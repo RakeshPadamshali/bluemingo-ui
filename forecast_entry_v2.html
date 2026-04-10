@@ -176,8 +176,8 @@ body{font-family:'Roboto',system-ui,sans-serif;font-size:14px;color:#333333;back
 .rmk-clr-btn{padding:7px 12px;background:transparent;border:1px solid var(--border);border-radius:var(--r);font-family:inherit;font-size:11px;cursor:pointer;color:var(--ink3);flex-shrink:0}
 .rmk-clr-btn:hover{background:var(--surface3)}
 /* Aggregated column — shared by fixed and variable grid */
-.agg-th{background:#f5f5f5;color:#666;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:right;padding:10px 10px;border-left:2px solid var(--border2);white-space:nowrap}
-.agg-td{border-left:2px solid var(--border2)!important;background:rgba(245,245,245,.6);text-align:right;padding:8px 8px}
+.agg-th{background:var(--bg-alt);color:var(--ink3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:right;padding:10px 12px;white-space:nowrap}
+.agg-td{background:rgba(245,245,245,.5);text-align:right;padding:8px 8px}
 .agg-inp{width:74px;text-align:right;padding:5px 7px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:500;color:var(--ink);background:rgba(245,245,245,.6);outline:none;-moz-appearance:textfield}
 .agg-inp::-webkit-inner-spin-button,.agg-inp::-webkit-outer-spin-button{-webkit-appearance:none}
 .agg-inp:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
@@ -340,8 +340,8 @@ input:disabled{opacity:.45;cursor:not-allowed}
 <!-- FILTER BAR -->
 <div class="filter-bar" id="filter-bar">
   <div class="tg-ctrl">
-    <button class="tg-btn active" data-view="1">View 1</button>
-    <button class="tg-btn" data-view="2">View 2</button>
+    <button class="tg-btn active" data-view="1">Units</button>
+    <button class="tg-btn" data-view="2">Buckets</button>
   </div>
   <div class="tg-ctrl">
     <button class="tg-btn active" data-btype="fixed">Fixed bucket</button>
@@ -508,33 +508,31 @@ var DRAWER_CHARTS={};
 var BUCKETS=[{id:'APR-2026',lbl:'Apr 2026',s:'APR',frozen:true},{id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false},{id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false},{id:'JUL-2026',lbl:'Jul 2026',s:'JUL',frozen:false}];
 var VAR_BUCKET_DEFS={
   weekly:[
-    {id:'WK1-MAR',lbl:'Wk1 Mar',s:'W1',frozen:false,near:true},
-    {id:'WK2-MAR',lbl:'Wk2 Mar',s:'W2',frozen:false,near:true},
-    {id:'WK3-MAR',lbl:'Wk3 Mar',s:'W3',frozen:false,near:true},
-    {id:'WK4-MAR',lbl:'Wk4 Mar',s:'W4',frozen:false,near:true,aggAfter:true,aggLabel:'Mar (Wk1–4)',aggIds:['WK1-MAR','WK2-MAR','WK3-MAR','WK4-MAR']},
-    {id:'APR-2026',lbl:'Apr 2026',s:'APR',frozen:false,near:false},
-    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May total',aggIds:['APR-2026','MAY-2026']},
-    {id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false,near:false},
+    {id:'WK1-APR',lbl:'Wk1 Apr',s:'W1',frozen:false,near:true},
+    {id:'WK2-APR',lbl:'Wk2 Apr',s:'W2',frozen:false,near:true},
+    {id:'WK3-APR',lbl:'Wk3 Apr',s:'W3',frozen:false,near:true},
+    {id:'WK4-APR',lbl:'Wk4 Apr',s:'W4',frozen:false,near:true,aggAfter:true,aggLabel:'Apr (Wk1–4)',aggIds:['WK1-APR','WK2-APR','WK3-APR','WK4-APR']},
+    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false},
+    {id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May–Jun total',aggIds:['WK1-APR','WK2-APR','WK3-APR','WK4-APR','MAY-2026','JUN-2026']},
     {id:'QTR3-2026',lbl:'Qtr3 2026',s:'Q3',frozen:false,near:false}
   ],
   daily:[
-    {id:'D01-MAR',lbl:'Day 1',s:'D1',frozen:false,near:true},{id:'D02-MAR',lbl:'Day 2',s:'D2',frozen:false,near:true},
-    {id:'D03-MAR',lbl:'Day 3',s:'D3',frozen:false,near:true},{id:'D04-MAR',lbl:'Day 4',s:'D4',frozen:false,near:true},
-    {id:'D05-MAR',lbl:'Day 5',s:'D5',frozen:false,near:true},{id:'D06-MAR',lbl:'Day 6',s:'D6',frozen:false,near:true},
-    {id:'D07-MAR',lbl:'Day 7',s:'D7',frozen:false,near:true},{id:'D08-MAR',lbl:'Day 8',s:'D8',frozen:false,near:true},
-    {id:'D09-MAR',lbl:'Day 9',s:'D9',frozen:false,near:true},{id:'D10-MAR',lbl:'Day 10',s:'D10',frozen:false,near:true,aggAfter:true,aggLabel:'Mar 1–10',aggIds:['D01-MAR','D02-MAR','D03-MAR','D04-MAR','D05-MAR','D06-MAR','D07-MAR','D08-MAR','D09-MAR','D10-MAR']},
-    {id:'MAR-BAL',lbl:'Mar bal',s:'MB',frozen:false,near:false,aggAfter:true,aggLabel:'Mar balance',aggIds:['MAR-BAL']},
-    {id:'APR-2026',lbl:'Apr 2026',s:'APR',frozen:false,near:false},
-    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May total',aggIds:['APR-2026','MAY-2026']},
+    {id:'D01-APR',lbl:'Day 1',s:'D1',frozen:false,near:true},{id:'D02-APR',lbl:'Day 2',s:'D2',frozen:false,near:true},
+    {id:'D03-APR',lbl:'Day 3',s:'D3',frozen:false,near:true},{id:'D04-APR',lbl:'Day 4',s:'D4',frozen:false,near:true},
+    {id:'D05-APR',lbl:'Day 5',s:'D5',frozen:false,near:true},{id:'D06-APR',lbl:'Day 6',s:'D6',frozen:false,near:true},
+    {id:'D07-APR',lbl:'Day 7',s:'D7',frozen:false,near:true},{id:'D08-APR',lbl:'Day 8',s:'D8',frozen:false,near:true},
+    {id:'D09-APR',lbl:'Day 9',s:'D9',frozen:false,near:true},{id:'D10-APR',lbl:'Day 10',s:'D10',frozen:false,near:true,aggAfter:true,aggLabel:'Apr 1–10',aggIds:['D01-APR','D02-APR','D03-APR','D04-APR','D05-APR','D06-APR','D07-APR','D08-APR','D09-APR','D10-APR']},
+    {id:'APR-BAL',lbl:'Apr bal',s:'AB',frozen:false,near:false,aggAfter:true,aggLabel:'Apr balance',aggIds:['APR-BAL']},
+    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false},
+    {id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May–Jun total',aggIds:['D01-APR','D02-APR','D03-APR','D04-APR','D05-APR','D06-APR','D07-APR','D08-APR','D09-APR','D10-APR','APR-BAL','MAY-2026','JUN-2026']},
     {id:'QTR3-2026',lbl:'Qtr3',s:'Q3',frozen:false,near:false}
   ],
   tdp:[
-    {id:'TDP1-MAR',lbl:'10D-1',s:'T1',frozen:false,near:true},
-    {id:'TDP2-MAR',lbl:'10D-2',s:'T2',frozen:false,near:true},
-    {id:'TDP3-MAR',lbl:'10D-3',s:'T3',frozen:false,near:true,aggAfter:true,aggLabel:'Mar (3×TDP)',aggIds:['TDP1-MAR','TDP2-MAR','TDP3-MAR']},
-    {id:'APR-2026',lbl:'Apr 2026',s:'APR',frozen:false,near:false},
-    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May total',aggIds:['APR-2026','MAY-2026']},
-    {id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false,near:false},
+    {id:'TDP1-APR',lbl:'10D-1',s:'T1',frozen:false,near:true},
+    {id:'TDP2-APR',lbl:'10D-2',s:'T2',frozen:false,near:true},
+    {id:'TDP3-APR',lbl:'10D-3',s:'T3',frozen:false,near:true,aggAfter:true,aggLabel:'Apr (3×TDP)',aggIds:['TDP1-APR','TDP2-APR','TDP3-APR']},
+    {id:'MAY-2026',lbl:'May 2026',s:'MAY',frozen:false,near:false},
+    {id:'JUN-2026',lbl:'Jun 2026',s:'JUN',frozen:false,near:false,aggAfter:true,aggLabel:'Apr–May–Jun total',aggIds:['TDP1-APR','TDP2-APR','TDP3-APR','MAY-2026','JUN-2026']},
     {id:'QTR3-2026',lbl:'Qtr3 2026',s:'Q3',frozen:false,near:false}
   ]
 };
@@ -558,7 +556,76 @@ var ROLE_USERS={
   RM:[{id:'atanu',name:'Atanu',node:'Amazon_Mamaearth',nodeId:'N002',role:'ASM',initials:'AT',skuVals:{0:1230,1:760,2:900,3:640,4:620,5:710,6:520}},{id:'priya',name:'Priya',node:'Amazon_DermaCo',nodeId:'N003',role:'ASM',initials:'PR',skuVals:{0:1050,1:680,2:750,3:570,4:580,5:660,6:440}},{id:'ujawal',name:'Ujawal',node:'Amazon_BWithin',nodeId:'N004',role:'ASM',initials:'UJ',skuVals:{0:1110,1:710,2:800,3:600,4:595,5:672,6:470}}],
   HO:[{id:'swapnil',name:'Swapnil',node:'Amazon (L1)',nodeId:'N010',role:'RM',initials:'SW',skuVals:{0:3390,1:2150,2:2450,3:1810,4:1795,5:2042,6:1430}},{id:'arun',name:'Arun',node:'Blinkit (L1)',nodeId:'N011',role:'RM',initials:'AR',skuVals:{0:2800,1:1800,2:2000,3:1500,4:1500,5:1700,6:1200}}]
 };
-var S={bucket:'MAY-2026',measure:'units',viewHierarchy:['SKU'],role:'ASM',view:1,bucketType:'fixed',varBucketType:'weekly',openRow:null,openRemark:null,openDd:null,skuVals:{},bktSource:{},exemptions:{},remarks:{},submitted:new Set(),filters:{categories:new Set(),brands:new Set(),baseSkus:new Set(),skuIds:new Set()},selectedUsers:new Set(['atanu','priya','ujawal','swapnil','arun']),notifOpen:false,notifs:[{id:'n1',type:'a',icon:'⏰',txt:'Window closes in 10 days — submit before Day 15.',time:'Today'},{id:'n2',type:'b',icon:'⬇️',txt:'RM Swapnil entered top-down target: 8,500 units.',time:'2h ago'},{id:'n3',type:'b',icon:'📊',txt:'Base V0 updated for Apr–Jul 2026.',time:'Yesterday'}]};
+var S={bucket:'MAY-2026',measure:'units',viewHierarchy:['SKU'],role:'ASM',view:1,bucketType:'fixed',varBucketType:'weekly',openRow:null,openRemark:null,openDd:null,
+skuVals:(function(){
+  /* Pre-loaded ASM forecast — keyed by skuId_bucketId                              */
+  /* Fixed buckets: MAY-2026, JUN-2026, JUL-2026 (APR-2026 is frozen)               */
+  /* Variable weekly: WK1-APR … WK4-APR, MAY-2026, JUN-2026                        */
+  /* Variable daily: D01-APR … D10-APR, APR-BAL, MAY-2026, JUN-2026               */
+  /* Variable TDP: TDP1-APR, TDP2-APR, TDP3-APR, MAY-2026, JUN-2026               */
+  /* Values in units; slightly above SFC with realistic seasonal pattern            */
+  var d={};
+  function s(id,bkt,v){d[id+'_'+bkt]=v;}
+  /* SKU 0 — FACE_WASH_50ML  sfc=1200, promo+150 base=1350                        */
+  s(0,'MAY-2026',1280); s(0,'JUN-2026',1310); s(0,'JUL-2026',1240);
+  s(0,'WK1-APR',310); s(0,'WK2-APR',320); s(0,'WK3-APR',340); s(0,'WK4-APR',330);
+  s(0,'MAY-2026',1280); s(0,'JUN-2026',1310);
+  s(0,'TDP1-APR',420); s(0,'TDP2-APR',440); s(0,'TDP3-APR',430);
+  s(0,'D01-APR',125); s(0,'D02-APR',128); s(0,'D03-APR',130); s(0,'D04-APR',127);
+  s(0,'D05-APR',132); s(0,'D06-APR',129); s(0,'D07-APR',131); s(0,'D08-APR',128);
+  s(0,'D09-APR',126); s(0,'D10-APR',130); s(0,'APR-BAL',450);
+  /* SKU 1 — FACE_WASH_100ML  sfc=750                                             */
+  s(1,'MAY-2026',780); s(1,'JUN-2026',800); s(1,'JUL-2026',760);
+  s(1,'WK1-APR',185); s(1,'WK2-APR',190); s(1,'WK3-APR',195); s(1,'WK4-APR',188);
+  s(1,'TDP1-APR',255); s(1,'TDP2-APR',260); s(1,'TDP3-APR',258);
+  s(1,'D01-APR',75); s(1,'D02-APR',77); s(1,'D03-APR',78); s(1,'D04-APR',76);
+  s(1,'D05-APR',79); s(1,'D06-APR',76); s(1,'D07-APR',78); s(1,'D08-APR',75);
+  s(1,'D09-APR',74); s(1,'D10-APR',76); s(1,'APR-BAL',270);
+  /* SKU 2 — SUN_SPF50_50ML  sfc=820, promo+200 base=1020, seasonal peak         */
+  s(2,'MAY-2026',1180); s(2,'JUN-2026',1150); s(2,'JUL-2026',1080);
+  s(2,'WK1-APR',260); s(2,'WK2-APR',270); s(2,'WK3-APR',280); s(2,'WK4-APR',265);
+  s(2,'TDP1-APR',360); s(2,'TDP2-APR',375); s(2,'TDP3-APR',368);
+  s(2,'D01-APR',104); s(2,'D02-APR',106); s(2,'D03-APR',108); s(2,'D04-APR',105);
+  s(2,'D05-APR',110); s(2,'D06-APR',107); s(2,'D07-APR',109); s(2,'D08-APR',105);
+  s(2,'D09-APR',103); s(2,'D10-APR',106); s(2,'APR-BAL',370);
+  /* SKU 3 — SUN_SPF50_100ML  sfc=600, promo+100 base=700                        */
+  s(3,'MAY-2026',850); s(3,'JUN-2026',830); s(3,'JUL-2026',780);
+  s(3,'WK1-APR',188); s(3,'WK2-APR',195); s(3,'WK3-APR',200); s(3,'WK4-APR',192);
+  s(3,'TDP1-APR',260); s(3,'TDP2-APR',268); s(3,'TDP3-APR',265);
+  s(3,'D01-APR',76); s(3,'D02-APR',78); s(3,'D03-APR',79); s(3,'D04-APR',77);
+  s(3,'D05-APR',80); s(3,'D06-APR',78); s(3,'D07-APR',79); s(3,'D08-APR',76);
+  s(3,'D09-APR',75); s(3,'D10-APR',77); s(3,'APR-BAL',270);
+  /* SKU 4 — BIOTIN_SMP_200ML  sfc=610, flat trend                               */
+  s(4,'MAY-2026',615); s(4,'JUN-2026',618); s(4,'JUL-2026',612);
+  s(4,'WK1-APR',152); s(4,'WK2-APR',154); s(4,'WK3-APR',155); s(4,'WK4-APR',153);
+  s(4,'TDP1-APR',206); s(4,'TDP2-APR',208); s(4,'TDP3-APR',207);
+  s(4,'D01-APR',61); s(4,'D02-APR',62); s(4,'D03-APR',63); s(4,'D04-APR',61);
+  s(4,'D05-APR',62); s(4,'D06-APR',61); s(4,'D07-APR',62); s(4,'D08-APR',61);
+  s(4,'D09-APR',60); s(4,'D10-APR',62); s(4,'APR-BAL',215);
+  /* SKU 5 — ONION_SMP_200ML  sfc=700, declining — slight under-forecast          */
+  s(5,'MAY-2026',670); s(5,'JUN-2026',660); s(5,'JUL-2026',650);
+  s(5,'WK1-APR',168); s(5,'WK2-APR',172); s(5,'WK3-APR',175); s(5,'WK4-APR',170);
+  s(5,'TDP1-APR',228); s(5,'TDP2-APR',232); s(5,'TDP3-APR',230);
+  s(5,'D01-APR',67); s(5,'D02-APR',68); s(5,'D03-APR',70); s(5,'D04-APR',68);
+  s(5,'D05-APR',69); s(5,'D06-APR',67); s(5,'D07-APR',68); s(5,'D08-APR',66);
+  s(5,'D09-APR',66); s(5,'D10-APR',67); s(5,'APR-BAL',235);
+  /* SKU 6 — VITC_SERUM_30ML  sfc=480, promo override=80, fast growth            */
+  s(6,'MAY-2026',560); s(6,'JUN-2026',590); s(6,'JUL-2026',540);
+  s(6,'WK1-APR',95); s(6,'WK2-APR',98); s(6,'WK3-APR',102); s(6,'WK4-APR',100);
+  s(6,'TDP1-APR',130); s(6,'TDP2-APR',134); s(6,'TDP3-APR',132);
+  s(6,'D01-APR',38); s(6,'D02-APR',39); s(6,'D03-APR',40); s(6,'D04-APR',38);
+  s(6,'D05-APR',40); s(6,'D06-APR',38); s(6,'D07-APR',39); s(6,'D08-APR',38);
+  s(6,'D09-APR',37); s(6,'D10-APR',39); s(6,'APR-BAL',138);
+  return d;
+}()),
+bktSource:{},exemptions:{},
+remarks:{
+  0:'Promo confirmed — display placement in May. Expecting +8% uplift vs SFC.',
+  2:'Summer peak — aligned with trade event. Jun expected to stay elevated.',
+  5:'Declining trend continues. Kept forecast below SFC intentionally.',
+  6:'Display launch confirmed for Apr. Growth trajectory strong.'
+},
+submitted:new Set(),filters:{categories:new Set(),brands:new Set(),baseSkus:new Set(),skuIds:new Set()},selectedUsers:new Set(['atanu','priya','ujawal','swapnil','arun']),notifOpen:false,notifs:[{id:'n1',type:'a',icon:'⏰',txt:'Window closes in 10 days — submit before Day 15.',time:'Today'},{id:'n2',type:'b',icon:'⬇️',txt:'RM Swapnil entered top-down target: 8,500 units.',time:'2h ago'},{id:'n3',type:'b',icon:'📊',txt:'Base V0 updated for Apr–Jul 2026.',time:'Yesterday'}]};
 
 function sKey(sid,bid){return sid+'_'+bid;}
 function getSkuVal(sid,bid){var k=sKey(sid,bid);return S.skuVals[k]!==undefined?S.skuVals[k]:null;}
@@ -647,7 +714,7 @@ function syncFilterBar(){
     var cur=getActiveBucketObj(S.bucket);
     document.getElementById('v2bkt-lbl').textContent='Bucket: '+cur.lbl;
   }
-  var hints={v1fixed:'Enter forecast total in any bucket card — auto-disaggregates to all SKUs via LRM.',v1var:'Variable bucket view — near-term periods editable at granular level.',v2:'Select a bucket from the dropdown. Cards show your forecast totals in each measure unit.'};
+  var hints={v1fixed:'Enter forecast total per bucket — auto-disaggregates to all SKUs via LRM.',v1var:'Variable bucket (Units view) — near-term periods editable at granular level.',v2:'Buckets view — select a bucket from the dropdown. Cards show totals in each measure unit.'};
   var hk=v2?'v2':(isVar?'v1var':'v1fixed');
   document.getElementById('bkt-hint-txt').textContent=hints[hk];
 }
@@ -720,7 +787,7 @@ function renderBktCards(){
     /* Fixed: one agg card at end covering all open periods */
     if(!isVar){
       var openIds=buckets.filter(function(b){return!b.frozen;}).map(function(b){return b.id;});
-      html+=buildGroupAggCard(openIds,'All periods');
+      html+=buildGroupAggCard(openIds,getGridAggLabel());
     }
   } else {
     gridCls='bkt-grid-measures';var bid=S.bucket;
@@ -791,11 +858,20 @@ function aggPeriodLabel(){
   if(S.bucketType==='fixed'){var ob=getOpenBuckets();return ob.length+' periods ('+ob.map(function(b){return b.s;}).join('+')+')';};
   var nb=getNearBuckets();return'Near ('+nb.map(function(b){return b.s;}).join('+')+')';}
 
+function getGridAggLabel(){
+  /* Label used for BOTH the agg summary card and the grid agg column header */
+  if(S.bucketType==='fixed'){
+    return getOpenBuckets().map(function(b){return b.s;}).join('+');
+  }
+  /* Variable: near-term agg label = first bucket with aggAfter+near */
+  var nearAgg=VAR_BUCKET_DEFS[S.varBucketType].find(function(b){return b.near&&b.aggAfter&&b.aggLabel;});
+  return nearAgg?nearAgg.aggLabel:'Near total';
+}
 function makeGridHead(periodLbl,aggLbl){
   return'<tr><th style="width:24px"></th><th style="min-width:170px">SKU</th>'+
     '<th class="r">Baseline</th><th>Promo</th>'+
     '<th class="r">'+periodLbl+'</th><th class="r">vs Baseline</th>'+
-    '<th class="agg-th">'+aggLbl+'</th>'+
+    '<th class="r" style="background:var(--bg-alt);color:var(--ink3)">'+aggLbl+'</th>'+
     '<th>Tolerance</th><th>Status</th><th>Remarks</th></tr>';
 }
 
@@ -880,11 +956,49 @@ function renderHierarchyWithUsers(groups,skus,colspan,users,userRowFn,depth){
   return html;
 }
 
+/* ── Shared SKU detail drawer HTML builder ── */
+function buildSkuDrawer(sku,colspan,readOnly){
+  var sid=sku.id;
+  var mx=Math.max.apply(null,sku.hist);
+  var accH=[{l:'Last cycle',v:sku.acc},{l:'3-cycle avg',v:Math.round(sku.acc*.96)}].map(function(a){var fc=a.v>=85?'af-g':a.v>=70?'af-m':'af-b';return'<div class="acc-r"><div class="acc-hdr"><span class="acc-l">'+a.l+'</span><span style="font-family:var(--mono);font-size:11px;font-weight:600">'+a.v+'%</span></div><div class="acc-t"><div class="acc-fil '+fc+'" style="width:'+a.v+'%"></div></div></div>';}).join('');
+  var seaH=sku.sea.map(function(v,i){var act=i===3,hi=v>1.1&&!act;return'<div class="sc'+(act?' act':hi?' hi':'')+'"><div class="sc-m">'+SEA_M[i]+'</div><div class="sc-v '+(act?'act':hi?'hi':'lo')+'">'+v.toFixed(2)+'</div></div>';}).join('');
+  var histMo=last6Mo();
+  var histH=sku.hist.map(function(v,i){return'<div class="hbar"><div class="hbar-l">'+histMo[i]+'</div><div class="hbar-t"><div class="hbar-f" style="width:'+Math.round(v/mx*100)+'%"></div></div><div class="hbar-v">'+v+'</div></div>';}).join('');
+  var opts=[{l:'Last year same period',s:'LY Apr avg',v:sku.ly},{l:'3-month rolling avg',s:'Jan–Mar 2026',v:avg3(sku)},{l:'SFC baseline',s:'Statistical model',v:sku.sfc},{l:'Seasonality adjusted',s:'3m avg × Apr index',v:seaAdj(sku)}];
+  var qfH=readOnly?'<div style="font-size:11px;color:var(--ink3);padding:4px 0">Read-only view</div>':opts.map(function(o){return'<button class="qf-btn" data-qf-id="'+sid+'" data-qf-val="'+o.v+'"><div class="qf-l">'+o.l+'</div><div class="qf-row"><span class="qf-s">'+o.s+'</span><span class="qf-v">'+fmt(toDisp(o.v))+'</span></div></button>';}).join('');
+
+  var out='<tr class="xtr"><td colspan="'+colspan+'"><div class="drawer">';
+  out+='<div class="drawer-tabs">';
+  out+='<button class="dt active" data-dtab="ins" data-dsku="'+sid+'">Insights</button>';
+  out+='<button class="dt" data-dtab="promo" data-dsku="'+sid+'">Actuals + Promo</button>';
+  out+='<button class="dt" data-dtab="svsu" data-dsku="'+sid+'">SFC vs User</button>';
+  out+='<button class="dt" data-dtab="err" data-dsku="'+sid+'">Error trend</button>';
+  out+='<button class="dt" data-dtab="avf" data-dsku="'+sid+'">Actuals vs FC</button>';
+  out+='</div>';
+  /* Insights */
+  out+='<div class="dtc active" id="dtc-ins-'+sid+'"><div class="d4" style="margin-bottom:10px">';
+  out+='<div class="dp"><div class="dp-t">6-month sales history</div>'+histH+'</div>';
+  out+='<div class="dp"><div class="dp-t">Forecast accuracy</div>'+accH+'<div class="rm-note'+(sku.rmW?' w':'')+'">RM: '+sku.rmNote+'</div></div>';
+  out+='<div class="dp"><div class="dp-t">Seasonality index</div><div class="sea-g">'+seaH+'</div>'+(sku.promo.on?'<div class="promo-badge">Promo in Apr 2026</div>':'')+'</div>';
+  out+='<div class="dp"><div class="dp-t">Smart fill</div>'+qfH+'</div>';
+  out+='</div></div>';
+  /* Actuals + Promo */
+  out+='<div class="dtc" id="dtc-promo-'+sid+'"><div class="promo-leg"><div class="pl-item"><div class="pl-sq" style="background:#85B7EB"></div>Baseline</div><div class="pl-item"><div class="pl-sq" style="background:#EF9F27"></div>Event</div><div class="pl-item"><div class="pl-sq" style="background:#7F77DD"></div>Diwali</div><div class="pl-item"><div class="pl-sq" style="background:#F0997B"></div>Planned</div></div><div class="chart-wrap chart-h160"><canvas id="c-promo-'+sid+'"></canvas></div></div>';
+  /* SFC vs User */
+  out+='<div class="dtc" id="dtc-svsu-'+sid+'"><div class="ch-grid"><div class="chart-card"><div class="chart-lbl">SFC vs User FC</div><div class="chart-wrap chart-h130"><canvas id="c-svsu-'+sid+'"></canvas></div></div><div class="chart-card"><div class="chart-lbl">YoY comparison</div><div class="chart-wrap chart-h130"><canvas id="c-yoy-'+sid+'"></canvas></div></div></div></div>';
+  /* Error trend */
+  out+='<div class="dtc" id="dtc-err-'+sid+'"><div class="n-slider-row"><label>History:</label><input type="range" min="3" max="12" step="1" value="6" id="err-n-'+sid+'" oninput="document.getElementById(\'err-nv-'+sid+'\').textContent=this.value+\'m\';refreshErrChart('+sid+',parseInt(this.value))"><span id="err-nv-'+sid+'">6m</span></div><div class="ch-grid"><div class="chart-card"><div class="chart-lbl">Error %</div><div class="chart-wrap chart-h130"><canvas id="c-err-'+sid+'"></canvas></div></div><div class="chart-card"><div class="chart-lbl">Bias</div><div class="chart-wrap chart-h130"><canvas id="c-bias-'+sid+'"></canvas></div></div></div></div>';
+  /* Actuals vs FC */
+  out+='<div class="dtc" id="dtc-avf-'+sid+'"><div class="chart-card"><div class="chart-lbl">Actuals vs SFC vs User forecast — 12 months</div><div class="chart-wrap chart-h160"><canvas id="c-avf-'+sid+'"></canvas></div></div></div>';
+  out+='</div></td></tr>';
+  return out;
+}
+
 function renderGrid(){
   var bktObj=getActiveBucketObj(S.bucket);
   var isFrz=bktObj.frozen;
   var openBkts=getOpenBuckets();
-  var aggLbl=openBkts.length+'× total';
+  var aggLbl=getGridAggLabel();
   document.getElementById('thead').innerHTML=makeGridHead(bktObj.lbl,aggLbl);
   document.getElementById('grid-bkt-lbl').textContent=bktObj.lbl;
   var filteredSkus=getFilteredSkus();
@@ -904,11 +1018,35 @@ function renderGrid(){
       var u=user.skuVals[sku.id]||null;var bDisp=toDisp(getBase(sku));var uDisp=u!==null?toDisp(u):null;
       var aggU=u!==null?u*openBkts.length:null;var aggDisp=aggU!==null?Math.round(toDisp(aggU)):null;
       var tol=u!==null?chkTol(sku,u):null;var hardB=tol&&tol.type==='HARD';
-      var rc='dr'+(hardB?' hard-row':tol&&tol.type==='SOFT'?' soft-row':'');
+      var rc='dr hoverable'+(hardB?' hard-row':tol&&tol.type==='SOFT'?' soft-row':'');
+      var rowKey=user.id+'_'+sku.id;
+      if(S.openRow===rowKey)rc+=' open-row';
       var varH='<span class="vp-none">—</span>';if(uDisp!==null){var p=(u-getBase(sku))/getBase(sku)*100,sg=p>=0?'+':'';varH='<span class="vp '+(Math.abs(p)>sku.tpct?'vp-big':p>=0?'vp-pos':'vp-neg')+'">'+sg+p.toFixed(0)+'%</span>';}
       var tolH='<span class="tb-none">—</span>';if(tol){if(tol.type==='SOFT')tolH='<span class="tb tb-s">SOFT '+Math.abs(tol.pct).toFixed(0)+'%</span>';else tolH='<span class="tb tb-h">HARD '+Math.abs(tol.pct).toFixed(0)+'%</span>';}
-      var promoH=sku.promo.on?'<span class="promo-p">'+(sku.promo.mode==='ADD_UP'?'+'+fmt(toDisp(sku.promo.qty))+' ADD_UP':'Override '+fmt(toDisp(sku.promo.qty)))+'</span>':'<span style="font-size:11px;color:#8B91A3">—</span>';
-      return'<tr class="'+rc+'"><td></td><td><div class="sku-n">'+sku.full+'</div><div class="sku-s">'+sku.br+' · '+sku.cat+'</div></td><td class="r">'+fmt(bDisp)+'</td><td>'+promoH+'</td><td class="r">'+(uDisp!==null?fmt(uDisp):'<span style="color:#8B91A3">—</span>')+'</td><td class="r">'+varH+'</td><td class="agg-td"><span style="font-family:var(--mono);font-size:12px">'+(aggDisp!==null?aggDisp.toLocaleString():'—')+'</span></td><td>'+tolH+'</td><td><span class="sb-badge">Submitted</span></td><td><span style="font-size:11px;color:#8B91A3">—</span></td></tr>';
+      var promoH=sku.promo.on?'<span class="promo-p">'+(sku.promo.mode==='ADD_UP'?'+'+fmt(toDisp(sku.promo.qty))+' ADD_UP':'Override '+fmt(toDisp(sku.promo.qty)))+'</span>':'<span style="font-size:11px;color:var(--ink4)">—</span>';
+      var rmkTxt=S.remarks[sku.id]||'';
+      var out='<tr class="'+rc+'" data-row-uid="'+rowKey+'">';
+      out+='<td style="text-align:center"><span class="chev'+(S.openRow===rowKey?' open':'')+'">▼</span></td>';
+      out+='<td><div class="sku-n">'+sku.full+'</div><div class="sku-s">'+sku.br+' · '+sku.cat+'</div></td>';
+      out+='<td class="r">'+fmt(bDisp)+'</td><td>'+promoH+'</td>';
+      out+='<td class="r">'+(uDisp!==null?fmt(uDisp):'<span style="color:var(--ink4)">—</span>')+'</td>';
+      out+='<td class="r">'+varH+'</td>';
+      out+='<td class="agg-td"><span style="font-family:var(--mono);font-size:12px">'+(aggDisp!==null?aggDisp.toLocaleString():'—')+'</span></td>';
+      out+='<td>'+tolH+'</td><td><span class="sb-badge">Submitted</span></td>';
+      out+='<td><button class="rmk-btn'+(rmkTxt?' has-r':'')+'" data-rmk-id="'+sku.id+'">'+(rmkTxt?'💬 Edit':'+ Remark')+'</button></td></tr>';
+      /* Remark popup */
+      if(S.openRemark===sku.id){
+        out+='<tr class="rmk-popup-row"><td colspan="'+colspan+'"><div class="rmk-popup">';
+        if(rmkTxt)out+='<div class="rmk-popup-existing"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1h12v9H9l-4 3V10H1z" stroke="var(--primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+rmkTxt+'</div>';
+        out+='<div class="rmk-popup-actions"><textarea id="rinp-'+sku.id+'" placeholder="Add remark..." rows="2">'+rmkTxt+'</textarea><button class="rmk-save-btn" data-rmk-save="'+sku.id+'">Save</button>';
+        if(rmkTxt)out+='<button class="rmk-clr-btn" data-rmk-clear="'+sku.id+'">Clear</button>';
+        out+='</div></div></td></tr>';
+      }
+      /* Drawer — same as ASM but read-only */
+      if(S.openRow===rowKey){
+        out+=buildSkuDrawer(sku,colspan,true);
+      }
+      return out;
     }
     html+=renderHierarchyWithUsers(groups,filteredSkus,colspan,selUsers,userRowFn,0);
   } else {
@@ -943,30 +1081,10 @@ function renderGrid(){
         out+='</div></div></td></tr>';
       }
       if(S.openRow===sku.id){
-        var mx2=Math.max.apply(null,sku.hist);
-        var accH=[{l:'Last cycle',v:sku.acc},{l:'3-cycle avg',v:Math.round(sku.acc*.96)}].map(function(a){var fc=a.v>=85?'af-g':a.v>=70?'af-m':'af-b';return'<div class="acc-r"><div class="acc-hdr"><span class="acc-l">'+a.l+'</span><span style="font-family:var(--mono);font-size:11px;font-weight:600">'+a.v+'%</span></div><div class="acc-t"><div class="acc-fil '+fc+'" style="width:'+a.v+'%"></div></div></div>';}).join('');
-        var seaH=sku.sea.map(function(v,i){var act=i===3,hi=v>1.1&&!act;return'<div class="sc'+(act?' act':hi?' hi':'')+'"><div class="sc-m">'+SEA_M[i]+'</div><div class="sc-v '+(act?'act':hi?'hi':'lo')+'">'+v.toFixed(2)+'</div></div>';}).join('');
-        var opts=[{l:'Last year same period',s:'LY Apr avg',v:sku.ly},{l:'3-month rolling avg',s:'Jan–Mar 2026',v:avg3(sku)},{l:'SFC baseline',s:'Statistical model',v:sku.sfc},{l:'Seasonality adjusted',s:'3m avg × Apr index',v:seaAdj(sku)}];
-        var qfH=opts.map(function(o){return'<button class="qf-btn" data-qf-id="'+sku.id+'" data-qf-val="'+o.v+'"><div class="qf-l">'+o.l+'</div><div class="qf-row"><span class="qf-s">'+o.s+'</span><span class="qf-v">'+fmt(toDisp(o.v))+'</span></div></button>';}).join('');
         var exH='';if(hardB&&!(ex&&ex.status==='PENDING')){exH='<div class="ex-panel"><div class="ex-title">Request exemption — HARD block on '+sku.full+'</div><div class="ex-sub">Value exceeds HARD tolerance of '+sku.tpct+'% vs baseline '+fmt(bDisp)+'.</div><label class="ex-label">Justification</label><textarea class="ex-ta" id="extxt-'+sku.id+'" rows="3" placeholder="e.g. Display launch confirmed..."></textarea><div class="ex-btns"><button class="ex-cancel-btn" data-ex-cancel="'+sku.id+'">Cancel</button><button class="ex-submit-btn" data-ex-submit="'+sku.id+'">Submit Request</button></div></div>';}
-        var histMo=last6Mo();
-        out+='<tr class="xtr"><td colspan="'+colspan+'"><div class="drawer"><div class="drawer-tabs">';
-        out+='<button class="dt active" data-dtab="ins" data-dsku="'+sku.id+'">Insights</button>';
-        out+='<button class="dt" data-dtab="promo" data-dsku="'+sku.id+'">Actuals + Promo</button>';
-        out+='<button class="dt" data-dtab="svsu" data-dsku="'+sku.id+'">SFC vs User</button>';
-        out+='<button class="dt" data-dtab="err" data-dsku="'+sku.id+'">Error trend</button>';
-        out+='<button class="dt" data-dtab="avf" data-dsku="'+sku.id+'">Actuals vs FC</button></div>';
-        out+='<div class="dtc active" id="dtc-ins-'+sku.id+'"><div class="d4" style="margin-bottom:10px"><div class="dp"><div class="dp-t">6-month sales history</div>';
-        out+=sku.hist.map(function(v,i){return'<div class="hbar"><div class="hbar-l">'+histMo[i]+'</div><div class="hbar-t"><div class="hbar-f" style="width:'+Math.round(v/mx2*100)+'%"></div></div><div class="hbar-v">'+v+'</div></div>';}).join('');
-        out+='</div><div class="dp"><div class="dp-t">Forecast accuracy</div>'+accH+'<div class="rm-note'+(sku.rmW?' w':'')+'">RM: '+sku.rmNote+'</div></div>';
-        out+='<div class="dp"><div class="dp-t">Seasonality index</div><div class="sea-g">'+seaH+'</div>'+(sku.promo.on?'<div class="promo-badge">Promo in Apr 2026</div>':'')+'</div>';
-        out+='<div class="dp"><div class="dp-t">Smart fill</div>'+qfH+'</div></div></div>';
-        out+='<div class="dtc" id="dtc-promo-'+sku.id+'"><div class="promo-leg"><div class="pl-item"><div class="pl-sq" style="background:#85B7EB"></div>Baseline</div><div class="pl-item"><div class="pl-sq" style="background:#EF9F27"></div>Event</div><div class="pl-item"><div class="pl-sq" style="background:#7F77DD"></div>Diwali</div><div class="pl-item"><div class="pl-sq" style="background:#F0997B"></div>Planned</div></div><div class="chart-wrap chart-h160"><canvas id="c-promo-'+sku.id+'"></canvas></div></div>';
-        out+='<div class="dtc" id="dtc-svsu-'+sku.id+'"><div class="ch-grid"><div class="chart-card"><div class="chart-lbl">SFC vs user</div><div class="chart-wrap chart-h130"><canvas id="c-svsu-'+sku.id+'"></canvas></div></div><div class="chart-card"><div class="chart-lbl">YoY</div><div class="chart-wrap chart-h130"><canvas id="c-yoy-'+sku.id+'"></canvas></div></div></div></div>';
-        out+='<div class="dtc" id="dtc-err-'+sku.id+'"><div class="n-slider-row"><label>History:</label><input type="range" min="3" max="12" step="1" value="6" id="err-n-'+sku.id+'" oninput="document.getElementById(\'err-nv-'+sku.id+'\').textContent=this.value+\'m\';refreshErrChart('+sku.id+',parseInt(this.value))"><span id="err-nv-'+sku.id+'">6m</span></div><div class="ch-grid"><div class="chart-card"><div class="chart-lbl">Error %</div><div class="chart-wrap chart-h130"><canvas id="c-err-'+sku.id+'"></canvas></div></div><div class="chart-card"><div class="chart-lbl">Bias</div><div class="chart-wrap chart-h130"><canvas id="c-bias-'+sku.id+'"></canvas></div></div></div></div>';
-        out+='<div class="dtc" id="dtc-avf-'+sku.id+'"><div class="chart-card"><div class="chart-lbl">Actuals vs SFC vs user</div><div class="chart-wrap chart-h160"><canvas id="c-avf-'+sku.id+'"></canvas></div></div></div>';
-        out+=exH;
-        out+='</div></td></tr>';
+        out+=buildSkuDrawer(sku,colspan,false);
+        /* Append exemption panel inside drawer */
+        if(exH)out=out.replace('</div></td></tr>','<div style="padding:0 14px 14px">'+exH+'</div></div></td></tr>');
       }
       return out;
     }
@@ -977,7 +1095,7 @@ function renderGrid(){
   updateGridFooter();
   attachGridListeners();
   attachAggFixedListeners();
-  if(S.openRow!==null)setTimeout(function(){initSkuCharts(S.openRow,'ins');},60);
+  if(S.openRow!==null){var _sid=typeof S.openRow==='string'?parseInt(S.openRow.split('_')[1]):S.openRow;setTimeout(function(){initSkuCharts(_sid,'ins');},60);}
 }
 
 function destroySkuCharts(sid){
@@ -1124,8 +1242,13 @@ function renderVariableGrid(){
   var nearBkts=varBkts.filter(function(b){return b.near;});
   var bktObj=getActiveBucketObj(S.bucket);
   var typeLbl={weekly:'weekly',daily:'daily',tdp:'10-day'}[S.varBucketType]||S.varBucketType;
-  var aggLbl='Near total ('+nearBkts.length+'×)';
-  document.getElementById('thead').innerHTML=makeGridHead(bktObj.lbl+' ('+typeLbl+')',aggLbl);
+  /* Near period label: e.g. "Apr W1–W4" or "Apr D1–D10" or "Apr TDP×3" */
+  var nearPeriodLbl='';
+  if(S.varBucketType==='weekly')nearPeriodLbl='Apr ('+nearBkts.map(function(b){return b.s;}).join('/') +')';
+  else if(S.varBucketType==='daily')nearPeriodLbl='Apr ('+nearBkts[0].s+'–'+nearBkts[nearBkts.length-1].s+')';
+  else nearPeriodLbl='Apr (TDP ×'+nearBkts.length+')';
+  var aggLbl=getGridAggLabel();
+  document.getElementById('thead').innerHTML=makeGridHead(bktObj.lbl+' — '+typeLbl,aggLbl);
   document.getElementById('grid-bkt-lbl').textContent=bktObj.lbl+' — '+typeLbl;
   var filteredSkus=getFilteredSkus();
   document.getElementById('filter-result').textContent=filteredSkus.length===SKUS.length?'Showing all '+SKUS.length+' SKUs':'Showing '+filteredSkus.length+' of '+SKUS.length+' SKUs (filtered)';
@@ -1226,7 +1349,18 @@ function updateGridFooter(){
 }
 function attachGridListeners(){
   document.querySelectorAll('[data-inp-id]').forEach(function(inp){inp.addEventListener('input',function(){var id=parseInt(this.getAttribute('data-inp-id'));var raw=parseFloat(this.value);if(isNaN(raw)||raw<0){delete S.skuVals[sKey(id,S.bucket)];S.bktSource[S.bucket]='sku';renderBktCards();renderGrid();return;}setSkuVal(id,S.bucket,toUnits(raw));S.bktSource[S.bucket]='sku';var sku=SKUS[id];var t=chkTol(sku,toUnits(raw));if(t&&t.type==='HARD'&&!S.exemptions[id]){var exists=S.notifs.some(function(n){return n.id==='hard'+id;});if(!exists){S.notifs.unshift({id:'hard'+id,type:'r',icon:'⛔',txt:'HARD block: '+sku.full+' exceeded '+sku.tpct+'% tolerance.',time:'Just now'});S.notifOpen=true;renderNotifs();}}renderBktCards();renderGrid();var el=document.querySelector('[data-inp-id="'+id+'"]');if(el)el.focus();});});
-  document.querySelectorAll('tr.hoverable[data-row-id]').forEach(function(tr){tr.addEventListener('click',function(e){if(e.target.closest('input')||e.target.closest('button')||e.target.closest('select')||e.target.closest('textarea')||e.target.closest('.ex-lnk'))return;var id=parseInt(tr.getAttribute('data-row-id'));if(S.openRow===id){destroySkuCharts(id);S.openRow=null;}else{if(S.openRow!==null)destroySkuCharts(S.openRow);S.openRow=id;}renderGrid();});});
+  document.querySelectorAll('tr.hoverable[data-row-id]').forEach(function(tr){tr.addEventListener('click',function(e){if(e.target.closest('input')||e.target.closest('button')||e.target.closest('select')||e.target.closest('textarea')||e.target.closest('.ex-lnk'))return;var id=parseInt(tr.getAttribute('data-row-id'));if(S.openRow===id){destroySkuCharts(id);S.openRow=null;}else{if(S.openRow!==null&&typeof S.openRow==='number')destroySkuCharts(S.openRow);S.openRow=id;}renderGrid();});});
+  /* RM/HO rows use string uid = userId_skuId */
+  document.querySelectorAll('tr.hoverable[data-row-uid]').forEach(function(tr){
+    tr.addEventListener('click',function(e){
+      if(e.target.closest('input')||e.target.closest('button')||e.target.closest('select')||e.target.closest('textarea'))return;
+      var uid=tr.getAttribute('data-row-uid');
+      var sid=parseInt(uid.split('_')[1]);
+      if(S.openRow===uid){destroySkuCharts(sid);S.openRow=null;}
+      else{if(S.openRow!==null){var oldSid=typeof S.openRow==='string'?parseInt(S.openRow.split('_')[1]):S.openRow;destroySkuCharts(oldSid);}S.openRow=uid;}
+      renderGrid();
+    });
+  });
   /* Drawer tab switching */
   document.querySelectorAll('[data-dtab]').forEach(function(btn){
     btn.addEventListener('click',function(e){
