@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demand Planning v3 — Stress Test (1000 ASM × 8000 SKU)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117; --bg2: #161b24; --bg3: #1e2633; --bg4: #252e3e;
+  --border: #2a3548; --border2: #344060;
+  --text: #e2e8f4; --text2: #8896b0; --text3: #5a6a85;
+  --accent: #3d8ef0; --accent2: #5aa3ff; --accent-glow: rgba(61,142,240,0.15);
+  --amber: #f59e0b; --amber-bg: rgba(245,158,11,0.12);
+  --red: #f43f5e; --red-bg: rgba(244,63,94,0.1);
+  --green: #10b981; --green-bg: rgba(16,185,129,0.1);
+  --purple: #a78bfa; --purple-bg: rgba(167,139,250,0.1);
+  --teal: #2dd4bf;
+  --font: 'Sora', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  --r: 7px; --r2: 11px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;overflow:hidden}
+.shell{display:flex;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#6366f1);display:flex;align-items:center;justify-content:center}
+.logo-name{font-size:13.5px;font-weight:700;letter-spacing:-.4px}.logo-name span{color:var(--accent2)}
+.steps{display:flex;align-items:center;gap:3px}
+.step{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:500;color:var(--text3);cursor:pointer;transition:all .15s}
+.step.active{background:var(--accent-glow);color:var(--accent2);border:1px solid rgba(61,142,240,.28)}
+.step.done{color:var(--green)}
+.step-n{width:17px;height:17px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--bg3);border:1px solid var(--border2)}
+.step.active .step-n{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.done .step-n{background:var(--green);border-color:var(--green);color:#fff}
+.step-sep{color:var(--border2);font-size:10px}
+.tbr{display:flex;align-items:center;gap:7px}
+.btn{padding:5px 13px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:5px}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-sm{padding:4px 10px;font-size:11.5px}
+
+/* MAIN */
+.main{display:flex;flex:1;min-height:0;overflow:hidden}
+
+/* CONTENT */
+.content{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;position:relative}
+
+/* SECTION CARD */
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:16px}
+.sc:last-child{margin-bottom:0}
+.sc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.sc-title{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.sc-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ic-b{background:rgba(61,142,240,.15);color:var(--accent2)}.ic-a{background:var(--amber-bg);color:var(--amber)}.ic-p{background:var(--purple-bg);color:var(--purple)}
+.sc-ctrl{display:flex;align-items:center;gap:7px}
+.sc-body{padding:16px}
+
+/* CHART */
+.chart-wrap{position:relative;height:240px;width:100%;display:block}
+.chart-wrap canvas{display:block;width:100%!important;height:100%!important}
+.legend{display:flex;align-items:center;gap:14px;margin-top:9px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:9px;height:9px;border-radius:50%}
+.ctrl-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:13px;padding-top:13px;border-top:1px solid var(--border)}
+.ctrl-grp{display:flex;align-items:center;gap:7px}
+.ctrl-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+.pill{display:flex;border-radius:18px;border:1px solid var(--border2);overflow:hidden;background:var(--bg3)}
+.pill button{padding:3px 11px;font-size:11px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font);font-weight:500;transition:all .15s}
+.pill button.on{background:var(--accent);color:#fff}
+.range-g{display:flex;align-items:center;gap:7px}
+.range-g input[type=range]{width:100px;accent-color:var(--accent);cursor:pointer}
+.rv{font-size:11px;color:var(--accent2);font-family:var(--mono);min-width:26px}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:3px 9px;border-radius:9px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;background:var(--bg4);border:1px solid var(--border2);color:var(--text2)}
+.chip:hover{border-color:var(--border);color:var(--text)}.chip.on{background:var(--accent-glow);border-color:rgba(61,142,240,.4);color:var(--accent2)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:9px;font-size:10.5px;font-weight:500}
+.b-a{background:var(--amber-bg);color:var(--amber)}.b-g{background:var(--green-bg);color:var(--green)}.b-b{background:var(--accent-glow);color:var(--accent2)}.b-p{background:var(--purple-bg);color:var(--purple)}.b-r{background:var(--red-bg);color:var(--red)}
+
+/* NORM */
+.ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ncard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:11px 12px;cursor:pointer;transition:all .15s;position:relative}
+.ncard:hover{border-color:var(--border2)}.ncard.sel{border-color:var(--accent);background:var(--accent-glow)}
+.ncard-t{font-size:11.5px;font-weight:600;margin-bottom:2px}.ncard-d{font-size:10px;color:var(--text3);line-height:1.45}
+.ncard-ck{position:absolute;top:8px;right:9px;color:var(--accent2);font-size:12px}
+
+/* ============================================================
+   MATRIX SECTION
+   ============================================================ */
+.matrix-shell{display:flex;flex-direction:column;gap:0}
+
+/* MATRIX TOOLBAR */
+.mtbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg3);flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:6px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:4px 10px;flex:1;min-width:160px;max-width:220px}
+.search-box svg{width:12px;height:12px;color:var(--text3);flex-shrink:0}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:12px;width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.mtbar-grp{display:flex;align-items:center;gap:6px}
+.mtbar-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+.hexp-btn{padding:3px 9px;border-radius:5px;font-size:11px;border:1px solid var(--border2);background:var(--bg4);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .12s}
+.hexp-btn:hover{background:var(--bg3);color:var(--text)}
+.mtbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.legend-row{display:flex;align-items:center;gap:10px;margin-left:auto}
+.leg-sq{display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text3)}
+.sq{width:10px;height:10px;border-radius:2px}
+
+/* MATRIX + PANEL LAYOUT */
+.matrix-body{display:flex;overflow:hidden;flex:1}
+
+/* SCROLLABLE MATRIX CONTAINER */
+.matrix-scroll{overflow:auto;flex:1;position:relative}
+
+/* THE TABLE */
+.mx{border-collapse:collapse;table-layout:fixed;min-width:max-content}
+.mx td,.mx th{padding:0;white-space:nowrap}
+
+/* ---- CORNER CELLS (top-left area) ---- */
+.corner{background:var(--bg3);border:1px solid var(--border2);position:sticky;z-index:200}
+.corner-top-row{height:30px}
+.corner-inner{display:flex;align-items:center;justify-content:center;height:100%;padding:0 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)}
+
+/* ---- SKU COLUMN HEADER CELLS ---- */
+.skuh{background:var(--bg3);border:1px solid var(--border2);position:sticky;z-index:5;height:30px;overflow:visible}
+/* sticky th text stays pinned to visible edge — inner div is position:sticky;left:0 */
+.skuh-inner{display:flex;align-items:center;gap:4px;padding:0 8px;height:100%;font-size:11.5px;font-weight:500;cursor:pointer;user-select:none;transition:background .12s;min-width:64px}
+.skuh-inner:hover{background:rgba(61,142,240,.07)}
+.skuh-inner.leaf-hdr{font-size:10.5px;font-weight:400;color:var(--text2);min-width:72px}
+.skuh-inner.selected-col{background:rgba(61,142,240,.15);color:var(--accent2)}
+.expand-btn{width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;flex-shrink:0;transition:all .1s;color:var(--text2)}
+.expand-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.hdr-name{overflow:hidden;text-overflow:ellipsis}
+/* Level-tinted name colors inside org cells (replaces redundant level tag) */
+.orgh .hdr-name.lt-ho{color:#a5b4fc}
+.orgh .hdr-name.lt-rm{color:#fbbf24}
+.orgh .hdr-name.lt-asm{color:#5eead4}
+.orgh .hdr-name{font-weight:500;flex:1;min-width:0}
+/* SKU header text stays pinned to left edge of visible scroll area — spreadsheet-style group headers */
+.skuh .hdr-name{position:sticky;left:10px;display:inline-block;max-width:100%}
+.skuh .expand-btn{position:sticky;left:0}
+.col-has-rule{position:relative}
+.col-rule-dot{position:absolute;bottom:3px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.col-rule-dot.rm{background:var(--amber)}
+
+/* ---- ORG ROW HEADER CELLS ---- */
+.orgh{background:var(--bg3);border:1px solid var(--border2);position:sticky;z-index:100;white-space:nowrap}
+.orgh-inner{display:flex;align-items:center;gap:5px;padding:0 8px;height:100%;font-size:11.5px;font-weight:500;cursor:pointer;user-select:none;transition:background .12s;min-height:32px}
+.orgh-inner:hover{background:rgba(61,142,240,.07)}
+.orgh-inner.leaf-org{font-size:11px;font-weight:400;color:var(--text2)}
+.orgh-inner.selected-row{background:rgba(61,142,240,.15);color:var(--accent2)}
+.level-tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;flex-shrink:0}
+.level-tag.lt-ho{background:rgba(99,102,241,.15);color:#818cf8}
+.level-tag.lt-rm{background:var(--amber-bg);color:var(--amber)}
+.level-tag.lt-asm{background:rgba(45,212,191,.12);color:var(--teal)}
+.level-tag.lt-cat{background:var(--purple-bg);color:var(--purple)}
+.level-tag.lt-br{background:rgba(16,185,129,.12);color:var(--green)}
+.level-tag.lt-bs{background:rgba(249,115,22,.12);color:#fb923c}
+.level-tag.lt-sku{background:rgba(61,142,240,.12);color:var(--accent2)}
+
+/* ---- DATA CELLS ---- */
+.dc{border:1px solid rgba(42,53,72,.6);background:var(--bg);cursor:pointer;transition:background .1s;min-width:72px;height:32px;vertical-align:middle;position:relative}
+.dc:hover{background:rgba(61,142,240,.06)}
+.dc.sel{background:rgba(61,142,240,.14);border-color:rgba(61,142,240,.4)}
+.dc-inner{display:flex;align-items:center;justify-content:center;height:100%;padding:2px 6px;font-size:10.5px;font-family:var(--mono)}
+/* rule level colors */
+.dc.rule-ho{background:rgba(61,142,240,.09);border-color:rgba(61,142,240,.25)}
+.dc.rule-rm{background:rgba(245,158,11,.09);border-color:rgba(245,158,11,.25)}
+.dc.rule-asm{background:rgba(16,185,129,.09);border-color:rgba(16,185,129,.2)}
+.dc.sel.rule-ho,.dc.sel.rule-rm,.dc.sel.rule-asm{border-color:rgba(61,142,240,.6);background:rgba(61,142,240,.18)}
+.dc-text{font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68px}
+.dc-text.ho{color:#818cf8}.dc-text.rm{color:var(--amber)}.dc-text.asm{color:var(--teal)}
+
+/* TECH PANEL */
+.tech-panel{width:260px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
+.tech-panel.hidden{width:0;overflow:hidden;border:none}
+.tp-head{padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.tp-title{font-size:12px;font-weight:600;margin-bottom:4px}
+.tp-sel-info{font-size:10.5px;color:var(--text3)}
+.tp-body{padding:12px 14px;flex:1}
+.tp-section{margin-bottom:14px}
+.tp-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:7px}
+.tech-list{display:flex;flex-direction:column;gap:5px}
+.tech-item{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;font-size:12px}
+.tech-item:hover{border-color:var(--border2)}.tech-item.on{border-color:var(--accent);background:var(--accent-glow);color:var(--accent2)}
+.tech-item input{accent-color:var(--accent);cursor:pointer;width:13px;height:13px;flex-shrink:0}
+.tech-n{flex:1;font-weight:500}
+.tech-tag{padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600}
+.tt-s{background:rgba(45,212,191,.12);color:var(--teal)}.tt-m{background:var(--purple-bg);color:var(--purple)}.tt-e{background:var(--amber-bg);color:var(--amber)}
+.apply-btn{width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px}
+.apply-btn:hover{background:var(--accent2)}.apply-btn:disabled{opacity:.35;cursor:not-allowed}
+.clear-btn{width:100%;padding:6px;background:transparent;color:var(--text3);border:1px solid var(--border2);border-radius:var(--r);font-family:var(--font);font-size:11.5px;cursor:pointer;transition:all .15s;margin-top:5px}
+.clear-btn:hover{background:var(--bg3);color:var(--text)}
+.sel-preview{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;max-height:100px;overflow-y:auto}
+.sp-pill{padding:2px 7px;border-radius:8px;font-size:10px;background:var(--bg4);border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:all .1s}
+.sp-pill:hover{border-color:var(--red);color:var(--red)}
+.no-sel-msg{text-align:center;padding:32px 16px;color:var(--text3)}
+.no-sel-icon{font-size:26px;margin-bottom:8px;opacity:.3}
+.no-sel-t{font-size:12px;line-height:1.5}
+
+/* RULES LIST */
+.rules-area{border-top:1px solid var(--border);background:var(--bg2)}
+.rules-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:var(--text2);transition:color .12s}
+.rules-toggle:hover{color:var(--text)}
+.rules-table-wrap{padding:0 16px 12px;overflow-x:auto}
+.rt{width:100%;border-collapse:collapse;font-size:11.5px}
+.rt th{text-align:left;padding:7px 9px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg3)}
+.rt td{padding:7px 9px;border-bottom:1px solid rgba(42,53,72,.5);vertical-align:middle}
+.rt tr:hover td{background:var(--bg3)}
+.rt tr.overridden td{opacity:.5}
+.pb{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;background:var(--bg4);border:1px solid var(--border2);color:var(--text3)}
+.pb.p1{background:rgba(16,185,129,.15);border-color:var(--green);color:var(--green)}
+.pb.p2{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.tech-chips{display:flex;flex-wrap:wrap;gap:3px}
+.tc{padding:2px 6px;border-radius:8px;font-size:10px;font-weight:500;background:var(--bg4);border:1px solid var(--border2);color:var(--text2)}
+.ab{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 5px;border-radius:4px;transition:all .1s}
+.ab:hover{background:var(--red-bg);color:var(--red)}
+
+/* QUICK ASSIGN BAR */
+.qa-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+.qa-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.qa-btns{display:flex;gap:4px;flex-wrap:wrap}
+.qa-btn{padding:3px 9px;border-radius:5px;border:1px solid var(--border2);background:var(--bg4);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;white-space:nowrap;letter-spacing:.2px}
+.qa-btn:hover{opacity:.85}
+.qa-btn.qa-ho{background:rgba(99,102,241,.12);border-color:rgba(129,140,248,.4);color:#818cf8}
+.qa-btn.qa-rm{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4);color:var(--amber)}
+.qa-btn.qa-asm{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.4);color:var(--teal)}
+.qa-btn.qa-cat{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);color:var(--purple)}
+.qa-btn.qa-br{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.4);color:var(--green)}
+.qa-btn.qa-bs{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.4);color:#fb923c}
+.qa-btn.qa-sku{background:rgba(61,142,240,.1);border-color:rgba(61,142,240,.4);color:var(--accent2)}
+.qa-btn.on{box-shadow:0 0 0 2px currentColor;opacity:1}
+.qa-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 3px}
+.qa-hint{font-size:10px;color:var(--text3);margin-left:auto;font-style:italic}
+
+/* PAGINATION + DATA CONTROLS */
+.mx-ctrl-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;border-top:1px solid var(--border);background:var(--bg3);flex-shrink:0;flex-wrap:wrap;gap:8px}
+.pg-info{font-size:11px;color:var(--text3)}.pg-info b{color:var(--text2);font-weight:600}
+.pg-ctrl{display:flex;align-items:center;gap:5px}
+.pg-btn{padding:3px 10px;border-radius:5px;border:1px solid var(--border2);background:var(--bg4);color:var(--text2);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .12s;font-weight:500}
+.pg-btn:hover:not([disabled]){background:var(--accent);border-color:var(--accent);color:#fff}
+.pg-btn[disabled]{opacity:.3;cursor:not-allowed}
+.pg-nums{display:flex;gap:3px}
+.pg-num{padding:2px 7px;border-radius:4px;border:1px solid transparent;background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--mono);transition:all .1s}
+.pg-num:hover{color:var(--text)}.pg-num.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pg-right{display:flex;align-items:center;gap:10px}
+.pg-size-label{font-size:11px;color:var(--text3);white-space:nowrap}
+.pg-size-label select{background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:2px 6px;font-size:11px;font-family:var(--font);cursor:pointer;margin-left:4px}
+
+/* DENSITY / FILTER CONTROLS IN TOOLBAR */
+.dens-pill button{padding:3px 10px;font-size:10.5px}
+/* TWO-PANEL FREEZE LAYOUT */
+.frozen-left{
+  flex-shrink:0;
+  overflow-y:auto; /* MUST be scrollable for scrollTop sync to work */
+  overflow-x:hidden;
+  background:var(--bg3);
+  border-right:2px solid var(--border2);
+  box-shadow:4px 0 12px rgba(13,17,23,.6);
+  /* Hide scrollbar but keep scrollable */
+  scrollbar-width:none; /* Firefox */
+  -ms-overflow-style:none; /* IE/Edge */
+}
+.frozen-left::-webkit-scrollbar{width:0;height:0;display:none} /* WebKit */
+.mx-frozen{border-collapse:collapse;table-layout:fixed}
+.mx-frozen td,.mx-frozen th{padding:0;white-space:nowrap}
+/* Frozen panel cells inherit same look as main table */
+.mx-frozen .orgh{background:var(--bg3);border:1px solid var(--border2);z-index:auto}
+.mx-frozen .corner{background:var(--bg3);border:1px solid var(--border2)}
+/* Right panel — SKU headers sticky top, no left-sticky needed */
+.matrix-scroll{overflow:auto}
+.mx .skuh{position:sticky;z-index:10}
+.mx .orgh{z-index:auto;position:static} /* org cells are in frozen panel — no sticky needed */
+
+/* MATRIX SCROLL — isolate stacking context so sticky z-indexes resolve correctly */
+.matrix-scroll{isolation:isolate}
+
+/* SELECTION HIGHLIGHT — axis-based intersection */
+.dc.sel-cross{background:rgba(61,142,240,.22)!important;border-color:rgba(61,142,240,.55)!important}
+.dc.sel-row{background:rgba(99,102,241,.08)!important;border-left:2px solid rgba(99,102,241,.4)!important}
+.dc.sel-col{background:rgba(45,212,191,.08)!important;border-top:2px solid rgba(45,212,191,.4)!important}
+.srch-match{background:rgba(245,158,11,.2);color:var(--amber)!important;border-radius:3px;padding:0 3px}
+.sel-hdr{background:rgba(61,142,240,.15)!important;color:var(--accent2)!important}
+.orgh-inner.sel-hdr{background:rgba(99,102,241,.15)!important;color:#818cf8!important}
+/* TECH PANEL AXIS VIEW */
+.tp-axis-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:4px}
+.tp-axis-block{flex:1;min-width:0}
+.tp-axis-cross{font-size:22px;color:var(--border2);font-weight:300;padding-top:18px;flex-shrink:0;text-align:center}
+.sel-axis-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;max-height:80px;overflow-y:auto}
+.sel-axis-pill{display:flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:10.5px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:all .1s;white-space:nowrap}
+.sel-axis-pill:hover{border-color:var(--red);color:var(--red)}
+.sp-x{font-size:11px;color:var(--text3)}
+
+.mx-compact .dc{height:24px}.mx-compact .orgh-inner{min-height:24px}.mx-compact .skuh{height:24px}
+.mx-mini .dc{height:18px}.mx-mini .dc .dc-text{font-size:9px}.mx-mini .orgh-inner{min-height:18px;font-size:10.5px}.mx-mini .skuh{height:20px}.mx-mini .skuh-inner{font-size:10px}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--bg3);border:1px solid var(--green);border-radius:var(--r2);padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:9999;transform:translateY(60px);opacity:0;transition:all .28s}
+.toast.show{transform:translateY(0);opacity:1}
+.ti{color:var(--green);font-size:14px}
+
+
+/* PERF MONITOR */
+.perf-bar{position:fixed;bottom:0;left:0;right:0;height:28px;background:rgba(13,17,23,.92);
+  border-top:1px solid var(--border);display:flex;align-items:center;gap:0;z-index:9998;
+  backdrop-filter:blur(6px);font-family:var(--mono);font-size:10.5px}
+.pm-seg{padding:0 14px;border-right:1px solid var(--border);color:var(--text3);white-space:nowrap}
+.pm-seg b{color:var(--text2)}
+.pm-seg.warn b{color:var(--amber)}
+.pm-seg.good b{color:var(--green)}
+.pm-sep-flex{flex:1}
+.pm-badge{margin-right:12px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
+/* Dataset badge */
+.ds-badge{position:fixed;top:56px;right:8px;z-index:9997;padding:4px 10px;
+  border-radius:6px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);
+  color:var(--amber);font-size:10.5px;font-weight:600;font-family:var(--mono)}
+/* Scenario buttons */
+.scenario-bar{padding:7px 14px;background:rgba(16,185,129,.06);border-bottom:1px solid rgba(16,185,129,.15);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.sc-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--green);white-space:nowrap}
+.sc-btn{padding:3px 10px;border-radius:5px;border:1px solid rgba(16,185,129,.3);background:rgba(16,185,129,.08);
+  color:var(--green);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s}
+.sc-btn:hover{background:rgba(16,185,129,.18)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="1,10 4,6 7,8 10,3 13,5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="logo-name">Forecast<span>Studio</span></span>
+  </div>
+  <div class="steps">
+    <div class="step done"><span class="step-n">✓</span>Data Source</div>
+    <span class="step-sep">›</span>
+    <div class="step done" id="s2"><span class="step-n">✓</span>Historical & Prep</div>
+    <span class="step-sep">›</span>
+    <div class="step active" id="s3"><span class="step-n">3</span>Techniques</div>
+    <span class="step-sep">›</span>
+    <div class="step" id="s4"><span class="step-n">4</span>Run & Review</div>
+  </div>
+  <div class="tbr">
+    <button class="btn btn-ghost btn-sm">Save Draft</button>
+    <button class="btn btn-primary btn-sm">Continue →</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- MAIN CONTENT -->
+<div class="content" id="mainContent">
+
+  <!-- CHART SECTION -->
+  <div class="sc" id="sec-chart">
+    <div class="sc-head">
+      <div class="sc-title">
+        <span class="sc-icon ic-b"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,9 4,5 7,7 10,2 12,4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        Historical Demand Data
+      </div>
+      <div class="sc-ctrl">
+        <span class="badge b-a">⚠ 7 Outliers</span>
+        <button class="btn btn-ghost btn-sm" onclick="toggleOut(this)">Hide Outliers</button>
+        <div class="chips">
+          <span class="chip on" onclick="setRng(this,'13w')">13W</span>
+          <span class="chip" onclick="setRng(this,'26w')">26W</span>
+          <span class="chip" onclick="setRng(this,'52w')">52W</span>
+        </div>
+      </div>
+    </div>
+    <div class="sc-body">
+      <div class="chart-wrap"><canvas id="demandChart"></canvas></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:9px;">
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#3d8ef0"></div>Actual</div>
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(61,142,240,.4);border:1px dashed #3d8ef0"></div>Smoothed</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#f43f5e"></div>Outlier</div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">Click outlier point to include/exclude</span>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-grp"><span class="ctrl-lbl">Smoothing:</span>
+          <div class="pill">
+            <button class="on" onclick="setSm(this,'none')">None</button>
+            <button onclick="setSm(this,'ma')">Moving Avg</button>
+            <button onclick="setSm(this,'exp')">Exp. Smooth</button>
+          </div>
+        </div>
+        <div class="ctrl-grp" id="smWin" style="display:none"><span class="ctrl-lbl">Window:</span>
+          <div class="range-g"><input type="range" min="2" max="8" value="4" oninput="document.getElementById('smV').textContent=this.value+' wk'"><span class="rv" id="smV">4 wk</span></div>
+        </div>
+        <div class="ctrl-grp"><span class="ctrl-lbl">Threshold:</span>
+          <div class="pill"><button onclick="setP(this)">1.5σ</button><button class="on" onclick="setP(this)">2σ</button><button onclick="setP(this)">3σ</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NORMALIZATION SECTION -->
+  <div class="sc" id="sec-norm">
+    <div class="sc-head">
+      <div class="sc-title">
+        <span class="sc-icon ic-a"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><line x1="1" y1="6.5" x2="12" y2="6.5" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+        Data Normalization &amp; Interpolation
+      </div>
+      <div class="sc-ctrl">
+        <button class="btn btn-ghost btn-sm" id="normBtn" onclick="toggleNorm()">Collapse ▴</button>
+      </div>
+    </div>
+    <div id="normBody" class="sc-body">
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div style="flex:1;min-width:250px">
+          <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px">Normalization Method</div>
+          <div class="ngrid">
+            <div class="ncard sel" onclick="pickN(this)"><div class="ncard-ck">✓</div><div class="ncard-t">Min-Max</div><div class="ncard-d">Scale to [0,1]. Good for bounded distributions.</div></div>
+            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Z-Score</div><div class="ncard-d">Mean=0, Std=1. Handles outliers better.</div></div>
+            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Log Transform</div><div class="ncard-d">Reduces right skew for multiplicative patterns.</div></div>
+            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Robust Scaler</div><div class="ncard-d">Uses median &amp; IQR. Resilient to outliers.</div></div>
+            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">None</div><div class="ncard-d">Use raw values if already normalised.</div></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:250px">
+          <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px">Interpolation (Missing Data)</div>
+          <div class="ngrid">
+            <div class="ncard sel" onclick="pickI(this)"><div class="ncard-ck">✓</div><div class="ncard-t">Linear</div><div class="ncard-d">Straight line between known points.</div></div>
+            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Spline</div><div class="ncard-d">Smooth cubic curves for seasonal demand.</div></div>
+            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Forward Fill</div><div class="ncard-d">Carry last known value forward.</div></div>
+            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Seasonal Avg</div><div class="ncard-d">Same-period average from prior years.</div></div>
+            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">KNN</div><div class="ncard-d">K-nearest neighbour imputation.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECHNIQUE MATRIX SECTION -->
+  <div class="sc" id="sec-matrix" style="overflow:hidden;display:flex;flex-direction:column;min-height:500px">
+    <div class="sc-head">
+      <div class="sc-title">
+        <span class="sc-icon ic-p"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg></span>
+        Technique Matrix — Org × SKU Hierarchy
+      </div>
+      <div class="sc-ctrl">
+        <span class="badge b-g" id="ruleBadge">3 Rules</span>
+        <span class="badge b-a" id="confBadge">1 Conflict</span>
+      </div>
+    </div>
+
+    <!-- TOOLBAR ROW 1: Navigation + View Controls -->
+    <div class="mtbar">
+      <div class="search-box">
+        <svg viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/><line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="Search org / SKU…" oninput="handleSearch(this.value)">
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">Org depth:</span>
+        <div class="pill">
+          <button onclick="setOrgDepth(this,1)">HO</button>
+          <button onclick="setOrgDepth(this,2)">RM</button>
+          <button class="on" onclick="setOrgDepth(this,3)">ASM</button>
+        </div>
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">SKU depth:</span>
+        <div class="pill">
+          <button onclick="setSkuDepth(this,1)">Cat</button>
+          <button onclick="setSkuDepth(this,2)">Brand</button>
+          <button onclick="setSkuDepth(this,3)">Base SKU</button>
+          <button class="on" onclick="setSkuDepth(this,4)">SKU</button>
+        </div>
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">Density:</span>
+        <div class="pill dens-pill">
+          <button class="on" onclick="setDensity(this,'normal')">Normal</button>
+          <button onclick="setDensity(this,'compact')">Compact</button>
+          <button onclick="setDensity(this,'mini')">Mini</button>
+        </div>
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">Org Col Width:</span>
+        <div class="pill">
+          <button onclick="setOrgColWidth(this,90)">S</button>
+          <button onclick="setOrgColWidth(this,120)">M</button>
+          <button class="on" onclick="setOrgColWidth(this,140)">L</button>
+          <button onclick="setOrgColWidth(this,180)">XL</button>
+          <button onclick="setOrgColWidth(this,220)">XXL</button>
+        </div>
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">SKU Col Width:</span>
+        <div class="pill">
+          <button onclick="setSkuColWidth(this,60)">S</button>
+          <button class="on" onclick="setSkuColWidth(this,90)">M</button>
+          <button onclick="setSkuColWidth(this,130)">L</button>
+          <button onclick="setSkuColWidth(this,180)">XL</button>
+        </div>
+      </div>
+      <span class="mtbar-sep"></span>
+      <div class="mtbar-grp">
+        <span class="mtbar-lbl">Show:</span>
+        <div class="pill">
+          <button class="on" onclick="setFilter(this,'all')">All</button>
+          <button onclick="setFilter(this,'rules')">Has Rules</button>
+          <button onclick="setFilter(this,'empty')">No Rules</button>
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-sq"><div class="sq" style="background:rgba(99,102,241,.25);border:1px solid #818cf8"></div>HO</div>
+        <div class="leg-sq"><div class="sq" style="background:rgba(245,158,11,.2);border:1px solid var(--amber)"></div>RM</div>
+        <div class="leg-sq"><div class="sq" style="background:rgba(45,212,191,.15);border:1px solid var(--teal)"></div>ASM</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR ROW 2: Quick Level-Assign Buttons -->
+    <div class="qa-bar">
+      <span class="qa-lbl">Quick Select:</span>
+      <div class="qa-btns">
+        <button class="qa-btn qa-ho" id="qaHO" onclick="selectByOrgLevel(0)" title="Select all cells for every HO node — assign one rule per HO">All HO</button>
+        <button class="qa-btn qa-rm" id="qaRM" onclick="selectByOrgLevel(1)" title="Select all cells for every RM node">All RM</button>
+        <button class="qa-btn qa-asm" id="qaASM" onclick="selectByOrgLevel(2)" title="Select all cells for every ASM node">All ASM</button>
+      </div>
+      <span class="qa-sep"></span>
+      <div class="qa-btns">
+        <button class="qa-btn qa-cat" id="qaCat" onclick="selectBySkuLevel(0)" title="Select all cells for every Category">All Category</button>
+        <button class="qa-btn qa-br" id="qaBrand" onclick="selectBySkuLevel(1)" title="Select all cells for every Brand">All Brand</button>
+        <button class="qa-btn qa-bs" id="qaBS" onclick="selectBySkuLevel(2)" title="Select all cells for every Base SKU">All Base SKU</button>
+        <button class="qa-btn qa-sku" id="qaSKU" onclick="selectBySkuLevel(3)" title="Select all cells for every SKU">All SKU</button>
+      </div>
+      <span class="qa-sep"></span>
+      <button class="qa-btn" style="background:transparent;color:var(--text3)" onclick="clearSel()">✕ Clear</button>
+      <span class="qa-hint" id="qaHint">Click a level button to select all rows/columns at that hierarchy level, then assign techniques →</span>
+    </div>
+
+
+    <!-- STRESS TEST SCENARIO BAR -->
+    <div class="scenario-bar">
+      <span class="sc-lbl">⚡ Stress Scenarios:</span>
+      <button class="sc-btn" onclick="runScenario('ho-cat')">HO × Category (5×8)</button>
+      <button class="sc-btn" onclick="runScenario('ho-brand')">HO × Brand (5×80)</button>
+      <button class="sc-btn" onclick="runScenario('rm-brand')">RM × Brand (20×80)</button>
+      <button class="sc-btn" onclick="runScenario('rm-basesku')">RM × Base SKU (20×800)</button>
+      <button class="sc-btn" onclick="runScenario('asm-cat')">ASM × Category (1000×8)</button>
+      <button class="sc-btn" onclick="runScenario('full-leaf')">Full Leaf ⚠ (1000×8000)</button>
+      <button class="sc-btn" style="border-color:var(--border2);color:var(--text3)" onclick="runScenario('reset')">↺ Reset</button>
+    </div>
+    <!-- MATRIX + TECH PANEL -->
+    <div class="matrix-body" style="flex:1;overflow:hidden;display:flex">
+      <!-- TWO-PANEL FREEZE: left panel = frozen org cols, right panel = SKU headers + data -->
+      <div class="frozen-left" id="frozenLeft">
+        <table class="mx-frozen" id="frozenTable"></table>
+      </div>
+      <div class="matrix-scroll" id="matrixScroll" style="flex:1;overflow:auto">
+        <table class="mx" id="matrixTable"></table>
+      </div>
+
+      <!-- TECHNIQUE PANEL -->
+      <div class="tech-panel" id="techPanel">
+        <div class="tp-head">
+          <div class="tp-title">Assign Techniques</div>
+          <div class="tp-sel-info" id="tpInfo">Select cells to assign</div>
+        </div>
+        <div class="tp-body" id="tpBody">
+          <div class="no-sel-msg">
+            <div class="no-sel-icon">⊞</div>
+            <div class="no-sel-t">Click cells or header rows/columns in the matrix to select, then assign techniques here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES LIST -->
+    <!-- CELL COUNT WARNING BANNER -->
+    <div id="cellCountWarn" style="display:none;align-items:center;gap:10px;padding:7px 14px;background:rgba(245,158,11,.08);border-top:1px solid rgba(245,158,11,.25);font-size:11px;color:var(--amber)">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L12 11H1L6.5 1Z" stroke="currentColor" stroke-width="1.4"/><line x1="6.5" y1="5" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor"/></svg>
+      <span id="ccwText"></span>
+      <span style="margin-left:auto;color:var(--text3)">Tip: Use Compact/Mini density and collapse levels to reduce cell count</span>
+    </div>
+
+    <!-- PAGINATION BAR — rows AND columns -->
+    <div class="mx-ctrl-bar" id="mxCtrlBar">
+      <!-- Row pagination -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span class="pg-info">Rows <b id="pgRowStart">1</b>–<b id="pgRowEnd">15</b> / <b id="pgRowTotal">0</b></span>
+        <div class="pg-ctrl">
+          <button class="pg-btn" id="pgPrev" onclick="changePage(-1)" disabled>‹</button>
+          <div class="pg-nums" id="pgNums"></div>
+          <button class="pg-btn" id="pgNext" onclick="changePage(1)">›</button>
+        </div>
+        <span class="pg-size-label">Rows:
+          <select onchange="setPageSize(+this.value)">
+            <option value="10">10</option><option value="15" selected>15</option>
+            <option value="25">25</option><option value="50">50</option><option value="999">All</option>
+          </select>
+        </span>
+      </div>
+
+      <div style="width:1px;height:28px;background:var(--border);flex-shrink:0"></div>
+
+      <!-- Column pagination -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span class="pg-info">Cols <b id="pgColStart">1</b>–<b id="pgColEnd">50</b> / <b id="pgColTotal">0</b></span>
+        <div class="pg-ctrl">
+          <button class="pg-btn" id="pgColPrev" onclick="changeColPage(-1)" disabled>‹</button>
+          <div class="pg-nums" id="pgColNums"></div>
+          <button class="pg-btn" id="pgColNext" onclick="changeColPage(1)">›</button>
+        </div>
+        <span class="pg-size-label">Cols:
+          <select onchange="setColPageSize(+this.value)">
+            <option value="20">20</option><option value="50" selected>50</option>
+            <option value="100">100</option><option value="200">200</option><option value="9999">All</option>
+          </select>
+        </span>
+      </div>
+    </div>
+
+    <!-- RULES LIST -->
+    <div class="rules-area">
+      <div class="rules-toggle" onclick="toggleRules()">
+        <span>▸ &nbsp;Defined Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">3 rules</span></span>
+        <span id="rulesToggleIcon" style="font-size:11px;color:var(--text3)">Show ▾</span>
+      </div>
+      <div id="rulesBody" style="display:none">
+        <div class="rules-table-wrap">
+          <table class="rt" id="rulesTable"></table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /matrix section -->
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<!-- DATASET BADGE -->
+<div class="ds-badge" id="dsBadge">v3 · 1 000 ASM × 8 000 SKU</div>
+
+<!-- PERF MONITOR BAR -->
+<div class="perf-bar" id="perfBar">
+  <div class="pm-seg">Dataset: <b id="pmDataset">1 000 ASM × 8 000 SKU = 8 000 000 cells</b></div>
+  <div class="pm-seg">Visible: <b id="pmVisible">—</b></div>
+  <div class="pm-seg">Render: <b id="pmRender">—</b></div>
+  <div class="pm-seg">ruleIndex: <b id="pmRuleIdx">—</b></div>
+  <div class="pm-seg">Rules: <b id="pmRules">—</b></div>
+  <div class="pm-seg-flex"></div>
+  <div class="pm-seg" id="pmStatus" style="color:var(--green)">Ready</div>
+</div>
+</div><!-- /shell -->
+
+<div class="toast" id="toast"><span class="ti">✓</span><span id="toastMsg">Done</span></div>
+
+<script>
+
+// ============================================================
+// HIERARCHY DATA  —  LARGE DATASET (v3 stress test)
+// 5 HO × 4 RM × 50 ASM  =  1 000 org leaves
+// 8 Cat × 10 Brand × 10 BaseSKU × 10 SKU  =  8 000 SKU leaves
+// ============================================================
+const ORG_LEVELS = ['HO','RM','ASM'];
+const SKU_LEVELS = ['Category','Brand','Base SKU','SKU'];
+const ORG_DEPTH  = 3;
+const SKU_DEPTH  = 4;
+
+const ORG_REGIONS   = ['North','South','East','West','Central'];
+const SKU_CATS      = ['Beverages','Snacks','Dairy','Frozen','Personal Care','Home Care','Health','Baby'];
+const BRAND_NAMES   = ['AquaLife','FreshCo','NovaBrand','PeakLine','SunGold',
+                       'EcoPlus','ProVita','NatureSel','TrueBlend','MaxVal'];
+const PRODUCT_TYPES = ['Regular','Premium','Lite','Organic','Economy',
+                       'Family','Sport','Classic','Plus','Select'];
+const SKU_SUFFIXES  = ['330ml','500ml','750ml','1L','1.5L','250g','500g','1kg','2kg','Pack'];
+
+function makeNode(id,name,children=[],expanded=false){
+  return {id,name,children,expanded};
+}
+
+// ─── Build Org Tree ──────────────────────────────────────────
+function buildOrgTree(){
+  const hoNodes = ORG_REGIONS.map((reg,hi)=>{
+    const rmNodes = Array.from({length:4},(_,ri)=>{
+      const rmId=`rm${hi*4+ri+1}`;
+      const rmName=`RM-${reg}-${ri+1}`;
+      const asmNodes = Array.from({length:50},(_,ai)=>{
+        const asmIdx = hi*200 + ri*50 + ai + 1;
+        return makeNode(`asm${asmIdx}`,`ASM-${reg[0]}${hi*4+ri+1}-${String(ai+1).padStart(2,'0')}`);
+      });
+      return makeNode(rmId, rmName, asmNodes, false);
+    });
+    const hoExpanded = hi===0; // only first HO open by default
+    return makeNode(`ho${hi+1}`, `HO-${reg}`, rmNodes, hoExpanded);
+  });
+  return makeNode('org-root','All Org', hoNodes);
+}
+
+// ─── Build SKU Tree ──────────────────────────────────────────
+function buildSkuTree(){
+  const catNodes = SKU_CATS.map((cat,ci)=>{
+    const brandNodes = Array.from({length:10},(_,bi)=>{
+      const brandName = `${BRAND_NAMES[bi]}-${cat.substring(0,3)}`;
+      const brandId   = `br${ci*10+bi+1}`;
+      const bsNodes = Array.from({length:10},(_,bsi)=>{
+        const bsIdx  = ci*100 + bi*10 + bsi + 1;
+        const bsId   = `bs${bsIdx}`;
+        const bsName = `${BRAND_NAMES[bi]}-${PRODUCT_TYPES[bsi]}`;
+        const skuNodes = Array.from({length:10},(_,si)=>{
+          const skuIdx  = (bsIdx-1)*10 + si + 1;
+          return makeNode(`sku${skuIdx}`, `${bsName}-${SKU_SUFFIXES[si]}`);
+        });
+        return makeNode(bsId, bsName, skuNodes, false);
+      });
+      return makeNode(brandId, brandName, bsNodes, false);
+    });
+    const catExpanded = ci===0; // only first Category open by default
+    return makeNode(`cat${ci+1}`, cat, brandNodes, catExpanded);
+  });
+  return makeNode('sku-root','All SKU', catNodes);
+}
+
+const orgRoot = buildOrgTree();
+const skuRoot = buildSkuTree();
+
+// Add parent refs + level
+function initTree(node, parent=null, level=-1){
+  node.parent=parent; node.level=level;
+  (node.children||[]).forEach(c=>initTree(c,node,level+1));
+}
+initTree(orgRoot); initTree(skuRoot);
+// Root nodes must always be "expanded" so getLeaves descends into their children
+orgRoot.expanded = true;
+skuRoot.expanded = true;
+
+// Index all nodes
+const nodeMap={};
+function indexTree(node){nodeMap[node.id]=node;(node.children||[]).forEach(indexTree);}
+indexTree(orgRoot); indexTree(skuRoot);
+
+// ============================================================
+// TREE HELPERS
+// ============================================================
+function getLeaves(node){
+  if(!node.children.length || !node.expanded) return [node];
+  return node.children.flatMap(getLeaves);
+}
+function leafCount(node){ return getLeaves(node).length; }
+function isLeafInView(node){ return !node.children.length||!node.expanded; }
+
+// ============================================================
+// RULES STATE
+// ============================================================
+// ruleMap: "orgLeafId|skuLeafId" -> {techniques, orgRuleLevel, skuRuleLevel, orgNodeId, skuNodeId}
+// ruleMap stores per-org-leaf index for O(rules) lookup — avoids leaf×leaf expansion
+// ruleOrgIndex: orgLeafId → [{rule, skuLeafSet}]
+
+
+// ============================================================
+// STRESS TEST SCENARIO RUNNER
+// ============================================================
+function runScenario(name){
+  invalidateLeafCache();
+
+  function collapseAll_(root){
+    function c(n){if(n.children.length)n.expanded=false;n.children.forEach(c);}
+    root.children.forEach(c);
+  }
+  // Always keep virtual roots expanded so getLeaves works
+  function expandToDepth(root, targetDepth){
+    root.expanded=true;
+    function set(node, lv){
+      node.expanded = (lv < targetDepth && node.children.length);
+      node.children.forEach(c=>set(c,lv+1));
+    }
+    root.children.forEach(c=>set(c,0));
+  }
+
+  collapseAll_(orgRoot); collapseAll_(skuRoot);
+  orgRoot.expanded=true; skuRoot.expanded=true;
+
+  // depth N means: expand N levels so level-N nodes become the visible leaves
+  // org:  0=HO leaves, 1=RM leaves, 2=ASM leaves
+  // sku:  0=Category leaves, 1=Brand leaves, 2=BaseSKU leaves, 3=SKU leaves
+  if(name==='reset'){
+    expandToDepth(orgRoot,1); expandToDepth(skuRoot,1);
+    currentPage=0; currentColPage=0; pageSize=15; colPageSize=50;
+  } else if(name==='ho-cat'){
+    expandToDepth(orgRoot,0); expandToDepth(skuRoot,0);   // 5 × 8 = 40
+  } else if(name==='ho-brand'){
+    expandToDepth(orgRoot,0); expandToDepth(skuRoot,1);   // 5 × 80 = 400
+  } else if(name==='rm-brand'){
+    expandToDepth(orgRoot,1); expandToDepth(skuRoot,1);   // 20 × 80 = 1 600
+  } else if(name==='rm-basesku'){
+    expandToDepth(orgRoot,1); expandToDepth(skuRoot,2);   // 20 × 800 = 16 000 (paginated)
+    pageSize=15; colPageSize=50;
+  } else if(name==='asm-cat'){
+    expandToDepth(orgRoot,2); expandToDepth(skuRoot,0);   // 1000 × 8 = 8 000 (paginated)
+    pageSize=15; colPageSize=8;
+  } else if(name==='full-leaf'){
+    expandToDepth(orgRoot,2); expandToDepth(skuRoot,3);   // 1000 × 8000 (paginated 15×50)
+    pageSize=15; colPageSize=50;
+  }
+  invalidateLeafCache(); currentPage=0; currentColPage=0;
+  checkCellCountGuard(); renderMatrix();
+  showToast(`Scenario: ${name}`);
+}
+
+// ============================================================
+// INITIAL RULES — seeded across hierarchy levels
+// ============================================================
+const ruleOrgIndex = new Map();
+const ruleSkuIndex = new Map();
+const ruleMap = { _dummy: true };
+let rules = (function(){
+  const TECHS=[
+    ['ARIMA','Prophet'],['XGBoost','LightGBM'],['Ensemble','Simple Avg'],
+    ['SARIMA','Holt-Winters'],['Prophet','LSTM'],['ETS','ARIMA'],
+    ['XGBoost','Prophet','Ensemble'],['ARIMA'],['Simple Avg'],['LightGBM','XGBoost']
+  ];
+  const r=[];
+  let id=1;
+  // HO-level rules — one per HO × Category (5×8 = 40 rules)
+  for(let hi=0;hi<5;hi++){
+    for(let ci=0;ci<8;ci++){
+      r.push({id:id++,orgId:`ho${hi+1}`,skuId:`cat${ci+1}`,orgLevel:0,skuLevel:0,
+        orgName:`HO-${['North','South','East','West','Central'][hi]}`,
+        skuName:['Beverages','Snacks','Dairy','Frozen','Personal Care','Home Care','Health','Baby'][ci],
+        techniques:TECHS[(hi*8+ci)%TECHS.length],priority:3});
+    }
+  }
+  // RM-level overrides — rm1..rm8 × first 4 cats
+  for(let ri=0;ri<8;ri++){
+    for(let ci=0;ci<4;ci++){
+      r.push({id:id++,orgId:`rm${ri+1}`,skuId:`cat${ci+1}`,orgLevel:1,skuLevel:0,
+        orgName:`RM-North-${ri+1}`,
+        skuName:['Beverages','Snacks','Dairy','Frozen'][ci],
+        techniques:TECHS[(ri+ci)%TECHS.length],priority:2});
+    }
+  }
+  // ASM-level spot rules
+  const spotPairs=[[1,1],[5,11],[10,21],[15,31],[20,41],[25,51],[30,61],[35,71],[40,81],[50,91]];
+  spotPairs.forEach(([ai,bsi])=>{
+    r.push({id:id++,orgId:`asm${ai}`,skuId:`bs${bsi}`,orgLevel:2,skuLevel:2,
+      orgName:`ASM-N1-${String(ai).padStart(2,'0')}`,skuName:`bs${bsi}`,
+      techniques:['ARIMA','XGBoost'],priority:1});
+  });
+  return r;
+})();
+let ruleIdCounter = rules.length + 1;
+
+
+
+// ============================================================
+// VIEW STATE — pagination, density, filter, search
+// ============================================================
+let currentPage=0, pageSize=15;
+let densityMode='normal';   // 'normal' | 'compact' | 'mini'
+let orgColWidth=140;        // width per org level column (px) — default fits "ASM-North-01" + expand button
+let skuColWidth=90;         // min-width for SKU leaf columns (px)
+let filterMode='all';       // 'all' | 'rules' | 'empty'
+let searchQuery='';         // lowercase search string
+
+// Memoized leaf lists — invalidated on tree expand/collapse and buildRuleMap
+const _leafCache = new Map();
+function getAllOrgLeaves(){
+  if(!_leafCache.has('org')) _leafCache.set('org', getSubtreeLeaves(orgRoot,'org'));
+  return _leafCache.get('org');
+}
+function getAllSkuLeaves(){
+  if(!_leafCache.has('sku')) _leafCache.set('sku', getSubtreeLeaves(skuRoot,'sku'));
+  return _leafCache.get('sku');
+}
+function invalidateLeafCache(){ _leafCache.clear(); }
+
+// Column pagination state
+let currentColPage=0, colPageSize=50;
+
+// Get nodes at an exact hierarchy level (used by quick-assign)
+function getAllNodesAtLevel(root,targetLevel){
+  const result=[];
+  function walk(node){
+    if(node===root){node.children.forEach(walk);return;}
+    if(node.level===targetLevel){result.push(node);return;}
+    if(node.level<targetLevel) node.children.forEach(walk);
+  }
+  walk(root); return result;
+}
+
+// Apply search + filter to org display rows
+// Search matches org names — returns set of matching leaf IDs
+function getOrgSearchMatches(){
+  if(!searchQuery) return null;
+  const matched=new Set();
+  getAllOrgLeaves().forEach(leaf=>{
+    let n=leaf;
+    while(n&&n!==orgRoot){
+      if(n.name.toLowerCase().includes(searchQuery)){matched.add(leaf.id);break;}
+      n=n.parent;
+    }
+  });
+  return matched;
+}
+// Search matches SKU names — returns set of matching leaf IDs
+function getSkuSearchMatches(){
+  if(!searchQuery) return null;
+  const matched=new Set();
+  getAllSkuLeaves().forEach(leaf=>{
+    let n=leaf;
+    while(n&&n!==skuRoot){
+      if(n.name.toLowerCase().includes(searchQuery)){matched.add(leaf.id);break;}
+      n=n.parent;
+    }
+  });
+  return matched;
+}
+
+function getFilteredOrgRows(allRows){
+  const orgMatches=getOrgSearchMatches();
+  return allRows.filter(({leaf})=>{
+    // search filter on org side
+    if(orgMatches!==null&&orgMatches.size>0&&!orgMatches.has(leaf.id)) return false;
+    // rule filter: check if this org leaf has ANY rule against any SKU
+    if(filterMode==='rules') return hasRuleForOrgLeaf(leaf.id);
+    if(filterMode==='empty') return !hasRuleForOrgLeaf(leaf.id);
+    return true;
+  });
+}
+
+function getFilteredSkuCols(allLeaves){
+  const skuMatches=getSkuSearchMatches();
+  const orgMatches=getOrgSearchMatches();
+
+  // Start with search filtering (existing logic)
+  let leaves=allLeaves;
+  if(searchQuery){
+    if(orgMatches!==null&&orgMatches.size>0&&(skuMatches===null||skuMatches.size===0)){
+      leaves=allLeaves; // org-side match — show all SKU cols
+    } else if(skuMatches!==null&&skuMatches.size>0){
+      leaves=allLeaves.filter(leaf=>skuMatches.has(leaf.id));
+    }
+  }
+
+  // Rule filter: also filter SKU columns
+  if(filterMode==='rules') return leaves.filter(sl=>hasRuleForSkuLeaf(sl.id));
+  if(filterMode==='empty') return leaves.filter(sl=>!hasRuleForSkuLeaf(sl.id));
+  return leaves;
+}
+function buildRuleMap(){
+  ruleOrgIndex.clear();
+  ruleSkuIndex.clear();
+  _leafCache.clear();
+  rules.forEach(rule=>{
+    const orgNode=nodeMap[rule.orgId];
+    const skuNode=nodeMap[rule.skuId];
+    if(!orgNode||!skuNode) return;
+    // Collect all descendant node IDs (including the rule's node itself) — so queries at ANY depth level find the rule
+    const orgNodeIds=[];
+    (function collectOrg(n){ orgNodeIds.push(n.id); n.children.forEach(collectOrg); })(orgNode);
+    const skuNodeIds=new Set();
+    (function collectSku(n){ skuNodeIds.add(n.id); n.children.forEach(collectSku); })(skuNode);
+    // Mirror for the sku side so SKU leaf queries work
+    const orgNodeIdSet=new Set(orgNodeIds);
+    orgNodeIds.forEach(id=>{
+      if(!ruleOrgIndex.has(id)) ruleOrgIndex.set(id,[]);
+      ruleOrgIndex.get(id).push({rule,skuNodeIds});
+    });
+    skuNodeIds.forEach(id=>{
+      if(!ruleSkuIndex.has(id)) ruleSkuIndex.set(id,[]);
+      ruleSkuIndex.get(id).push({rule,orgNodeIdSet});
+    });
+  });
+}
+// Works at ANY hierarchy level — queries for (HO, Category), (ASM, SKU), (RM, Brand) all resolve
+function getEffectiveRule(orgId, skuId){
+  const candidates=ruleOrgIndex.get(orgId)||[];
+  let best=null;
+  for(const {rule,skuNodeIds} of candidates){
+    if(!skuNodeIds.has(skuId)) continue;
+    if(!best||rule.orgLevel>best.orgLevel||(rule.orgLevel===best.orgLevel&&rule.skuLevel>best.skuLevel)) best=rule;
+  }
+  return best;
+}
+function hasRuleForOrgLeaf(orgId){ const a=ruleOrgIndex.get(orgId); return !!(a&&a.length); }
+function hasRuleForSkuLeaf(skuId){ const a=ruleSkuIndex.get(skuId); return !!(a&&a.length); }
+function hasRuleAtCell(orgId,skuId){ return getEffectiveRule(orgId,skuId)!==null; }
+function getSubtreeLeaves(node,type){
+  if(!node) return [];
+  const maxDepth = type==='org'?ORG_DEPTH-1:SKU_DEPTH-1;
+  if(node.level===maxDepth||!node.children.length) return [node];
+  return node.children.flatMap(c=>getSubtreeLeaves(c,type));
+}
+buildRuleMap();
+
+// ============================================================
+// SELECTION STATE — axis-based (org nodes × SKU nodes)
+// ============================================================
+// selectedOrgNodes: Set of org node IDs chosen on the row axis
+// selectedSkuNodes: Set of SKU node IDs chosen on the column axis
+// The INTERSECTION of the two axes is what gets highlighted and ruled.
+let selectedOrgNodes = new Set();
+let selectedSkuNodes = new Set();
+let selectedTechs = new Set();
+
+// Is an org leaf "covered" by current org selection?
+function orgLeafSelected(leaf){
+  let n=leaf;
+  while(n&&n!==orgRoot){ if(selectedOrgNodes.has(n.id)) return true; n=n.parent; }
+  return false;
+}
+// Is a sku leaf "covered" by current sku selection?
+function skuLeafSelected(leaf){
+  let n=leaf;
+  while(n&&n!==skuRoot){ if(selectedSkuNodes.has(n.id)) return true; n=n.parent; }
+  return false;
+}
+// Is a data cell (orgLeaf, skuLeaf) in the intersection?
+function cellInSelection(orgLeaf, skuLeaf){
+  return orgLeafSelected(orgLeaf) && skuLeafSelected(skuLeaf);
+}
+
+// ============================================================
+// COLUMN HEADER BUILDER
+// ============================================================
+// Build column headers for exactly the provided leaf slice (paginated)
+// Returns rows[0..maxLevel], each row = [{node, colspan, rowspan}]
+function buildColHeaders(visibleLeafSlice){
+  const visibleSet = new Set(visibleLeafSlice.map(l=>l.id));
+  const rows = Array.from({length:SKU_DEPTH},()=>[]);
+  const seen = new Set();
+  function visit(node){
+    if(node===skuRoot){node.children.forEach(c=>visit(c));return;}
+    // Use getLeaves (expansion-aware) so collapsed Category nodes count as 1 visible leaf
+    const nodeViewLeaves = getLeaves(node);
+    const visCount = nodeViewLeaves.filter(l=>visibleSet.has(l.id)).length;
+    if(visCount===0) return;
+    if(seen.has(node.id)) return;
+    seen.add(node.id);
+    const isLeaf=isLeafInView(node);
+    rows[node.level].push({
+      node,
+      colspan: isLeaf ? 1 : visCount,
+      rowspan: isLeaf ? (SKU_DEPTH - node.level) : 1,
+      isLeaf
+    });
+    if(!isLeaf) node.children.forEach(c=>visit(c));
+  }
+  skuRoot.children.forEach(c=>visit(c));
+  return rows;
+}
+
+// Returns visible (expand-aware) leaf nodes — cached
+function getSkuLeaves(){
+  if(!_leafCache.has('skuVisible')) _leafCache.set('skuVisible', getLeaves(skuRoot));
+  return _leafCache.get('skuVisible');
+}
+function getOrgLeaves(){
+  if(!_leafCache.has('orgVisible')) _leafCache.set('orgVisible', getLeaves(orgRoot));
+  return _leafCache.get('orgVisible');
+}
+
+// Build org row headers — rowspan within the page slice
+function buildOrgRows(leafSlice){
+  const nodeInfo={};
+  leafSlice.forEach((leaf,idx)=>{
+    let n=leaf;
+    while(n&&n!==orgRoot){
+      if(!nodeInfo[n.id]){nodeInfo[n.id]={rowspan:0,firstRowIdx:idx};}
+      nodeInfo[n.id].rowspan++;
+      n=n.parent;
+    }
+  });
+  return leafSlice.map((leaf,idx)=>{
+    const cells=[];
+    const path=[];
+    let n=leaf;
+    while(n&&n!==orgRoot){path.unshift(n);n=n.parent;}
+    path.forEach(ancestor=>{
+      if(nodeInfo[ancestor.id].firstRowIdx===idx){
+        const isLeaf=isLeafInView(ancestor);
+        cells.push({
+          node:ancestor,
+          rowspan:nodeInfo[ancestor.id].rowspan,
+          colspan:isLeaf?(ORG_DEPTH-ancestor.level):1,
+          level:ancestor.level,
+          isLeaf
+        });
+      }
+    });
+    return {leaf,cells};
+  });
+}
+
+// ============================================================
+// RENDER MATRIX (paginated + filtered + density-aware)
+// ============================================================
+function getLevelClass(node,tree){
+  if(tree==='org'){if(node.level===0)return 'lt-ho';if(node.level===1)return 'lt-rm';return 'lt-asm';}
+  else{if(node.level===0)return 'lt-cat';if(node.level===1)return 'lt-br';if(node.level===2)return 'lt-bs';return 'lt-sku';}
+}
+function getLevelName(node,tree){
+  if(tree==='org')return ORG_LEVELS[node.level]||'';
+  return SKU_LEVELS[node.level]||'';
+}
+
+// ============================================================
+// CELL COUNT GUARD — warn before rendering huge grids
+// ============================================================
+const MAX_RENDERABLE_CELLS = 5000;
+function checkCellCountGuard(){
+  const orgRows = getOrgLeaves().length;
+  const skuCols = getSkuLeaves().length;
+  const total = orgRows * skuCols;
+  const warn = document.getElementById('cellCountWarn');
+  if(!warn) return;
+  if(total > MAX_RENDERABLE_CELLS){
+    warn.style.display='flex';
+    warn.querySelector('#ccwText').textContent =
+      `${orgRows.toLocaleString()} org rows × ${skuCols.toLocaleString()} SKU cols = ${total.toLocaleString()} cells at this depth. `+
+      `Showing ${colPageSize} cols per page. Collapse hierarchy levels for better performance.`;
+  } else {
+    warn.style.display='none';
+  }
+}
+
+function renderMatrix(){
+  const t1=performance.now();
+  // ── 1. Filter & paginate org rows ─────────────────────────
+  const allOrgLeaves=getOrgLeaves();
+  const allOrgRows=allOrgLeaves.map(leaf=>({leaf})); // lightweight — no cells yet
+  const filteredOrgLeaves=getFilteredOrgRows(allOrgRows).map(r=>r.leaf);
+  const totalRows=filteredOrgLeaves.length;
+  const totalPages=Math.max(1,Math.ceil(totalRows/pageSize));
+  currentPage=Math.min(currentPage,totalPages-1);
+  const pageStart=currentPage*pageSize;
+  const pageEnd=Math.min(pageStart+pageSize,totalRows);
+  const pageOrgLeaves=filteredOrgLeaves.slice(pageStart,pageEnd);
+
+  // ── 2. Filter & paginate SKU cols ─────────────────────────
+  const allSkuLeaves=getSkuLeaves();
+  const filteredSkuLeaves=(searchQuery||filterMode!=='all')?getFilteredSkuCols(allSkuLeaves):allSkuLeaves;
+  const totalCols=filteredSkuLeaves.length;
+  const totalColPages=Math.max(1,Math.ceil(totalCols/colPageSize));
+  currentColPage=Math.min(currentColPage,totalColPages-1);
+  const colStart=currentColPage*colPageSize;
+  const colEnd=Math.min(colStart+colPageSize,totalCols);
+  const skuLeaves=filteredSkuLeaves.slice(colStart,colEnd);
+
+  // ── 3. Build headers from the exact slices ────────────────
+  const colHdrRows=buildColHeaders(skuLeaves);
+  const pageRows=buildOrgRows(pageOrgLeaves);
+
+  const hdrRowH=30;
+  const hdrTops=Array.from({length:SKU_DEPTH},(_,i)=>i*hdrRowH);
+  const ROW_H=densityMode==='mini'?18:densityMode==='compact'?24:32; // explicit row height for alignment
+
+  // ── BUILD FROZEN LEFT TABLE (org columns only) ─────────────
+  const numHdrRows=colHdrRows.filter(r=>r.length>0).length||1;
+  const hdrTotalH=numHdrRows*hdrRowH;
+
+  let fHtml=`<thead><tr style="height:${hdrTotalH}px">`;
+  for(let c=0;c<ORG_DEPTH;c++){
+    fHtml+=`<th style="width:${orgColWidth}px;min-width:${orgColWidth}px;background:var(--bg3);border:1px solid var(--border2);vertical-align:bottom;padding:0 0 6px 0;text-align:center">
+      <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">${ORG_LEVELS[c]}</span>
+    </th>`;
+  }
+  fHtml+=`</tr></thead><tbody>`;
+
+  if(pageRows.length===0){
+    fHtml+=`<tr style="height:${ROW_H}px"><td colspan="${ORG_DEPTH}" style="padding:8px;color:var(--text3);font-size:11px">No rows</td></tr>`;
+  } else {
+    const orgColSpanned=new Array(ORG_DEPTH).fill(0);
+    pageRows.forEach(({leaf:orgLeaf,cells:orgCells})=>{
+      fHtml+=`<tr style="height:${ROW_H}px" data-org="${orgLeaf.id}">`;
+      let col=0;
+      while(col<ORG_DEPTH){
+        if(orgColSpanned[col]>0){orgColSpanned[col]--;col++;continue;}
+        const cd=orgCells.find(c=>c.level===col);
+        if(cd){
+          const{node,rowspan,colspan}=cd;
+          const isActualLeaf=!node.children.length;
+          const lcls=getLevelClass(node,'org');
+          fHtml+=`<td class="orgh" rowspan="${rowspan}" colspan="${colspan}" style="min-width:${colspan*orgColWidth}px;max-width:${colspan*orgColWidth}px">
+            <div class="orgh-inner${isActualLeaf?' leaf-org':''}${selectedOrgNodes.has(node.id)?' sel-hdr':''}" onclick="onOrgHdrClick(event,'${node.id}')">
+              ${!isActualLeaf?`<span class="expand-btn" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
+              <span class="hdr-name ${lcls}${searchQuery&&node.name.toLowerCase().includes(searchQuery)?' srch-match':''}" title="${node.name}">${node.name}</span>
+            </div>
+          </td>`;
+          for(let c=col;c<col+colspan;c++)orgColSpanned[c]=rowspan-1;
+          col+=colspan;
+        } else {col++;}
+      }
+      fHtml+=`</tr>`;
+    });
+  }
+  fHtml+=`</tbody>`;
+
+  // ── BUILD RIGHT DATA TABLE (SKU headers + data cells only) ──
+  let html=`<thead>`;
+  colHdrRows.forEach((rowCells,level)=>{
+    html+=`<tr>`;
+    const visibleCells=searchQuery?rowCells.filter(({node})=>{
+      const nl=getLeaves(node);
+      return nl.some(l=>skuLeaves.includes(l));
+    }):rowCells;
+    visibleCells.forEach(({node,rowspan,isLeaf})=>{
+      const nl=getLeaves(node);
+      const visCount=searchQuery?nl.filter(l=>skuLeaves.includes(l)).length:nl.length;
+      const effectiveColspan=isLeaf?1:visCount;
+      if(effectiveColspan===0)return;
+      const hasRule=hasRuleInSubtree(node);
+      const isActualLeaf=!node.children.length;
+      html+=`<th class="skuh${hasRule?' col-has-rule':''}" colspan="${effectiveColspan}" rowspan="${rowspan}"
+        style="position:sticky;top:${hdrTops[level]}px;z-index:10;min-width:${isActualLeaf||isLeaf?skuColWidth:effectiveColspan*skuColWidth}px">
+        <div class="skuh-inner${isActualLeaf?' leaf-hdr':''}${selectedSkuNodes.has(node.id)?' sel-hdr':''}" onclick="onSkuHdrClick(event,'${node.id}')">
+          ${!isActualLeaf?`<span class="expand-btn" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
+          <span class="hdr-name${searchQuery&&node.name.toLowerCase().includes(searchQuery)?' srch-match':''}" title="${node.name}">${node.name}</span>
+          ${hasRule?`<span class="col-rule-dot"></span>`:''}
+        </div>
+      </th>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</thead><tbody>`;
+
+  if(pageRows.length===0){
+    html+=`<tr style="height:${ROW_H}px"><td colspan="${skuLeaves.length||1}" style="padding:28px;text-align:center;color:var(--text3);font-size:12px">
+      ${searchQuery?`No rows match "<b style="color:var(--text2)">${searchQuery}</b>"`:'No rows to display'}
+    </td></tr>`;
+  } else {
+    pageRows.forEach(({leaf:orgLeaf})=>{
+      html+=`<tr style="height:${ROW_H}px" data-org="${orgLeaf.id}">`;
+      skuLeaves.forEach(skuLeaf=>{
+        const key=orgLeaf.id+'|'+skuLeaf.id;
+        const rule=getEffectiveRule(orgLeaf.id,skuLeaf.id);
+        let ruleCls='',techTxt='',techCls='';
+        if(rule){
+          const lvl=rule.orgLevel;
+          ruleCls=lvl===2?'rule-asm':lvl===1?'rule-rm':'rule-ho';
+          techCls=lvl===2?'asm':lvl===1?'rm':'ho';
+          techTxt=rule.techniques.join('/');
+          if(techTxt.length>14)techTxt=rule.techniques[0]+(rule.techniques.length>1?` +${rule.techniques.length-1}`:'');
+        }
+        const inSel=cellInSelection(orgLeaf,skuLeaf);
+        const orgOnlyHl=orgLeafSelected(orgLeaf)&&!skuLeafSelected(skuLeaf);
+        const skuOnlyHl=!orgLeafSelected(orgLeaf)&&skuLeafSelected(skuLeaf);
+        const hlCls=inSel?'sel-cross':orgOnlyHl?'sel-row':skuOnlyHl?'sel-col':'';
+        html+=`<td class="dc ${ruleCls} ${hlCls}" data-key="${key}" onclick="onCellClick(event,'${key}')">
+          <div class="dc-inner"><span class="dc-text ${techCls}">${techTxt}</span></div>
+        </td>`;
+      });
+      html+=`</tr>`;
+    });
+  }
+  html+=`</tbody>`;
+  const t2=performance.now();
+
+  // ── INJECT INTO DOM ─────────────────────────────────────────
+  document.getElementById('frozenTable').innerHTML=fHtml;
+  document.getElementById('matrixTable').innerHTML=html;
+  const t3=performance.now();
+
+  const scroll=document.getElementById('matrixScroll');
+  const frozen=document.getElementById('frozenLeft');
+  scroll.classList.remove('mx-compact','mx-mini');
+  frozen.classList.remove('mx-compact','mx-mini');
+  if(densityMode==='compact'){scroll.classList.add('mx-compact');frozen.classList.add('mx-compact');}
+  else if(densityMode==='mini'){scroll.classList.add('mx-mini');frozen.classList.add('mx-mini');}
+
+  // Sync vertical scroll between left frozen panel and right data panel
+  scroll.onscroll=()=>{ frozen.scrollTop=scroll.scrollTop; };
+
+  renderPagination(totalRows,pageStart,pageEnd,totalCols,colStart,colEnd);
+  updateQAButtonStates();
+  // Update perf bar
+  const buildMs = (t2-t1).toFixed(1);
+  const domMs   = (t3-t2).toFixed(1);
+  const totalMs = (t3-t1).toFixed(1);
+  const cells   = pageRows.length * skuLeaves.length;
+  const allOrg  = getAllOrgLeaves().length;
+  const allSku  = getAllSkuLeaves().length;
+  document.getElementById('pmVisible').textContent = `${pageRows.length} rows × ${skuLeaves.length} cols = ${cells.toLocaleString()} cells`;
+  document.getElementById('pmRender').textContent  = `${totalMs}ms (build ${buildMs}ms + DOM ${domMs}ms)`;
+  document.getElementById('pmRuleIdx').textContent = `${ruleOrgIndex.size} org-leaf entries`;
+  document.getElementById('pmRules').textContent   = `${rules.length} rules`;
+  document.getElementById('pmDataset').textContent = `${allOrg.toLocaleString()} ASM × ${allSku.toLocaleString()} SKU = ${(allOrg*allSku).toLocaleString()} cells`;
+  const status = document.getElementById('pmStatus');
+  const ms = parseFloat(totalMs);
+  status.style.color = ms<50?'var(--green)':ms<150?'var(--amber)':'var(--red)';
+  status.textContent = ms<50?`✓ Fast (${totalMs}ms)`:ms<150?`⚠ Slow (${totalMs}ms)`:`✗ Very slow (${totalMs}ms)`;
+}
+
+function buildPageNums(current,total,clickFn){
+  let h='';
+  const range=5,half=Math.floor(range/2);
+  let lo=Math.max(0,current-half),hi=Math.min(total-1,lo+range-1);
+  if(hi-lo<range-1) lo=Math.max(0,hi-range+1);
+  if(lo>0) h+=`<span class="pg-num" onclick="${clickFn}(0)">1</span>${lo>1?'<span style="color:var(--text3);padding:0 2px">…</span>':''}`;
+  for(let i=lo;i<=hi;i++) h+=`<span class="pg-num${i===current?' on':''}" onclick="${clickFn}(${i})">${i+1}</span>`;
+  if(hi<total-1) h+=`${hi<total-2?'<span style="color:var(--text3);padding:0 2px">…</span>':''}<span class="pg-num" onclick="${clickFn}(${total-1})">${total}</span>`;
+  return h;
+}
+
+function renderPagination(totalRows,pageStart,pageEnd,totalCols,colStart,colEnd){
+  document.getElementById('pgRowStart').textContent=totalRows?pageStart+1:0;
+  document.getElementById('pgRowEnd').textContent=pageEnd;
+  document.getElementById('pgRowTotal').textContent=totalRows;
+  document.getElementById('pgColStart').textContent=totalCols?colStart+1:0;
+  document.getElementById('pgColEnd').textContent=colEnd;
+  document.getElementById('pgColTotal').textContent=totalCols;
+  document.getElementById('pgPrev').disabled=currentPage===0;
+  const totalPages=Math.max(1,Math.ceil(totalRows/pageSize));
+  document.getElementById('pgNext').disabled=currentPage>=totalPages-1;
+  document.getElementById('pgColPrev').disabled=currentColPage===0;
+  const totalColPages=Math.max(1,Math.ceil(totalCols/colPageSize));
+  document.getElementById('pgColNext').disabled=currentColPage>=totalColPages-1;
+  document.getElementById('pgNums').innerHTML=buildPageNums(currentPage,totalPages,'goPage');
+  document.getElementById('pgColNums').innerHTML=buildPageNums(currentColPage,totalColPages,'goColPage');
+}
+
+function changePage(dir){currentPage=Math.max(0,currentPage+dir);renderMatrix();}
+function goPage(p){currentPage=p;renderMatrix();}
+function setPageSize(n){pageSize=n;currentPage=0;renderMatrix();}
+function changeColPage(dir){currentColPage=Math.max(0,currentColPage+dir);renderMatrix();}
+function goColPage(p){currentColPage=p;renderMatrix();}
+function setColPageSize(n){colPageSize=n;currentColPage=0;renderMatrix();}
+function hasRuleInSubtree(skuNode){
+  return getSubtreeLeaves(skuNode,'sku').some(sl=>hasRuleForSkuLeaf(sl.id));
+}
+function hasOrgRuleInSubtree(orgNode){
+  return getSubtreeLeaves(orgNode,'org').some(ol=>hasRuleForOrgLeaf(ol.id));
+}
+
+// ============================================================
+// EXPAND / COLLAPSE
+// ============================================================
+function toggleNode(id){
+  const node=nodeMap[id];
+  if(!node||!node.children.length) return;
+  node.expanded=!node.expanded;
+  invalidateLeafCache(); currentPage=0; currentColPage=0;
+  checkCellCountGuard(); renderMatrix();
+}
+function expandAll(tree){
+  const root=tree==='org'?orgRoot:skuRoot;
+  function exp(n){n.expanded=true;n.children.forEach(exp);}
+  exp(root); invalidateLeafCache(); currentPage=0; currentColPage=0;
+  checkCellCountGuard(); renderMatrix();
+}
+function collapseAll(tree){
+  const root=tree==='org'?orgRoot:skuRoot;
+  function col(n){if(n.children.length)n.expanded=false;n.children.forEach(col);}
+  root.children.forEach(col); invalidateLeafCache(); currentPage=0; currentColPage=0;
+  renderMatrix();
+}
+
+function setOrgDepth(el,depth){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  orgRoot.expanded=true;
+  // depth=1 → HO leaves, depth=2 → RM leaves, depth=3 → ASM leaves
+  function setDepth(node,lv){
+    node.expanded = (lv < depth-1 && node.children.length);
+    node.children.forEach(c=>setDepth(c,lv+1));
+  }
+  orgRoot.children.forEach(c=>setDepth(c,0));
+  invalidateLeafCache(); currentPage=0; checkCellCountGuard(); renderMatrix();
+}
+
+function setSkuDepth(el,depth){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  skuRoot.expanded=true;
+  // depth=1 → Cat leaves, depth=2 → Brand leaves, depth=3 → BaseSKU leaves, depth=4 → SKU leaves
+  function setDepth(node,lv){
+    node.expanded = (lv < depth-1 && node.children.length);
+    node.children.forEach(c=>setDepth(c,lv+1));
+  }
+  skuRoot.children.forEach(c=>setDepth(c,0));
+  invalidateLeafCache(); currentColPage=0; checkCellCountGuard(); renderMatrix();
+}
+
+function setDensity(el,mode){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  densityMode=mode; renderMatrix();
+}
+function setOrgColWidth(el,w){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  orgColWidth=w; renderMatrix();
+}
+function setSkuColWidth(el,w){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  skuColWidth=w; renderMatrix();
+}
+
+function setFilter(el,mode){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  filterMode=mode; currentPage=0; renderMatrix();
+}
+
+// ============================================================
+// ============================================================
+// QUICK LEVEL-ASSIGN — select all org/sku nodes at a hierarchy level
+// ============================================================
+function selectByOrgLevel(level){
+  const nodes=getAllNodesAtLevel(orgRoot,level);
+  const allSel=nodes.length>0&&nodes.every(n=>selectedOrgNodes.has(n.id));
+  if(allSel) nodes.forEach(n=>selectedOrgNodes.delete(n.id));
+  else nodes.forEach(n=>selectedOrgNodes.add(n.id));
+  updateHint();updateSelection();
+}
+
+function selectBySkuLevel(level){
+  const nodes=getAllNodesAtLevel(skuRoot,level);
+  const allSel=nodes.length>0&&nodes.every(n=>selectedSkuNodes.has(n.id));
+  if(allSel) nodes.forEach(n=>selectedSkuNodes.delete(n.id));
+  else nodes.forEach(n=>selectedSkuNodes.add(n.id));
+  updateHint();updateSelection();
+}
+
+function updateHint(){
+  const hint=document.getElementById('qaHint');
+  if(!hint) return;
+  const orgCount=selectedOrgNodes.size, skuCount=selectedSkuNodes.size;
+  if(orgCount===0&&skuCount===0){
+    hint.textContent='Click a level button to select rows/columns at that hierarchy level, then assign techniques →';
+  } else if(orgCount>0&&skuCount===0){
+    hint.textContent=`${orgCount} Org node${orgCount>1?'s':''} selected — now select SKU level to define the intersection`;
+  } else if(orgCount===0&&skuCount>0){
+    hint.textContent=`${skuCount} SKU node${skuCount>1?'s':''} selected — now select Org level to define the intersection`;
+  } else {
+    // Count intersection cells
+    const orgLeaves=getAllOrgLeaves().filter(orgLeafSelected);
+    const skuLeaves=getAllSkuLeaves().filter(skuLeafSelected);
+    hint.textContent=`Intersection: ${orgCount} Org × ${skuCount} SKU nodes (${orgLeaves.length}×${skuLeaves.length} cells) — choose techniques →`;
+  }
+}
+
+function updateQAButtonStates(){
+  [{id:'qaHO',tree:'org',lv:0},{id:'qaRM',tree:'org',lv:1},{id:'qaASM',tree:'org',lv:2},
+   {id:'qaCat',tree:'sku',lv:0},{id:'qaBrand',tree:'sku',lv:1},{id:'qaBS',tree:'sku',lv:2},{id:'qaSKU',tree:'sku',lv:3}]
+  .forEach(({id,tree,lv})=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    const root=tree==='org'?orgRoot:skuRoot;
+    const selSet=tree==='org'?selectedOrgNodes:selectedSkuNodes;
+    const nodes=getAllNodesAtLevel(root,lv);
+    btn.classList.toggle('on',nodes.length>0&&nodes.every(n=>selSet.has(n.id)));
+  });
+}
+
+// ============================================================
+// CELL & HEADER CLICK HANDLERS
+// ============================================================
+function onCellClick(event,key){
+  // Clicking a data cell toggles the specific org leaf + sku leaf nodes
+  const [oId,sId]=key.split('|');
+  const orgAlready=selectedOrgNodes.has(oId), skuAlready=selectedSkuNodes.has(sId);
+  if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){
+    // Single click: if both already selected, deselect both; else select both
+    if(orgAlready&&skuAlready){ selectedOrgNodes.delete(oId); selectedSkuNodes.delete(sId); }
+    else { selectedOrgNodes.add(oId); selectedSkuNodes.add(sId); }
+  } else {
+    // Multi-click: toggle each axis independently
+    if(orgAlready) selectedOrgNodes.delete(oId); else selectedOrgNodes.add(oId);
+    if(skuAlready) selectedSkuNodes.delete(sId); else selectedSkuNodes.add(sId);
+  }
+  updateHint(); updateSelection();
+}
+
+function onSkuHdrClick(event,id){
+  if(selectedSkuNodes.has(id)) selectedSkuNodes.delete(id);
+  else selectedSkuNodes.add(id);
+  updateHint(); updateSelection();
+}
+
+function onOrgHdrClick(event,id){
+  if(selectedOrgNodes.has(id)) selectedOrgNodes.delete(id);
+  else selectedOrgNodes.add(id);
+  updateHint(); updateSelection();
+}
+
+function updateSelection(){
+  // Update data cells (right table)
+  document.querySelectorAll('#matrixTable .dc').forEach(td=>{
+    const key=td.dataset.key;
+    if(!key) return;
+    const [oId,sId]=key.split('|');
+    const ol=nodeMap[oId], sl=nodeMap[sId];
+    if(!ol||!sl) return;
+    td.classList.remove('sel-cross','sel-row','sel-col');
+    const oSel=orgLeafSelected(ol), sSel=skuLeafSelected(sl);
+    if(oSel&&sSel) td.classList.add('sel-cross');
+    else if(oSel) td.classList.add('sel-row');
+    else if(sSel) td.classList.add('sel-col');
+  });
+  // Update org header highlights (frozen left table)
+  document.querySelectorAll('#frozenTable .orgh-inner').forEach(el=>{
+    const td=el.closest('td[onclick]');
+    const m=td?.getAttribute('onclick')?.match(/'([^']+)'/);
+    if(m) el.classList.toggle('sel-hdr', selectedOrgNodes.has(m[1]));
+  });
+  // Update sku header highlights (right table)
+  document.querySelectorAll('#matrixTable .skuh-inner').forEach(el=>{
+    const m=el.getAttribute('onclick')?.match(/'([^']+)'/);
+    if(m) el.classList.toggle('sel-hdr', selectedSkuNodes.has(m[1]));
+  });
+  updateQAButtonStates();
+  renderTechPanel();
+}
+
+// ============================================================
+// TECHNIQUE PANEL
+// ============================================================
+const TECHNIQUES=[
+  {name:'ARIMA',tag:'STAT',cls:'tt-s'},{name:'SARIMA',tag:'STAT',cls:'tt-s'},
+  {name:'Prophet',tag:'ML',cls:'tt-m'},{name:'XGBoost',tag:'ML',cls:'tt-m'},
+  {name:'LSTM',tag:'ML',cls:'tt-m'},{name:'Holt-Winters',tag:'STAT',cls:'tt-s'},
+  {name:'Simple Avg',tag:'STAT',cls:'tt-s'},{name:'Ensemble',tag:'ENS',cls:'tt-e'},
+  {name:'LightGBM',tag:'ML',cls:'tt-m'},{name:'ETS',tag:'STAT',cls:'tt-s'},
+];
+
+function renderTechPanel(){
+  const body=document.getElementById('tpBody');
+  const info=document.getElementById('tpInfo');
+  const hasOrg=selectedOrgNodes.size>0, hasSku=selectedSkuNodes.size>0;
+
+  if(!hasOrg&&!hasSku){
+    info.textContent='Select rows & columns to assign';
+    body.innerHTML=`<div class="no-sel-msg"><div class="no-sel-icon">⊞</div>
+      <div class="no-sel-t">Click org headers (rows) and SKU headers (columns) to define a rule intersection, then assign techniques.</div>
+    </div>`;
+    selectedTechs.clear(); return;
+  }
+
+  // Compute intersection
+  const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const hasIntersection=hasOrg&&hasSku;
+
+  // Pre-fill techniques if there's an existing rule at this intersection
+  if(selectedTechs.size===0&&hasIntersection){
+    orgNodes.forEach(on=>{skuNodes.forEach(sn=>{
+      const existing=rules.find(r=>r.orgId===on.id&&r.skuId===sn.id);
+      if(existing) existing.techniques.forEach(t=>selectedTechs.add(t));
+    });});
+  }
+
+  const orgLevelNames=orgNodes.map(n=>`<span class="level-tag ${getLevelClass(n,'org')}">${getLevelName(n,'org')}</span> ${n.name}`);
+  const skuLevelNames=skuNodes.map(n=>`<span class="level-tag ${getLevelClass(n,'sku')}">${getLevelName(n,'sku')}</span> ${n.name}`);
+
+  info.textContent=hasIntersection?`${orgNodes.length}×${skuNodes.length} intersection`:hasOrg?`${orgNodes.length} org node${orgNodes.length>1?'s':''} (pick SKU →)`:`${skuNodes.length} SKU node${skuNodes.length>1?'s':''} (pick Org ←)`;
+
+  const MAX=6;
+  function pillList(names,type){
+    const shown=names.slice(0,MAX);
+    const more=names.length-MAX;
+    return shown.map((n,i)=>`<div class="sel-axis-pill" onclick="${type==='org'?'removeOrgNode':'removeSkuNode'}('${(type==='org'?orgNodes:skuNodes)[i]?.id}')">${n} <span class="sp-x">×</span></div>`).join('')
+      +(more>0?`<div class="sel-axis-pill" style="color:var(--text3)">+${more} more</div>`:'');
+  }
+
+  body.innerHTML=`
+    <div class="tp-section">
+      <div class="tp-axis-row">
+        <div class="tp-axis-block">
+          <div class="tp-lbl">Org Rows <span style="color:var(--text3);font-weight:400">(${orgNodes.length})</span></div>
+          <div class="sel-axis-pills">${orgNodes.length?pillList(orgLevelNames,'org'):'<span style="color:var(--text3);font-size:11px">None — click org headers</span>'}</div>
+        </div>
+        <div class="tp-axis-cross">×</div>
+        <div class="tp-axis-block">
+          <div class="tp-lbl">SKU Cols <span style="color:var(--text3);font-weight:400">(${skuNodes.length})</span></div>
+          <div class="sel-axis-pills">${skuNodes.length?pillList(skuLevelNames,'sku'):'<span style="color:var(--text3);font-size:11px">None — click SKU headers</span>'}</div>
+        </div>
+      </div>
+      <button class="clear-btn" onclick="clearSel()" style="margin-top:6px">✕ Clear all</button>
+    </div>
+    ${hasIntersection?`
+    <div class="tp-section">
+      <div class="tp-lbl">Techniques</div>
+      <div class="tech-list">
+        ${TECHNIQUES.map(t=>`
+          <div class="tech-item ${selectedTechs.has(t.name)?'on':''}" onclick="toggleTech('${t.name}',this)">
+            <input type="checkbox" ${selectedTechs.has(t.name)?'checked':''} onclick="event.stopPropagation()">
+            <span class="tech-n">${t.name}</span>
+            <span class="tech-tag ${t.cls}">${t.tag}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="tp-section">
+      <button class="apply-btn" onclick="applyTechniques()" ${selectedTechs.size>0?'':'disabled'}>
+        Save Rule${orgNodes.length*skuNodes.length>1?' ('+orgNodes.length+'×'+skuNodes.length+')':''}
+      </button>
+    </div>`:`
+    <div class="tp-section" style="text-align:center;color:var(--text3);font-size:11.5px;padding:16px 0">
+      Select both Org <b style="color:var(--text2)">rows</b> and SKU <b style="color:var(--text2)">columns</b> to define the intersection
+    </div>`}
+  `;
+}
+
+function toggleTech(name,el){
+  if(selectedTechs.has(name)){selectedTechs.delete(name);el.classList.remove('on');el.querySelector('input').checked=false;}
+  else{selectedTechs.add(name);el.classList.add('on');el.querySelector('input').checked=true;}
+  const ab=document.querySelector('.apply-btn');
+  if(ab) ab.disabled=selectedTechs.size===0;
+}
+
+function removeOrgNode(id){selectedOrgNodes.delete(id);updateHint();updateSelection();}
+function removeSkuNode(id){selectedSkuNodes.delete(id);updateHint();updateSelection();}
+
+function clearSel(){
+  selectedOrgNodes.clear();selectedSkuNodes.clear();selectedTechs.clear();
+  updateHint();updateSelection();
+}
+
+function applyTechniques(){
+  if(selectedTechs.size===0||selectedOrgNodes.size===0||selectedSkuNodes.size===0) return;
+  const techs=[...selectedTechs];
+  const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
+
+  orgNodes.forEach(on=>{
+    skuNodes.forEach(sn=>{
+      // Remove any existing rule for exact same org+sku node pair
+      rules=rules.filter(r=>!(r.orgId===on.id&&r.skuId===sn.id));
+      rules.push({
+        id:ruleIdCounter++,
+        orgId:on.id, skuId:sn.id,
+        orgLevel:on.level, skuLevel:sn.level,
+        orgName:on.name, skuName:sn.name,
+        techniques:techs,
+        priority: on.level===0?3:on.level===1?2:1
+      });
+    });
+  });
+
+  buildRuleMap();
+  renderMatrix();
+  renderRulesTable();
+  const ruleCount=orgNodes.length*skuNodes.length;
+  showToast(`${ruleCount} rule${ruleCount>1?'s':''} saved: ${techs.join(', ')}`);
+  selectedOrgNodes.clear(); selectedSkuNodes.clear(); selectedTechs.clear();
+  updateHint(); updateSelection();
+}
+
+// ============================================================
+// RULES TABLE
+// ============================================================
+function renderRulesTable(){
+  const tbody=document.getElementById('rulesTable');
+  document.getElementById('rulesCountLbl').textContent=`${rules.length} rule${rules.length!==1?'s':''}`;
+  if(!rules.length){tbody.innerHTML=`<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text3)">No rules defined yet</td></tr>`;return;}
+
+  // Detect conflicts: same org+sku covered by multiple rules
+  const conflictSet=new Set();
+  const orgSkuCount={};
+  rules.forEach(r=>{const k=r.orgId+'|'+r.skuId;orgSkuCount[k]=(orgSkuCount[k]||0)+1;});
+  Object.entries(orgSkuCount).forEach(([k,v])=>{if(v>1)conflictSet.add(k);});
+
+  const sorted=[...rules].sort((a,b)=>a.priority-b.priority||(a.orgLevel-b.orgLevel)||(a.skuLevel-b.skuLevel));
+
+  tbody.innerHTML=`<thead><tr>
+    <th>P</th><th>Org Level</th><th>Org Node</th><th>SKU Level</th><th>SKU Node</th>
+    <th>Techniques</th><th>Scope</th><th></th>
+  </tr></thead><tbody>${sorted.map(r=>{
+    const k=r.orgId+'|'+r.skuId;
+    const isConf=conflictSet.has(k);
+    const orgLcls=r.orgLevel===0?'lt-ho':r.orgLevel===1?'lt-rm':'lt-asm';
+    const skuLcls=r.skuLevel===0?'lt-cat':r.skuLevel===1?'lt-br':r.skuLevel===2?'lt-bs':'lt-sku';
+    const orgLvlName=ORG_LEVELS[r.orgLevel]||'';
+    const skuLvlName=SKU_LEVELS[r.skuLevel]||'';
+    return `<tr class="${isConf&&r.orgLevel>0?'overridden':''}">
+      <td><span class="pb ${r.priority===1?'p1':r.priority===2?'p2':''}">${r.priority}</span></td>
+      <td><span class="level-tag ${orgLcls}">${orgLvlName}</span></td>
+      <td style="color:var(--text)">${r.orgName}</td>
+      <td><span class="level-tag ${skuLcls}">${skuLvlName}</span></td>
+      <td style="color:var(--text)">${r.skuName}</td>
+      <td><div class="tech-chips">${r.techniques.map(t=>`<span class="tc">${t}</span>`).join('')}</div>
+        ${isConf?'<div style="font-size:10px;color:var(--amber);margin-top:2px">⚡ Overridden by lower-level rule</div>':''}
+      </td>
+      <td><span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${getSubtreeLeaves(nodeMap[r.orgId],'org').length}×${getSubtreeLeaves(nodeMap[r.skuId],'sku').length}</span></td>
+      <td><button class="ab" onclick="deleteRule(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('')}</tbody>`;
+
+  // Update badges
+  document.getElementById('ruleBadge').textContent=`${rules.length} Rule${rules.length!==1?'s':''}`;
+  document.getElementById('confBadge').textContent=`${Object.values(orgSkuCount).filter(v=>v>1).length} Conflict${Object.values(orgSkuCount).filter(v=>v>1).length!==1?'s':''}`;
+  document.getElementById('confBadge').style.display=Object.values(orgSkuCount).some(v=>v>1)?'inline-flex':'none';
+}
+
+function deleteRule(id){
+  rules=rules.filter(r=>r.id!==id);
+  buildRuleMap();renderMatrix();renderRulesTable();
+  showToast('Rule deleted');
+}
+
+// ============================================================
+// SEARCH — filters rows and columns in matrix
+// ============================================================
+let searchTimer=null;
+function handleSearch(val){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{
+    searchQuery=val.trim().toLowerCase();
+    currentPage=0;
+    renderMatrix();
+  },220);
+}
+
+// ============================================================
+// STICKY LEFT UPDATE (after expand/collapse changes org cols)
+// ============================================================
+function updateStickyLeft(){
+  // Sticky left is baked into the render, so a full re-render handles it
+}
+
+// ============================================================
+// CHART
+// ============================================================
+function genData(n){
+  const labels=[],actual=[],outIdx=[3,7,10];
+  const seasonal=[1,1.1,1.2,1.15,1.05,.9,.85,.88,.95,1,1.08,1.12,1.18];
+  for(let i=0;i<n;i++){
+    const v=Math.round(1200*seasonal[i%seasonal.length]+(Math.random()-.5)*200);
+    actual.push(outIdx.includes(i)?v*1.5:v);
+    labels.push(`Wk ${i+1}`);
+  }
+  return{labels,actual,outIdx};
+}
+let cdata=genData(13), cInst=null, showOut=true, smoothMode='none';
+function movAvg(d,w){return d.map((_,i)=>i<w-1?null:Math.round(d.slice(i-w+1,i+1).reduce((a,b)=>a+b,0)/w));}
+function expSm(d,a=.35){let r=[d[0]];for(let i=1;i<d.length;i++)r.push(Math.round(a*d[i]+(1-a)*r[i-1]));return r;}
+function buildChart(){
+  const{labels,actual,outIdx}=cdata;
+  const pBG=actual.map((_,i)=>outIdx.includes(i)&&showOut?'#f43f5e':'#3d8ef0');
+  const pR=actual.map((_,i)=>outIdx.includes(i)&&showOut?6:3);
+  const datasets=[{label:'Actual',data:actual,borderColor:'#3d8ef0',backgroundColor:'rgba(61,142,240,.07)',borderWidth:2,pointBackgroundColor:pBG,pointRadius:pR,fill:true,tension:.35}];
+  if(smoothMode!=='none') datasets.push({label:'Smoothed',data:smoothMode==='ma'?movAvg(actual,4):expSm(actual),borderColor:'rgba(61,142,240,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4});
+  if(cInst)cInst.destroy();
+  const canvas=document.getElementById('demandChart');
+  // Ensure canvas fills its container before Chart.js reads dimensions
+  canvas.style.width='100%';
+  canvas.style.height='100%';
+  cInst=new Chart(canvas.getContext('2d'),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2633',borderColor:'#2a3548',borderWidth:1,titleColor:'#e2e8f4',bodyColor:'#8896b0',padding:9}},
+      scales:{x:{grid:{color:'rgba(42,53,72,.5)'},ticks:{color:'#5a6a85',font:{size:10.5}}},y:{grid:{color:'rgba(42,53,72,.5)'},ticks:{color:'#5a6a85',font:{size:10.5},callback:v=>v.toLocaleString()}}}
+    }
+  });
+}
+function setRng(el,r){document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');cdata=genData(r==='13w'?13:r==='26w'?26:52);buildChart();}
+function toggleOut(btn){showOut=!showOut;btn.textContent=showOut?'Hide Outliers':'Show Outliers';buildChart();}
+function setSm(el,m){document.querySelectorAll('.pill button').forEach(b=>{if(b.parentElement===el.parentElement)b.classList.remove('on')});el.classList.add('on');smoothMode=m;document.getElementById('smWin').style.display=m!=='none'?'flex':'none';buildChart();}
+function setP(el){document.querySelectorAll('.pill button').forEach(b=>{if(b.parentElement===el.parentElement)b.classList.remove('on')});el.classList.add('on');}
+
+// ============================================================
+// NORM
+// ============================================================
+let normOpen=true;
+function toggleNorm(){normOpen=!normOpen;document.getElementById('normBody').style.display=normOpen?'block':'none';document.getElementById('normBtn').textContent=normOpen?'Collapse ▴':'Expand ▾';}
+function pickN(el){el.closest('.ngrid').querySelectorAll('.ncard').forEach(c=>{c.classList.remove('sel');const ck=c.querySelector('.ncard-ck');if(ck)ck.remove();});el.classList.add('sel');const d=document.createElement('div');d.className='ncard-ck';d.textContent='✓';el.prepend(d);}
+function pickI(el){pickN(el);}
+
+// ============================================================
+// RULES TOGGLE
+// ============================================================
+let rulesOpen=false;
+function toggleRules(){
+  rulesOpen=!rulesOpen;
+  document.getElementById('rulesBody').style.display=rulesOpen?'block':'none';
+  document.getElementById('rulesToggleIcon').textContent=rulesOpen?'Hide ▴':'Show ▾';
+  document.querySelector('.rules-toggle').querySelector('span:first-child').innerHTML=`${rulesOpen?'▾':'▸'} &nbsp;Defined Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">${rules.length} rules</span>`;
+  if(rulesOpen) renderRulesTable();
+}
+
+// ============================================================
+// SCROLL
+// ============================================================
+function scrollSec(id){
+  const el=document.getElementById(id);
+  const cont=document.getElementById('mainContent');
+  if(!el||!cont) return;
+  cont.scrollTo({top: el.offsetTop - 16, behavior:'smooth'});
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  const navItems=document.querySelectorAll('.sb-item');
+  const map={'sec-chart':3,'sec-norm':4,'sec-matrix':5};
+  if(map[id]!==undefined) navItems[map[id]]?.classList.add('active');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load',()=>{
+  // rAF ensures layout is computed before Chart.js reads canvas dimensions
+  requestAnimationFrame(()=>{
+    try{ buildChart(); } catch(e){ console.error('Chart error:',e); }
+    buildRuleMap();
+    // Start at HO × Category for performance on large dataset
+    runScenario('ho-cat');
+    renderRulesTable();
+  });
+});
+</script>
+</body>
+</html>
