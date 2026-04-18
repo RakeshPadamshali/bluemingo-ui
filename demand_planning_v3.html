@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Demand Planning — Bluemingo MES</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
   /* ── Bluemingo MES v2 palette ───────────────────────────── */
@@ -98,12 +97,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sc-ctrl{display:flex;align-items:center;gap:7px}
 .sc-body{padding:16px}
 
-/* CHART */
-.chart-wrap{position:relative;height:240px;width:100%;display:block}
-.chart-wrap canvas{display:block;width:100%!important;height:100%!important}
-.legend{display:flex;align-items:center;gap:16px;margin-top:10px}
-.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
-.leg-dot{width:10px;height:10px;border-radius:50%}
 .ctrl-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0}
 .ctrl-grp{display:flex;align-items:center;gap:8px}
 .ctrl-lbl{font-size:12px;color:var(--text2);font-weight:500;white-space:nowrap}
@@ -136,6 +129,124 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ncard-d{font-size:12px;color:var(--text3);line-height:1.5}
 .ncard-ck{position:absolute;top:10px;right:10px;color:var(--accent);font-size:14px}
 
+/* RULES SUBTABS — tech / norm toggle inside the rules drawer */
+.rules-subtabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:10px}
+.rules-subtab{display:flex;align-items:center;gap:8px;padding:8px 16px;background:transparent;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;color:var(--text2);transition:all .12s;margin-bottom:-1px}
+.rules-subtab:hover{color:var(--text);background:var(--bg4)}
+.rules-subtab.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.rules-subtab .mode-count{display:inline-block;min-width:20px;padding:0 6px;border-radius:var(--r-pill);background:var(--bg4);border:1px solid var(--border);color:var(--text3);font-size:10px;font-weight:600;text-align:center}
+.rules-subtab.on .mode-count{background:var(--accent-light);border-color:var(--accent);color:var(--accent2)}
+
+/* RULES SPLIT — Technique | Normalization side by side per xlsx layout */
+.rules-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rules-col{min-width:0}
+.rules-col-title{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:13px;font-weight:600;color:var(--text)}
+.rules-col-title .mode-count{display:inline-block;min-width:22px;padding:1px 7px;border-radius:var(--r-pill);background:#fff;border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:600;margin-left:auto}
+.rules-col .rt{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)}
+/* Scroll wrapper around each Defined Rules table — caps height so the section stays compact as rules grow */
+.rt-scroll{max-height:340px;overflow-y:auto;border-radius:0 0 var(--r) var(--r)}
+.rt-scroll .rt{border-radius:0}
+.rt-scroll thead th{position:sticky;top:0;z-index:1;background:var(--bg4)}
+.rules-empty{padding:20px;text-align:center;color:var(--text3);font-size:12px;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);background:#fff}
+@media(max-width:900px){.rules-split{grid-template-columns:1fr}}
+
+/* ============================================================
+   PIVOT BAR + MODE TABS — new top controls
+   ============================================================ */
+.pivot-bar{background:#fff;border-bottom:1px solid var(--border);padding:8px 16px;display:flex;flex-direction:column;gap:6px}
+.pivot-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pivot-heading{font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;background:var(--accent-light);border-radius:var(--r);border:1px solid rgba(var(--accent-rgb),.3)}
+
+/* SMART / QUICK SELECTION — sits above the Pivot bar per xlsx spec */
+.smart-sel-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;border-bottom:1px solid #f0f0f0;background:var(--bg4);flex-wrap:wrap;row-gap:8px}
+.smart-sel-bar .mtbar-lbl.ssb-strong{font-weight:600;color:var(--text2);letter-spacing:.2px}
+.smart-sel-bar .ssb-title{font-size:14px;font-weight:600;color:var(--text);flex-shrink:0}
+.smart-sel-bar .ssb-title .sc-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.ssb-vsep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+.ssb-badges{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.ssb-clear{flex-shrink:0}
+.sel-mode-bar{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid #f0f0f0;background:#fff}
+.sel-mode-lbl{font-size:12px;color:var(--text2);font-weight:600}
+.sel-mode-hint{font-size:11px;color:var(--text3);font-style:italic;margin-left:auto}
+.sel-mode-pill button{padding:5px 14px}
+.mtbar-slim{padding:6px 16px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* SELECTED VALUE SUMMARY — between matrix and editors per xlsx */
+.sel-summary-bar{display:flex;align-items:flex-start;gap:14px;padding:10px 16px;background:var(--accent-light);border-top:1px solid rgba(var(--accent-rgb),.25);border-bottom:1px solid rgba(var(--accent-rgb),.25);flex-wrap:wrap}
+.sel-summary-heading{font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;background:#fff;border-radius:var(--r);border:1px solid rgba(var(--accent-rgb),.3);align-self:center;flex-shrink:0}
+.sel-summary-grp{display:flex;align-items:center;gap:6px}
+.sel-summary-grp-chips{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:220px;flex:1 1 0}
+.sel-summary-grp-chips .sel-summary-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:var(--text3)}
+.sel-summary-count{color:var(--accent2);font-weight:700;margin-left:2px}
+.sel-summary-chips{display:flex;flex-wrap:wrap;gap:4px;max-height:62px;overflow-y:auto;width:100%}
+.sel-summary-empty{color:var(--text-hint);font-size:11px;font-style:italic;padding:3px 0}
+/* Inviting tip shown only when both Org and SKU axes are empty — guides first-time users on what to do next */
+.sel-summary-tip{flex-basis:100%;font-size:11.5px;color:var(--text2);padding:4px 0 0;line-height:1.4}
+.sel-summary-x{font-size:22px;color:rgba(var(--accent-rgb),.4);font-weight:300;align-self:center;flex-shrink:0}
+.sel-summary-inter-grp{align-self:center}
+.sel-summary-clear{margin-left:auto;align-self:center;flex-shrink:0;color:var(--red)!important;border:1px solid rgba(211,47,47,.3)!important}
+.sel-summary-clear:hover{background:var(--red-bg)!important}
+.sel-summary-lbl{font-size:12px;color:var(--text3);font-weight:500}
+.sel-summary-val{font-size:12px;color:var(--text);font-weight:600;font-family:var(--mono);padding:2px 8px;background:#fff;border-radius:var(--r);border:1px solid rgba(var(--accent-rgb),.2);min-width:40px;text-align:center}
+
+/* FULL-WIDTH RULE EDITOR BAR (Technique + Normalization side by side) */
+.rule-editor-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:#fff}
+.rule-editor-meta{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.rule-editor-title{font-size:14px;font-weight:600;color:var(--text)}
+/* Side-by-side editor layout — two panels equal width */
+.tp-body-editors{display:grid;grid-template-columns:2fr 1fr;gap:0;padding:0}
+.tp-body-editors > .tp-section{padding:14px 16px;margin:0;border-right:1px solid #f0f0f0}
+.tp-body-editors > .tp-section:last-child{border-right:none}
+.tp-section.tp-apply-row{grid-column:1/-1;border-top:1px solid var(--border);background:var(--bg4);display:flex;justify-content:flex-end;padding:12px 16px}
+.tp-section.tp-apply-row .apply-btn{max-width:340px}
+.tp-axis-section{grid-column:1/-1;padding:14px 16px;background:var(--bg4);border-bottom:1px solid var(--border)}
+.pivot-grp{display:flex;align-items:center;gap:6px}
+.pivot-lbl{font-size:12px;font-weight:500;color:var(--text2)}
+.pivot-sel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;font-size:13px;font-family:var(--font);color:var(--text);cursor:pointer;min-width:180px;max-width:260px;transition:all .12s}
+.pivot-sel:hover{border-color:var(--accent)}
+.pivot-sel:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+
+/* Pivot picker (multi-select checkbox popover) */
+.pivot-picker{position:relative;display:inline-block}
+.pivot-btn{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:6px 12px;font-size:13px;font-family:var(--font);color:var(--text);cursor:pointer;min-width:200px;max-width:280px;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:all .12s}
+.pivot-btn:hover{border-color:var(--accent)}
+.pivot-btn:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.pivot-btn-lbl{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pivot-btn-caret{color:var(--text3);font-size:10px}
+.pivot-pop{position:absolute;top:100%;left:0;margin-top:4px;min-width:420px;max-width:520px;max-height:520px;background:#fff;border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow-md);z-index:1001;display:none;flex-direction:column;overflow:hidden}
+.pivot-pop.open{display:flex}
+.pivot-panels{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pivot-panel{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pivot-panel>.pivot-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin:0}
+.pivot-pop.pivot-pop-inline{position:static;display:flex;margin-top:0;min-width:0;max-width:none;max-height:none;box-shadow:none;z-index:auto;width:100%}
+.pivot-pop.pivot-pop-inline .pivot-pop-list{max-height:220px}
+@media(max-width:900px){.pivot-panels{grid-template-columns:1fr}}
+.pivot-pop-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg4);font-size:12px;color:var(--text);flex-shrink:0}
+.pivot-pop-toolbar{display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid var(--border-light);background:#fff;flex-shrink:0;flex-wrap:wrap}
+.pivot-pop-axis-clear{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--text3);font-size:11px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.pivot-pop-axis-clear:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.pivot-pop-toolbar .search-box{padding:4px 10px!important}
+.pivot-pop-toolbar .search-box input{font-size:12px}
+.pivot-pop-toolbar .pill button{padding:3px 9px;font-size:10px}
+.pivot-pop-list{overflow-y:auto;flex:1;padding:2px 0;min-height:100px;max-height:220px}
+.pivot-pop-item{display:flex;align-items:center;gap:8px;padding:3px 10px;cursor:pointer;font-size:12.5px;color:var(--text);transition:background .1s;white-space:nowrap}
+.pivot-pop-item:hover{background:var(--bg4)}
+.pivot-pop-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.pivot-pop-name{flex:1;overflow:hidden;text-overflow:ellipsis}
+.pivot-pop-rule-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;box-shadow:0 0 4px rgba(var(--accent-rgb),.6)}
+.pivot-pop-footer{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg4);flex-shrink:0}
+.pivot-x{font-size:18px;color:var(--text3);font-weight:300}
+.pivot-label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-left:3px}
+.pivot-label b{color:var(--text);font-weight:600}
+
+.mode-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg4);padding:0 16px}
+.mode-tab{display:flex;align-items:center;gap:8px;padding:10px 18px;background:transparent;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;color:var(--text2);transition:all .12s;margin-bottom:-1px}
+.mode-tab:hover{color:var(--text);background:rgba(255,255,255,0.5)}
+.mode-tab.on{color:var(--text);border-bottom-color:var(--accent);background:#fff;font-weight:600}
+.mode-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.mode-count{display:inline-block;min-width:22px;padding:1px 7px;border-radius:var(--r-pill);background:var(--bg4);border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:600;text-align:center}
+.mode-tab.on .mode-count{background:var(--accent-light);border-color:var(--accent);color:var(--accent2)}
+
 /* ============================================================
    MATRIX SECTION
    ============================================================ */
@@ -143,11 +254,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 /* MATRIX TOOLBAR */
 .mtbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0;background:var(--bg4);flex-wrap:wrap}
-.search-box{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:6px 12px;flex:1;min-width:180px;max-width:260px;transition:all .12s}
+.search-wrap{display:flex;flex-direction:column;gap:4px;flex:1 1 240px;min-width:200px;max-width:380px}
+.search-box{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:6px 12px;transition:all .12s;position:relative}
 .search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);background:var(--accent-light)}
 .search-box svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
 .search-box input{background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;width:100%}
 .search-box input::placeholder{color:var(--text-hint)}
+.search-fuzzy-tag{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--purple-bg);color:var(--purple);font-family:var(--mono);font-size:13px;font-weight:700;flex-shrink:0;cursor:help;border:1px solid rgba(103,58,183,.3)}
+.search-clear{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--bg4);color:var(--text3);font-size:11px;cursor:pointer;flex-shrink:0;transition:all .1s}
+.search-clear:hover{background:var(--red-bg);color:var(--red)}
+
+/* Fuzzy status line below search */
+.search-status{display:none;align-items:center;gap:6px;font-size:11px;color:var(--text3);flex-wrap:wrap;padding:0 2px}
+/* Always-visible hint under the search box — surfaces fuzzy-search behavior without relying on the ~ tooltip */
+.search-hint{font-size:10.5px;color:var(--text3);padding:0 2px;line-height:1.3;font-style:italic;opacity:.75}
+.search-status-label{font-weight:500;color:var(--text2)}
+.search-status-label b{color:var(--purple);font-weight:600}
+.search-status-hit{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--accent-light);border:1px solid rgba(var(--accent-rgb),.3);border-radius:var(--r-pill);color:var(--accent2)}
+.search-status-hit-name{font-weight:600}
+.search-status-hit-score{font-family:var(--mono);font-size:10px;color:var(--text3);background:#fff;padding:0 5px;border-radius:var(--r);border:1px solid var(--border)}
+.search-status-hit-tree{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;font-weight:500}
+.search-status-more{color:var(--text-hint);font-style:italic}
+.search-status-none{color:var(--text3);font-style:italic}
+.search-status-none b{color:var(--red);font-weight:600}
 .mtbar-grp{display:flex;align-items:center;gap:6px}
 .mtbar-lbl{font-size:12px;color:var(--text2);font-weight:500;white-space:nowrap}
 .hexp-btn{padding:4px 10px;border-radius:var(--r);font-size:12px;border:1px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .12s;font-weight:500}
@@ -173,18 +302,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .corner-inner{display:flex;align-items:center;justify-content:center;height:100%;padding:0 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3)}
 
 /* ---- SKU COLUMN HEADER CELLS — gray table header strip per guide ---- */
-.skuh{background:#f5f5f5;border:1px solid var(--border);position:sticky;z-index:5;height:30px;overflow:visible}
+.skuh{background:#f5f5f5;border:1px solid var(--border);position:sticky;z-index:5;height:30px;overflow:hidden}
 .skuh-inner{display:flex;align-items:center;gap:4px;padding:0 10px;height:100%;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:background .12s;min-width:64px;text-transform:uppercase;letter-spacing:.3px;color:var(--text3)}
 .skuh-inner:hover{background:rgba(37,169,224,.08)}
 .skuh-inner.leaf-hdr{font-size:11px;font-weight:500;color:var(--text2);text-transform:none;letter-spacing:0;min-width:72px}
-.skuh-inner.sel-hdr{background:var(--accent-light);color:var(--accent2)}
 .expand-btn{width:16px;height:16px;border-radius:3px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;flex-shrink:0;transition:all .1s;color:var(--text2)}
 .expand-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
 .hdr-name{overflow:hidden;text-overflow:ellipsis}
 /* Level-tinted name colors inside org cells (replaces redundant level tag) */
-.orgh .hdr-name.lt-ho{color:#1E8FBF;font-weight:600}
-.orgh .hdr-name.lt-rm{color:var(--amber);font-weight:600}
-.orgh .hdr-name.lt-asm{color:var(--green);font-weight:500}
+/* Org-row header text colors — darkened from the brand vars to meet WCAG-AA contrast on white */
+.orgh .hdr-name.lt-ho{color:#0d5a7d;font-weight:600}
+.orgh .hdr-name.lt-rm{color:#a85800;font-weight:600}
+.orgh .hdr-name.lt-asm{color:#1e6622;font-weight:500}
 .orgh .hdr-name{flex:1;min-width:0}
 /* SKU header text sticky to left viewport edge — Excel-style grouped headers */
 .skuh .hdr-name{position:sticky;left:10px;display:inline-block;max-width:100%}
@@ -195,34 +324,41 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 /* ---- ORG ROW HEADER CELLS ---- */
 .orgh{background:#fff;border:1px solid var(--border);position:sticky;z-index:100;white-space:nowrap}
-.orgh-inner{display:flex;align-items:center;gap:6px;padding:0 10px;height:100%;font-size:12px;cursor:pointer;user-select:none;transition:background .12s;min-height:32px;color:var(--text)}
+.orgh-inner{display:flex;align-items:center;gap:6px;padding:0 10px;height:100%;font-size:12px;cursor:pointer;user-select:none;transition:background .12s;min-height:42px;color:var(--text)}
 .orgh-inner:hover{background:#fafafa}
 .orgh-inner.leaf-org{font-size:12px;color:var(--text2)}
-.orgh-inner.sel-hdr{background:var(--accent-light);color:var(--accent2)}
 .level-tag{display:inline-block;padding:2px 8px;border-radius:var(--r);font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;flex-shrink:0}
-.level-tag.lt-ho{background:var(--accent-light);color:var(--accent2)}
-.level-tag.lt-rm{background:var(--amber-bg);color:var(--amber)}
-.level-tag.lt-asm{background:var(--green-bg);color:var(--green)}
-.level-tag.lt-cat{background:var(--purple-bg);color:var(--purple)}
-.level-tag.lt-br{background:var(--green-bg);color:var(--green)}
-.level-tag.lt-bs{background:var(--amber-bg);color:var(--amber)}
-.level-tag.lt-sku{background:var(--accent-light);color:var(--accent2)}
+/* Level-tag pill text colors — darkened from brand vars to clear WCAG-AA on the tinted backgrounds */
+.level-tag.lt-ho{background:var(--accent-light);color:#0d5a7d}
+.level-tag.lt-rm{background:var(--amber-bg);color:#a85800}
+.level-tag.lt-asm{background:var(--green-bg);color:#1e6622}
+.level-tag.lt-cat{background:var(--purple-bg);color:#4527a0}
+.level-tag.lt-br{background:var(--green-bg);color:#1e6622}
+.level-tag.lt-bs{background:var(--amber-bg);color:#a85800}
+.level-tag.lt-sku{background:var(--accent-light);color:#0d5a7d}
 
-/* ---- DATA CELLS — white bg, light borders, status-color rule tints ---- */
-.dc{border:1px solid var(--border);background:#fff;cursor:pointer;transition:background .1s;min-width:72px;height:32px;vertical-align:middle;position:relative}
+/* ---- DATA CELLS — dual-badge pattern (norm + tech) ---- */
+.dc{border:1px solid var(--border);background:#fff;cursor:pointer;transition:background .1s;min-width:88px;height:42px;vertical-align:middle;position:relative;overflow:hidden}
+
+/* ---- EXCEL-STYLE COLUMN RESIZE GRIP ---- */
+/* Persistent faint vertical rule so users discover the drag affordance without hovering */
+.col-resize-grip{position:absolute;top:0;right:-3px;width:8px;height:100%;cursor:col-resize;z-index:20;background:linear-gradient(to right,transparent 0,transparent 3px,rgba(0,0,0,.10) 3px,rgba(0,0,0,.10) 5px,transparent 5px,transparent 100%);transition:background .12s}
+.col-resize-grip:hover{background:var(--accent)}
+.col-resize-grip:active{background:var(--accent2)}
+body.col-resizing,body.col-resizing *{user-select:none!important;cursor:col-resize!important}
+body.col-resizing .col-resize-grip{background:var(--accent2)}
 .dc:hover{background:#fafafa}
-.dc.sel-cross{background:var(--accent-light);border-color:var(--accent)}
-.dc.sel-row,.dc.sel-col{background:rgba(37,169,224,.06)}
-.dc-inner{display:flex;align-items:center;justify-content:center;height:100%;padding:2px 6px;font-size:11px;font-family:var(--mono)}
-/* Rule level — use the status-color pattern from the guide: rgba(color,.12) bg + solid text */
-.dc.rule-ho{background:rgba(var(--accent-rgb),.12);border-color:rgba(var(--accent-rgb),.3)}
-.dc.rule-rm{background:var(--amber-bg);border-color:rgba(245,124,0,.3)}
-.dc.rule-asm{background:var(--green-bg);border-color:rgba(56,142,60,.3)}
-.dc.sel-cross.rule-ho,.dc.sel-cross.rule-rm,.dc.sel-cross.rule-asm{border-color:var(--accent);background:var(--accent-light)}
-.dc-text{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68px}
-.dc-text.ho{color:var(--accent2)}
-.dc-text.rm{color:var(--amber)}
-.dc-text.asm{color:var(--green)}
+.dc.has-both{background:linear-gradient(90deg,var(--amber-bg) 0,var(--amber-bg) 50%,var(--accent-light) 50%,var(--accent-light) 100%)}
+.dc.has-norm{background:var(--amber-bg)}
+.dc.has-tech{background:var(--accent-light)}
+.dc-inner{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:3px;height:100%;padding:2px 6px;font-family:var(--mono);flex-wrap:nowrap;overflow:hidden}
+.dc-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.4}
+.dc-badge-norm{background:#fff;color:var(--amber);border:1px solid rgba(245,124,0,.4)}
+.dc-badge-tech{background:#fff;color:var(--accent2);border:1px solid rgba(var(--accent-rgb),.4)}
+.dc-badge.lvl-0{border-left-width:3px} /* HO/Cat — broadest */
+.dc-badge.lvl-1{border-left-width:2px} /* RM/Brand */
+.dc-badge.lvl-2{border-left-width:1px} /* ASM/BaseSKU — most specific */
+.dc-empty{color:var(--border);font-size:14px;opacity:.5}
 
 /* TECH PANEL */
 .tech-panel{width:280px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg3);display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
@@ -233,13 +369,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .tp-body{padding:14px 16px;flex:1}
 .tp-section{margin-bottom:16px}
 .tp-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-bottom:8px}
-.tech-list{display:flex;flex-direction:column;gap:6px}
-.tech-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;font-size:13px;color:var(--text)}
-.tech-item:hover{border-color:var(--accent);background:var(--bg4)}
+.tech-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:start;max-height:300px;overflow-y:auto;padding-right:6px}
+.tech-item{display:flex;flex-direction:column;background:#fff;border:1px solid var(--border);border-radius:var(--r);transition:all .12s;font-size:13px;color:var(--text);overflow:hidden}
+.tech-item-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer}
+.tech-item:hover{border-color:var(--accent)}
 .tech-item.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent2)}
-.tech-item input{accent-color:var(--accent);cursor:pointer;width:14px;height:14px;flex-shrink:0}
+.tech-item.on .tech-item-hdr{background:var(--accent-light)}
+.tech-item input[type=checkbox]{accent-color:var(--accent);cursor:pointer;width:14px;height:14px;flex-shrink:0}
 .tech-n{flex:1;font-weight:500}
 .tech-tag{padding:2px 7px;border-radius:var(--r);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.tech-expand{width:22px;height:22px;border-radius:4px;border:1px solid var(--border);background:#fff;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .12s}
+.tech-expand:hover{border-color:var(--accent);color:var(--accent)}
+.tech-item.expanded .tech-expand{background:var(--accent);border-color:var(--accent);color:#fff}
+.tech-params{padding:8px 10px;background:var(--accent-light);border-top:1px solid rgba(var(--accent-rgb),.3)}
+.tech-params .np-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.tech-params .np-row:last-child{margin-bottom:0}
+.tech-params .np-lbl{font-size:11px;color:var(--accent2);font-weight:500}
+.tech-params .np-input{background:#fff;border:1px solid rgba(var(--accent-rgb),.35);border-radius:var(--r);padding:4px 8px;font-size:12px;font-family:var(--mono);color:var(--text);width:90px;text-align:right}
+.tech-params .np-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.tech-selectall{display:flex;align-items:center;gap:6px;padding:4px 8px;background:#fff;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);margin-left:auto;transition:all .12s}
+.tech-selectall:hover{border-color:var(--accent);color:var(--accent)}
+.tech-selectall input{accent-color:var(--accent);width:13px;height:13px;cursor:pointer}
 .tt-s{background:var(--green-bg);color:var(--green)}
 .tt-m{background:var(--purple-bg);color:var(--purple)}
 .tt-e{background:var(--amber-bg);color:var(--amber)}
@@ -255,10 +405,31 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .no-sel-icon{font-size:32px;margin-bottom:10px;opacity:.3}
 .no-sel-t{font-size:12px;line-height:1.5}
 
+/* NORM METHOD PICKER */
+.norm-methods{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto;padding-right:6px}
+.norm-method{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s}
+.norm-method:hover{border-color:var(--amber);background:var(--amber-bg)}
+.norm-method.on{border-color:var(--amber);background:var(--amber-bg)}
+.norm-method input[type=radio]{accent-color:var(--amber);margin-top:2px;flex-shrink:0}
+.nm-body{flex:1;min-width:0}
+.nm-name{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.3}
+.norm-method.on .nm-name{color:var(--amber)}
+.nm-desc{font-size:11px;color:var(--text3);line-height:1.4;margin-top:1px}
+
+/* NORM PARAMS */
+.norm-params{margin-top:10px;padding:10px;background:var(--amber-bg);border:1px solid rgba(245,124,0,.3);border-radius:var(--r)}
+.np-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.np-row:last-child{margin-bottom:0}
+.np-lbl{font-size:11.5px;font-weight:500;color:var(--text2)}
+.np-input{background:#fff;border:1px solid rgba(245,124,0,.35);border-radius:var(--r);padding:5px 8px;font-size:12px;font-family:var(--mono);color:var(--text);width:90px;text-align:right}
+.np-input:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,124,0,.15)}
+
 /* RULES LIST */
 .rules-area{border-top:1px solid var(--border);background:var(--bg3)}
 .rules-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;font-size:13px;font-weight:600;color:var(--text);transition:color .12s}
 .rules-toggle:hover{color:var(--accent2)}
+.rules-delete-all{color:var(--red);border:1px solid rgba(211,47,47,.3);background:#fff}
+.rules-delete-all:hover{background:var(--red-bg);border-color:var(--red)}
 .rules-table-wrap{padding:0 16px 14px;overflow-x:auto}
 .rt{width:100%;border-collapse:collapse;font-size:12px}
 .rt th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);background:#f5f5f5}
@@ -277,7 +448,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .qa-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid #f0f0f0;background:var(--bg4);flex-wrap:wrap}
 .qa-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);white-space:nowrap;flex-shrink:0}
 .qa-btns{display:flex;gap:4px;flex-wrap:wrap}
-.qa-btn{padding:4px 12px;border-radius:var(--r-pill);border:1px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.qa-btn{padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s;white-space:nowrap}
 .qa-btn:hover{background:var(--bg4);border-color:var(--accent)}
 .qa-btn.qa-ho{background:var(--accent-light);border-color:rgba(var(--accent-rgb),.3);color:var(--accent2)}
 .qa-btn.qa-rm{background:var(--amber-bg);border-color:rgba(245,124,0,.3);color:var(--amber)}
@@ -287,7 +458,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .qa-btn.qa-bs{background:var(--amber-bg);border-color:rgba(245,124,0,.3);color:var(--amber)}
 .qa-btn.qa-sku{background:var(--accent-light);border-color:rgba(var(--accent-rgb),.3);color:var(--accent2)}
 .qa-btn.on{box-shadow:0 0 0 2px currentColor;opacity:1}
-.qa-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+.qa-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px}
 .qa-hint{font-size:11px;color:var(--text3);margin-left:auto;font-style:italic}
 
 /* PAGINATION + DATA CONTROLS */
@@ -331,13 +502,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .mx .orgh{z-index:auto;position:static}
 .matrix-scroll{isolation:isolate}
 
-/* SELECTION HIGHLIGHT — axis-based intersection */
-.dc.sel-cross{background:var(--accent-light)!important;border-color:var(--accent)!important}
-.dc.sel-row{background:rgba(var(--accent-rgb),.06)!important;border-left:2px solid var(--accent)!important}
-.dc.sel-col{background:rgba(var(--accent-rgb),.06)!important;border-top:2px solid var(--accent)!important}
+/* SELECTION HIGHLIGHT — Excel-clean (accent outlines, default bg preserved).
+   Uses both inset box-shadow AND a darker outline overlay so the selection stays visible over
+   colored cell backgrounds (.has-norm amber, .has-tech accent-light, .has-both gradient). */
+.dc.sel-row{box-shadow:inset 0 2px 0 var(--accent),inset 0 -2px 0 var(--accent),inset 0 0 0 1px rgba(0,0,0,.06)}
+.dc.sel-col{box-shadow:inset 2px 0 0 var(--accent),inset -2px 0 0 var(--accent),inset 0 0 0 1px rgba(0,0,0,.06)}
+.dc.sel-cross{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 0 3px rgba(255,255,255,.55)}
+/* On already-tinted cells, add a faint dark outline so the cyan selection edges don't blur into the bg */
+.dc.has-norm.sel-row,.dc.has-tech.sel-row,.dc.has-both.sel-row,
+.dc.has-norm.sel-col,.dc.has-tech.sel-col,.dc.has-both.sel-col,
+.dc.has-norm.sel-cross,.dc.has-tech.sel-cross,.dc.has-both.sel-cross{outline:1px solid rgba(0,0,0,.15);outline-offset:-1px}
 .srch-match{background:var(--amber-bg);color:var(--amber)!important;border-radius:3px;padding:0 3px;font-weight:600}
-.sel-hdr{background:var(--accent-light)!important;color:var(--accent2)!important}
-.orgh-inner.sel-hdr{background:var(--accent-light)!important;color:var(--accent2)!important}
+.skuh-inner.sel-hdr,
+.orgh-inner.sel-hdr{background:var(--accent)!important;color:#fff!important;font-weight:600}
+.orgh-inner.sel-hdr .level-tag{background:rgba(255,255,255,.22)!important;color:#fff!important}
+.orgh-inner.sel-hdr .hdr-name{color:#fff!important}
 
 /* TECH PANEL AXIS VIEW */
 .tp-axis-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:4px}
@@ -348,8 +527,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sel-axis-pill:hover{border-color:var(--red);color:var(--red)}
 .sp-x{font-size:12px;color:var(--text3)}
 
-.mx-compact .dc{height:26px}.mx-compact .orgh-inner{min-height:26px}.mx-compact .skuh{height:26px}
-.mx-mini .dc{height:22px}.mx-mini .dc .dc-text{font-size:10px}.mx-mini .orgh-inner{min-height:22px;font-size:11px}.mx-mini .skuh{height:22px}.mx-mini .skuh-inner{font-size:10px}
+.mx-compact .dc{height:34px}.mx-compact .orgh-inner{min-height:34px}.mx-compact .skuh{height:26px}
+.mx-mini .dc{height:28px}.mx-mini .dc .dc-badge{font-size:9px;padding:1px 5px}.mx-mini .orgh-inner{min-height:28px}.mx-mini .skuh{height:22px}.mx-mini .skuh-inner{font-size:10px}
 
 /* TOAST */
 .toast{position:fixed;bottom:18px;right:18px;background:#fff;border:1px solid var(--green);border-radius:var(--r2);padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);box-shadow:var(--shadow-lg);z-index:9999;transform:translateY(60px);opacity:0;transition:all .28s}
@@ -366,10 +545,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .pm-badge{margin-right:12px;padding:3px 8px;border-radius:var(--r);font-size:11px;font-weight:600}
 
 /* Dataset badge */
-.ds-badge{position:fixed;top:64px;right:10px;z-index:9997;padding:4px 12px;border-radius:var(--r);background:var(--amber-bg);border:1px solid rgba(245,124,0,.3);color:var(--amber);font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.3px}
 
 /* Scenario buttons */
-.scenario-bar{padding:10px 16px;background:var(--green-bg);border-bottom:1px solid rgba(56,142,60,.2);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
 .sc-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--green);white-space:nowrap}
 .sc-btn{padding:4px 12px;border-radius:var(--r);border:1px solid rgba(56,142,60,.3);background:#fff;color:var(--green);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s}
 .sc-btn:hover{background:var(--green-bg);border-color:var(--green)}
@@ -410,127 +587,85 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <!-- MAIN CONTENT -->
 <div class="content" id="mainContent">
 
-  <!-- CHART SECTION -->
-  <div class="sc" id="sec-chart">
-    <div class="sc-head">
-      <div class="sc-title">
-        <span class="sc-icon ic-b"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,9 4,5 7,7 10,2 12,4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-        Historical Demand Data
-      </div>
-      <div class="sc-ctrl">
-        <span class="badge b-a">⚠ 7 Outliers</span>
-        <button class="btn btn-ghost btn-sm" onclick="toggleOut(this)">Hide Outliers</button>
-        <div class="chips">
-          <span class="chip on" onclick="setRng(this,'13w')">13W</span>
-          <span class="chip" onclick="setRng(this,'26w')">26W</span>
-          <span class="chip" onclick="setRng(this,'52w')">52W</span>
-        </div>
-      </div>
-    </div>
-    <div class="sc-body">
-      <div class="chart-wrap"><canvas id="demandChart"></canvas></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:9px;">
-        <div class="legend">
-          <div class="leg-item"><div class="leg-dot" style="background:#25A9E0"></div>Actual</div>
-          <div class="leg-item"><div class="leg-dot" style="background:rgba(37,169,224,.4);border:1px dashed #25A9E0"></div>Smoothed</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Outlier</div>
-        </div>
-        <span style="font-size:11px;color:var(--text3)">Click outlier point to include/exclude</span>
-      </div>
-      <div class="ctrl-row">
-        <div class="ctrl-grp"><span class="ctrl-lbl">Smoothing:</span>
-          <div class="pill">
-            <button class="on" onclick="setSm(this,'none')">None</button>
-            <button onclick="setSm(this,'ma')">Moving Avg</button>
-            <button onclick="setSm(this,'exp')">Exp. Smooth</button>
-          </div>
-        </div>
-        <div class="ctrl-grp" id="smWin" style="display:none"><span class="ctrl-lbl">Window:</span>
-          <div class="range-g"><input type="range" min="2" max="8" value="4" oninput="document.getElementById('smV').textContent=this.value+' wk'"><span class="rv" id="smV">4 wk</span></div>
-        </div>
-        <div class="ctrl-grp"><span class="ctrl-lbl">Threshold:</span>
-          <div class="pill"><button onclick="setP(this)">1.5σ</button><button class="on" onclick="setP(this)">2σ</button><button onclick="setP(this)">3σ</button></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- NORMALIZATION SECTION -->
-  <div class="sc" id="sec-norm">
-    <div class="sc-head">
-      <div class="sc-title">
-        <span class="sc-icon ic-a"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><line x1="1" y1="6.5" x2="12" y2="6.5" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
-        Data Normalization &amp; Interpolation
-      </div>
-      <div class="sc-ctrl">
-        <button class="btn btn-ghost btn-sm" id="normBtn" onclick="toggleNorm()">Collapse ▴</button>
-      </div>
-    </div>
-    <div id="normBody" class="sc-body">
-      <div style="display:flex;gap:18px;flex-wrap:wrap">
-        <div style="flex:1;min-width:250px">
-          <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px">Normalization Method</div>
-          <div class="ngrid">
-            <div class="ncard sel" onclick="pickN(this)"><div class="ncard-ck">✓</div><div class="ncard-t">Min-Max</div><div class="ncard-d">Scale to [0,1]. Good for bounded distributions.</div></div>
-            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Z-Score</div><div class="ncard-d">Mean=0, Std=1. Handles outliers better.</div></div>
-            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Log Transform</div><div class="ncard-d">Reduces right skew for multiplicative patterns.</div></div>
-            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">Robust Scaler</div><div class="ncard-d">Uses median &amp; IQR. Resilient to outliers.</div></div>
-            <div class="ncard" onclick="pickN(this)"><div class="ncard-t">None</div><div class="ncard-d">Use raw values if already normalised.</div></div>
-          </div>
-        </div>
-        <div style="flex:1;min-width:250px">
-          <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px">Interpolation (Missing Data)</div>
-          <div class="ngrid">
-            <div class="ncard sel" onclick="pickI(this)"><div class="ncard-ck">✓</div><div class="ncard-t">Linear</div><div class="ncard-d">Straight line between known points.</div></div>
-            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Spline</div><div class="ncard-d">Smooth cubic curves for seasonal demand.</div></div>
-            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Forward Fill</div><div class="ncard-d">Carry last known value forward.</div></div>
-            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">Seasonal Avg</div><div class="ncard-d">Same-period average from prior years.</div></div>
-            <div class="ncard" onclick="pickI(this)"><div class="ncard-t">KNN</div><div class="ncard-d">K-nearest neighbour imputation.</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TECHNIQUE MATRIX SECTION -->
+  <!-- RULE MATRIX SECTION -->
   <div class="sc" id="sec-matrix" style="overflow:hidden;display:flex;flex-direction:column;min-height:500px">
-    <div class="sc-head">
-      <div class="sc-title">
+    <!-- SMART / QUICK SELECTION ROW — Filters title + toolbar combined into one row -->
+    <div class="smart-sel-bar">
+      <span class="sc-title ssb-title">
         <span class="sc-icon ic-p"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.4"/></svg></span>
-        Technique Matrix — Org × SKU Hierarchy
+        Bulk Select
+      </span>
+      <span class="ssb-vsep"></span>
+      <span class="mtbar-lbl ssb-strong">Select:</span>
+      <button class="qa-btn qa-ho" id="qaHO" onclick="selectByOrgLevel(0)">HO</button>
+      <button class="qa-btn qa-rm" id="qaRM" onclick="selectByOrgLevel(1)">RM</button>
+      <span class="qa-sep"></span>
+      <button class="qa-btn qa-cat" id="qaCat" onclick="selectBySkuLevel(0)">Category</button>
+      <button class="qa-btn qa-br" id="qaBrand" onclick="selectBySkuLevel(1)">Brand</button>
+      <button class="qa-btn qa-bs" id="qaBS" onclick="selectBySkuLevel(2)">Base SKU</button>
+      <div class="ssb-badges">
+        <span class="badge b-b" id="normRulesBadge">0 Norm</span>
+        <span class="badge b-g" id="techRulesBadge">0 Tech</span>
       </div>
-      <div class="sc-ctrl">
-        <span class="badge b-g" id="ruleBadge">3 Rules</span>
-        <span class="badge b-a" id="confBadge">1 Conflict</span>
-      </div>
+      <button class="btn btn-ghost btn-sm ssb-clear" onclick="clearSel()">✕ Clear</button>
     </div>
 
-    <!-- TOOLBAR ROW 1: Navigation + View Controls -->
-    <div class="mtbar">
-      <div class="search-box">
-        <svg viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/><line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <input type="text" id="searchInput" placeholder="Search org / SKU…" oninput="handleSearch(this.value)">
+    <!-- SELECTION MODE TOGGLE — swap between dropdown picker and matrix picker -->
+    <div class="sel-mode-bar">
+      <span class="sel-mode-lbl">Selection Mode:</span>
+      <div class="pill sel-mode-pill">
+        <button class="on" data-mode="normal" onclick="setSelectionMode(this,'normal')">Normal Selection</button>
+        <button data-mode="enhanced" onclick="setSelectionMode(this,'enhanced')">Enhanced Selection</button>
       </div>
-      <span class="mtbar-sep"></span>
+      <span class="sel-mode-hint" id="selModeHint">Use pivot dropdowns below to pick orgs &amp; SKUs</span>
+    </div>
+
+    <!-- PIVOT SELECTION — always-visible list panels (Org and SKU side by side) -->
+    <div class="pivot-bar">
+      <div class="pivot-row">
+        <span class="pivot-heading">Pivot Selection</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="clearSel()">✕ Clear Selection</button>
+      </div>
+      <div class="pivot-panels">
+        <div class="pivot-panel">
+          <label class="pivot-lbl">Organization</label>
+          <div class="pivot-pop pivot-pop-inline open" id="pivotPop-org"></div>
+        </div>
+        <div class="pivot-panel">
+          <label class="pivot-lbl">SKU</label>
+          <div class="pivot-pop pivot-pop-inline open" id="pivotPop-sku"></div>
+        </div>
+      </div>
+      <div id="pivotLabel" class="pivot-label"></div>
+    </div>
+
+    <!-- Matrix toolbar (Enhanced Selection mode only): filters that apply to the matrix view + legend -->
+    <div class="mtbar mtbar-slim">
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/><line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Fuzzy search…" aria-describedby="searchHint" oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape'){clearSearch();this.blur()}">
+          <span class="search-fuzzy-tag" title="Typo-tolerant, word-order independent">~</span>
+          <span class="search-clear" id="searchClear" role="button" tabindex="0" aria-label="Clear search" onclick="clearSearch()" style="display:none" title="Clear search">✕</span>
+        </div>
+        <div class="search-hint" id="searchHint">Typo-tolerant · word-order independent · matches Org &amp; SKU names</div>
+        <div class="search-status" id="searchStatus"></div>
+      </div>
       <div class="mtbar-grp">
-        <span class="mtbar-lbl">Org depth:</span>
+        <span class="mtbar-lbl">Org:</span>
         <div class="pill">
           <button onclick="setOrgDepth(this,1)">HO</button>
-          <button onclick="setOrgDepth(this,2)">RM</button>
-          <button class="on" onclick="setOrgDepth(this,3)">ASM</button>
+          <button class="on" onclick="setOrgDepth(this,2)">RM</button>
         </div>
       </div>
-      <span class="mtbar-sep"></span>
       <div class="mtbar-grp">
-        <span class="mtbar-lbl">SKU depth:</span>
+        <span class="mtbar-lbl">SKU:</span>
         <div class="pill">
           <button onclick="setSkuDepth(this,1)">Cat</button>
           <button onclick="setSkuDepth(this,2)">Brand</button>
-          <button onclick="setSkuDepth(this,3)">Base SKU</button>
-          <button class="on" onclick="setSkuDepth(this,4)">SKU</button>
+          <button class="on" onclick="setSkuDepth(this,3)">Base SKU</button>
         </div>
       </div>
-      <span class="mtbar-sep"></span>
       <div class="mtbar-grp">
         <span class="mtbar-lbl">Density:</span>
         <div class="pill dens-pill">
@@ -539,28 +674,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <button onclick="setDensity(this,'mini')">Mini</button>
         </div>
       </div>
-      <span class="mtbar-sep"></span>
-      <div class="mtbar-grp">
-        <span class="mtbar-lbl">Org Col Width:</span>
-        <div class="pill">
-          <button onclick="setOrgColWidth(this,90)">S</button>
-          <button onclick="setOrgColWidth(this,120)">M</button>
-          <button class="on" onclick="setOrgColWidth(this,140)">L</button>
-          <button onclick="setOrgColWidth(this,180)">XL</button>
-          <button onclick="setOrgColWidth(this,220)">XXL</button>
-        </div>
-      </div>
-      <span class="mtbar-sep"></span>
-      <div class="mtbar-grp">
-        <span class="mtbar-lbl">SKU Col Width:</span>
-        <div class="pill">
-          <button onclick="setSkuColWidth(this,60)">S</button>
-          <button class="on" onclick="setSkuColWidth(this,90)">M</button>
-          <button onclick="setSkuColWidth(this,130)">L</button>
-          <button onclick="setSkuColWidth(this,180)">XL</button>
-        </div>
-      </div>
-      <span class="mtbar-sep"></span>
       <div class="mtbar-grp">
         <span class="mtbar-lbl">Show:</span>
         <div class="pill">
@@ -569,47 +682,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <button onclick="setFilter(this,'empty')">No Rules</button>
         </div>
       </div>
-      <div class="legend-row">
+      <div class="legend-row" style="margin-left:auto">
         <div class="leg-sq"><div class="sq" style="background:var(--accent-light);border:1px solid var(--accent)"></div>HO</div>
         <div class="leg-sq"><div class="sq" style="background:var(--amber-bg);border:1px solid var(--amber)"></div>RM</div>
-        <div class="leg-sq"><div class="sq" style="background:var(--green-bg);border:1px solid var(--green)"></div>ASM</div>
+        <div class="leg-sq"><div class="sq" style="background:var(--purple-bg);border:1px solid var(--purple)"></div>Cat</div>
+        <div class="leg-sq"><div class="sq" style="background:var(--green-bg);border:1px solid var(--green)"></div>Brand</div>
       </div>
     </div>
 
-    <!-- TOOLBAR ROW 2: Quick Level-Assign Buttons -->
-    <div class="qa-bar">
-      <span class="qa-lbl">Quick Select:</span>
-      <div class="qa-btns">
-        <button class="qa-btn qa-ho" id="qaHO" onclick="selectByOrgLevel(0)" title="Select all cells for every HO node — assign one rule per HO">All HO</button>
-        <button class="qa-btn qa-rm" id="qaRM" onclick="selectByOrgLevel(1)" title="Select all cells for every RM node">All RM</button>
-        <button class="qa-btn qa-asm" id="qaASM" onclick="selectByOrgLevel(2)" title="Select all cells for every ASM node">All ASM</button>
-      </div>
-      <span class="qa-sep"></span>
-      <div class="qa-btns">
-        <button class="qa-btn qa-cat" id="qaCat" onclick="selectBySkuLevel(0)" title="Select all cells for every Category">All Category</button>
-        <button class="qa-btn qa-br" id="qaBrand" onclick="selectBySkuLevel(1)" title="Select all cells for every Brand">All Brand</button>
-        <button class="qa-btn qa-bs" id="qaBS" onclick="selectBySkuLevel(2)" title="Select all cells for every Base SKU">All Base SKU</button>
-        <button class="qa-btn qa-sku" id="qaSKU" onclick="selectBySkuLevel(3)" title="Select all cells for every SKU">All SKU</button>
-      </div>
-      <span class="qa-sep"></span>
-      <button class="qa-btn" style="background:transparent;color:var(--text3)" onclick="clearSel()">✕ Clear</button>
-      <span class="qa-hint" id="qaHint">Click a level button to select all rows/columns at that hierarchy level, then assign techniques →</span>
-    </div>
-
-
-    <!-- STRESS TEST SCENARIO BAR -->
-    <div class="scenario-bar">
-      <span class="sc-lbl">⚡ Stress Scenarios:</span>
-      <button class="sc-btn" onclick="runScenario('ho-cat')">HO × Category (5×8)</button>
-      <button class="sc-btn" onclick="runScenario('ho-brand')">HO × Brand (5×80)</button>
-      <button class="sc-btn" onclick="runScenario('rm-brand')">RM × Brand (20×80)</button>
-      <button class="sc-btn" onclick="runScenario('rm-basesku')">RM × Base SKU (20×800)</button>
-      <button class="sc-btn" onclick="runScenario('asm-cat')">ASM × Category (1000×8)</button>
-      <button class="sc-btn" onclick="runScenario('full-leaf')">Full Leaf ⚠ (1000×8000)</button>
-      <button class="sc-btn" style="border-color:var(--border2);color:var(--text3)" onclick="runScenario('reset')">↺ Reset</button>
-    </div>
-    <!-- MATRIX + TECH PANEL -->
-    <div class="matrix-body" style="flex:1;overflow:hidden;display:flex">
+    <!-- MATRIX (no right sidebar — editors moved below per xlsx layout) -->
+    <div class="matrix-body" style="flex:0 0 auto;max-height:55vh;overflow:hidden;display:flex">
       <!-- TWO-PANEL FREEZE: left panel = frozen org cols, right panel = SKU headers + data -->
       <div class="frozen-left" id="frozenLeft">
         <table class="mx-frozen" id="frozenTable"></table>
@@ -617,23 +699,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="matrix-scroll" id="matrixScroll" style="flex:1;overflow:auto">
         <table class="mx" id="matrixTable"></table>
       </div>
-
-      <!-- TECHNIQUE PANEL -->
-      <div class="tech-panel" id="techPanel">
-        <div class="tp-head">
-          <div class="tp-title">Assign Techniques</div>
-          <div class="tp-sel-info" id="tpInfo">Select cells to assign</div>
-        </div>
-        <div class="tp-body" id="tpBody">
-          <div class="no-sel-msg">
-            <div class="no-sel-icon">⊞</div>
-            <div class="no-sel-t">Click cells or header rows/columns in the matrix to select, then assign techniques here.</div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- RULES LIST -->
     <!-- CELL COUNT WARNING BANNER -->
     <div id="cellCountWarn" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:var(--amber-bg);border-top:1px solid rgba(245,124,0,.2);font-size:12px;color:var(--amber);font-weight:500">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1L12 11H1L6.5 1Z" stroke="currentColor" stroke-width="1.4"/><line x1="6.5" y1="5" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor"/></svg>
@@ -641,15 +708,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <span style="margin-left:auto;color:var(--text3)">Tip: Use Compact/Mini density and collapse levels to reduce cell count</span>
     </div>
 
-    <!-- PAGINATION BAR — rows AND columns -->
+    <!-- PAGINATION BAR — rows AND columns (moved to sit directly under the matrix) -->
     <div class="mx-ctrl-bar" id="mxCtrlBar">
       <!-- Row pagination -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span class="pg-info">Rows <b id="pgRowStart">1</b>–<b id="pgRowEnd">15</b> / <b id="pgRowTotal">0</b></span>
+        <span class="pg-info" id="pgRowInfo">Rows <b id="pgRowStart">1</b>–<b id="pgRowEnd">15</b> / <b id="pgRowTotal">0</b></span>
         <div class="pg-ctrl">
-          <button class="pg-btn" id="pgPrev" onclick="changePage(-1)" disabled>‹</button>
+          <button class="pg-btn" id="pgPrev" aria-label="Previous row page" title="Previous page" onclick="changePage(-1)" disabled>‹</button>
           <div class="pg-nums" id="pgNums"></div>
-          <button class="pg-btn" id="pgNext" onclick="changePage(1)">›</button>
+          <button class="pg-btn" id="pgNext" aria-label="Next row page" title="Next page" onclick="changePage(1)">›</button>
         </div>
         <span class="pg-size-label">Rows:
           <select onchange="setPageSize(+this.value)">
@@ -663,11 +730,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
       <!-- Column pagination -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span class="pg-info">Cols <b id="pgColStart">1</b>–<b id="pgColEnd">50</b> / <b id="pgColTotal">0</b></span>
+        <span class="pg-info" id="pgColInfo">Cols <b id="pgColStart">1</b>–<b id="pgColEnd">50</b> / <b id="pgColTotal">0</b></span>
         <div class="pg-ctrl">
-          <button class="pg-btn" id="pgColPrev" onclick="changeColPage(-1)" disabled>‹</button>
+          <button class="pg-btn" id="pgColPrev" aria-label="Previous column page" title="Previous page" onclick="changeColPage(-1)" disabled>‹</button>
           <div class="pg-nums" id="pgColNums"></div>
-          <button class="pg-btn" id="pgColNext" onclick="changeColPage(1)">›</button>
+          <button class="pg-btn" id="pgColNext" aria-label="Next column page" title="Next page" onclick="changeColPage(1)">›</button>
         </div>
         <span class="pg-size-label">Cols:
           <select onchange="setColPageSize(+this.value)">
@@ -678,30 +745,77 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </div>
     </div>
 
-    <!-- RULES LIST -->
+    <!-- SELECTED VALUE SUMMARY — axis chips + clear -->
+    <div class="sel-summary-bar" id="selSummaryBar">
+      <span class="sel-summary-heading">Selected Value</span>
+      <div class="sel-summary-grp sel-summary-grp-chips">
+        <span class="sel-summary-lbl">ORG ROWS <span class="sel-summary-count" id="selSummaryOrgCount">(0)</span></span>
+        <div class="sel-summary-chips" id="selSummaryOrgChips"><span class="sel-summary-empty">None</span></div>
+      </div>
+      <div class="sel-summary-x">×</div>
+      <div class="sel-summary-grp sel-summary-grp-chips">
+        <span class="sel-summary-lbl">SKU COLS <span class="sel-summary-count" id="selSummarySkuCount">(0)</span></span>
+        <div class="sel-summary-chips" id="selSummarySkuChips"><span class="sel-summary-empty">None</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm sel-summary-clear" id="selSummaryClear" onclick="clearSel()" style="display:none">✕ Clear Selection</button>
+      <div class="sel-summary-tip" id="selSummaryTip">💡 Pick an Org node and a SKU node above to define a rule for that intersection.</div>
+    </div>
+
+    <!-- RULE SELECTOR: Technique Selection + Normalization Method side by side -->
+    <div class="rule-editor-bar">
+      <div class="rule-editor-meta">
+        <div class="rule-editor-title" id="tpTitle">Rule Selector</div>
+        <div class="tp-sel-info" id="tpInfo">Select cells to assign rules</div>
+      </div>
+    </div>
+    <div class="tp-body" id="tpBody"></div>
+
+    <!-- APPLIED RULES — Technique + Normalization side by side -->
     <div class="rules-area">
       <div class="rules-toggle" onclick="toggleRules()">
-        <span>▸ &nbsp;Defined Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">3 rules</span></span>
+        <span>▸ &nbsp;Applied Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">0 rules</span></span>
         <span id="rulesToggleIcon" style="font-size:11px;color:var(--text3)">Show ▾</span>
       </div>
       <div id="rulesBody" style="display:none">
         <div class="rules-table-wrap">
-          <table class="rt" id="rulesTable"></table>
+          <div id="rulesTable"></div>
         </div>
       </div>
     </div>
 
   </div><!-- /matrix section -->
 
+  <!-- INTERPOLATION (MISSING DATA) — separate section at bottom -->
+  <div class="sc" id="sec-interp">
+    <div class="sc-head">
+      <div class="sc-title">
+        <span class="sc-icon ic-a"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><line x1="1" y1="6.5" x2="12" y2="6.5" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2,2"/><circle cx="3" cy="6.5" r="1.2" fill="currentColor"/><circle cx="10" cy="6.5" r="1.2" fill="currentColor"/></svg></span>
+        Interpolation (Missing Data)
+      </div>
+      <div class="sc-ctrl">
+        <span class="badge b-a" id="interpSelBadge" title="Active interpolation method">Linear</span>
+      </div>
+    </div>
+    <div class="sc-body">
+      <div style="font-size:11.5px;color:var(--text3);margin-bottom:10px;font-style:italic">Applies globally to every cell with missing historical data.</div>
+      <div class="ngrid" role="radiogroup" aria-label="Interpolation method">
+        <div class="ncard sel" data-interp="linear"  role="radio" aria-checked="true"  tabindex="0" onclick="pickInterp(this,'linear')"   title="Best for steady, slow-trending demand (default)"><div class="ncard-ck">✓</div><div class="ncard-t">Linear</div><div class="ncard-d">Straight line between known points.</div></div>
+        <div class="ncard"     data-interp="spline" role="radio" aria-checked="false" tabindex="0" onclick="pickInterp(this,'spline')"   title="Use when the series has smooth seasonal curves"><div class="ncard-t">Spline</div><div class="ncard-d">Smooth cubic curves for seasonal demand.</div></div>
+        <div class="ncard"     data-interp="ffill"  role="radio" aria-checked="false" tabindex="0" onclick="pickInterp(this,'ffill')"    title="Conservative — keeps last known value; risk of staleness"><div class="ncard-t">Forward Fill</div><div class="ncard-d">Carry last known value forward.</div></div>
+        <div class="ncard"     data-interp="seasonal" role="radio" aria-checked="false" tabindex="0" onclick="pickInterp(this,'seasonal')" title="Requires at least one full season of history"><div class="ncard-t">Seasonal Avg</div><div class="ncard-d">Same-period average from prior years.</div></div>
+        <div class="ncard"     data-interp="knn"    role="radio" aria-checked="false" tabindex="0" onclick="pickInterp(this,'knn')"      title="Best when nearby SKUs share a similar demand pattern"><div class="ncard-t">KNN</div><div class="ncard-d">K-nearest neighbour imputation.</div></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /content -->
 </div><!-- /main -->
 
 <!-- DATASET BADGE -->
-<div class="ds-badge" id="dsBadge">v3 · 1 000 ASM × 8 000 SKU</div>
 
 <!-- PERF MONITOR BAR -->
 <div class="perf-bar" id="perfBar">
-  <div class="pm-seg">Dataset: <b id="pmDataset">1 000 ASM × 8 000 SKU = 8 000 000 cells</b></div>
+  <div class="pm-seg">Dataset: <b id="pmDataset">20 RM × 800 Base SKU = 16 000 cells</b></div>
   <div class="pm-seg">Visible: <b id="pmVisible">—</b></div>
   <div class="pm-seg">Render: <b id="pmRender">—</b></div>
   <div class="pm-seg">ruleIndex: <b id="pmRuleIdx">—</b></div>
@@ -716,14 +830,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <script>
 
 // ============================================================
-// HIERARCHY DATA  —  LARGE DATASET (v3 stress test)
-// 5 HO × 4 RM × 50 ASM  =  1 000 org leaves
-// 8 Cat × 10 Brand × 10 BaseSKU × 10 SKU  =  8 000 SKU leaves
+// HIERARCHY DATA
+// 5 HO × 4 RM  =  20 org leaves
+// 8 Cat × 10 Brand × 10 BaseSKU  =  800 SKU leaves
 // ============================================================
-const ORG_LEVELS = ['HO','RM','ASM'];
-const SKU_LEVELS = ['Category','Brand','Base SKU','SKU'];
-const ORG_DEPTH  = 3;
-const SKU_DEPTH  = 4;
+const ORG_LEVELS = ['HO','RM'];
+const SKU_LEVELS = ['Category','Brand','Base SKU'];
+const ORG_DEPTH  = 2;
+const SKU_DEPTH  = 3;
 
 const ORG_REGIONS   = ['North','South','East','West','Central'];
 const SKU_CATS      = ['Beverages','Snacks','Dairy','Frozen','Personal Care','Home Care','Health','Baby'];
@@ -731,7 +845,6 @@ const BRAND_NAMES   = ['AquaLife','FreshCo','NovaBrand','PeakLine','SunGold',
                        'EcoPlus','ProVita','NatureSel','TrueBlend','MaxVal'];
 const PRODUCT_TYPES = ['Regular','Premium','Lite','Organic','Economy',
                        'Family','Sport','Classic','Plus','Select'];
-const SKU_SUFFIXES  = ['330ml','500ml','750ml','1L','1.5L','250g','500g','1kg','2kg','Pack'];
 
 function makeNode(id,name,children=[],expanded=false){
   return {id,name,children,expanded};
@@ -743,11 +856,8 @@ function buildOrgTree(){
     const rmNodes = Array.from({length:4},(_,ri)=>{
       const rmId=`rm${hi*4+ri+1}`;
       const rmName=`RM-${reg}-${ri+1}`;
-      const asmNodes = Array.from({length:50},(_,ai)=>{
-        const asmIdx = hi*200 + ri*50 + ai + 1;
-        return makeNode(`asm${asmIdx}`,`ASM-${reg[0]}${hi*4+ri+1}-${String(ai+1).padStart(2,'0')}`);
-      });
-      return makeNode(rmId, rmName, asmNodes, false);
+      // ASM leaf level removed — RM is now the deepest level
+      return makeNode(rmId, rmName, [], false);
     });
     const hoExpanded = hi===0; // only first HO open by default
     return makeNode(`ho${hi+1}`, `HO-${reg}`, rmNodes, hoExpanded);
@@ -765,11 +875,8 @@ function buildSkuTree(){
         const bsIdx  = ci*100 + bi*10 + bsi + 1;
         const bsId   = `bs${bsIdx}`;
         const bsName = `${BRAND_NAMES[bi]}-${PRODUCT_TYPES[bsi]}`;
-        const skuNodes = Array.from({length:10},(_,si)=>{
-          const skuIdx  = (bsIdx-1)*10 + si + 1;
-          return makeNode(`sku${skuIdx}`, `${bsName}-${SKU_SUFFIXES[si]}`);
-        });
-        return makeNode(bsId, bsName, skuNodes, false);
+        // SKU leaf level removed — Base SKU is now the deepest level
+        return makeNode(bsId, bsName, [], false);
       });
       return makeNode(brandId, brandName, bsNodes, false);
     });
@@ -834,13 +941,12 @@ function runScenario(name){
     }
     root.children.forEach(c=>set(c,0));
   }
-
   collapseAll_(orgRoot); collapseAll_(skuRoot);
   orgRoot.expanded=true; skuRoot.expanded=true;
 
   // depth N means: expand N levels so level-N nodes become the visible leaves
-  // org:  0=HO leaves, 1=RM leaves, 2=ASM leaves
-  // sku:  0=Category leaves, 1=Brand leaves, 2=BaseSKU leaves, 3=SKU leaves
+  // org: 0=HO leaves, 1=RM leaves (leaf — no deeper)
+  // sku: 0=Category leaves, 1=Brand leaves, 2=BaseSKU leaves (leaf — no deeper)
   if(name==='reset'){
     expandToDepth(orgRoot,1); expandToDepth(skuRoot,1);
     currentPage=0; currentColPage=0; pageSize=15; colPageSize=50;
@@ -853,12 +959,6 @@ function runScenario(name){
   } else if(name==='rm-basesku'){
     expandToDepth(orgRoot,1); expandToDepth(skuRoot,2);   // 20 × 800 = 16 000 (paginated)
     pageSize=15; colPageSize=50;
-  } else if(name==='asm-cat'){
-    expandToDepth(orgRoot,2); expandToDepth(skuRoot,0);   // 1000 × 8 = 8 000 (paginated)
-    pageSize=15; colPageSize=8;
-  } else if(name==='full-leaf'){
-    expandToDepth(orgRoot,2); expandToDepth(skuRoot,3);   // 1000 × 8000 (paginated 15×50)
-    pageSize=15; colPageSize=50;
   }
   invalidateLeafCache(); currentPage=0; currentColPage=0;
   checkCellCountGuard(); renderMatrix();
@@ -866,47 +966,441 @@ function runScenario(name){
 }
 
 // ============================================================
-// INITIAL RULES — seeded across hierarchy levels
+// PIVOT (top selector) — scopes both matrix and chart
+// Multi-select via checkbox dropdown popover
 // ============================================================
-const ruleOrgIndex = new Map();
-const ruleSkuIndex = new Map();
+function _afterPivotChange(){
+  // Pivot dropdown now writes to the same selectedOrgNodes/selectedSkuNodes state
+  // that matrix clicks write to. So after a pivot change, we treat it as a selection
+  // change: update chart sync, matrix highlighting, chip bar, rule editor.
+  chartOrgId = selectedOrgNodes.size ? [...selectedOrgNodes][0] : 'org-root';
+  chartSkuId = selectedSkuNodes.size ? [...selectedSkuNodes][0] : 'sku-root';
+  if(typeof refreshChartData==='function'){ refreshChartData(); try{ buildChart(); }catch(e){} }
+  populateChartSelectors && populateChartSelectors();
+  // Matrix re-render is needed so the sel-row/sel-col/sel-cross classes pick up the change.
+  // Using updateSelection (cheaper — just flips classes) instead of full renderMatrix.
+  if(typeof updateSelection==='function') updateSelection();
+  else renderMatrix();
+  updatePivotLabel();
+  updatePivotButtonLabels();
+  // Refresh any open pivot popover so checkbox state reflects current selection
+  ['org','sku'].forEach(which=>{
+    const pop = document.getElementById(`pivotPop-${which}`);
+    if(pop && pop.classList.contains('open') && typeof refreshPivotPopover==='function') refreshPivotPopover(which);
+  });
+}
+// Dropdown checkbox handlers — behave EXACTLY like clicking a matrix header.
+// Just add/remove from the shared selection Set and refresh highlighting + editor + summary bar.
+// No matrix re-render (matrix view doesn't narrow based on selection anymore).
+function togglePivotOrg(id, checked){
+  if(checked){
+    // Dedupe: adding a node removes its already-selected descendants (keeps selection canonical)
+    const node = nodeMap[id]; if(!node) return;
+    selectedOrgNodes.forEach(existingId=>{
+      const existing = nodeMap[existingId];
+      if(!existing || existing===node) return;
+      let n = existing;
+      while(n && n!==orgRoot){ if(n===node){ selectedOrgNodes.delete(existingId); break; } n=n.parent; }
+    });
+    selectedOrgNodes.add(id);
+  } else {
+    selectedOrgNodes.delete(id);
+  }
+  _afterSelectionChange();
+}
+function togglePivotSku(id, checked){
+  if(checked){
+    const node = nodeMap[id]; if(!node) return;
+    selectedSkuNodes.forEach(existingId=>{
+      const existing = nodeMap[existingId];
+      if(!existing || existing===node) return;
+      let n = existing;
+      while(n && n!==skuRoot){ if(n===node){ selectedSkuNodes.delete(existingId); break; } n=n.parent; }
+    });
+    selectedSkuNodes.add(id);
+  } else {
+    selectedSkuNodes.delete(id);
+  }
+  _afterSelectionChange();
+}
+function clearPivotOrg(){ selectedOrgNodes.clear(); _afterSelectionChange(); }
+function clearPivotSku(){ selectedSkuNodes.clear(); _afterSelectionChange(); }
+
+// Shared "after selection change" — same end state whether triggered by matrix click or dropdown
+function _afterSelectionChange(){
+  updateHint && updateHint();
+  updateSelection();                // highlights cells/headers + re-renders rule editor + Selected Value bar
+  updatePivotButtonLabels();
+  // Panels are always visible — refresh both so checkbox state reflects the new selection
+  ['org','sku'].forEach(which=>{
+    const pop = document.getElementById(`pivotPop-${which}`);
+    if(pop && typeof refreshPivotPopover==='function') refreshPivotPopover(which);
+  });
+}
+
+// Legacy single-select setters — clear + set one
+function setPivotOrg(id){
+  pivotOrgIds.clear();
+  if(id && id!=='org-root') pivotOrgIds.add(id);
+  _afterPivotChange();
+  rebuildPivotDropdowns();
+}
+function setPivotSku(id){
+  pivotSkuIds.clear();
+  if(id && id!=='sku-root') pivotSkuIds.add(id);
+  _afterPivotChange();
+  rebuildPivotDropdowns();
+}
+function resetPivot(){
+  pivotOrgIds.clear(); pivotSkuIds.clear();
+  _afterPivotChange();
+  rebuildPivotDropdowns();
+}
+
+function updatePivotLabel(){
+  const lbl = document.getElementById('pivotLabel');
+  if(!lbl) return;
+  // The Selected Value chip bar already shows the current selection with chips,
+  // so this label is redundant. Keep it empty (or could be repurposed later).
+  lbl.innerHTML = '';
+}
+
+// Update the pivot button labels (shown on the closed buttons)
+function updatePivotButtonLabels(){
+  const oBtn = document.getElementById('pivotOrgBtn');
+  const sBtn = document.getElementById('pivotSkuBtn');
+  if(oBtn){
+    if(selectedOrgNodes.size===0) oBtn.innerHTML = `<span class="pivot-btn-lbl" style="color:var(--text-hint)">Select organizations…</span> <span class="pivot-btn-caret">▾</span>`;
+    else if(selectedOrgNodes.size===1){
+      const n = nodeMap[[...selectedOrgNodes][0]];
+      oBtn.innerHTML = `<span class="pivot-btn-lbl">[${ORG_LEVELS[n.level]}] ${n.name}</span> <span class="pivot-btn-caret">▾</span>`;
+    }
+    else oBtn.innerHTML = `<span class="pivot-btn-lbl">${selectedOrgNodes.size} org nodes selected</span> <span class="pivot-btn-caret">▾</span>`;
+  }
+  if(sBtn){
+    if(selectedSkuNodes.size===0) sBtn.innerHTML = `<span class="pivot-btn-lbl" style="color:var(--text-hint)">Select SKUs…</span> <span class="pivot-btn-caret">▾</span>`;
+    else if(selectedSkuNodes.size===1){
+      const n = nodeMap[[...selectedSkuNodes][0]];
+      sBtn.innerHTML = `<span class="pivot-btn-lbl">[${SKU_LEVELS[n.level]}] ${n.name}</span> <span class="pivot-btn-caret">▾</span>`;
+    }
+    else sBtn.innerHTML = `<span class="pivot-btn-lbl">${selectedSkuNodes.size} sku nodes selected</span> <span class="pivot-btn-caret">▾</span>`;
+  }
+}
+
+// Build checkbox popover content (lazy — rebuilt on open)
+// Per-popover local state (search query, depth, filter mode) — separate from global search
+const pivotPopState = {
+  org: { query:'', depth:2, filter:'all' },
+  sku: { query:'', depth:2, filter:'all' }
+};
+
+function buildPivotPopover(which){
+  const isOrg = which==='org';
+  const root = isOrg ? orgRoot : skuRoot;
+  const levels = isOrg ? ORG_LEVELS : SKU_LEVELS;
+  const set = isOrg ? pivotOrgIds : pivotSkuIds;
+  const toggleFn = isOrg ? 'togglePivotOrg' : 'togglePivotSku';
+  const clearFn = isOrg ? 'clearPivotOrg' : 'clearPivotSku';
+  const state = pivotPopState[which];
+  const maxDepthAllowed = isOrg ? ORG_DEPTH : SKU_DEPTH;
+
+  // Toolbar row 1: Search + per-axis clear
+  let html = `<div class="pivot-pop-toolbar">
+    <div class="search-box" style="min-width:0;flex:1;padding:3px 10px">
+      <svg viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/><line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input type="text" value="${state.query.replace(/"/g,'&quot;')}" placeholder="Fuzzy search ${isOrg?'orgs':'SKUs'}…" oninput="setPivotPopSearch('${which}',this.value)" onclick="event.stopPropagation()" onkeydown="if(event.key==='Escape'){setPivotPopSearch('${which}','');this.blur();event.stopPropagation()}else{event.stopPropagation()}" autocomplete="off">
+      ${state.query?`<span class="search-clear" role="button" tabindex="0" aria-label="Clear search" style="display:flex" onclick="setPivotPopSearch('${which}','');event.stopPropagation()" title="Clear">✕</span>`:''}
+    </div>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap">${set.size} sel</span>
+    <button class="pivot-pop-axis-clear" aria-label="Clear ${isOrg?'organization':'SKU'} selection" onclick="${clearFn}();event.stopPropagation()" title="Clear this axis">✕</button>
+  </div>`;
+
+  // Toolbar row 2: depth + filter + bulk-select (all on one row)
+  html += `<div class="pivot-pop-toolbar">
+    <div class="pill" style="font-size:10px">`;
+  for(let d=1; d<=maxDepthAllowed; d++){
+    const label = isOrg ? (d===1?'HO':'RM') : (d===1?'Cat':d===2?'Brand':'BS');
+    html += `<button class="${state.depth===d?'on':''}" onclick="setPivotPopDepth('${which}',${d});event.stopPropagation()" style="padding:3px 9px;font-size:10px">${label}</button>`;
+  }
+  html += `</div>
+    <div class="pill" style="font-size:10px">
+      <button class="${state.filter==='all'?'on':''}" onclick="setPivotPopFilter('${which}','all');event.stopPropagation()" style="padding:3px 9px;font-size:10px">All</button>
+      <button class="${state.filter==='rules'?'on':''}" onclick="setPivotPopFilter('${which}','rules');event.stopPropagation()" style="padding:3px 9px;font-size:10px">Has</button>
+      <button class="${state.filter==='empty'?'on':''}" onclick="setPivotPopFilter('${which}','empty');event.stopPropagation()" style="padding:3px 9px;font-size:10px">None</button>
+    </div>
+    <button class="qa-btn qa-ho" style="padding:3px 9px;font-size:10px;margin-left:auto" onclick="pivotPopSelectVisible('${which}');event.stopPropagation()" title="Select all visible">☑ Visible</button>
+  </div>`;
+
+  // Checkbox list — filtered by search, depth, has-rules
+  html += `<div class="pivot-pop-list">`;
+  const query = state.query.trim().toLowerCase();
+  let visibleCount = 0;
+  const visibleIds = []; // used by "Select All Visible"
+
+  (function walk(node, depth){
+    if(node!==root){
+      const lvlIdx = node.level;
+      // Depth filter — show only nodes up to and including state.depth
+      if(lvlIdx + 1 > state.depth) return;
+
+      // has-rules filter
+      if(state.filter !== 'all'){
+        const hasR = hasRuleInSubtree(node);
+        if(state.filter==='rules' && !hasR) return;
+        if(state.filter==='empty' && hasR) return;
+      }
+
+      // Search filter — check fuzzy match on this node's name, AND on descendant names
+      // (so parent stays visible if any descendant matches)
+      let matches = true;
+      if(query){
+        const selfMatch = fuzzyScore(query, node.name) > 0.35;
+        let descMatch = false;
+        if(!selfMatch){
+          // Check descendants (cheap: subtree is small relative to tree)
+          (function desc(n){
+            if(descMatch) return;
+            if(n!==node && fuzzyScore(query, n.name) > 0.35){ descMatch = true; return; }
+            n.children.forEach(desc);
+          })(node);
+        }
+        matches = selfMatch || descMatch;
+      }
+
+      if(matches){
+        const indent = depth-1;
+        const checked = set.has(node.id);
+        const hasR = hasRuleInSubtree(node);
+        const ruleDot = hasR ? `<span class="pivot-pop-rule-dot" title="Has rules"></span>` : '';
+        html += `<label class="pivot-pop-item" style="padding-left:${10+indent*16}px" onclick="event.stopPropagation()">
+          <input type="checkbox" ${checked?'checked':''} onchange="${toggleFn}('${node.id}', this.checked);event.stopPropagation()" onclick="event.stopPropagation()">
+          <span class="level-tag ${getLevelClass(node, isOrg?'org':'sku')}" style="font-size:10px">${levels[node.level]||''}</span>
+          <span class="pivot-pop-name">${node.name}</span>
+          ${ruleDot}
+        </label>`;
+        visibleIds.push(node.id);
+        visibleCount++;
+      }
+    }
+    node.children.forEach(c=>walk(c, depth+1));
+  })(root, 0);
+
+  if(visibleCount===0){
+    html += `<div style="padding:14px 16px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">
+      ${query ? `No matches for "<b>${query}</b>"` : 'No items match the current filter'}
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Stash visible IDs on a global so Select-All-Visible can use them without re-walking
+  window._pivotPopVisibleIds = window._pivotPopVisibleIds || {};
+  window._pivotPopVisibleIds[which] = visibleIds;
+
+  return html;
+}
+
+function setPivotPopSearch(which, val){
+  pivotPopState[which].query = val;
+  refreshPivotPopover(which);
+  // If search is cleared via ✕, re-focus the input
+  if(val==='') {
+    setTimeout(()=>{
+      const inp = document.querySelector(`#pivotPop-${which} .search-box input`);
+      if(inp) inp.focus();
+    }, 0);
+  }
+}
+function setPivotPopDepth(which, depth){
+  pivotPopState[which].depth = depth;
+  refreshPivotPopover(which);
+}
+function setPivotPopFilter(which, filter){
+  pivotPopState[which].filter = filter;
+  refreshPivotPopover(which);
+}
+function pivotPopSelectVisible(which){
+  const ids = (window._pivotPopVisibleIds||{})[which] || [];
+  const toggleFn = which==='org' ? togglePivotOrg : togglePivotSku;
+  ids.forEach(id => toggleFn(id, true));
+  refreshPivotPopover(which);
+}
+function pivotPopSelectByLevel(which, level){
+  const isOrg = which==='org';
+  const root = isOrg ? orgRoot : skuRoot;
+  const nodesAtLevel = [];
+  (function walk(n){
+    if(n!==root && n.level===level) nodesAtLevel.push(n.id);
+    n.children.forEach(walk);
+  })(root);
+  const toggleFn = isOrg ? togglePivotOrg : togglePivotSku;
+  nodesAtLevel.forEach(id => toggleFn(id, true));
+  refreshPivotPopover(which);
+}
+function refreshPivotPopover(which){
+  const pop = document.getElementById(`pivotPop-${which}`);
+  if(!pop) return;
+  // Save focus state so search-typing isn't interrupted
+  const activeId = document.activeElement;
+  const wasSearchFocused = activeId && pop.contains(activeId) && activeId.tagName==='INPUT' && activeId.type==='text';
+  const cursorPos = wasSearchFocused ? activeId.selectionStart : null;
+  const scrollTop = pop.querySelector('.pivot-pop-list')?.scrollTop || 0;
+  pop.innerHTML = buildPivotPopover(which);
+  if(wasSearchFocused){
+    const newInp = pop.querySelector('.search-box input');
+    if(newInp){
+      newInp.focus();
+      if(cursorPos!==null) newInp.setSelectionRange(cursorPos, cursorPos);
+    }
+  }
+  const newList = pop.querySelector('.pivot-pop-list');
+  if(newList && scrollTop) newList.scrollTop = scrollTop;
+}
+function closePivotPopover(which){
+  const pop = document.getElementById(`pivotPop-${which}`);
+  if(pop) pop.classList.remove('open');
+}
+
+function togglePivotPopover(which, evt){
+  if(evt) evt.stopPropagation();
+  const pop = document.getElementById(`pivotPop-${which}`);
+  const btn = document.getElementById(`pivot${which==='org'?'Org':'Sku'}Btn`);
+  if(!pop||!btn) return;
+  const isOpen = pop.classList.contains('open');
+  // Close any open popover first
+  document.querySelectorAll('.pivot-pop.open').forEach(p=>p.classList.remove('open'));
+  if(!isOpen){
+    pop.innerHTML = buildPivotPopover(which);
+    pop.classList.add('open');
+  }
+}
+
+function rebuildPivotDropdowns(){
+  // Panels are always visible — refresh both to reflect current state (preserves focus/scroll)
+  ['org','sku'].forEach(which=>{
+    const pop = document.getElementById(`pivotPop-${which}`);
+    if(pop) refreshPivotPopover(which);
+  });
+  updatePivotButtonLabels();
+}
+
+// (Outside-click popover closer removed — panels are now always visible inline)
+
+function populatePivotSelectors(){
+  // Inline always-visible panels — populate once; selection changes call rebuildPivotDropdowns to refresh
+  refreshPivotPopover('org');
+  refreshPivotPopover('sku');
+  updatePivotButtonLabels();
+}
+
+// ============================================================
+// EDIT MODE — which rule type the user is defining
+// ============================================================
+function setEditMode(mode){
+  editMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById(`mt-${mode}`)?.classList.add('on');
+  renderTechPanel();
+}
+
+// ============================================================
+// RULES — Two independent rule types: Normalization + Technique
+// ============================================================
+// Each rule type has its own index (Map orgNodeId → [{rule, skuNodeIds}])
+// so a cell can have 0, 1, or 2 rules applied.
+// Rule shape (common):
+//   {id, type:'norm'|'tech', orgId, skuId, orgLevel, skuLevel, orgName, skuName}
+// Norm rule extras: method ('zscore'|'iqr'|'winsorize'|'cap'|'movmedian'|'hampel'), params:{...}
+// Tech rule extras: techniques:['ARIMA', ...]
+
+const normOrgIndex = new Map();
+const normSkuIndex = new Map();
+const techOrgIndex = new Map();
+const techSkuIndex = new Map();
+
+// Legacy aliases so existing helpers (that looked at ruleOrgIndex) keep working
+// Default view = technique rules (backwards compatible with old "rules" semantics)
+const ruleOrgIndex = techOrgIndex;
+const ruleSkuIndex = techSkuIndex;
 const ruleMap = { _dummy: true };
-let rules = (function(){
+
+// Normalization method catalog — each method declares its parameter schema
+const NORM_METHODS = [
+  {id:'zscore', name:'Z-Score', desc:'Flag |x-μ|/σ > threshold', params:[
+    {key:'sigma', label:'Threshold (σ)', type:'number', default:2, min:0.5, max:5, step:0.5}
+  ]},
+  {id:'iqr', name:'IQR', desc:'Flag outside Q1-k·IQR … Q3+k·IQR', params:[
+    {key:'k', label:'IQR Multiplier', type:'number', default:1.5, min:0.5, max:3, step:0.1}
+  ]},
+  {id:'winsorize', name:'Winsorize', desc:'Clip extreme percentiles', params:[
+    {key:'pct', label:'Percentile (%)', type:'number', default:5, min:1, max:25, step:1}
+  ]},
+  {id:'cap', name:'Cap (Fixed)', desc:'Hard min/max values', params:[
+    {key:'min', label:'Min Value', type:'number', default:0, min:0},
+    {key:'max', label:'Max Value', type:'number', default:10000, min:0}
+  ]},
+  {id:'movmedian', name:'Moving Median', desc:'Replace with rolling median', params:[
+    {key:'window', label:'Window (weeks)', type:'number', default:5, min:3, max:13, step:2}
+  ]},
+  {id:'hampel', name:'Hampel Filter', desc:'Robust median + MAD outlier', params:[
+    {key:'window', label:'Window (weeks)', type:'number', default:7, min:3, max:15, step:2},
+    {key:'nSigma', label:'MAD Threshold', type:'number', default:3, min:1, max:5, step:0.5}
+  ]}
+];
+
+let normRules = [];
+let techRules = [];
+// Legacy `rules` alias — points to techRules for backwards-compat with existing helpers
+let rules = techRules;
+let ruleIdCounter = 1;
+
+function seedInitialRules(){
+  // Technique rules (prior seeded set — HO-level + RM-level + ASM spot rules)
   const TECHS=[
     ['ARIMA','Prophet'],['XGBoost','LightGBM'],['Ensemble','Simple Avg'],
     ['SARIMA','Holt-Winters'],['Prophet','LSTM'],['ETS','ARIMA'],
     ['XGBoost','Prophet','Ensemble'],['ARIMA'],['Simple Avg'],['LightGBM','XGBoost']
   ];
-  const r=[];
-  let id=1;
-  // HO-level rules — one per HO × Category (5×8 = 40 rules)
   for(let hi=0;hi<5;hi++){
     for(let ci=0;ci<8;ci++){
-      r.push({id:id++,orgId:`ho${hi+1}`,skuId:`cat${ci+1}`,orgLevel:0,skuLevel:0,
+      techRules.push({id:ruleIdCounter++, type:'tech',
+        orgId:`ho${hi+1}`, skuId:`cat${ci+1}`, orgLevel:0, skuLevel:0,
         orgName:`HO-${['North','South','East','West','Central'][hi]}`,
         skuName:['Beverages','Snacks','Dairy','Frozen','Personal Care','Home Care','Health','Baby'][ci],
-        techniques:TECHS[(hi*8+ci)%TECHS.length],priority:3});
+        techniques:TECHS[(hi*8+ci)%TECHS.length], priority:3});
     }
   }
-  // RM-level overrides — rm1..rm8 × first 4 cats
   for(let ri=0;ri<8;ri++){
     for(let ci=0;ci<4;ci++){
-      r.push({id:id++,orgId:`rm${ri+1}`,skuId:`cat${ci+1}`,orgLevel:1,skuLevel:0,
-        orgName:`RM-North-${ri+1}`,
+      techRules.push({id:ruleIdCounter++, type:'tech',
+        orgId:`rm${ri+1}`, skuId:`cat${ci+1}`, orgLevel:1, skuLevel:0,
+        orgName:`RM-${ri+1}`,
         skuName:['Beverages','Snacks','Dairy','Frozen'][ci],
-        techniques:TECHS[(ri+ci)%TECHS.length],priority:2});
+        techniques:TECHS[(ri+ci)%TECHS.length], priority:2});
     }
   }
-  // ASM-level spot rules
-  const spotPairs=[[1,1],[5,11],[10,21],[15,31],[20,41],[25,51],[30,61],[35,71],[40,81],[50,91]];
-  spotPairs.forEach(([ai,bsi])=>{
-    r.push({id:id++,orgId:`asm${ai}`,skuId:`bs${bsi}`,orgLevel:2,skuLevel:2,
-      orgName:`ASM-N1-${String(ai).padStart(2,'0')}`,skuName:`bs${bsi}`,
-      techniques:['ARIMA','XGBoost'],priority:1});
+  // RM-level spot rules on specific Base SKU pairs (ASM level removed)
+  [[1,1],[3,11],[5,21],[7,31],[9,41],[11,51],[13,61],[15,71],[17,81],[19,91]].forEach(([ri,bsi])=>{
+    techRules.push({id:ruleIdCounter++, type:'tech',
+      orgId:`rm${ri}`, skuId:`bs${bsi}`, orgLevel:1, skuLevel:2,
+      orgName:`RM-${ri}`, skuName:`bs${bsi}`,
+      techniques:['ARIMA','XGBoost'], priority:1});
   });
-  return r;
-})();
-let ruleIdCounter = rules.length + 1;
+
+  // Normalization rules — sample seed: a few methods across the hierarchy
+  normRules.push({id:ruleIdCounter++, type:'norm',
+    orgId:'ho1', skuId:'cat1', orgLevel:0, skuLevel:0,
+    orgName:'HO-North', skuName:'Beverages',
+    method:'zscore', params:{sigma:2}, priority:3});
+  normRules.push({id:ruleIdCounter++, type:'norm',
+    orgId:'rm1', skuId:'cat2', orgLevel:1, skuLevel:0,
+    orgName:'RM-1', skuName:'Snacks',
+    method:'iqr', params:{k:1.5}, priority:2});
+  normRules.push({id:ruleIdCounter++, type:'norm',
+    orgId:'ho2', skuId:'cat3', orgLevel:0, skuLevel:0,
+    orgName:'HO-South', skuName:'Dairy',
+    method:'hampel', params:{window:7, nSigma:3}, priority:3});
+}
+seedInitialRules();
 
 
 
@@ -915,7 +1409,7 @@ let ruleIdCounter = rules.length + 1;
 // ============================================================
 let currentPage=0, pageSize=15;
 let densityMode='normal';   // 'normal' | 'compact' | 'mini'
-let orgColWidth=140;        // width per org level column (px) — default fits "ASM-North-01" + expand button
+let orgColWidth=140;        // width per org level column (px) — default fits "HO-Central" + expand button
 let skuColWidth=90;         // min-width for SKU leaf columns (px)
 let filterMode='all';       // 'all' | 'rules' | 'empty'
 let searchQuery='';         // lowercase search string
@@ -946,6 +1440,109 @@ function getAllNodesAtLevel(root,targetLevel){
   walk(root); return result;
 }
 
+// ============================================================
+// FUZZY SEARCH — typo-tolerant, word-order invariant, prefix-aware
+// ============================================================
+// Score is 0..1. Higher = better. Threshold ~0.35 for "this is a match".
+// Strategy layers (each cheaper check first so we short-circuit):
+//   1.0  exact substring match (current behavior preserved)
+//   0.9  every word in query is a substring of name (word-order independent)
+//   0.7  prefix match on any name token (e.g. "bev" → "Beverages")
+//   n-gram Jaccard similarity (0..1) — finds typos like "bevrages" → "beverages"
+//   Levenshtein distance as tie-breaker for very short strings
+
+// Trigram cache — key = lowercased string, value = Set of trigrams
+const _trigramCache = new Map();
+function trigrams(s){
+  if(_trigramCache.has(s)) return _trigramCache.get(s);
+  const padded = '  ' + s + '  ';
+  const set = new Set();
+  for(let i=0;i<padded.length-2;i++) set.add(padded.slice(i,i+3));
+  _trigramCache.set(s, set);
+  return set;
+}
+
+function jaccardSim(aSet, bSet){
+  if(!aSet.size || !bSet.size) return 0;
+  let intersection = 0;
+  // Iterate smaller set for speed
+  const [smaller, larger] = aSet.size < bSet.size ? [aSet, bSet] : [bSet, aSet];
+  smaller.forEach(g => { if(larger.has(g)) intersection++; });
+  const union = aSet.size + bSet.size - intersection;
+  return union ? intersection / union : 0;
+}
+
+// Levenshtein — capped at maxDistance for speed. Returns the distance or maxDistance+1 if exceeded.
+function levenshteinCapped(a, b, maxDist){
+  if(a===b) return 0;
+  if(Math.abs(a.length-b.length) > maxDist) return maxDist+1;
+  const m = a.length, n = b.length;
+  if(!m) return n; if(!n) return m;
+  // Two-row DP
+  let prev = new Array(n+1);
+  let curr = new Array(n+1);
+  for(let j=0;j<=n;j++) prev[j]=j;
+  for(let i=1;i<=m;i++){
+    curr[0]=i;
+    let minRow = i;
+    for(let j=1;j<=n;j++){
+      const cost = a.charCodeAt(i-1)===b.charCodeAt(j-1) ? 0 : 1;
+      curr[j] = Math.min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost);
+      if(curr[j] < minRow) minRow = curr[j];
+    }
+    if(minRow > maxDist) return maxDist+1; // early exit — can't improve
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+// Core fuzzy matcher. Input needle and haystack are expected LOWERCASE already.
+function fuzzyMatch(needle, hay){
+  if(!needle) return 1.0;
+  if(!hay) return 0;
+  // 1. Exact substring
+  if(hay.includes(needle)) return 1.0;
+
+  // 2. Tokenized word-order-invariant match: split needle by non-alnum, require all words present
+  const needleWords = needle.split(/[^a-z0-9]+/).filter(w=>w.length>0);
+  if(needleWords.length > 1){
+    if(needleWords.every(w => hay.includes(w))) return 0.9;
+  }
+
+  // 3. Prefix match — any word in hay starts with needle (or a needle-word)
+  const hayWords = hay.split(/[^a-z0-9]+/).filter(w=>w.length>0);
+  for(const hw of hayWords){
+    if(hw.startsWith(needle)) return 0.75;
+    for(const nw of needleWords){
+      if(nw.length >= 2 && hw.startsWith(nw)) return 0.65;
+    }
+  }
+
+  // 4. Skip expensive work if length ratio is terrible
+  const lenRatio = Math.min(needle.length, hay.length) / Math.max(needle.length, hay.length);
+  if(lenRatio < 0.4) return 0;
+
+  // 5. Trigram Jaccard (good for transpositions + typos)
+  const sim = jaccardSim(trigrams(needle), trigrams(hay));
+  if(sim >= 0.35) return 0.4 + sim * 0.4; // 0.4..0.8
+
+  // 6. Levenshtein fallback for short strings (expensive so gated)
+  if(needle.length <= 10 && hay.length <= 20){
+    const maxDist = Math.max(1, Math.floor(needle.length * 0.35));
+    const dist = levenshteinCapped(needle, hay, maxDist);
+    if(dist <= maxDist){
+      return 0.45 + (maxDist - dist) / maxDist * 0.2; // 0.45..0.65
+    }
+  }
+
+  return 0;
+}
+
+// Against a node name — lowercases and matches. Returns score.
+function fuzzyScore(query, name){
+  return fuzzyMatch(query, name.toLowerCase());
+}
+
 // Apply search + filter to org display rows
 // Search matches org names — returns set of matching leaf IDs
 function getOrgSearchMatches(){
@@ -954,7 +1551,7 @@ function getOrgSearchMatches(){
   getAllOrgLeaves().forEach(leaf=>{
     let n=leaf;
     while(n&&n!==orgRoot){
-      if(n.name.toLowerCase().includes(searchQuery)){matched.add(leaf.id);break;}
+      if(fuzzyScore(searchQuery, n.name) > 0.35){matched.add(leaf.id);break;}
       n=n.parent;
     }
   });
@@ -967,7 +1564,7 @@ function getSkuSearchMatches(){
   getAllSkuLeaves().forEach(leaf=>{
     let n=leaf;
     while(n&&n!==skuRoot){
-      if(n.name.toLowerCase().includes(searchQuery)){matched.add(leaf.id);break;}
+      if(fuzzyScore(searchQuery, n.name) > 0.35){matched.add(leaf.id);break;}
       n=n.parent;
     }
   });
@@ -1006,43 +1603,58 @@ function getFilteredSkuCols(allLeaves){
   return leaves;
 }
 function buildRuleMap(){
-  ruleOrgIndex.clear();
-  ruleSkuIndex.clear();
+  techOrgIndex.clear(); techSkuIndex.clear();
+  normOrgIndex.clear(); normSkuIndex.clear();
   _leafCache.clear();
-  rules.forEach(rule=>{
-    const orgNode=nodeMap[rule.orgId];
-    const skuNode=nodeMap[rule.skuId];
-    if(!orgNode||!skuNode) return;
-    // Collect all descendant node IDs (including the rule's node itself) — so queries at ANY depth level find the rule
-    const orgNodeIds=[];
-    (function collectOrg(n){ orgNodeIds.push(n.id); n.children.forEach(collectOrg); })(orgNode);
-    const skuNodeIds=new Set();
-    (function collectSku(n){ skuNodeIds.add(n.id); n.children.forEach(collectSku); })(skuNode);
-    // Mirror for the sku side so SKU leaf queries work
-    const orgNodeIdSet=new Set(orgNodeIds);
-    orgNodeIds.forEach(id=>{
-      if(!ruleOrgIndex.has(id)) ruleOrgIndex.set(id,[]);
-      ruleOrgIndex.get(id).push({rule,skuNodeIds});
+  function indexRules(ruleSet, orgIdx, skuIdx){
+    ruleSet.forEach(rule=>{
+      const orgNode=nodeMap[rule.orgId], skuNode=nodeMap[rule.skuId];
+      if(!orgNode||!skuNode) return;
+      const orgNodeIds=[];
+      (function collectOrg(n){ orgNodeIds.push(n.id); n.children.forEach(collectOrg); })(orgNode);
+      const skuNodeIds=new Set();
+      (function collectSku(n){ skuNodeIds.add(n.id); n.children.forEach(collectSku); })(skuNode);
+      const orgNodeIdSet=new Set(orgNodeIds);
+      orgNodeIds.forEach(id=>{
+        if(!orgIdx.has(id)) orgIdx.set(id,[]);
+        orgIdx.get(id).push({rule,skuNodeIds});
+      });
+      skuNodeIds.forEach(id=>{
+        if(!skuIdx.has(id)) skuIdx.set(id,[]);
+        skuIdx.get(id).push({rule,orgNodeIdSet});
+      });
     });
-    skuNodeIds.forEach(id=>{
-      if(!ruleSkuIndex.has(id)) ruleSkuIndex.set(id,[]);
-      ruleSkuIndex.get(id).push({rule,orgNodeIdSet});
-    });
-  });
+  }
+  indexRules(techRules, techOrgIndex, techSkuIndex);
+  indexRules(normRules, normOrgIndex, normSkuIndex);
+  // Keep legacy `rules` alias synced
+  rules = techRules;
 }
-// Works at ANY hierarchy level — queries for (HO, Category), (ASM, SKU), (RM, Brand) all resolve
-function getEffectiveRule(orgId, skuId){
-  const candidates=ruleOrgIndex.get(orgId)||[];
-  let best=null;
-  for(const {rule,skuNodeIds} of candidates){
+
+// Lookup helpers — now type-aware
+function _getEffective(orgId, skuId, orgIdx){
+  const candidates = orgIdx.get(orgId) || [];
+  let best = null;
+  for(const {rule, skuNodeIds} of candidates){
     if(!skuNodeIds.has(skuId)) continue;
-    if(!best||rule.orgLevel>best.orgLevel||(rule.orgLevel===best.orgLevel&&rule.skuLevel>best.skuLevel)) best=rule;
+    if(!best || rule.orgLevel>best.orgLevel || (rule.orgLevel===best.orgLevel && rule.skuLevel>best.skuLevel)) best = rule;
   }
   return best;
 }
-function hasRuleForOrgLeaf(orgId){ const a=ruleOrgIndex.get(orgId); return !!(a&&a.length); }
-function hasRuleForSkuLeaf(skuId){ const a=ruleSkuIndex.get(skuId); return !!(a&&a.length); }
-function hasRuleAtCell(orgId,skuId){ return getEffectiveRule(orgId,skuId)!==null; }
+function getEffectiveTechRule(orgId, skuId){ return _getEffective(orgId, skuId, techOrgIndex); }
+function getEffectiveNormRule(orgId, skuId){ return _getEffective(orgId, skuId, normOrgIndex); }
+// Backwards-compat — existing callers of getEffectiveRule get technique rule
+function getEffectiveRule(orgId, skuId){ return getEffectiveTechRule(orgId, skuId); }
+
+function hasRuleForOrgLeaf(orgId){
+  return !!(techOrgIndex.get(orgId)?.length || normOrgIndex.get(orgId)?.length);
+}
+function hasRuleForSkuLeaf(skuId){
+  return !!(techSkuIndex.get(skuId)?.length || normSkuIndex.get(skuId)?.length);
+}
+function hasRuleAtCell(orgId, skuId){
+  return !!getEffectiveTechRule(orgId, skuId) || !!getEffectiveNormRule(orgId, skuId);
+}
 function getSubtreeLeaves(node,type){
   if(!node) return [];
   const maxDepth = type==='org'?ORG_DEPTH-1:SKU_DEPTH-1;
@@ -1052,14 +1664,46 @@ function getSubtreeLeaves(node,type){
 buildRuleMap();
 
 // ============================================================
-// SELECTION STATE — axis-based (org nodes × SKU nodes)
+// PIVOT SCOPE — top-level filter that drives both chart AND matrix
 // ============================================================
+// Multi-select: pivotOrgIds / pivotSkuIds hold the selected node IDs.
+// Empty set = "All" (equivalent to root).
+// Matrix scope = union of getSubtreeLeaves() across all selected nodes.
+// ============================================================
+// UNIFIED SELECTION STATE — axis-based (org nodes × SKU nodes)
+// ============================================================
+// Editing mode — kept as state for the dual rule system. Default 'both' so both editors
+// are always visible side-by-side (per xlsx layout). 'tech'/'norm' modes stay available.
+let editMode = 'both';
+
 // selectedOrgNodes: Set of org node IDs chosen on the row axis
 // selectedSkuNodes: Set of SKU node IDs chosen on the column axis
-// The INTERSECTION of the two axes is what gets highlighted and ruled.
+// The INTERSECTION of the two axes drives:
+//   - matrix cell highlighting (sel-row / sel-col / sel-cross)
+//   - the rule editor panel + Selected Value chip bar
+//
+// TWO INPUT METHODS FOR THE SAME STATE:
+//   1. Click org/sku header in the matrix  →  onOrgHdrClick / onSkuHdrClick
+//   2. Pivot Selection dropdown checkboxes →  togglePivotOrg / togglePivotSku
+// Both feed the same Sets. The legacy pivotOrgIds/pivotSkuIds names are kept as
+// aliases for backwards compatibility with any downstream code that uses them.
 let selectedOrgNodes = new Set();
 let selectedSkuNodes = new Set();
 let selectedTechs = new Set();
+
+// Aliases — pivot dropdown functions write here and matrix clicks write here too
+const pivotOrgIds = selectedOrgNodes;
+const pivotSkuIds = selectedSkuNodes;
+
+// Legacy single-ID accessors — return the first selected or the root
+Object.defineProperty(window, 'pivotOrgId', {
+  get(){ return selectedOrgNodes.size ? [...selectedOrgNodes][0] : 'org-root'; },
+  configurable: true
+});
+Object.defineProperty(window, 'pivotSkuId', {
+  get(){ return selectedSkuNodes.size ? [...selectedSkuNodes][0] : 'sku-root'; },
+  configurable: true
+});
 
 // Is an org leaf "covered" by current org selection?
 function orgLeafSelected(leaf){
@@ -1085,11 +1729,12 @@ function cellInSelection(orgLeaf, skuLeaf){
 // Returns rows[0..maxLevel], each row = [{node, colspan, rowspan}]
 function buildColHeaders(visibleLeafSlice){
   const visibleSet = new Set(visibleLeafSlice.map(l=>l.id));
+  const pivotRoots = _pivotSkuRoots();
   const rows = Array.from({length:SKU_DEPTH},()=>[]);
   const seen = new Set();
   function visit(node){
-    if(node===skuRoot){node.children.forEach(c=>visit(c));return;}
-    // Use getLeaves (expansion-aware) so collapsed Category nodes count as 1 visible leaf
+    // Never render skuRoot itself as a header (it's virtual)
+    if(node===skuRoot){ node.children.forEach(c=>visit(c)); return; }
     const nodeViewLeaves = getLeaves(node);
     const visCount = nodeViewLeaves.filter(l=>visibleSet.has(l.id)).length;
     if(visCount===0) return;
@@ -1104,26 +1749,41 @@ function buildColHeaders(visibleLeafSlice){
     });
     if(!isLeaf) node.children.forEach(c=>visit(c));
   }
-  skuRoot.children.forEach(c=>visit(c));
+  pivotRoots.forEach(visit);
   return rows;
 }
 
-// Returns visible (expand-aware) leaf nodes — cached
+// Matrix view is ALWAYS the full tree at the current depth — the selection state
+// (selectedOrgNodes / selectedSkuNodes) only drives cell highlighting + rule editor,
+// it does NOT narrow the matrix view. If the user wants to focus on a subset, they
+// can still drill via the depth pills. The legacy "pivot scope" narrowing was removed
+// when pivotOrgIds/pivotSkuIds became aliases for selectedOrgNodes/selectedSkuNodes.
 function getSkuLeaves(){
-  if(!_leafCache.has('skuVisible')) _leafCache.set('skuVisible', getLeaves(skuRoot));
+  if(!_leafCache.has('skuVisible')){
+    _leafCache.set('skuVisible', getLeaves(skuRoot));
+  }
   return _leafCache.get('skuVisible');
 }
 function getOrgLeaves(){
-  if(!_leafCache.has('orgVisible')) _leafCache.set('orgVisible', getLeaves(orgRoot));
+  if(!_leafCache.has('orgVisible')){
+    _leafCache.set('orgVisible', getLeaves(orgRoot));
+  }
   return _leafCache.get('orgVisible');
 }
 
-// Build org row headers — rowspan within the page slice
+// These helpers used to return the pivot-narrowed roots; now they always return
+// the full roots so any remaining callers (chart aggregation, etc.) still work.
+function _pivotOrgRoots(){ return [orgRoot]; }
+function _pivotSkuRoots(){ return [skuRoot]; }
+function _pivotOrgRoot(){ return orgRoot; }
+function _pivotSkuRoot(){ return skuRoot; }
+
+// Build org row headers — rowspan within the page slice. Always traverses up to orgRoot.
 function buildOrgRows(leafSlice){
   const nodeInfo={};
   leafSlice.forEach((leaf,idx)=>{
     let n=leaf;
-    while(n&&n!==orgRoot){
+    while(n && n!==orgRoot){
       if(!nodeInfo[n.id]){nodeInfo[n.id]={rowspan:0,firstRowIdx:idx};}
       nodeInfo[n.id].rowspan++;
       n=n.parent;
@@ -1133,7 +1793,7 @@ function buildOrgRows(leafSlice){
     const cells=[];
     const path=[];
     let n=leaf;
-    while(n&&n!==orgRoot){path.unshift(n);n=n.parent;}
+    while(n && n!==orgRoot){path.unshift(n);n=n.parent;}
     path.forEach(ancestor=>{
       if(nodeInfo[ancestor.id].firstRowIdx===idx){
         const isLeaf=isLeafInView(ancestor);
@@ -1210,12 +1870,23 @@ function renderMatrix(){
   const pageRows=buildOrgRows(pageOrgLeaves);
 
   const hdrRowH=30;
-  const hdrTops=Array.from({length:SKU_DEPTH},(_,i)=>i*hdrRowH);
-  const ROW_H=densityMode==='mini'?18:densityMode==='compact'?24:32; // explicit row height for alignment
+  const ROW_H=densityMode==='mini'?28:densityMode==='compact'?34:42; // accommodates dual badges
+
+  // Pre-filter header rows once so LEFT and RIGHT panels render the SAME number of
+  // header `<tr>`s. If we don't, an empty SKU level (e.g., all brands collapsed —
+  // no Base SKU row) makes the right panel emit a stray `<tr>` while the left's
+  // numHdrRows skips it, drifting the data rows out of alignment by one row.
+  const displayedHdrRows=colHdrRows.map(rowCells=>
+    searchQuery?rowCells.filter(({node})=>{
+      const nl=getLeaves(node);
+      return nl.some(l=>skuLeaves.includes(l));
+    }):rowCells
+  ).filter(r=>r.length>0);
+  const numHdrRows=displayedHdrRows.length||1;
+  const hdrTotalH=numHdrRows*hdrRowH;
+  const hdrTops=displayedHdrRows.map((_,i)=>i*hdrRowH);
 
   // ── BUILD FROZEN LEFT TABLE (org columns only) ─────────────
-  const numHdrRows=colHdrRows.filter(r=>r.length>0).length||1;
-  const hdrTotalH=numHdrRows*hdrRowH;
 
   let fHtml=`<thead><tr style="height:${hdrTotalH}px">`;
   for(let c=0;c<ORG_DEPTH;c++){
@@ -1226,7 +1897,7 @@ function renderMatrix(){
   fHtml+=`</tr></thead><tbody>`;
 
   if(pageRows.length===0){
-    fHtml+=`<tr style="height:${ROW_H}px"><td colspan="${ORG_DEPTH}" style="padding:8px;color:var(--text3);font-size:11px">No rows</td></tr>`;
+    fHtml+=`<tr><td colspan="${ORG_DEPTH}" style="padding:24px 8px;color:var(--text3);font-size:11px;text-align:center;font-style:italic">—</td></tr>`;
   } else {
     const orgColSpanned=new Array(ORG_DEPTH).fill(0);
     pageRows.forEach(({leaf:orgLeaf,cells:orgCells})=>{
@@ -1241,9 +1912,10 @@ function renderMatrix(){
           const lcls=getLevelClass(node,'org');
           fHtml+=`<td class="orgh" rowspan="${rowspan}" colspan="${colspan}" style="min-width:${colspan*orgColWidth}px;max-width:${colspan*orgColWidth}px">
             <div class="orgh-inner${isActualLeaf?' leaf-org':''}${selectedOrgNodes.has(node.id)?' sel-hdr':''}" onclick="onOrgHdrClick(event,'${node.id}')">
-              ${!isActualLeaf?`<span class="expand-btn" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
-              <span class="hdr-name ${lcls}${searchQuery&&node.name.toLowerCase().includes(searchQuery)?' srch-match':''}" title="${node.name}">${node.name}</span>
+              ${!isActualLeaf?`<span class="expand-btn" role="button" tabindex="0" aria-label="${node.expanded?'Collapse':'Expand'} ${node.name}" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
+              <span class="hdr-name ${lcls}${searchQuery&&fuzzyScore(searchQuery,node.name)>0.35?' srch-match':''}" title="${node.name}">${node.name}</span>
             </div>
+            <div class="col-resize-grip" role="separator" aria-label="Resize ${ORG_LEVELS[node.level]||'org'} column" aria-orientation="vertical" onmousedown="startColResize(event,'org',${orgColWidth})" title="Drag to resize"></div>
           </td>`;
           for(let c=col;c<col+colspan;c++)orgColSpanned[c]=rowspan-1;
           col+=colspan;
@@ -1256,12 +1928,8 @@ function renderMatrix(){
 
   // ── BUILD RIGHT DATA TABLE (SKU headers + data cells only) ──
   let html=`<thead>`;
-  colHdrRows.forEach((rowCells,level)=>{
-    html+=`<tr>`;
-    const visibleCells=searchQuery?rowCells.filter(({node})=>{
-      const nl=getLeaves(node);
-      return nl.some(l=>skuLeaves.includes(l));
-    }):rowCells;
+  displayedHdrRows.forEach((visibleCells,displayedIdx)=>{
+    html+=`<tr style="height:${hdrRowH}px">`;
     visibleCells.forEach(({node,rowspan,isLeaf})=>{
       const nl=getLeaves(node);
       const visCount=searchQuery?nl.filter(l=>skuLeaves.includes(l)).length:nl.length;
@@ -1269,43 +1937,89 @@ function renderMatrix(){
       if(effectiveColspan===0)return;
       const hasRule=hasRuleInSubtree(node);
       const isActualLeaf=!node.children.length;
-      html+=`<th class="skuh${hasRule?' col-has-rule':''}" colspan="${effectiveColspan}" rowspan="${rowspan}"
-        style="position:sticky;top:${hdrTops[level]}px;z-index:10;min-width:${isActualLeaf||isLeaf?skuColWidth:effectiveColspan*skuColWidth}px">
+      // Clamp rowspan to remaining displayed rows. The original value comes from
+      // buildColHeaders as (SKU_DEPTH - node.level), but if upper levels were
+      // filtered out (e.g., all brands collapsed → no BS row rendered), the
+      // un-clamped rowspan tells the browser to span rows that don't exist,
+      // and the browser silently extends the header height to compensate —
+      // pushing data rows below the left panel by ~30px per missing row.
+      const clampedRowspan=Math.min(rowspan,numHdrRows-displayedIdx);
+      html+=`<th class="skuh${hasRule?' col-has-rule':''}" colspan="${effectiveColspan}" rowspan="${clampedRowspan}"
+        style="position:sticky;top:${hdrTops[displayedIdx]}px;z-index:10;min-width:${isActualLeaf||isLeaf?skuColWidth:effectiveColspan*skuColWidth}px">
         <div class="skuh-inner${isActualLeaf?' leaf-hdr':''}${selectedSkuNodes.has(node.id)?' sel-hdr':''}" onclick="onSkuHdrClick(event,'${node.id}')">
-          ${!isActualLeaf?`<span class="expand-btn" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
-          <span class="hdr-name${searchQuery&&node.name.toLowerCase().includes(searchQuery)?' srch-match':''}" title="${node.name}">${node.name}</span>
+          ${!isActualLeaf?`<span class="expand-btn" role="button" tabindex="0" aria-label="${node.expanded?'Collapse':'Expand'} ${node.name}" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
+          <span class="hdr-name${searchQuery&&fuzzyScore(searchQuery,node.name)>0.35?' srch-match':''}" title="${node.name}">${node.name}</span>
           ${hasRule?`<span class="col-rule-dot"></span>`:''}
         </div>
+        <div class="col-resize-grip" role="separator" aria-label="Resize SKU column" aria-orientation="vertical" onmousedown="startColResize(event,'sku',${skuColWidth})" title="Drag to resize"></div>
       </th>`;
     });
     html+=`</tr>`;
   });
   html+=`</thead><tbody>`;
 
-  if(pageRows.length===0){
-    html+=`<tr style="height:${ROW_H}px"><td colspan="${skuLeaves.length||1}" style="padding:28px;text-align:center;color:var(--text3);font-size:12px">
-      ${searchQuery?`No rows match "<b style="color:var(--text2)">${searchQuery}</b>"`:'No rows to display'}
+  if(pageRows.length===0||skuLeaves.length===0){
+    const hasSearch=!!searchQuery;
+    const hasFilter=filterMode!=='all';
+    let title, hint;
+    if(hasSearch){
+      title=`No matches for "${searchQuery}"`;
+      hint='Try a different search term, or clear the search to see everything.';
+    } else if(hasFilter){
+      title=filterMode==='rules'?'No rows have rules yet':'All rows have rules already';
+      hint='Switch the Show filter back to "All" to see every row.';
+    } else if(pageRows.length===0&&skuLeaves.length===0){
+      title='Nothing to display';
+      hint='Adjust Org/SKU depth above, or pick a Stress Scenario to populate the matrix.';
+    } else if(pageRows.length===0){
+      title='No org rows at this depth';
+      hint='Try a different Org depth (HO/RM) above.';
+    } else {
+      title='No SKU columns at this depth';
+      hint='Try a different SKU depth (Cat/Brand/Base SKU) above.';
+    }
+    html+=`<tr><td colspan="${Math.max(skuLeaves.length,1)}" style="padding:48px 24px;text-align:center;color:var(--text3);font-size:12px">
+      <div style="font-size:32px;line-height:1;margin-bottom:10px;opacity:.4">⊞</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">${title}</div>
+      <div style="font-size:12px;color:var(--text3);max-width:340px;margin:0 auto;line-height:1.5">${hint}</div>
     </td></tr>`;
   } else {
     pageRows.forEach(({leaf:orgLeaf})=>{
       html+=`<tr style="height:${ROW_H}px" data-org="${orgLeaf.id}">`;
       skuLeaves.forEach(skuLeaf=>{
         const key=orgLeaf.id+'|'+skuLeaf.id;
-        const rule=getEffectiveRule(orgLeaf.id,skuLeaf.id);
-        let ruleCls='',techTxt='',techCls='';
-        if(rule){
-          const lvl=rule.orgLevel;
-          ruleCls=lvl===2?'rule-asm':lvl===1?'rule-rm':'rule-ho';
-          techCls=lvl===2?'asm':lvl===1?'rm':'ho';
-          techTxt=rule.techniques.join('/');
-          if(techTxt.length>14)techTxt=rule.techniques[0]+(rule.techniques.length>1?` +${rule.techniques.length-1}`:'');
+        const techRule=getEffectiveTechRule(orgLeaf.id,skuLeaf.id);
+        const normRule=getEffectiveNormRule(orgLeaf.id,skuLeaf.id);
+
+        // Build badges depending on edit mode
+        let badges='';
+        const showNorm = editMode==='norm' || editMode==='both';
+        const showTech = editMode==='tech' || editMode==='both';
+        if(showNorm && normRule){
+          const methodMeta=NORM_METHODS.find(m=>m.id===normRule.method);
+          const label=methodMeta?methodMeta.name:normRule.method;
+          const lvl=normRule.orgLevel;
+          badges+=`<span class="dc-badge dc-badge-norm lvl-${lvl}" title="${label} (${JSON.stringify(normRule.params)})">${label}</span>`;
         }
+        if(showTech && techRule){
+          let techTxt=techRule.techniques.join('/');
+          if(techTxt.length>14) techTxt=techRule.techniques[0]+(techRule.techniques.length>1?` +${techRule.techniques.length-1}`:'');
+          const lvl=techRule.orgLevel;
+          badges+=`<span class="dc-badge dc-badge-tech lvl-${lvl}" title="${techRule.techniques.join(', ')}">${techTxt}</span>`;
+        }
+
+        // Cell background: derived from whichever rules apply + active edit mode
+        let bgCls='';
+        if(showNorm && normRule && showTech && techRule) bgCls='has-both';
+        else if(showNorm && normRule) bgCls='has-norm';
+        else if(showTech && techRule) bgCls='has-tech';
+
         const inSel=cellInSelection(orgLeaf,skuLeaf);
         const orgOnlyHl=orgLeafSelected(orgLeaf)&&!skuLeafSelected(skuLeaf);
         const skuOnlyHl=!orgLeafSelected(orgLeaf)&&skuLeafSelected(skuLeaf);
         const hlCls=inSel?'sel-cross':orgOnlyHl?'sel-row':skuOnlyHl?'sel-col':'';
-        html+=`<td class="dc ${ruleCls} ${hlCls}" data-key="${key}" onclick="onCellClick(event,'${key}')">
-          <div class="dc-inner"><span class="dc-text ${techCls}">${techTxt}</span></div>
+        html+=`<td class="dc ${bgCls} ${hlCls}" data-key="${key}" onclick="onCellClick(event,'${key}')">
+          <div class="dc-inner">${badges||'<span class="dc-empty">·</span>'}</div>
         </td>`;
       });
       html+=`</tr>`;
@@ -1361,18 +2075,21 @@ function buildPageNums(current,total,clickFn){
 }
 
 function renderPagination(totalRows,pageStart,pageEnd,totalCols,colStart,colEnd){
-  document.getElementById('pgRowStart').textContent=totalRows?pageStart+1:0;
-  document.getElementById('pgRowEnd').textContent=pageEnd;
-  document.getElementById('pgRowTotal').textContent=totalRows;
-  document.getElementById('pgColStart').textContent=totalCols?colStart+1:0;
-  document.getElementById('pgColEnd').textContent=colEnd;
-  document.getElementById('pgColTotal').textContent=totalCols;
+  // Friendlier labels when there are zero results: "Rows: — (no results)" instead of "Rows 0–0 / 0"
+  const rowInfo=document.getElementById('pgRowInfo');
+  if(rowInfo) rowInfo.innerHTML = totalRows
+    ? `Rows <b>${pageStart+1}</b>–<b>${pageEnd}</b> / <b>${totalRows}</b>`
+    : `Rows <b>—</b> <span style="color:var(--text3);font-style:italic">(no results)</span>`;
+  const colInfo=document.getElementById('pgColInfo');
+  if(colInfo) colInfo.innerHTML = totalCols
+    ? `Cols <b>${colStart+1}</b>–<b>${colEnd}</b> / <b>${totalCols}</b>`
+    : `Cols <b>—</b> <span style="color:var(--text3);font-style:italic">(no results)</span>`;
   document.getElementById('pgPrev').disabled=currentPage===0;
   const totalPages=Math.max(1,Math.ceil(totalRows/pageSize));
-  document.getElementById('pgNext').disabled=currentPage>=totalPages-1;
+  document.getElementById('pgNext').disabled=currentPage>=totalPages-1||totalRows===0;
   document.getElementById('pgColPrev').disabled=currentColPage===0;
   const totalColPages=Math.max(1,Math.ceil(totalCols/colPageSize));
-  document.getElementById('pgColNext').disabled=currentColPage>=totalColPages-1;
+  document.getElementById('pgColNext').disabled=currentColPage>=totalColPages-1||totalCols===0;
   document.getElementById('pgNums').innerHTML=buildPageNums(currentPage,totalPages,'goPage');
   document.getElementById('pgColNums').innerHTML=buildPageNums(currentColPage,totalColPages,'goColPage');
 }
@@ -1417,13 +2134,14 @@ function setOrgDepth(el,depth){
   el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   orgRoot.expanded=true;
-  // depth=1 → HO leaves, depth=2 → RM leaves, depth=3 → ASM leaves
+  // depth=1 → HO leaves, depth=2 → RM leaves (leaf)
   function setDepth(node,lv){
     node.expanded = (lv < depth-1 && node.children.length);
     node.children.forEach(c=>setDepth(c,lv+1));
   }
   orgRoot.children.forEach(c=>setDepth(c,0));
   invalidateLeafCache(); currentPage=0; checkCellCountGuard(); renderMatrix();
+  showToast(`Org depth: ${ORG_LEVELS[depth-1]||depth}`);
 }
 
 function setSkuDepth(el,depth){
@@ -1437,28 +2155,67 @@ function setSkuDepth(el,depth){
   }
   skuRoot.children.forEach(c=>setDepth(c,0));
   invalidateLeafCache(); currentColPage=0; checkCellCountGuard(); renderMatrix();
+  showToast(`SKU depth: ${SKU_LEVELS[depth-1]||depth}`);
 }
 
 function setDensity(el,mode){
   el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   densityMode=mode; renderMatrix();
+  showToast(`Density: ${mode.charAt(0).toUpperCase()+mode.slice(1)}`);
 }
-function setOrgColWidth(el,w){
-  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-  orgColWidth=w; renderMatrix();
+// Column width state — single-level defaults, overridden per-column when user drags
+// (handled by startColResize mousedown handler attached to header grip elements)
+// Legacy preset setters kept as no-ops for any orphan callers.
+function setOrgColWidth(el,w){ orgColWidth=w; renderMatrix(); }
+function setSkuColWidth(el,w){ skuColWidth=w; renderMatrix(); }
+
+// ── EXCEL-STYLE COLUMN RESIZE ─────────────────────────────
+// Drag the grip on the right edge of any org or sku header to set that column's width.
+// Resizing the org-column affects orgColWidth (all org columns share width like Excel frozen panes).
+// Resizing a specific sku header sets skuColWidth for the whole panel (simpler + performant).
+let _resizeState = null;
+function startColResize(evt, which, startWidth){
+  evt.preventDefault();
+  evt.stopPropagation();
+  _resizeState = {
+    which,
+    startX: evt.clientX,
+    startW: startWidth,
+    rafPending: false,
+  };
+  document.body.style.cursor = 'col-resize';
+  document.body.classList.add('col-resizing');
+  document.addEventListener('mousemove', onColResizeMove);
+  document.addEventListener('mouseup', endColResize, {once:true});
 }
-function setSkuColWidth(el,w){
-  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-  skuColWidth=w; renderMatrix();
+function onColResizeMove(evt){
+  if(!_resizeState) return;
+  if(_resizeState.rafPending) return;
+  _resizeState.rafPending = true;
+  requestAnimationFrame(()=>{
+    _resizeState.rafPending = false;
+    if(!_resizeState) return;
+    const delta = evt.clientX - _resizeState.startX;
+    const newW = Math.max(40, _resizeState.startW + delta);
+    if(_resizeState.which==='org') orgColWidth = newW;
+    else skuColWidth = newW;
+    renderMatrix();
+  });
+}
+function endColResize(){
+  _resizeState = null;
+  document.body.style.cursor = '';
+  document.body.classList.remove('col-resizing');
+  document.removeEventListener('mousemove', onColResizeMove);
 }
 
 function setFilter(el,mode){
   el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   filterMode=mode; currentPage=0; renderMatrix();
+  const labels={all:'All rows',rules:'Rows with rules',empty:'Rows without rules'};
+  showToast(`Show: ${labels[mode]||mode}`);
 }
 
 // ============================================================
@@ -1470,7 +2227,7 @@ function selectByOrgLevel(level){
   const allSel=nodes.length>0&&nodes.every(n=>selectedOrgNodes.has(n.id));
   if(allSel) nodes.forEach(n=>selectedOrgNodes.delete(n.id));
   else nodes.forEach(n=>selectedOrgNodes.add(n.id));
-  updateHint();updateSelection();
+  _afterSelectionChange();
 }
 
 function selectBySkuLevel(level){
@@ -1478,7 +2235,7 @@ function selectBySkuLevel(level){
   const allSel=nodes.length>0&&nodes.every(n=>selectedSkuNodes.has(n.id));
   if(allSel) nodes.forEach(n=>selectedSkuNodes.delete(n.id));
   else nodes.forEach(n=>selectedSkuNodes.add(n.id));
-  updateHint();updateSelection();
+  _afterSelectionChange();
 }
 
 function updateHint(){
@@ -1500,8 +2257,8 @@ function updateHint(){
 }
 
 function updateQAButtonStates(){
-  [{id:'qaHO',tree:'org',lv:0},{id:'qaRM',tree:'org',lv:1},{id:'qaASM',tree:'org',lv:2},
-   {id:'qaCat',tree:'sku',lv:0},{id:'qaBrand',tree:'sku',lv:1},{id:'qaBS',tree:'sku',lv:2},{id:'qaSKU',tree:'sku',lv:3}]
+  [{id:'qaHO',tree:'org',lv:0},{id:'qaRM',tree:'org',lv:1},
+   {id:'qaCat',tree:'sku',lv:0},{id:'qaBrand',tree:'sku',lv:1},{id:'qaBS',tree:'sku',lv:2}]
   .forEach(({id,tree,lv})=>{
     const btn=document.getElementById(id);
     if(!btn) return;
@@ -1516,15 +2273,17 @@ function updateQAButtonStates(){
 // CELL & HEADER CLICK HANDLERS
 // ============================================================
 function onCellClick(event,key){
-  // Clicking a data cell toggles the specific org leaf + sku leaf nodes
   const [oId,sId]=key.split('|');
   const orgAlready=selectedOrgNodes.has(oId), skuAlready=selectedSkuNodes.has(sId);
   if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){
-    // Single click: if both already selected, deselect both; else select both
     if(orgAlready&&skuAlready){ selectedOrgNodes.delete(oId); selectedSkuNodes.delete(sId); }
-    else { selectedOrgNodes.add(oId); selectedSkuNodes.add(sId); }
+    else {
+      selectedOrgNodes.add(oId); selectedSkuNodes.add(sId);
+      chartOrgId=oId; chartSkuId=sId;
+      populateChartSelectors(); refreshChartData();
+      try{ buildChart(); } catch(e){}
+    }
   } else {
-    // Multi-click: toggle each axis independently
     if(orgAlready) selectedOrgNodes.delete(oId); else selectedOrgNodes.add(oId);
     if(skuAlready) selectedSkuNodes.delete(sId); else selectedSkuNodes.add(sId);
   }
@@ -1534,13 +2293,28 @@ function onCellClick(event,key){
 function onSkuHdrClick(event,id){
   if(selectedSkuNodes.has(id)) selectedSkuNodes.delete(id);
   else selectedSkuNodes.add(id);
-  updateHint(); updateSelection();
+  // If exactly one org + one sku now selected, reflect in chart
+  if(selectedOrgNodes.size===1 && selectedSkuNodes.size===1){
+    chartOrgId=[...selectedOrgNodes][0]; chartSkuId=[...selectedSkuNodes][0];
+    refreshChartData(); try{ buildChart(); } catch(e){}
+  } else if(selectedSkuNodes.size===1 && selectedOrgNodes.size===0){
+    chartSkuId=[...selectedSkuNodes][0];
+    refreshChartData(); try{ buildChart(); } catch(e){}
+  }
+  _afterSelectionChange();
 }
 
 function onOrgHdrClick(event,id){
   if(selectedOrgNodes.has(id)) selectedOrgNodes.delete(id);
   else selectedOrgNodes.add(id);
-  updateHint(); updateSelection();
+  if(selectedOrgNodes.size===1 && selectedSkuNodes.size===1){
+    chartOrgId=[...selectedOrgNodes][0]; chartSkuId=[...selectedSkuNodes][0];
+    refreshChartData(); try{ buildChart(); } catch(e){}
+  } else if(selectedOrgNodes.size===1 && selectedSkuNodes.size===0){
+    chartOrgId=[...selectedOrgNodes][0];
+    refreshChartData(); try{ buildChart(); } catch(e){}
+  }
+  _afterSelectionChange();
 }
 
 function updateSelection(){
@@ -1570,191 +2344,498 @@ function updateSelection(){
   });
   updateQAButtonStates();
   renderTechPanel();
+  // Sync the pivot dropdown button labels & open popovers — since selection and
+  // pivot are unified, a matrix click also updates the dropdown's visible state
+  if(typeof updatePivotButtonLabels==='function') updatePivotButtonLabels();
+  if(typeof updatePivotLabel==='function') updatePivotLabel();
+  ['org','sku'].forEach(which=>{
+    const pop = document.getElementById(`pivotPop-${which}`);
+    if(pop && pop.classList.contains('open') && typeof refreshPivotPopover==='function') refreshPivotPopover(which);
+  });
 }
 
 // ============================================================
 // TECHNIQUE PANEL
 // ============================================================
 const TECHNIQUES=[
-  {name:'ARIMA',tag:'STAT',cls:'tt-s'},{name:'SARIMA',tag:'STAT',cls:'tt-s'},
-  {name:'Prophet',tag:'ML',cls:'tt-m'},{name:'XGBoost',tag:'ML',cls:'tt-m'},
-  {name:'LSTM',tag:'ML',cls:'tt-m'},{name:'Holt-Winters',tag:'STAT',cls:'tt-s'},
-  {name:'Simple Avg',tag:'STAT',cls:'tt-s'},{name:'Ensemble',tag:'ENS',cls:'tt-e'},
-  {name:'LightGBM',tag:'ML',cls:'tt-m'},{name:'ETS',tag:'STAT',cls:'tt-s'},
+  {name:'ARIMA',tag:'STAT',cls:'tt-s',desc:'Auto-regressive integrated moving average',params:[
+    {key:'p',label:'AR order (p)',type:'number',default:1,min:0,max:5,step:1},
+    {key:'d',label:'Differencing (d)',type:'number',default:1,min:0,max:2,step:1},
+    {key:'q',label:'MA order (q)',type:'number',default:1,min:0,max:5,step:1}
+  ]},
+  {name:'SARIMA',tag:'STAT',cls:'tt-s',desc:'Seasonal ARIMA with periodic component',params:[
+    {key:'order',label:'Order (p,d,q)',type:'text',default:'1,1,1'},
+    {key:'seasonal',label:'Seasonal (P,D,Q,s)',type:'text',default:'0,1,1,12'}
+  ]},
+  {name:'Prophet',tag:'ML',cls:'tt-m',desc:'Additive model with trend + seasonality',params:[
+    {key:'season',label:'Seasonality',type:'text',default:'additive'},
+    {key:'cp_prior',label:'Changepoint prior',type:'number',default:0.05,min:0.001,max:0.5,step:0.01}
+  ]},
+  {name:'XGBoost',tag:'ML',cls:'tt-m',desc:'Gradient-boosted trees',params:[
+    {key:'n_est',label:'Estimators',type:'number',default:100,min:10,max:1000,step:10},
+    {key:'depth',label:'Max depth',type:'number',default:6,min:2,max:12,step:1},
+    {key:'lr',label:'Learning rate',type:'number',default:0.1,min:0.01,max:0.5,step:0.01}
+  ]},
+  {name:'LSTM',tag:'ML',cls:'tt-m',desc:'Recurrent neural network',params:[
+    {key:'units',label:'Hidden units',type:'number',default:64,min:16,max:256,step:16},
+    {key:'epochs',label:'Epochs',type:'number',default:50,min:10,max:500,step:10}
+  ]},
+  {name:'Holt-Winters',tag:'STAT',cls:'tt-s',desc:'Triple exponential smoothing',params:[
+    {key:'trend',label:'Trend type',type:'text',default:'additive'},
+    {key:'seasonal',label:'Seasonal type',type:'text',default:'additive'},
+    {key:'periods',label:'Periods',type:'number',default:12,min:2,max:52,step:1}
+  ]},
+  {name:'Simple Avg',tag:'STAT',cls:'tt-s',desc:'Rolling mean of historical demand',params:[
+    {key:'window',label:'Window (weeks)',type:'number',default:4,min:2,max:26,step:1}
+  ]},
+  {name:'Ensemble',tag:'ENS',cls:'tt-e',desc:'Weighted blend of member models',params:[
+    {key:'weights',label:'Weights',type:'text',default:'equal'}
+  ]},
+  {name:'LightGBM',tag:'ML',cls:'tt-m',desc:'Fast gradient-boosted trees',params:[
+    {key:'n_est',label:'Estimators',type:'number',default:100,min:10,max:1000,step:10},
+    {key:'leaves',label:'Num leaves',type:'number',default:31,min:7,max:127,step:1},
+    {key:'lr',label:'Learning rate',type:'number',default:0.05,min:0.01,max:0.5,step:0.01}
+  ]},
+  {name:'ETS',tag:'STAT',cls:'tt-s',desc:'Error-Trend-Seasonal state space model',params:[
+    {key:'error',label:'Error',type:'text',default:'add'},
+    {key:'trend',label:'Trend',type:'text',default:'add'},
+    {key:'seasonal',label:'Seasonal',type:'text',default:'add'}
+  ]}
 ];
+
+// Tech UI state — which techs are expanded to show params, and their current param values
+const expandedTechs = new Set();
+const selectedTechParams = {}; // {techName: {paramKey: value}}
+
+// Normalization editor state — picks ONE method + params per save
+let selectedNormMethod = null;   // e.g. 'zscore'
+let selectedNormParams = {};     // filled per method
 
 function renderTechPanel(){
   const body=document.getElementById('tpBody');
   const info=document.getElementById('tpInfo');
   const hasOrg=selectedOrgNodes.size>0, hasSku=selectedSkuNodes.size>0;
-
-  if(!hasOrg&&!hasSku){
-    info.textContent='Select rows & columns to assign';
-    body.innerHTML=`<div class="no-sel-msg"><div class="no-sel-icon">⊞</div>
-      <div class="no-sel-t">Click org headers (rows) and SKU headers (columns) to define a rule intersection, then assign techniques.</div>
-    </div>`;
-    selectedTechs.clear(); return;
-  }
-
-  // Compute intersection
-  const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
-  const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
   const hasIntersection=hasOrg&&hasSku;
 
-  // Pre-fill techniques if there's an existing rule at this intersection
-  if(selectedTechs.size===0&&hasIntersection){
-    orgNodes.forEach(on=>{skuNodes.forEach(sn=>{
-      const existing=rules.find(r=>r.orgId===on.id&&r.skuId===sn.id);
-      if(existing) existing.techniques.forEach(t=>selectedTechs.add(t));
-    });});
+  const tpTitle=document.getElementById('tpTitle');
+  if(tpTitle) tpTitle.textContent = 'Rule Selector';
+
+  // Always update the Selected Value summary bar
+  updateSelectedValueSummary();
+
+  const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
+
+  // Pre-load existing rule values when exactly one org × one sku is selected
+  if(hasIntersection && orgNodes.length===1 && skuNodes.length===1){
+    const oid=orgNodes[0].id, sid=skuNodes[0].id;
+    if(selectedTechs.size===0){
+      const ex=techRules.find(r=>r.orgId===oid&&r.skuId===sid);
+      if(ex) ex.techniques.forEach(t=>selectedTechs.add(t));
+    }
+    if(selectedNormMethod===null){
+      const ex=normRules.find(r=>r.orgId===oid&&r.skuId===sid);
+      if(ex){ selectedNormMethod=ex.method; selectedNormParams={...ex.params}; }
+    }
   }
 
-  const orgLevelNames=orgNodes.map(n=>`<span class="level-tag ${getLevelClass(n,'org')}">${getLevelName(n,'org')}</span> ${n.name}`);
-  const skuLevelNames=skuNodes.map(n=>`<span class="level-tag ${getLevelClass(n,'sku')}">${getLevelName(n,'sku')}</span> ${n.name}`);
+  info.textContent = hasIntersection?`${orgNodes.length}×${skuNodes.length} intersection selected — configure and save`
+                   : hasOrg?`${orgNodes.length} org node${orgNodes.length>1?'s':''} (pick SKU to enable Save)`
+                   : hasSku?`${skuNodes.length} SKU node${skuNodes.length>1?'s':''} (pick Org to enable Save)`
+                   : 'Choose techniques & normalization; pick Org × SKU to save as a rule';
 
-  info.textContent=hasIntersection?`${orgNodes.length}×${skuNodes.length} intersection`:hasOrg?`${orgNodes.length} org node${orgNodes.length>1?'s':''} (pick SKU →)`:`${skuNodes.length} SKU node${skuNodes.length>1?'s':''} (pick Org ←)`;
+  // Always render both editors; Save button in renderApplyRow disables when no intersection
+  body.innerHTML = `<div class="tp-body-editors">
+    ${renderTechEditor()}
+    ${renderNormEditor()}
+    ${renderApplyRow(orgNodes, skuNodes)}
+  </div>`;
+}
 
-  const MAX=6;
-  function pillList(names,type){
-    const shown=names.slice(0,MAX);
-    const more=names.length-MAX;
-    return shown.map((n,i)=>`<div class="sel-axis-pill" onclick="${type==='org'?'removeOrgNode':'removeSkuNode'}('${(type==='org'?orgNodes:skuNodes)[i]?.id}')">${n} <span class="sp-x">×</span></div>`).join('')
-      +(more>0?`<div class="sel-axis-pill" style="color:var(--text3)">+${more} more</div>`:'');
-  }
-
-  body.innerHTML=`
-    <div class="tp-section">
-      <div class="tp-axis-row">
-        <div class="tp-axis-block">
-          <div class="tp-lbl">Org Rows <span style="color:var(--text3);font-weight:400">(${orgNodes.length})</span></div>
-          <div class="sel-axis-pills">${orgNodes.length?pillList(orgLevelNames,'org'):'<span style="color:var(--text3);font-size:11px">None — click org headers</span>'}</div>
-        </div>
-        <div class="tp-axis-cross">×</div>
-        <div class="tp-axis-block">
-          <div class="tp-lbl">SKU Cols <span style="color:var(--text3);font-weight:400">(${skuNodes.length})</span></div>
-          <div class="sel-axis-pills">${skuNodes.length?pillList(skuLevelNames,'sku'):'<span style="color:var(--text3);font-size:11px">None — click SKU headers</span>'}</div>
-        </div>
-      </div>
-      <button class="clear-btn" onclick="clearSel()" style="margin-top:6px">✕ Clear all</button>
+function renderTechEditor(){
+  const allSelected = selectedTechs.size === TECHNIQUES.length;
+  return `<div class="tp-section">
+    <div class="tp-lbl" style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span class="mode-dot" style="background:var(--accent);width:10px;height:10px;border-radius:50%"></span>
+      Technique Selection
+      <label class="tech-selectall" onclick="event.stopPropagation()">
+        <input type="checkbox" ${allSelected?'checked':''} onclick="toggleAllTechs(this.checked);event.stopPropagation()">
+        Select all
+      </label>
     </div>
-    ${hasIntersection?`
-    <div class="tp-section">
-      <div class="tp-lbl">Techniques</div>
-      <div class="tech-list">
-        ${TECHNIQUES.map(t=>`
-          <div class="tech-item ${selectedTechs.has(t.name)?'on':''}" onclick="toggleTech('${t.name}',this)">
-            <input type="checkbox" ${selectedTechs.has(t.name)?'checked':''} onclick="event.stopPropagation()">
+    <div class="tech-list">
+      ${TECHNIQUES.map(t=>{
+        const isOn = selectedTechs.has(t.name);
+        const isExpanded = expandedTechs.has(t.name);
+        let paramsHtml = '';
+        if(isExpanded && t.params && t.params.length){
+          paramsHtml = `<div class="tech-params">
+            ${t.params.map(p=>{
+              const stored = selectedTechParams[t.name] && selectedTechParams[t.name][p.key];
+              const val = stored!==undefined ? stored : p.default;
+              if(!selectedTechParams[t.name]) selectedTechParams[t.name] = {};
+              if(selectedTechParams[t.name][p.key]===undefined) selectedTechParams[t.name][p.key] = p.default;
+              return `<div class="np-row">
+                <label class="np-lbl">${p.label}</label>
+                <input type="${p.type}" class="np-input" value="${val}"
+                  ${p.min!==undefined?`min="${p.min}"`:''} ${p.max!==undefined?`max="${p.max}"`:''} ${p.step!==undefined?`step="${p.step}"`:''}
+                  oninput="setTechParam('${t.name}','${p.key}',this.value)">
+              </div>`;
+            }).join('')}
+          </div>`;
+        }
+        return `<div class="tech-item ${isOn?'on':''} ${isExpanded?'expanded':''}">
+          <div class="tech-item-hdr" onclick="toggleTech('${t.name}',this.parentElement)">
+            <input type="checkbox" ${isOn?'checked':''} onclick="event.stopPropagation()">
             <span class="tech-n">${t.name}</span>
             <span class="tech-tag ${t.cls}">${t.tag}</span>
-          </div>`).join('')}
-      </div>
+            ${t.params && t.params.length ? `<button class="tech-expand" aria-label="${isExpanded?'Hide':'Show'} ${t.name} parameters" aria-expanded="${isExpanded}" onclick="toggleTechExpanded('${t.name}');event.stopPropagation()" title="${isExpanded?'Hide parameters':'Show parameters'}">${isExpanded?'−':'+'}</button>` : ''}
+          </div>
+          ${paramsHtml}
+        </div>`;
+      }).join('')}
     </div>
-    <div class="tp-section">
-      <button class="apply-btn" onclick="applyTechniques()" ${selectedTechs.size>0?'':'disabled'}>
-        Save Rule${orgNodes.length*skuNodes.length>1?' ('+orgNodes.length+'×'+skuNodes.length+')':''}
-      </button>
-    </div>`:`
-    <div class="tp-section" style="text-align:center;color:var(--text3);font-size:11.5px;padding:16px 0">
-      Select both Org <b style="color:var(--text2)">rows</b> and SKU <b style="color:var(--text2)">columns</b> to define the intersection
-    </div>`}
-  `;
+  </div>`;
+}
+
+function renderNormEditor(){
+  let paramsHtml = '';
+  if(selectedNormMethod){
+    const meta = NORM_METHODS.find(m=>m.id===selectedNormMethod);
+    if(meta){
+      paramsHtml = `<div class="norm-params">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${meta.desc}</div>
+        ${meta.params.map(p=>{
+          const val = selectedNormParams[p.key]!==undefined?selectedNormParams[p.key]:p.default;
+          if(selectedNormParams[p.key]===undefined) selectedNormParams[p.key]=p.default;
+          return `<div class="np-row">
+            <label class="np-lbl">${p.label}</label>
+            <input type="${p.type}" class="np-input" value="${val}"
+              ${p.min!==undefined?`min="${p.min}"`:''} ${p.max!==undefined?`max="${p.max}"`:''} ${p.step!==undefined?`step="${p.step}"`:''}
+              oninput="setNormParam('${p.key}',this.value)">
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+  return `<div class="tp-section">
+    <div class="tp-lbl" style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span class="mode-dot" style="background:var(--amber);width:10px;height:10px;border-radius:50%"></span>
+      Normalization Method
+    </div>
+    <div class="norm-methods">
+      ${NORM_METHODS.map(m=>`
+        <div class="norm-method ${selectedNormMethod===m.id?'on':''}" onclick="setNormMethod('${m.id}')">
+          <input type="radio" name="normMethod" ${selectedNormMethod===m.id?'checked':''} onclick="event.stopPropagation()">
+          <div class="nm-body">
+            <div class="nm-name">${m.name}</div>
+            <div class="nm-desc">${m.desc}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    ${paramsHtml}
+  </div>`;
+}
+
+function renderApplyRow(orgNodes, skuNodes){
+  const count = orgNodes.length*skuNodes.length;
+  const hasIntersection = orgNodes.length>0 && skuNodes.length>0;
+  const hasSomething = hasIntersection && (selectedTechs.size>0 || !!selectedNormMethod);
+  const bits = [];
+  if(selectedTechs.size>0) bits.push(`${selectedTechs.size} tech`);
+  if(selectedNormMethod){
+    const meta=NORM_METHODS.find(m=>m.id===selectedNormMethod);
+    bits.push(meta?.name||'norm');
+  }
+  const label = !hasIntersection ? 'pick Org × SKU to save'
+              : bits.length ? bits.join(' + ') : 'nothing picked';
+  return `<div class="tp-section tp-apply-row">
+    <button class="clear-btn" onclick="clearSel()" style="max-width:140px;margin-right:10px">✕ Clear</button>
+    <button class="apply-btn" onclick="applyRule()" ${hasSomething?'':'disabled'} style="max-width:360px">
+      Save ${count>1?`${count} Rules`:'Rule'} · ${label}
+    </button>
+  </div>`;
+}
+
+function updateSelectedValueSummary(){
+  const oChipsEl=document.getElementById('selSummaryOrgChips');
+  const sChipsEl=document.getElementById('selSummarySkuChips');
+  const oCountEl=document.getElementById('selSummaryOrgCount');
+  const sCountEl=document.getElementById('selSummarySkuCount');
+  const clearBtn=document.getElementById('selSummaryClear');
+  if(!oChipsEl) return;
+
+  const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
+  const orgCount=orgNodes.length, skuCount=skuNodes.length;
+
+  oCountEl.textContent = `(${orgCount})`;
+  sCountEl.textContent = `(${skuCount})`;
+
+  const MAX = 6;
+  function renderChips(nodes, type){
+    if(!nodes.length) return `<span class="sel-summary-empty">None</span>`;
+    const shown = nodes.slice(0, MAX);
+    const more = nodes.length - MAX;
+    const removeFn = type==='org' ? 'removeOrgNode' : 'removeSkuNode';
+    const levels = type==='org' ? ORG_LEVELS : SKU_LEVELS;
+    return shown.map(n => `
+      <div class="sel-axis-pill" onclick="${removeFn}('${n.id}')" title="Click to remove">
+        <span class="level-tag ${getLevelClass(n, type)}">${levels[n.level]||''}</span>
+        <span style="color:var(--text)">${n.name}</span>
+        <span class="sp-x">✕</span>
+      </div>`).join('')
+      + (more>0 ? `<div class="sel-axis-pill" style="color:var(--text3);cursor:default;border-style:dashed">+${more} more</div>` : '');
+  }
+  oChipsEl.innerHTML = renderChips(orgNodes, 'org');
+  sChipsEl.innerHTML = renderChips(skuNodes, 'sku');
+
+  if(clearBtn) clearBtn.style.display = (orgCount || skuCount) ? 'inline-flex' : 'none';
+  const tipEl = document.getElementById('selSummaryTip');
+  if(tipEl) tipEl.style.display = (orgCount===0 && skuCount===0) ? 'block' : 'none';
+}
+
+function setNormMethod(id){
+  selectedNormMethod = id;
+  selectedNormParams = {};
+  const meta = NORM_METHODS.find(m=>m.id===id);
+  if(meta) meta.params.forEach(p=>selectedNormParams[p.key]=p.default);
+  renderTechPanel();
+}
+
+function setNormParam(key, val){
+  selectedNormParams[key] = isNaN(parseFloat(val)) ? val : parseFloat(val);
 }
 
 function toggleTech(name,el){
   if(selectedTechs.has(name)){selectedTechs.delete(name);el.classList.remove('on');el.querySelector('input').checked=false;}
   else{selectedTechs.add(name);el.classList.add('on');el.querySelector('input').checked=true;}
+  // Keep Select-All checkbox in sync
+  const saBox = document.querySelector('.tech-selectall input');
+  if(saBox) saBox.checked = selectedTechs.size === TECHNIQUES.length;
   const ab=document.querySelector('.apply-btn');
-  if(ab) ab.disabled=selectedTechs.size===0;
+  if(ab){
+    const hasSomething = (editMode==='tech' && selectedTechs.size>0)
+                      || (editMode==='norm' && !!selectedNormMethod)
+                      || (editMode==='both' && (selectedTechs.size>0 || !!selectedNormMethod));
+    ab.disabled = !hasSomething;
+  }
 }
 
-function removeOrgNode(id){selectedOrgNodes.delete(id);updateHint();updateSelection();}
-function removeSkuNode(id){selectedSkuNodes.delete(id);updateHint();updateSelection();}
+function toggleAllTechs(on){
+  if(on) TECHNIQUES.forEach(t=>selectedTechs.add(t.name));
+  else selectedTechs.clear();
+  renderTechPanel();
+}
+
+function toggleTechExpanded(name){
+  if(expandedTechs.has(name)) expandedTechs.delete(name);
+  else expandedTechs.add(name);
+  renderTechPanel();
+}
+
+function setTechParam(tech, key, val){
+  if(!selectedTechParams[tech]) selectedTechParams[tech] = {};
+  selectedTechParams[tech][key] = isNaN(parseFloat(val)) ? val : parseFloat(val);
+}
+
+function removeOrgNode(id){selectedOrgNodes.delete(id);_afterSelectionChange();}
+function removeSkuNode(id){selectedSkuNodes.delete(id);_afterSelectionChange();}
 
 function clearSel(){
   selectedOrgNodes.clear();selectedSkuNodes.clear();selectedTechs.clear();
-  updateHint();updateSelection();
+  selectedNormMethod=null; selectedNormParams={};
+  _afterSelectionChange();
 }
 
-function applyTechniques(){
-  if(selectedTechs.size===0||selectedOrgNodes.size===0||selectedSkuNodes.size===0) return;
-  const techs=[...selectedTechs];
+// Unified apply — writes tech AND/OR norm rules based on editMode
+function applyRule(){
+  if(selectedOrgNodes.size===0||selectedSkuNodes.size===0) return;
   const orgNodes=[...selectedOrgNodes].map(id=>nodeMap[id]).filter(Boolean);
   const skuNodes=[...selectedSkuNodes].map(id=>nodeMap[id]).filter(Boolean);
+  let techCount=0, normCount=0;
 
   orgNodes.forEach(on=>{
     skuNodes.forEach(sn=>{
-      // Remove any existing rule for exact same org+sku node pair
-      rules=rules.filter(r=>!(r.orgId===on.id&&r.skuId===sn.id));
-      rules.push({
-        id:ruleIdCounter++,
-        orgId:on.id, skuId:sn.id,
-        orgLevel:on.level, skuLevel:sn.level,
-        orgName:on.name, skuName:sn.name,
-        techniques:techs,
-        priority: on.level===0?3:on.level===1?2:1
-      });
+      if((editMode==='tech'||editMode==='both') && selectedTechs.size>0){
+        // Snapshot params for only the techniques actually selected
+        const techParamsSnap = {};
+        selectedTechs.forEach(t=>{
+          if(selectedTechParams[t]) techParamsSnap[t] = {...selectedTechParams[t]};
+        });
+        techRules = techRules.filter(r=>!(r.orgId===on.id&&r.skuId===sn.id));
+        techRules.push({
+          id:ruleIdCounter++, type:'tech',
+          orgId:on.id, skuId:sn.id,
+          orgLevel:on.level, skuLevel:sn.level,
+          orgName:on.name, skuName:sn.name,
+          techniques:[...selectedTechs],
+          techParams: techParamsSnap,
+          priority: on.level===0?3:on.level===1?2:1
+        });
+        techCount++;
+      }
+      if((editMode==='norm'||editMode==='both') && selectedNormMethod){
+        normRules = normRules.filter(r=>!(r.orgId===on.id&&r.skuId===sn.id));
+        normRules.push({
+          id:ruleIdCounter++, type:'norm',
+          orgId:on.id, skuId:sn.id,
+          orgLevel:on.level, skuLevel:sn.level,
+          orgName:on.name, skuName:sn.name,
+          method:selectedNormMethod, params:{...selectedNormParams},
+          priority: on.level===0?3:on.level===1?2:1
+        });
+        normCount++;
+      }
     });
   });
 
+  rules = techRules; // keep legacy alias
   buildRuleMap();
   renderMatrix();
   renderRulesTable();
-  const ruleCount=orgNodes.length*skuNodes.length;
-  showToast(`${ruleCount} rule${ruleCount>1?'s':''} saved: ${techs.join(', ')}`);
-  selectedOrgNodes.clear(); selectedSkuNodes.clear(); selectedTechs.clear();
+  updateRuleBadges();
+  const parts=[];
+  if(techCount) parts.push(`${techCount} technique rule${techCount>1?'s':''}`);
+  if(normCount) parts.push(`${normCount} normalization rule${normCount>1?'s':''}`);
+  showToast(`Saved: ${parts.join(' + ')||'nothing'}`);
+  selectedOrgNodes.clear(); selectedSkuNodes.clear();
+  selectedTechs.clear(); selectedNormMethod=null; selectedNormParams={};
   updateHint(); updateSelection();
+}
+// Legacy alias — tests still call applyTechniques
+function applyTechniques(){ return applyRule(); }
+
+function updateRuleBadges(){
+  const nb=document.getElementById('normRulesBadge');
+  const tb=document.getElementById('techRulesBadge');
+  const nmc=document.getElementById('normModeCount');
+  const tmc=document.getElementById('techModeCount');
+  if(nb) nb.textContent = `${normRules.length} Norm`;
+  if(tb) tb.textContent = `${techRules.length} Tech`;
+  if(nmc) nmc.textContent = normRules.length;
+  if(tmc) tmc.textContent = techRules.length;
 }
 
 // ============================================================
 // RULES TABLE
 // ============================================================
+let rulesTableTab = 'tech'; // 'tech' | 'norm'
+function setRulesTab(tab){ rulesTableTab=tab; renderRulesTable(); }
+
 function renderRulesTable(){
-  const tbody=document.getElementById('rulesTable');
-  document.getElementById('rulesCountLbl').textContent=`${rules.length} rule${rules.length!==1?'s':''}`;
-  if(!rules.length){tbody.innerHTML=`<tr><td colspan="8" style="padding:16px;text-align:center;color:var(--text3)">No rules defined yet</td></tr>`;return;}
+  const container=document.getElementById('rulesTable');
+  const total=techRules.length+normRules.length;
+  document.getElementById('rulesCountLbl').textContent=`${total} rule${total!==1?'s':''} · ${techRules.length} tech · ${normRules.length} norm`;
 
-  // Detect conflicts: same org+sku covered by multiple rules
-  const conflictSet=new Set();
-  const orgSkuCount={};
-  rules.forEach(r=>{const k=r.orgId+'|'+r.skuId;orgSkuCount[k]=(orgSkuCount[k]||0)+1;});
-  Object.entries(orgSkuCount).forEach(([k,v])=>{if(v>1)conflictSet.add(k);});
+  // Build Technique rules table
+  const techSorted=[...techRules].sort((a,b)=>a.priority-b.priority||(a.orgLevel-b.orgLevel)||(a.skuLevel-b.skuLevel));
+  let techHtml;
+  if(!techSorted.length){
+    techHtml = `<div class="rules-empty">No technique rules defined yet</div>`;
+  } else {
+    techHtml = `<div class="rt-scroll"><table class="rt"><thead><tr>
+      <th>P</th><th>Org</th><th>SKU</th><th>Techniques</th><th>Scope</th><th></th>
+    </tr></thead><tbody>${techSorted.map(r=>{
+      const orgLcls=r.orgLevel===0?'lt-ho':r.orgLevel===1?'lt-rm':'lt-asm';
+      const skuLcls=r.skuLevel===0?'lt-cat':r.skuLevel===1?'lt-br':r.skuLevel===2?'lt-bs':'lt-sku';
+      return `<tr>
+        <td><span class="pb ${r.priority===1?'p1':r.priority===2?'p2':''}">${r.priority}</span></td>
+        <td><span class="level-tag ${orgLcls}">${ORG_LEVELS[r.orgLevel]||''}</span> ${r.orgName}</td>
+        <td><span class="level-tag ${skuLcls}">${SKU_LEVELS[r.skuLevel]||''}</span> ${r.skuName}</td>
+        <td><div class="tech-chips">${r.techniques.map(t=>`<span class="tc">${t}</span>`).join('')}</div></td>
+        <td><span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${getSubtreeLeaves(nodeMap[r.orgId],'org').length}×${getSubtreeLeaves(nodeMap[r.skuId],'sku').length}</span></td>
+        <td><button class="ab" aria-label="Delete Technique rule for ${r.orgName} × ${r.skuName}" title="Delete rule" onclick="deleteRule(${r.id},'tech')">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
 
-  const sorted=[...rules].sort((a,b)=>a.priority-b.priority||(a.orgLevel-b.orgLevel)||(a.skuLevel-b.skuLevel));
+  // Build Normalization rules table
+  const normSorted=[...normRules].sort((a,b)=>a.priority-b.priority||(a.orgLevel-b.orgLevel)||(a.skuLevel-b.skuLevel));
+  let normHtml;
+  if(!normSorted.length){
+    normHtml = `<div class="rules-empty">No normalization rules defined yet</div>`;
+  } else {
+    normHtml = `<div class="rt-scroll"><table class="rt"><thead><tr>
+      <th>P</th><th>Org</th><th>SKU</th><th>Method</th><th>Parameters</th><th>Scope</th><th></th>
+    </tr></thead><tbody>${normSorted.map(r=>{
+      const orgLcls=r.orgLevel===0?'lt-ho':r.orgLevel===1?'lt-rm':'lt-asm';
+      const skuLcls=r.skuLevel===0?'lt-cat':r.skuLevel===1?'lt-br':r.skuLevel===2?'lt-bs':'lt-sku';
+      const meta=NORM_METHODS.find(m=>m.id===r.method);
+      const paramsStr = Object.entries(r.params||{}).map(([k,v])=>`<span class="tc">${k}=${v}</span>`).join('');
+      return `<tr>
+        <td><span class="pb ${r.priority===1?'p1':r.priority===2?'p2':''}">${r.priority}</span></td>
+        <td><span class="level-tag ${orgLcls}">${ORG_LEVELS[r.orgLevel]||''}</span> ${r.orgName}</td>
+        <td><span class="level-tag ${skuLcls}">${SKU_LEVELS[r.skuLevel]||''}</span> ${r.skuName}</td>
+        <td><span class="tc" style="background:var(--amber-bg);color:var(--amber);border-color:rgba(245,124,0,.3)">${meta?.name||r.method}</span></td>
+        <td><div class="tech-chips">${paramsStr}</div></td>
+        <td><span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${getSubtreeLeaves(nodeMap[r.orgId],'org').length}×${getSubtreeLeaves(nodeMap[r.skuId],'sku').length}</span></td>
+        <td><button class="ab" aria-label="Delete Normalization rule for ${r.orgName} × ${r.skuName}" title="Delete rule" onclick="deleteRule(${r.id},'norm')">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
 
-  tbody.innerHTML=`<thead><tr>
-    <th>P</th><th>Org Level</th><th>Org Node</th><th>SKU Level</th><th>SKU Node</th>
-    <th>Techniques</th><th>Scope</th><th></th>
-  </tr></thead><tbody>${sorted.map(r=>{
-    const k=r.orgId+'|'+r.skuId;
-    const isConf=conflictSet.has(k);
-    const orgLcls=r.orgLevel===0?'lt-ho':r.orgLevel===1?'lt-rm':'lt-asm';
-    const skuLcls=r.skuLevel===0?'lt-cat':r.skuLevel===1?'lt-br':r.skuLevel===2?'lt-bs':'lt-sku';
-    const orgLvlName=ORG_LEVELS[r.orgLevel]||'';
-    const skuLvlName=SKU_LEVELS[r.skuLevel]||'';
-    return `<tr class="${isConf&&r.orgLevel>0?'overridden':''}">
-      <td><span class="pb ${r.priority===1?'p1':r.priority===2?'p2':''}">${r.priority}</span></td>
-      <td><span class="level-tag ${orgLcls}">${orgLvlName}</span></td>
-      <td style="color:var(--text)">${r.orgName}</td>
-      <td><span class="level-tag ${skuLcls}">${skuLvlName}</span></td>
-      <td style="color:var(--text)">${r.skuName}</td>
-      <td><div class="tech-chips">${r.techniques.map(t=>`<span class="tc">${t}</span>`).join('')}</div>
-        ${isConf?'<div style="font-size:10px;color:var(--amber);margin-top:2px">⚡ Overridden by lower-level rule</div>':''}
-      </td>
-      <td><span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${getSubtreeLeaves(nodeMap[r.orgId],'org').length}×${getSubtreeLeaves(nodeMap[r.skuId],'sku').length}</span></td>
-      <td><button class="ab" onclick="deleteRule(${r.id})">✕</button></td>
-    </tr>`;
-  }).join('')}</tbody>`;
-
-  // Update badges
-  document.getElementById('ruleBadge').textContent=`${rules.length} Rule${rules.length!==1?'s':''}`;
-  document.getElementById('confBadge').textContent=`${Object.values(orgSkuCount).filter(v=>v>1).length} Conflict${Object.values(orgSkuCount).filter(v=>v>1).length!==1?'s':''}`;
-  document.getElementById('confBadge').style.display=Object.values(orgSkuCount).some(v=>v>1)?'inline-flex':'none';
+  // Two tables side-by-side
+  container.innerHTML = `<div class="rules-split">
+    <div class="rules-col">
+      <div class="rules-col-title">
+        <span class="mode-dot" style="background:var(--accent)"></span>
+        Applied Rules (Technique)
+        <span class="mode-count">${techRules.length}</span>
+        <button class="btn btn-ghost btn-sm rules-delete-all" aria-label="Delete all Technique rules" onclick="deleteAllTechRules()" title="Delete every applied Technique rule">🗑 Delete All</button>
+      </div>
+      ${techHtml}
+    </div>
+    <div class="rules-col">
+      <div class="rules-col-title">
+        <span class="mode-dot" style="background:var(--amber)"></span>
+        Applied Rules (Normalization)
+        <span class="mode-count">${normRules.length}</span>
+        <button class="btn btn-ghost btn-sm rules-delete-all" aria-label="Delete all Normalization rules" onclick="deleteAllNormRules()" title="Delete every applied Normalization rule">🗑 Delete All</button>
+      </div>
+      ${normHtml}
+    </div>
+  </div>`;
+  updateRuleBadges();
 }
 
-function deleteRule(id){
-  rules=rules.filter(r=>r.id!==id);
-  buildRuleMap();renderMatrix();renderRulesTable();
+function deleteRule(id, type){
+  if(type==='norm') normRules = normRules.filter(r=>r.id!==id);
+  else techRules = techRules.filter(r=>r.id!==id);
+  rules = techRules;
+  buildRuleMap(); renderMatrix(); renderRulesTable();
   showToast('Rule deleted');
+}
+
+function deleteAllRules(evt){
+  if(evt) evt.stopPropagation();  // prevent the parent toggle click
+  const total = techRules.length + normRules.length;
+  if(total === 0){ showToast('No rules to delete'); return; }
+  if(!confirm(`Delete all ${total} rule${total>1?'s':''}? This cannot be undone.`)) return;
+  techRules = [];
+  normRules = [];
+  rules = techRules;
+  buildRuleMap(); renderMatrix(); renderRulesTable(); updateRuleBadges();
+  showToast(`${total} rule${total>1?'s':''} deleted`);
+}
+
+function deleteAllTechRules(){
+  const n = techRules.length;
+  if(n === 0){ showToast('No Technique rules to delete'); return; }
+  if(!confirm(`Delete all ${n} Technique rule${n>1?'s':''}? This cannot be undone.`)) return;
+  techRules = [];
+  rules = techRules;
+  buildRuleMap(); renderMatrix(); renderRulesTable(); updateRuleBadges();
+  showToast(`${n} Technique rule${n>1?'s':''} deleted`);
+}
+
+function deleteAllNormRules(){
+  const n = normRules.length;
+  if(n === 0){ showToast('No Normalization rules to delete'); return; }
+  if(!confirm(`Delete all ${n} Normalization rule${n>1?'s':''}? This cannot be undone.`)) return;
+  normRules = [];
+  buildRuleMap(); renderMatrix(); renderRulesTable(); updateRuleBadges();
+  showToast(`${n} Normalization rule${n>1?'s':''} deleted`);
 }
 
 // ============================================================
@@ -1763,11 +2844,64 @@ function deleteRule(id){
 let searchTimer=null;
 function handleSearch(val){
   clearTimeout(searchTimer);
+  const clearBtn = document.getElementById('searchClear');
+  if(clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
   searchTimer=setTimeout(()=>{
     searchQuery=val.trim().toLowerCase();
     currentPage=0;
     renderMatrix();
-  },220);
+    updateSearchStatus();
+  },180);
+}
+function clearSearch(){
+  const inp = document.getElementById('searchInput');
+  if(inp) inp.value = '';
+  searchQuery = '';
+  currentPage = 0;
+  document.getElementById('searchClear').style.display = 'none';
+  renderMatrix();
+  updateSearchStatus();
+}
+
+// Compute top-N fuzzy matches across org + sku names for the status line.
+// Shows an "intent line" so the user sees *why* something matched.
+function updateSearchStatus(){
+  const el = document.getElementById('searchStatus');
+  if(!el) return;
+  if(!searchQuery){ el.textContent = ''; el.style.display='none'; return; }
+
+  // Collect all unique names across both trees (cap iteration for performance)
+  const candidates = [];
+  const seen = new Set();
+  function collect(node, tree){
+    if(seen.has(node.id)) return;
+    seen.add(node.id);
+    if(node!==orgRoot && node!==skuRoot){
+      const score = fuzzyScore(searchQuery, node.name);
+      if(score > 0.35) candidates.push({name:node.name, score, tree, level:node.level});
+    }
+    node.children.forEach(c=>collect(c,tree));
+  }
+  collect(orgRoot,'org'); collect(skuRoot,'sku');
+
+  candidates.sort((a,b)=>b.score-a.score);
+  const total = candidates.length;
+
+  if(total===0){
+    el.innerHTML = `<span class="search-status-none">No fuzzy matches for "<b>${searchQuery}</b>"</span>`;
+    el.style.display='flex';
+    return;
+  }
+
+  const top = candidates.slice(0,3);
+  const topBits = top.map(c=>{
+    const pct = Math.round(c.score*100);
+    const tree = c.tree==='org'?'Org':'SKU';
+    return `<span class="search-status-hit"><span class="search-status-hit-name">${c.name}</span> <span class="search-status-hit-score">${pct}%</span> <span class="search-status-hit-tree">${tree}</span></span>`;
+  }).join('');
+  const more = total>3 ? `<span class="search-status-more">+${total-3} more</span>` : '';
+  el.innerHTML = `<span class="search-status-label">Fuzzy match for "<b>${searchQuery}</b>":</span> ${topBits} ${more}`;
+  el.style.display='flex';
 }
 
 // ============================================================
@@ -1778,45 +2912,138 @@ function updateStickyLeft(){
 }
 
 // ============================================================
-// CHART
+// CHART — context-aware (Org × SKU hierarchy) time series
 // ============================================================
-function genData(n){
-  const labels=[],actual=[],outIdx=[3,7,10];
-  const seasonal=[1,1.1,1.2,1.15,1.05,.9,.85,.88,.95,1,1.08,1.12,1.18];
-  for(let i=0;i<n;i++){
-    const v=Math.round(1200*seasonal[i%seasonal.length]+(Math.random()-.5)*200);
-    actual.push(outIdx.includes(i)?v*1.5:v);
-    labels.push(`Wk ${i+1}`);
-  }
-  return{labels,actual,outIdx};
+
+// Deterministic hash so the same (orgId, skuId, weekIdx) always produces the same value
+function hash32(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
+  return h;
 }
-let cdata=genData(13), cInst=null, showOut=true, smoothMode='none';
+function seededRand(seed){
+  // Mulberry32 — stable, fast, good distribution
+  return function(){
+    seed|=0; seed=(seed+0x6D2B79F5)|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=(t+Math.imul(t^t>>>7,61|t))^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+// Generate demand series for a specific (org node, sku node) at the requested depth.
+// Higher-level nodes aggregate (sum) leaf-level values → realistic rollups.
+function genContextData(orgNode, skuNode, nWeeks){
+  const orgLeaves = getSubtreeLeaves(orgNode,'org');
+  const skuLeaves = getSubtreeLeaves(skuNode,'sku');
+  // Base amplitude depends on how many leaves aggregate into this view
+  const aggCount = orgLeaves.length * skuLeaves.length;
+  // Per-(orgLeaf,skuLeaf) baseline is ~800-1500 units; rollup sums them
+  const labels=[],actual=[];
+  const seasonal=[1,1.08,1.15,1.2,1.12,.95,.88,.9,.97,1.04,1.1,1.15,1.18];
+  // Stable seed combining both node IDs
+  const seed = hash32(orgNode.id+'|'+skuNode.id);
+  const rand = seededRand(seed);
+  // Pre-compute per-leaf base amplitudes so aggregation is consistent
+  const perLeafBase = [];
+  for(let i=0;i<Math.min(aggCount,200);i++) perLeafBase.push(600+rand()*900);
+  // Fill up if aggCount exceeds our sample (use avg × count for very large aggregations)
+  const sampleSum = perLeafBase.reduce((a,b)=>a+b,0);
+  const avgBase = sampleSum / perLeafBase.length;
+  const totalBase = aggCount<=perLeafBase.length ? sampleSum : avgBase * aggCount;
+
+  // Inject a few outlier weeks (seeded) — about 2-4 per 26w view
+  const outlierCount = Math.max(2, Math.floor(nWeeks/8));
+  const outlierSet = new Set();
+  for(let i=0;i<outlierCount;i++) outlierSet.add(Math.floor(rand()*nWeeks));
+
+  for(let w=0;w<nWeeks;w++){
+    const seasonalFactor = seasonal[w%seasonal.length];
+    const noise = 0.85 + rand()*0.30; // ±15% weekly noise
+    let v = totalBase * seasonalFactor * noise;
+    if(outlierSet.has(w)) v *= (1.6 + rand()*0.5); // spike
+    actual.push(Math.round(v));
+    labels.push(`Wk ${w+1}`);
+  }
+  // Return ACTUAL outliers as detected by threshold (not hardcoded indices)
+  return {labels, actual, orgNode, skuNode, aggCount};
+}
+
+// Detect outliers as points beyond N standard deviations from mean
+function detectOutliers(data, sigmaThreshold){
+  if(data.length<3) return [];
+  const mean = data.reduce((a,b)=>a+b,0)/data.length;
+  const variance = data.reduce((a,b)=>a+(b-mean)**2,0)/data.length;
+  const stdev = Math.sqrt(variance);
+  const threshold = stdev * sigmaThreshold;
+  return data.map((v,i)=>Math.abs(v-mean)>threshold ? i : -1).filter(i=>i>=0);
+}
+
+// CHART STATE
+let cdata = null;  // populated on first render
+let cInst = null;
+let showOut = true;
+let smoothMode = 'none';
+let smoothWindow = 4;
+let outlierSigma = 2;      // 1.5 / 2 / 3
+let chartRangeWeeks = 26;  // default wider view
+let chartOrgId = 'org-root'; // defaults: show aggregated "All Org × All SKU"
+let chartSkuId = 'sku-root';
+
 function movAvg(d,w){return d.map((_,i)=>i<w-1?null:Math.round(d.slice(i-w+1,i+1).reduce((a,b)=>a+b,0)/w));}
 function expSm(d,a=.35){let r=[d[0]];for(let i=1;i<d.length;i++)r.push(Math.round(a*d[i]+(1-a)*r[i-1]));return r;}
-function buildChart(){
-  const{labels,actual,outIdx}=cdata;
-  const pBG=actual.map((_,i)=>outIdx.includes(i)&&showOut?'#d32f2f':'#25A9E0');
-  const pR=actual.map((_,i)=>outIdx.includes(i)&&showOut?6:3);
-  const datasets=[{label:'Actual',data:actual,borderColor:'#25A9E0',backgroundColor:'rgba(37,169,224,.08)',borderWidth:2,pointBackgroundColor:pBG,pointRadius:pR,fill:true,tension:.35}];
-  if(smoothMode!=='none') datasets.push({label:'Smoothed',data:smoothMode==='ma'?movAvg(actual,4):expSm(actual),borderColor:'rgba(37,169,224,.5)',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.4});
-  if(cInst)cInst.destroy();
-  const canvas=document.getElementById('demandChart');
-  // Ensure canvas fills its container before Chart.js reads dimensions
-  canvas.style.width='100%';
-  canvas.style.height='100%';
-  cInst=new Chart(canvas.getContext('2d'),{
-    type:'line',data:{labels,datasets},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e0e0e0',borderWidth:1,titleColor:'#333',bodyColor:'#555',padding:9}},
-      scales:{x:{grid:{color:'#f0f0f0'},ticks:{color:'#888',font:{size:11}}},y:{grid:{color:'#f0f0f0'},ticks:{color:'#888',font:{size:11},callback:v=>v.toLocaleString()}}}
-    }
-  });
-}
-function setRng(el,r){document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');cdata=genData(r==='13w'?13:r==='26w'?26:52);buildChart();}
-function toggleOut(btn){showOut=!showOut;btn.textContent=showOut?'Hide Outliers':'Show Outliers';buildChart();}
-function setSm(el,m){document.querySelectorAll('.pill button').forEach(b=>{if(b.parentElement===el.parentElement)b.classList.remove('on')});el.classList.add('on');smoothMode=m;document.getElementById('smWin').style.display=m!=='none'?'flex':'none';buildChart();}
-function setP(el){document.querySelectorAll('.pill button').forEach(b=>{if(b.parentElement===el.parentElement)b.classList.remove('on')});el.classList.add('on');}
 
+function refreshChartData(){
+  const orgNode = nodeMap[chartOrgId] || orgRoot;
+  const skuNode = nodeMap[chartSkuId] || skuRoot;
+  cdata = genContextData(orgNode, skuNode, chartRangeWeeks);
+  cdata.outIdx = detectOutliers(cdata.actual, outlierSigma);
+}
+
+function buildChart(){
+  // Chart removed. Kept as no-op so existing callers (pivot/scenario handlers) still work
+  // without needing to strip every call site.
+}
+
+// ── CONTROL HANDLERS ──────────────────────────────────────
+function setRng(el,r){
+  document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  chartRangeWeeks = r==='13w'?13:r==='26w'?26:r==='52w'?52:104;
+  refreshChartData(); buildChart();
+}
+function toggleOut(btn){
+  showOut=!showOut;
+  btn.textContent=showOut?'Hide Outliers':'Show Outliers';
+  buildChart();
+}
+function setSm(el,m){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  smoothMode=m;
+  document.getElementById('smWin').style.display=m==='ma'?'flex':'none';
+  buildChart();
+}
+function setSmWin(v){ smoothWindow=parseInt(v,10); document.getElementById('smV').textContent=v+' wk'; if(smoothMode==='ma') buildChart(); }
+function setP(el,sigma){
+  el.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  outlierSigma = sigma;
+  refreshChartData(); buildChart();
+}
+function setChartOrg(id){ chartOrgId=id; refreshChartData(); try{ buildChart(); }catch(e){} }
+function setChartSku(id){ chartSkuId=id; refreshChartData(); try{ buildChart(); }catch(e){} }
+// Sync chart context with matrix selection (still called from cell/header clicks)
+function syncChartWithSelection(){
+  if(selectedOrgNodes.size===1) chartOrgId=[...selectedOrgNodes][0];
+  if(selectedSkuNodes.size===1) chartSkuId=[...selectedSkuNodes][0];
+  if(selectedOrgNodes.size===1||selectedSkuNodes.size===1){ refreshChartData(); try{ buildChart(); }catch(e){} }
+}
+// No-op kept for backwards compat (init + legacy chart setter calls)
+function populateChartSelectors(){ /* chart selector UI removed — pivot bar drives scope */ }
+
+// Build org/sku dropdown options — limit to top levels to keep dropdown usable
+// (full 9000 options would be unusable; users drill deeper via matrix → ↻ Sync)
 // ============================================================
 // NORM
 // ============================================================
@@ -1824,6 +3051,49 @@ let normOpen=true;
 function toggleNorm(){normOpen=!normOpen;document.getElementById('normBody').style.display=normOpen?'block':'none';document.getElementById('normBtn').textContent=normOpen?'Collapse ▴':'Expand ▾';}
 function pickN(el){el.closest('.ngrid').querySelectorAll('.ncard').forEach(c=>{c.classList.remove('sel');const ck=c.querySelector('.ncard-ck');if(ck)ck.remove();});el.classList.add('sel');const d=document.createElement('div');d.className='ncard-ck';d.textContent='✓';el.prepend(d);}
 function pickI(el){pickN(el);}
+// Interpolation method for missing data (global selection, applies to all cells lacking values)
+let selectedInterpMethod = 'linear';
+const INTERP_LABELS = {linear:'Linear', spline:'Spline', ffill:'Forward Fill', seasonal:'Seasonal Avg', knn:'KNN'};
+function pickInterp(el, method){
+  pickN(el);
+  el.closest('.ngrid').querySelectorAll('.ncard').forEach(c=>{
+    c.setAttribute('aria-checked', c===el ? 'true' : 'false');
+  });
+  selectedInterpMethod = method;
+  const b=document.getElementById('interpSelBadge');
+  if(b) b.textContent = INTERP_LABELS[method]||method;
+  showToast(`Interpolation: ${INTERP_LABELS[method]||method}`);
+}
+
+// ============================================================
+// SELECTION MODE — Normal (dropdowns) vs Enhanced (matrix)
+// ============================================================
+let selectionMode = 'normal';
+function setSelectionMode(btn, mode){
+  selectionMode = mode;
+  document.querySelectorAll('.sel-mode-pill button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.mode===mode);
+  });
+  applySelectionMode();
+  showToast(`Selection mode: ${mode==='enhanced'?'Enhanced (matrix)':'Normal (dropdowns)'}`);
+}
+function applySelectionMode(){
+  const isNormal = selectionMode === 'normal';
+  const pivotBar   = document.querySelector('.pivot-bar');
+  const mtbarSlim  = document.querySelector('.mtbar-slim');
+  const matrixBody = document.querySelector('.matrix-body');
+  const mxCtrlBar  = document.getElementById('mxCtrlBar');
+  const ccw        = document.getElementById('cellCountWarn');
+  const hint       = document.getElementById('selModeHint');
+  if(pivotBar)   pivotBar.style.display    = isNormal ? ''     : 'none';
+  if(mtbarSlim)  mtbarSlim.style.display   = isNormal ? 'none' : '';
+  if(matrixBody) matrixBody.style.display  = isNormal ? 'none' : 'flex';
+  if(mxCtrlBar)  mxCtrlBar.style.display   = isNormal ? 'none' : '';
+  if(ccw && isNormal) ccw.style.display    = 'none';
+  if(hint) hint.textContent = isNormal
+    ? 'Use pivot dropdowns below to pick orgs & SKUs'
+    : 'Click matrix cells or headers to select';
+}
 
 // ============================================================
 // RULES TOGGLE
@@ -1865,13 +3135,17 @@ function showToast(msg){
 // INIT
 // ============================================================
 window.addEventListener('load',()=>{
-  // rAF ensures layout is computed before Chart.js reads canvas dimensions
   requestAnimationFrame(()=>{
+    populatePivotSelectors();
+    populateChartSelectors();
     try{ buildChart(); } catch(e){ console.error('Chart error:',e); }
     buildRuleMap();
-    // Start at HO × Category for performance on large dataset
     runScenario('ho-cat');
+    updatePivotLabel();
+    updateRuleBadges();
     renderRulesTable();
+    renderTechPanel();  // always-visible Rule Selector (techniques + norm methods) on load
+    applySelectionMode();
   });
 });
 </script>
