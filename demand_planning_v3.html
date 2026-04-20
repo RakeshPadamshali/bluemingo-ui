@@ -286,11 +286,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .leg-sq{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);font-weight:500}
 .sq{width:11px;height:11px;border-radius:2px}
 
-/* MATRIX + PANEL LAYOUT */
-.matrix-body{display:flex;overflow:hidden;flex:1}
-
-/* SCROLLABLE MATRIX CONTAINER */
-.matrix-scroll{overflow:auto;flex:1;position:relative}
+/* MATRIX LAYOUT — single scroll container, org columns pinned via position:sticky
+   (merged from previous two-table frozen-left/matrix-scroll design so row heights
+   always align and there is only one scroll axis) */
+.matrix-body{overflow:auto;flex:1;position:relative;isolation:isolate}
 
 /* THE TABLE — Bluemingo MES pattern: 12px td, compact borders */
 .mx{border-collapse:collapse;table-layout:fixed;min-width:max-content;font-size:12px}
@@ -481,26 +480,18 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
 /* DENSITY / FILTER CONTROLS IN TOOLBAR */
 .dens-pill button{padding:4px 12px;font-size:12px}
 
-/* TWO-PANEL FREEZE LAYOUT */
-.frozen-left{
-  flex-shrink:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  background:#fff;
-  border-right:1px solid var(--border);
-  box-shadow:2px 0 4px rgba(0,0,0,.04);
-  scrollbar-width:none;
-  -ms-overflow-style:none;
-}
-.frozen-left::-webkit-scrollbar{width:0;height:0;display:none}
-.mx-frozen{border-collapse:collapse;table-layout:fixed}
-.mx-frozen td,.mx-frozen th{padding:0;white-space:nowrap}
-.mx-frozen .orgh{background:#fff;border:1px solid var(--border);z-index:auto}
-.mx-frozen .corner{background:#f5f5f5;border:1px solid var(--border)}
-.matrix-scroll{overflow:auto}
-.mx .skuh{position:sticky;z-index:10}
-.mx .orgh{z-index:auto;position:static}
-.matrix-scroll{isolation:isolate}
+/* STICKY ORG COLUMNS — left-pinned freeze pattern on the merged table.
+   Each .orgh gets inline `left:<px>` (per org level) from renderMatrix so resizing
+   the org column width updates every row's pin offset. The rightmost sticky cell
+   in a row gets .orgh-last for the separator shadow. */
+/* Stacking: corner (both-sticky) > skuh (top-sticky) > orgh (left-sticky) > dc.
+   skuh must outrank orgh so that data rows scrolling up pass behind the SKU
+   header strip rather than the sticky-left org column painting over it. */
+.mx .skuh{position:sticky;z-index:100}
+.mx .orgh{position:sticky;z-index:50;background:#fff}
+.mx .orgh-last{box-shadow:2px 0 4px rgba(0,0,0,.04)}
+.mx thead .corner{position:sticky;top:0;z-index:200}
+.mx thead .corner-last{box-shadow:2px 0 4px rgba(0,0,0,.04)}
 
 /* SELECTION HIGHLIGHT — Excel-clean (accent outlines, default bg preserved).
    Uses both inset box-shadow AND a darker outline overlay so the selection stays visible over
@@ -536,11 +527,6 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
 .ti{color:var(--green);font-size:15px}
 
 /* PERF MONITOR */
-.perf-bar{position:fixed;bottom:0;left:0;right:0;height:30px;background:#fff;border-top:1px solid var(--border);display:flex;align-items:center;gap:0;z-index:9998;font-family:var(--mono);font-size:11px;box-shadow:0 -2px 8px rgba(0,0,0,.04)}
-.pm-seg{padding:0 14px;border-right:1px solid #f0f0f0;color:var(--text3);white-space:nowrap}
-.pm-seg b{color:var(--text)}
-.pm-seg.warn b{color:var(--amber)}
-.pm-seg.good b{color:var(--green)}
 .pm-sep-flex{flex:1}
 .pm-badge{margin-right:12px;padding:3px 8px;border-radius:var(--r);font-size:11px;font-weight:600}
 
@@ -567,14 +553,14 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
     <div class="logo-mark"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="1,10 4,6 7,8 10,3 13,5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <span class="logo-name">Forecast<span>Studio</span></span>
   </div>
-  <div class="steps">
-    <div class="step done"><span class="step-n">✓</span>Data Source</div>
+  <div class="steps" role="navigation" aria-label="Jump to section">
+    <div class="step" id="nav-matrix" onclick="jumpTo('sec-matrix')" title="Jump to Data Source"><span class="step-n">1</span>Data Source</div>
     <span class="step-sep">›</span>
-    <div class="step done" id="s2"><span class="step-n">✓</span>Historical & Prep</div>
+    <div class="step" id="nav-techniques" onclick="jumpTo('sec-techniques')" title="Jump to Techniques"><span class="step-n">2</span>Techniques</div>
     <span class="step-sep">›</span>
-    <div class="step active" id="s3"><span class="step-n">3</span>Techniques</div>
+    <div class="step" id="nav-rules" onclick="jumpTo('sec-rules')" title="Jump to Applied Rule"><span class="step-n">3</span>Applied Rule</div>
     <span class="step-sep">›</span>
-    <div class="step" id="s4"><span class="step-n">4</span>Run & Review</div>
+    <div class="step" id="nav-interp" onclick="jumpTo('sec-interp')" title="Jump to Interpolation"><span class="step-n">4</span>Interpolation</div>
   </div>
   <div class="tbr">
     <button class="btn btn-ghost btn-sm">Save Draft</button>
@@ -690,15 +676,10 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
       </div>
     </div>
 
-    <!-- MATRIX (no right sidebar — editors moved below per xlsx layout) -->
-    <div class="matrix-body" style="flex:0 0 auto;max-height:55vh;overflow:hidden;display:flex">
-      <!-- TWO-PANEL FREEZE: left panel = frozen org cols, right panel = SKU headers + data -->
-      <div class="frozen-left" id="frozenLeft">
-        <table class="mx-frozen" id="frozenTable"></table>
-      </div>
-      <div class="matrix-scroll" id="matrixScroll" style="flex:1;overflow:auto">
-        <table class="mx" id="matrixTable"></table>
-      </div>
+    <!-- MATRIX — single scroll container, org columns pinned via position:sticky.
+         One `<table>` means rows always align and there is only one scroll axis. -->
+    <div class="matrix-body" id="matrixScroll" style="flex:0 0 auto;max-height:55vh">
+      <table class="mx" id="matrixTable"></table>
     </div>
 
     <!-- CELL COUNT WARNING BANNER -->
@@ -762,7 +743,7 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
     </div>
 
     <!-- RULE SELECTOR: Technique Selection + Normalization Method side by side -->
-    <div class="rule-editor-bar">
+    <div class="rule-editor-bar" id="sec-techniques">
       <div class="rule-editor-meta">
         <div class="rule-editor-title" id="tpTitle">Rule Selector</div>
         <div class="tp-sel-info" id="tpInfo">Select cells to assign rules</div>
@@ -771,12 +752,12 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
     <div class="tp-body" id="tpBody"></div>
 
     <!-- APPLIED RULES — Technique + Normalization side by side -->
-    <div class="rules-area">
+    <div class="rules-area" id="sec-rules">
       <div class="rules-toggle" onclick="toggleRules()">
-        <span>▸ &nbsp;Applied Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">0 rules</span></span>
-        <span id="rulesToggleIcon" style="font-size:11px;color:var(--text3)">Show ▾</span>
+        <span>▾ &nbsp;Applied Rules &nbsp;<span id="rulesCountLbl" style="color:var(--accent2)">0 rules</span></span>
+        <span id="rulesToggleIcon" style="font-size:11px;color:var(--text3)">Hide ▴</span>
       </div>
-      <div id="rulesBody" style="display:none">
+      <div id="rulesBody" style="display:block">
         <div class="rules-table-wrap">
           <div id="rulesTable"></div>
         </div>
@@ -811,18 +792,6 @@ body.col-resizing .col-resize-grip{background:var(--accent2)}
 </div><!-- /content -->
 </div><!-- /main -->
 
-<!-- DATASET BADGE -->
-
-<!-- PERF MONITOR BAR -->
-<div class="perf-bar" id="perfBar">
-  <div class="pm-seg">Dataset: <b id="pmDataset">20 RM × 800 Base SKU = 16 000 cells</b></div>
-  <div class="pm-seg">Visible: <b id="pmVisible">—</b></div>
-  <div class="pm-seg">Render: <b id="pmRender">—</b></div>
-  <div class="pm-seg">ruleIndex: <b id="pmRuleIdx">—</b></div>
-  <div class="pm-seg">Rules: <b id="pmRules">—</b></div>
-  <div class="pm-seg-flex"></div>
-  <div class="pm-seg" id="pmStatus" style="color:var(--green)">Ready</div>
-</div>
 </div><!-- /shell -->
 
 <div class="toast" id="toast"><span class="ti">✓</span><span id="toastMsg">Done</span></div>
@@ -1843,7 +1812,6 @@ function checkCellCountGuard(){
 }
 
 function renderMatrix(){
-  const t1=performance.now();
   // ── 1. Filter & paginate org rows ─────────────────────────
   const allOrgLeaves=getOrgLeaves();
   const allOrgRows=allOrgLeaves.map(leaf=>({leaf})); // lightweight — no cells yet
@@ -1872,10 +1840,9 @@ function renderMatrix(){
   const hdrRowH=30;
   const ROW_H=densityMode==='mini'?28:densityMode==='compact'?34:42; // accommodates dual badges
 
-  // Pre-filter header rows once so LEFT and RIGHT panels render the SAME number of
-  // header `<tr>`s. If we don't, an empty SKU level (e.g., all brands collapsed —
-  // no Base SKU row) makes the right panel emit a stray `<tr>` while the left's
-  // numHdrRows skips it, drifting the data rows out of alignment by one row.
+  // Pre-filter header rows so we never emit an empty `<tr>`. If an upper SKU
+  // level has no visible cells (e.g., all brands collapsed → no Base SKU row),
+  // an un-filtered empty row still takes hdrRowH and pushes data rows below.
   const displayedHdrRows=colHdrRows.map(rowCells=>
     searchQuery?rowCells.filter(({node})=>{
       const nl=getLeaves(node);
@@ -1883,53 +1850,35 @@ function renderMatrix(){
     }):rowCells
   ).filter(r=>r.length>0);
   const numHdrRows=displayedHdrRows.length||1;
-  const hdrTotalH=numHdrRows*hdrRowH;
   const hdrTops=displayedHdrRows.map((_,i)=>i*hdrRowH);
 
-  // ── BUILD FROZEN LEFT TABLE (org columns only) ─────────────
+  // ── BUILD SINGLE MERGED TABLE ────────────────────────────────
+  // First N columns are org hierarchy (position:sticky;left), remaining are SKU data.
+  // One <table> = rows auto-align; one scroll container = no sync drift.
+  // `left` offsets per org level, precomputed so the cell inline-styles stay terse.
+  const orgLeftPx=[]; for(let c=0;c<ORG_DEPTH;c++) orgLeftPx.push(c*orgColWidth);
 
-  let fHtml=`<thead><tr style="height:${hdrTotalH}px">`;
-  for(let c=0;c<ORG_DEPTH;c++){
-    fHtml+=`<th style="width:${orgColWidth}px;min-width:${orgColWidth}px;background:var(--bg3);border:1px solid var(--border2);vertical-align:bottom;padding:0 0 6px 0;text-align:center">
-      <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">${ORG_LEVELS[c]}</span>
-    </th>`;
-  }
-  fHtml+=`</tr></thead><tbody>`;
+  // Emit org-level corner cells — always at least one thead row so the table has
+  // its sticky-left columns defined even when the SKU side is empty.
+  const cornerCells=(()=>{
+    let h='';
+    for(let c=0;c<ORG_DEPTH;c++){
+      const isLast=c===ORG_DEPTH-1;
+      h+=`<th class="corner${isLast?' corner-last':''}" rowspan="${numHdrRows}"
+        style="top:0;left:${orgLeftPx[c]}px;width:${orgColWidth}px;min-width:${orgColWidth}px;background:var(--bg3);border:1px solid var(--border2);vertical-align:bottom;padding:0 0 6px 0;text-align:center">
+        <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">${ORG_LEVELS[c]}</span>
+      </th>`;
+    }
+    return h;
+  })();
 
-  if(pageRows.length===0){
-    fHtml+=`<tr><td colspan="${ORG_DEPTH}" style="padding:24px 8px;color:var(--text3);font-size:11px;text-align:center;font-style:italic">—</td></tr>`;
-  } else {
-    const orgColSpanned=new Array(ORG_DEPTH).fill(0);
-    pageRows.forEach(({leaf:orgLeaf,cells:orgCells})=>{
-      fHtml+=`<tr style="height:${ROW_H}px" data-org="${orgLeaf.id}">`;
-      let col=0;
-      while(col<ORG_DEPTH){
-        if(orgColSpanned[col]>0){orgColSpanned[col]--;col++;continue;}
-        const cd=orgCells.find(c=>c.level===col);
-        if(cd){
-          const{node,rowspan,colspan}=cd;
-          const isActualLeaf=!node.children.length;
-          const lcls=getLevelClass(node,'org');
-          fHtml+=`<td class="orgh" rowspan="${rowspan}" colspan="${colspan}" style="min-width:${colspan*orgColWidth}px;max-width:${colspan*orgColWidth}px">
-            <div class="orgh-inner${isActualLeaf?' leaf-org':''}${selectedOrgNodes.has(node.id)?' sel-hdr':''}" onclick="onOrgHdrClick(event,'${node.id}')">
-              ${!isActualLeaf?`<span class="expand-btn" role="button" tabindex="0" aria-label="${node.expanded?'Collapse':'Expand'} ${node.name}" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
-              <span class="hdr-name ${lcls}${searchQuery&&fuzzyScore(searchQuery,node.name)>0.35?' srch-match':''}" title="${node.name}">${node.name}</span>
-            </div>
-            <div class="col-resize-grip" role="separator" aria-label="Resize ${ORG_LEVELS[node.level]||'org'} column" aria-orientation="vertical" onmousedown="startColResize(event,'org',${orgColWidth})" title="Drag to resize"></div>
-          </td>`;
-          for(let c=col;c<col+colspan;c++)orgColSpanned[c]=rowspan-1;
-          col+=colspan;
-        } else {col++;}
-      }
-      fHtml+=`</tr>`;
-    });
-  }
-  fHtml+=`</tbody>`;
-
-  // ── BUILD RIGHT DATA TABLE (SKU headers + data cells only) ──
   let html=`<thead>`;
+  if(displayedHdrRows.length===0){
+    html+=`<tr style="height:${hdrRowH}px">${cornerCells}</tr>`;
+  }
   displayedHdrRows.forEach((visibleCells,displayedIdx)=>{
     html+=`<tr style="height:${hdrRowH}px">`;
+    if(displayedIdx===0) html+=cornerCells;
     visibleCells.forEach(({node,rowspan,isLeaf})=>{
       const nl=getLeaves(node);
       const visCount=searchQuery?nl.filter(l=>skuLeaves.includes(l)).length:nl.length;
@@ -1937,15 +1886,11 @@ function renderMatrix(){
       if(effectiveColspan===0)return;
       const hasRule=hasRuleInSubtree(node);
       const isActualLeaf=!node.children.length;
-      // Clamp rowspan to remaining displayed rows. The original value comes from
-      // buildColHeaders as (SKU_DEPTH - node.level), but if upper levels were
-      // filtered out (e.g., all brands collapsed → no BS row rendered), the
-      // un-clamped rowspan tells the browser to span rows that don't exist,
-      // and the browser silently extends the header height to compensate —
-      // pushing data rows below the left panel by ~30px per missing row.
+      // Clamp rowspan to remaining displayed rows — see prior notes on collapsed
+      // levels silently extending header height if we hand rowspan past the end.
       const clampedRowspan=Math.min(rowspan,numHdrRows-displayedIdx);
       html+=`<th class="skuh${hasRule?' col-has-rule':''}" colspan="${effectiveColspan}" rowspan="${clampedRowspan}"
-        style="position:sticky;top:${hdrTops[displayedIdx]}px;z-index:10;min-width:${isActualLeaf||isLeaf?skuColWidth:effectiveColspan*skuColWidth}px">
+        style="top:${hdrTops[displayedIdx]}px;min-width:${isActualLeaf||isLeaf?skuColWidth:effectiveColspan*skuColWidth}px">
         <div class="skuh-inner${isActualLeaf?' leaf-hdr':''}${selectedSkuNodes.has(node.id)?' sel-hdr':''}" onclick="onSkuHdrClick(event,'${node.id}')">
           ${!isActualLeaf?`<span class="expand-btn" role="button" tabindex="0" aria-label="${node.expanded?'Collapse':'Expand'} ${node.name}" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
           <span class="hdr-name${searchQuery&&fuzzyScore(searchQuery,node.name)>0.35?' srch-match':''}" title="${node.name}">${node.name}</span>
@@ -1978,14 +1923,43 @@ function renderMatrix(){
       title='No SKU columns at this depth';
       hint='Try a different SKU depth (Cat/Brand/Base SKU) above.';
     }
-    html+=`<tr><td colspan="${Math.max(skuLeaves.length,1)}" style="padding:48px 24px;text-align:center;color:var(--text3);font-size:12px">
+    const totalEmptyCols=ORG_DEPTH+Math.max(skuLeaves.length,1);
+    html+=`<tr><td colspan="${totalEmptyCols}" style="padding:48px 24px;text-align:center;color:var(--text3);font-size:12px">
       <div style="font-size:32px;line-height:1;margin-bottom:10px;opacity:.4">⊞</div>
       <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">${title}</div>
       <div style="font-size:12px;color:var(--text3);max-width:340px;margin:0 auto;line-height:1.5">${hint}</div>
     </td></tr>`;
   } else {
-    pageRows.forEach(({leaf:orgLeaf})=>{
+    // orgColSpanned tracks which org columns are still covered by a rowspan from
+    // a previous row; it must persist across the forEach (this is why the loop
+    // can't just scan one row at a time).
+    const orgColSpanned=new Array(ORG_DEPTH).fill(0);
+    pageRows.forEach(({leaf:orgLeaf,cells:orgCells})=>{
       html+=`<tr style="height:${ROW_H}px" data-org="${orgLeaf.id}">`;
+      // 1) Org hierarchy columns (sticky-left)
+      let col=0;
+      while(col<ORG_DEPTH){
+        if(orgColSpanned[col]>0){orgColSpanned[col]--;col++;continue;}
+        const cd=orgCells.find(c=>c.level===col);
+        if(cd){
+          const{node,rowspan,colspan}=cd;
+          const endCol=col+colspan-1;
+          const isActualLeaf=!node.children.length;
+          const lcls=getLevelClass(node,'org');
+          const isLastSticky=endCol===ORG_DEPTH-1;
+          html+=`<td class="orgh${isLastSticky?' orgh-last':''}" rowspan="${rowspan}" colspan="${colspan}"
+            style="left:${orgLeftPx[col]}px;min-width:${colspan*orgColWidth}px;max-width:${colspan*orgColWidth}px">
+            <div class="orgh-inner${isActualLeaf?' leaf-org':''}${selectedOrgNodes.has(node.id)?' sel-hdr':''}" onclick="onOrgHdrClick(event,'${node.id}')">
+              ${!isActualLeaf?`<span class="expand-btn" role="button" tabindex="0" aria-label="${node.expanded?'Collapse':'Expand'} ${node.name}" onclick="event.stopPropagation();toggleNode('${node.id}')">${node.expanded?'\u2212':'+'}</span>`:''}
+              <span class="hdr-name ${lcls}${searchQuery&&fuzzyScore(searchQuery,node.name)>0.35?' srch-match':''}" title="${node.name}">${node.name}</span>
+            </div>
+            <div class="col-resize-grip" role="separator" aria-label="Resize ${ORG_LEVELS[node.level]||'org'} column" aria-orientation="vertical" onmousedown="startColResize(event,'org',${orgColWidth})" title="Drag to resize"></div>
+          </td>`;
+          for(let c=col;c<col+colspan;c++)orgColSpanned[c]=rowspan-1;
+          col+=colspan;
+        } else {col++;}
+      }
+      // 2) Data cells
       skuLeaves.forEach(skuLeaf=>{
         const key=orgLeaf.id+'|'+skuLeaf.id;
         const techRule=getEffectiveTechRule(orgLeaf.id,skuLeaf.id);
@@ -2026,41 +2000,17 @@ function renderMatrix(){
     });
   }
   html+=`</tbody>`;
-  const t2=performance.now();
 
   // ── INJECT INTO DOM ─────────────────────────────────────────
-  document.getElementById('frozenTable').innerHTML=fHtml;
   document.getElementById('matrixTable').innerHTML=html;
-  const t3=performance.now();
 
   const scroll=document.getElementById('matrixScroll');
-  const frozen=document.getElementById('frozenLeft');
   scroll.classList.remove('mx-compact','mx-mini');
-  frozen.classList.remove('mx-compact','mx-mini');
-  if(densityMode==='compact'){scroll.classList.add('mx-compact');frozen.classList.add('mx-compact');}
-  else if(densityMode==='mini'){scroll.classList.add('mx-mini');frozen.classList.add('mx-mini');}
-
-  // Sync vertical scroll between left frozen panel and right data panel
-  scroll.onscroll=()=>{ frozen.scrollTop=scroll.scrollTop; };
+  if(densityMode==='compact') scroll.classList.add('mx-compact');
+  else if(densityMode==='mini') scroll.classList.add('mx-mini');
 
   renderPagination(totalRows,pageStart,pageEnd,totalCols,colStart,colEnd);
   updateQAButtonStates();
-  // Update perf bar
-  const buildMs = (t2-t1).toFixed(1);
-  const domMs   = (t3-t2).toFixed(1);
-  const totalMs = (t3-t1).toFixed(1);
-  const cells   = pageRows.length * skuLeaves.length;
-  const allOrg  = getAllOrgLeaves().length;
-  const allSku  = getAllSkuLeaves().length;
-  document.getElementById('pmVisible').textContent = `${pageRows.length} rows × ${skuLeaves.length} cols = ${cells.toLocaleString()} cells`;
-  document.getElementById('pmRender').textContent  = `${totalMs}ms (build ${buildMs}ms + DOM ${domMs}ms)`;
-  document.getElementById('pmRuleIdx').textContent = `${ruleOrgIndex.size} org-leaf entries`;
-  document.getElementById('pmRules').textContent   = `${rules.length} rules`;
-  document.getElementById('pmDataset').textContent = `${allOrg.toLocaleString()} ASM × ${allSku.toLocaleString()} SKU = ${(allOrg*allSku).toLocaleString()} cells`;
-  const status = document.getElementById('pmStatus');
-  const ms = parseFloat(totalMs);
-  status.style.color = ms<50?'var(--green)':ms<150?'var(--amber)':'var(--red)';
-  status.textContent = ms<50?`✓ Fast (${totalMs}ms)`:ms<150?`⚠ Slow (${totalMs}ms)`:`✗ Very slow (${totalMs}ms)`;
 }
 
 function buildPageNums(current,total,clickFn){
@@ -2331,10 +2281,9 @@ function updateSelection(){
     else if(oSel) td.classList.add('sel-row');
     else if(sSel) td.classList.add('sel-col');
   });
-  // Update org header highlights (frozen left table)
-  document.querySelectorAll('#frozenTable .orgh-inner').forEach(el=>{
-    const td=el.closest('td[onclick]');
-    const m=td?.getAttribute('onclick')?.match(/'([^']+)'/);
+  // Update org header highlights (sticky-left orgh cells)
+  document.querySelectorAll('#matrixTable .orgh-inner').forEach(el=>{
+    const m=el.getAttribute('onclick')?.match(/'([^']+)'/);
     if(m) el.classList.toggle('sel-hdr', selectedOrgNodes.has(m[1]));
   });
   // Update sku header highlights (right table)
@@ -3087,7 +3036,7 @@ function applySelectionMode(){
   const hint       = document.getElementById('selModeHint');
   if(pivotBar)   pivotBar.style.display    = isNormal ? ''     : 'none';
   if(mtbarSlim)  mtbarSlim.style.display   = isNormal ? 'none' : '';
-  if(matrixBody) matrixBody.style.display  = isNormal ? 'none' : 'flex';
+  if(matrixBody) matrixBody.style.display  = isNormal ? 'none' : '';
   if(mxCtrlBar)  mxCtrlBar.style.display   = isNormal ? 'none' : '';
   if(ccw && isNormal) ccw.style.display    = 'none';
   if(hint) hint.textContent = isNormal
@@ -3098,7 +3047,7 @@ function applySelectionMode(){
 // ============================================================
 // RULES TOGGLE
 // ============================================================
-let rulesOpen=false;
+let rulesOpen=true;
 function toggleRules(){
   rulesOpen=!rulesOpen;
   document.getElementById('rulesBody').style.display=rulesOpen?'block':'none';
@@ -3119,6 +3068,38 @@ function scrollSec(id){
   const navItems=document.querySelectorAll('.sb-item');
   const map={'sec-chart':3,'sec-norm':4,'sec-matrix':5};
   if(map[id]!==undefined) navItems[map[id]]?.classList.add('active');
+}
+
+// ============================================================
+// SECTION JUMP NAV (top bar)
+// ============================================================
+function jumpTo(id){
+  const el=document.getElementById(id);
+  const scroller=document.getElementById('mainContent');
+  if(!el||!scroller) return;
+  const top=el.getBoundingClientRect().top-scroller.getBoundingClientRect().top+scroller.scrollTop-8;
+  scroller.scrollTo({top,behavior:'smooth'});
+  setActiveNav(id);
+}
+function setActiveNav(id){
+  const map={'sec-matrix':'nav-matrix','sec-techniques':'nav-techniques','sec-rules':'nav-rules','sec-interp':'nav-interp'};
+  Object.values(map).forEach(n=>{const el=document.getElementById(n); if(el) el.classList.remove('active');});
+  const target=map[id]; if(target){const el=document.getElementById(target); if(el) el.classList.add('active');}
+}
+function initNavScrollSpy(){
+  const scroller=document.getElementById('mainContent'); if(!scroller) return;
+  const secIds=['sec-matrix','sec-techniques','sec-rules','sec-interp'];
+  const update=()=>{
+    const sTop=scroller.getBoundingClientRect().top;
+    let current=secIds[0];
+    for(const id of secIds){
+      const el=document.getElementById(id); if(!el) continue;
+      if(el.getBoundingClientRect().top-sTop<=40) current=id;
+    }
+    setActiveNav(current);
+  };
+  scroller.addEventListener('scroll',update,{passive:true});
+  update();
 }
 
 // ============================================================
@@ -3146,6 +3127,7 @@ window.addEventListener('load',()=>{
     renderRulesTable();
     renderTechPanel();  // always-visible Rule Selector (techniques + norm methods) on load
     applySelectionMode();
+    initNavScrollSpy();
   });
 });
 </script>
