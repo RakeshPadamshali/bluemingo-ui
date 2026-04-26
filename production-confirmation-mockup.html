@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Production Confirmation — Bluemingo MES v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  :root {
+    --color-primary: #25A9E0; --color-primary-dark: #1E8FBF; --color-primary-light: #E1F5FE; --color-primary-rgb: 37, 169, 224;
+    --color-success: #388e3c; --color-success-light: #e8f5e9;
+    --color-warning: #f57c00; --color-warning-light: #fff8e1;
+    --color-danger: #d32f2f; --color-danger-light: #ffebee;
+    --color-info: #2196f3; --color-info-light: #e3f2fd;
+    --color-bg: #f5f5f5; --color-bg-alt: #fafafa; --color-surface: #fff;
+    --color-border: #e0e0e0; --color-border-light: #eeeeee;
+    --color-text-primary: #333; --color-text-secondary: #555; --color-text-muted: #666; --color-text-hint: #888; --color-text-disabled: #999;
+    --header-bg: #1a1a2e; --header-bg-dark: #12121f;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin:0; font-family:'Roboto',sans-serif; font-size:13px; color:var(--color-text-primary); background:var(--color-bg); overflow:hidden; }
+
+  /* HEADER */
+  .bm-header { height:44px; background:linear-gradient(90deg,var(--header-bg),var(--header-bg-dark)); color:#fff; display:flex; align-items:center; padding:0 12px; flex-shrink:0; }
+  .bm-header .logo { font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px; }
+  .bm-header .logo i { color:var(--color-primary); }
+  .bm-header .module-name { margin-left:16px; padding-left:16px; border-left:1px solid rgba(255,255,255,.15); font-size:12px; opacity:.85; }
+  .bm-header .spacer { flex:1; }
+  .bm-header .industry-switch { display:flex; gap:2px; background:rgba(255,255,255,.06); padding:2px; border-radius:6px; }
+  .bm-header .industry-switch button { background:transparent; color:rgba(255,255,255,.7); border:none; padding:4px 12px; font:500 11px 'Roboto'; border-radius:4px; cursor:pointer; letter-spacing:.3px; text-transform:uppercase; }
+  .bm-header .industry-switch button:hover { color:#fff; }
+  .bm-header .industry-switch button.active { background:var(--color-primary); color:#fff; }
+  .bm-header .right { display:flex; align-items:center; gap:12px; margin-left:12px; font-size:12px; }
+  .bm-header .icon-btn { color:rgba(255,255,255,.7); cursor:pointer; }
+  .bm-header .avatar { width:26px; height:26px; border-radius:50%; background:var(--color-primary); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:11px; }
+
+  /* LAYOUT */
+  .bm-layout { display:flex; height:calc(100vh - 44px); }
+  .bm-sidebar { width:180px; background:linear-gradient(180deg,#1e1e32,#16213e); color:rgba(255,255,255,.65); flex-shrink:0; padding:8px 0; overflow-y:auto; }
+  .bm-sidebar .nav-label { color:#fff; font:700 10px 'Roboto'; letter-spacing:1px; text-transform:uppercase; padding:8px 14px 4px; margin-top:4px; }
+  .bm-sidebar a { display:flex; align-items:center; gap:8px; color:inherit; text-decoration:none; padding:6px 14px; margin:1px 6px; border-radius:6px; font-size:12px; cursor:pointer; }
+  .bm-sidebar a:hover { background:rgba(255,255,255,.08); color:#fff; }
+  .bm-sidebar a.active { background:rgba(var(--color-primary-rgb),.2); color:#E1F5FE; position:relative; }
+  .bm-sidebar a.active::before { content:''; position:absolute; left:0; top:4px; bottom:4px; width:2px; background:var(--color-primary); border-radius:0 2px 2px 0; }
+  .bm-sidebar a i { width:14px; text-align:center; opacity:.85; font-size:11px; }
+
+  /* CONTENT */
+  .bm-content { flex:1; overflow:hidden; display:flex; flex-direction:column; padding:8px 12px 0; }
+  .page-bar { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .page-bar h1 { margin:0; font-size:16px; font-weight:600; }
+  .page-bar .crumb { color:var(--color-text-muted); font-size:11px; }
+  .page-bar .actions { margin-left:auto; display:flex; gap:6px; }
+
+  /* BUTTONS */
+  .btn { padding:6px 14px; border-radius:4px; border:none; font:500 12px 'Roboto'; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+  .btn i { font-size:11px; }
+  .btn-primary { background:var(--color-primary); color:#fff; } .btn-primary:hover { background:var(--color-primary-dark); }
+  .btn-success { background:var(--color-success); color:#fff; } .btn-success:hover { background:#2e7d32; }
+  .btn-outline { background:transparent; border:1px solid var(--color-primary); color:var(--color-primary); } .btn-outline:hover { background:var(--color-primary); color:#fff; }
+  .btn-secondary { background:#757575; color:#fff; } .btn-secondary:hover { background:#616161; }
+  .btn-add { background:transparent; color:var(--color-primary); border:1px dashed var(--color-primary); border-radius:4px; padding:4px 10px; font:500 11px 'Roboto'; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+  .btn-add:hover { background:var(--color-primary-light); }
+  .icon-btn-mini { background:transparent; border:none; color:var(--color-text-hint); cursor:pointer; font-size:11px; padding:2px 4px; }
+  .icon-btn-mini:hover { color:var(--color-danger); }
+
+  /* CTX BAR */
+  .ctx-bar { background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; padding:6px 10px; display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; }
+  .ctx-bar .item { display:flex; align-items:center; gap:6px; padding:0 6px; border-right:1px solid var(--color-border-light); }
+  .ctx-bar .item:last-child { border-right:none; }
+  .ctx-bar .item .lbl { font-size:10px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.3px; font-weight:600; }
+  .ctx-bar .item .val { font-size:12px; color:var(--color-text-primary); font-weight:500; }
+  .ctx-bar .item i { color:var(--color-primary); font-size:11px; }
+  .flow { display:flex; align-items:center; gap:4px; flex-wrap:nowrap; margin-left:auto; font-size:11px; }
+  .flow .step { display:flex; align-items:center; gap:4px; color:var(--color-text-disabled); }
+  .flow .step.done { color:var(--color-success); }
+  .flow .step.current { color:var(--color-primary); font-weight:600; }
+  .flow .step .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .flow .arrow { color:var(--color-text-disabled); font-size:8px; }
+
+  /* GRID */
+  .main-grid { display:grid; grid-template-columns:240px 1fr; gap:8px; flex:1; min-height:0; overflow:hidden; }
+  .right-pane { display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:min-content; gap:8px; overflow-y:auto; padding-right:4px; padding-bottom:56px; }
+  .right-pane .full { grid-column:1 / -1; }
+
+  /* CARD */
+  .bm-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; overflow:hidden; }
+  .bm-card-header { padding:6px 10px; background:var(--color-bg-alt); border-bottom:1px solid var(--color-border-light); font:600 12px 'Roboto'; display:flex; align-items:center; gap:6px; }
+  .bm-card-header.produced { background:linear-gradient(90deg,#e8f5fd,#fafafa); }
+  .bm-card-header i { color:var(--color-primary); font-size:11px; }
+  .bm-card-header .right { margin-left:auto; font-weight:400; font-size:11px; color:var(--color-text-muted); display:flex; align-items:center; gap:6px; }
+  .bm-card-body { padding:8px 10px; }
+
+  /* ORDERS */
+  .orders-card { display:flex; flex-direction:column; height:100%; }
+  .order-search { padding:6px 8px; border-bottom:1px solid var(--color-border); }
+  .order-search input { width:100%; padding:5px 8px; border:1px solid var(--color-primary); border-radius:4px; font-size:12px; background:var(--color-primary-light); box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
+  .order-list { list-style:none; padding:0; margin:0; overflow-y:auto; flex:1; }
+  .order-item { padding:6px 10px; border-bottom:1px solid var(--color-border-light); cursor:pointer; display:flex; flex-direction:column; gap:2px; }
+  .order-item:hover { background:var(--color-bg-alt); }
+  .order-item.active { background:var(--color-primary-light); border-left:3px solid var(--color-primary); padding-left:7px; }
+  .order-item .row1 { display:flex; align-items:center; gap:6px; }
+  .order-item .order-code { font-weight:600; font-size:12px; }
+  .order-item .row2 { font-size:11px; color:var(--color-text-muted); display:flex; align-items:center; gap:4px; }
+  .order-item .row2 i { font-size:9px; }
+  .order-item .row3 { display:flex; justify-content:space-between; font-size:10px; color:var(--color-text-hint); }
+  .order-item .qty { font-weight:600; color:var(--color-primary); }
+
+  /* BADGE */
+  .badge { padding:1px 6px; border-radius:3px; font:600 10px 'Roboto'; text-transform:uppercase; letter-spacing:.3px; display:inline-block; }
+  .badge-success { background:rgba(76,175,80,.12); color:#2e7d32; }
+  .badge-warning { background:rgba(255,152,0,.12); color:#ef6c00; }
+  .badge-danger  { background:rgba(244,67,54,.12); color:#c62828; }
+  .badge-info    { background:rgba(33,150,243,.12); color:#1565c0; }
+  .badge-neutral { background:rgba(158,158,158,.12); color:#555; }
+  .badge-primary { background:rgba(var(--color-primary-rgb),.12); color:var(--color-primary-dark); }
+
+  /* KV */
+  .kv-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px 12px; }
+  .kv-grid > div { display:flex; flex-direction:column; }
+  .kv-grid .k { font-size:10px; text-transform:uppercase; color:var(--color-text-muted); letter-spacing:.3px; font-weight:600; }
+  .kv-grid .v { font-size:12px; color:var(--color-text-primary); font-weight:500; }
+  .attr-pill { padding:2px 8px; background:var(--color-primary-light); color:var(--color-primary-dark); border-radius:12px; font-size:10px; font-weight:500; }
+  .attr-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+
+  /* REQ / OUTPUT CARDS */
+  .req-list { display:flex; flex-direction:column; gap:6px; }
+  .req-card { border:1px solid var(--color-border); border-radius:4px; overflow:hidden; }
+  .req-card.output { border-color:#bce0f5; }
+  .req-card-head { display:grid; grid-template-columns:1.6fr 1fr 1fr 90px; gap:8px; padding:6px 8px; background:#f9f9f9; align-items:center; border-bottom:1px solid var(--color-border-light); }
+  .req-card.output .req-card-head { background:#f0f8fd; }
+  .req-card-head .m-name { font-weight:600; font-size:12px; }
+  .req-card-head .m-meta { font-size:10px; color:var(--color-text-hint); }
+  .req-card-head .m-fig { font-size:11px; }
+  .req-card-head .m-fig .fl { font-size:9px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.3px; font-weight:600; }
+  .req-card-head .m-fig .fv { font-weight:600; }
+  .req-card-head .m-fig .fv.req { color:var(--color-warning); }
+  .req-card-head .m-fig .fv.alloc-ok { color:var(--color-success); }
+  .req-card-head .m-fig .fv.alloc-bad { color:var(--color-danger); }
+  .req-card-head .m-fig .fv.prim { color:var(--color-primary); font-size:13px; }
+  .batch-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .batch-table th { padding:4px 6px; background:#f5f5f5; color:var(--color-text-muted); font:600 9px 'Roboto'; text-transform:uppercase; letter-spacing:.3px; text-align:left; }
+  .batch-table td { padding:4px 6px; border-top:1px solid var(--color-border-light); vertical-align:middle; }
+  .batch-table .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .batch-table input.qty-in { width:70px; padding:2px 6px; border:1px solid var(--color-border); border-radius:3px; font:12px 'Roboto'; text-align:right; }
+  .batch-table input.qty-in:focus { outline:none; border-color:var(--color-primary); }
+  .batch-table .batch-attrs { display:flex; flex-wrap:wrap; gap:3px; }
+  .batch-table .a-pill { padding:1px 6px; background:var(--color-bg-alt); color:var(--color-text-secondary); border:1px solid var(--color-border-light); border-radius:10px; font-size:10px; display:inline-flex; gap:3px; align-items:center; }
+  .batch-table .a-pill .a-k { color:var(--color-text-hint); font-size:9px; }
+  .batch-table .a-pill .a-v { color:var(--color-text-primary); font-weight:500; }
+  .batch-table .a-pill.warn { background:var(--color-warning-light); border-color:#ffd380; }
+  .batch-table .a-pill.fail { background:var(--color-danger-light); border-color:#ef9a9a; }
+  .batch-add-row { padding:4px 8px; background:#fafafa; border-top:1px dashed var(--color-border); display:flex; align-items:center; gap:8px; }
+
+  /* Output summary footer */
+  .output-summary { padding:6px 10px; background:var(--color-bg-alt); border-top:1px solid var(--color-border-light); display:flex; align-items:center; gap:14px; font-size:11px; }
+  .output-summary .ov { display:flex; flex-direction:column; }
+  .output-summary .ov .l { font-size:9px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.3px; font-weight:600; }
+  .output-summary .ov .v { font-size:13px; font-weight:700; }
+  .output-summary .ov .v.prim { color:var(--color-primary); }
+  .output-summary .ov .v.warn { color:var(--color-warning); }
+  .output-summary .ov .v.success { color:var(--color-success); }
+
+  /* PROCESS PARAM */
+  .pp-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .pp-table td { padding:4px 6px; border-bottom:1px solid var(--color-border-light); vertical-align:middle; }
+  .pp-table tr:last-child td { border-bottom:none; }
+  .pp-name { font-weight:500; font-size:12px; }
+  .pp-target { font-size:10px; color:var(--color-text-muted); }
+  .pp-reading { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .pp-reading.manual-input { padding:0; }
+  .pp-reading input { width:80px; padding:3px 6px; border:1px solid var(--color-warning); border-radius:3px; font:600 12px 'Roboto'; text-align:right; background:var(--color-warning-light); }
+  .pp-reading input:focus { outline:none; box-shadow:0 0 0 2px rgba(245,124,0,.2); }
+  .pp-source { font-size:10px; color:var(--color-info); white-space:nowrap; }
+  .pp-source.manual { color:var(--color-warning); }
+
+  /* TIME */
+  .form-line { display:grid; grid-template-columns:repeat(4,1fr); gap:6px 10px; }
+  .field { display:flex; flex-direction:column; gap:2px; }
+  .field label { font-size:10px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.3px; font-weight:600; }
+  .field input, .field select { padding:4px 8px; border:1px solid #ddd; border-radius:3px; font:12px 'Roboto'; background:#fff; }
+  .field input:focus, .field select:focus { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
+  .field .static { padding:4px 8px; background:var(--color-bg-alt); border:1px solid var(--color-border-light); border-radius:3px; font:12px 'Roboto'; font-weight:500; }
+  .field .static.success { color:var(--color-success); font-weight:600; }
+
+  /* SECONDARY */
+  .seq-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .seq-table th { padding:4px 6px; background:#f5f5f5; color:var(--color-text-muted); font:600 9px 'Roboto'; text-transform:uppercase; letter-spacing:.3px; text-align:left; }
+  .seq-table td { padding:4px 6px; border-bottom:1px solid var(--color-border-light); vertical-align:middle; }
+  .seq-table .num { text-align:right; }
+  .seq-name { font-weight:500; font-size:12px; }
+  .seq-meta { font-size:10px; color:var(--color-text-hint); }
+  .life-bar { height:4px; background:#eee; border-radius:2px; overflow:hidden; margin-top:2px; }
+  .life-bar > span { display:block; height:100%; background:var(--color-success); }
+  .life-bar.warn > span { background:var(--color-warning); }
+  .life-bar.crit > span { background:var(--color-danger); }
+  .seq-pct.warn { color:var(--color-warning); font-weight:600; }
+  .seq-pct.crit { color:var(--color-danger); font-weight:600; }
+  .seq-pct.ok { color:var(--color-success); font-weight:600; }
+  .seq-tick-input { width:55px; padding:2px 6px; border:1px solid var(--color-border); border-radius:3px; font:12px 'Roboto'; text-align:right; }
+  .seq-instance-pick { padding:3px 6px; border:1px solid var(--color-border); border-radius:3px; font:12px 'Roboto'; background:#fff; }
+
+  /* CONSUMABLES */
+  .cons-table { width:100%; border-collapse:collapse; font-size:11px; }
+  .cons-table th { padding:4px 6px; background:#f5f5f5; color:var(--color-text-muted); font:600 10px 'Roboto'; text-transform:uppercase; letter-spacing:.3px; text-align:left; }
+  .cons-table td { padding:4px 6px; border-bottom:1px solid #f5f5f5; vertical-align:middle; }
+  .cons-table .num { text-align:right; }
+  .cons-input { width:70px; padding:2px 6px; border:1px solid var(--color-border); border-radius:3px; font:12px 'Roboto'; text-align:right; }
+  .cons-batch-pick { padding:2px 6px; border:1px solid var(--color-border); border-radius:3px; font:11px 'Roboto'; background:#fff; max-width:140px; }
+
+  /* SHIFT LOG */
+  .slog-table { width:100%; border-collapse:collapse; font-size:10px; }
+  .slog-table td { padding:3px 4px; border-bottom:1px solid var(--color-border-light); }
+  .slog-table tr:last-child td { border-bottom:none; }
+  .slog-time { color:var(--color-text-muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  /* ALERT */
+  .alert-inline { display:flex; gap:6px; padding:4px 8px; border-radius:3px; font-size:11px; align-items:center; }
+  .alert-inline.success { background:var(--color-success-light); color:#2e7d32; border:1px solid #a5d6a7; }
+  .alert-inline.warn { background:var(--color-warning-light); color:#ef6c00; border:1px solid #ffd380; }
+  .alert-inline.info { background:var(--color-info-light); color:var(--color-primary-dark); border:1px solid #90caf9; }
+
+  /* FOOTER */
+  .footer-bar { position:absolute; left:180px; right:0; bottom:0; background:var(--color-surface); border-top:1px solid var(--color-border); padding:6px 12px; display:flex; align-items:center; gap:12px; box-shadow:0 -2px 8px rgba(0,0,0,.05); z-index:10; }
+  .footer-bar .summary { display:flex; gap:16px; font-size:11px; }
+  .footer-bar .summary .lk { font-size:9px; text-transform:uppercase; color:var(--color-text-muted); letter-spacing:.3px; font-weight:600; }
+  .footer-bar .summary .lv { font-weight:500; color:var(--color-text-primary); }
+  .footer-bar .actions { margin-left:auto; display:flex; gap:6px; }
+
+  /* INDUSTRY VIS */
+  .industry-process .steel-only, .industry-process .discrete-only,
+  .industry-steel .process-only, .industry-steel .discrete-only,
+  .industry-discrete .steel-only, .industry-discrete .process-only { display:none; }
+</style>
+</head>
+
+<body class="industry-steel">
+
+<header class="bm-header">
+  <div class="logo"><i class="fa-solid fa-industry"></i> Bluemingo MES <span style="opacity:.6;font-weight:500;">v2</span></div>
+  <div class="module-name"><i class="fa-solid fa-circle-check" style="margin-right:4px;color:var(--color-primary);"></i>Production Confirmation</div>
+  <div class="spacer"></div>
+  <div class="industry-switch">
+    <button data-industry="steel" class="active"><i class="fa-solid fa-fire" style="margin-right:4px"></i>Steel</button>
+    <button data-industry="process"><i class="fa-solid fa-flask" style="margin-right:4px"></i>Process</button>
+    <button data-industry="discrete"><i class="fa-solid fa-gears" style="margin-right:4px"></i>Discrete</button>
+  </div>
+  <div class="right">
+    <i class="fa-regular fa-bell icon-btn"></i>
+    <div class="avatar">RP</div>
+  </div>
+</header>
+
+<div class="bm-layout">
+
+  <aside class="bm-sidebar">
+    <div class="nav-label">Production</div>
+    <a class="active"><i class="fa-solid fa-circle-check"></i>Confirmation</a>
+    <a><i class="fa-solid fa-list-check"></i>Op Queue</a>
+    <a><i class="fa-solid fa-pause"></i>Holds &amp; Rework</a>
+    <a><i class="fa-solid fa-rotate-left"></i>Reversals</a>
+    <div class="nav-label">Orders</div>
+    <a><i class="fa-solid fa-clipboard-list"></i>Open Orders</a>
+    <a><i class="fa-solid fa-chart-line"></i>Status</a>
+    <div class="nav-label">Inventory</div>
+    <a><i class="fa-solid fa-boxes-stacked"></i>Stock</a>
+    <a><i class="fa-solid fa-link"></i>Genealogy</a>
+    <div class="nav-label">Quality</div>
+    <a><i class="fa-solid fa-vial"></i>Inspections</a>
+    <div class="nav-label">Masters</div>
+    <a><i class="fa-solid fa-cogs"></i>Setup</a>
+  </aside>
+
+  <main class="bm-content">
+
+    <div class="page-bar">
+      <div>
+        <h1>Production Confirmation</h1>
+        <div class="crumb">Production › Confirmation › <span data-bind="orderCode"></span></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline"><i class="fa-solid fa-pause"></i> Hold</button>
+        <button class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn btn-success"><i class="fa-solid fa-check"></i> Confirm</button>
+      </div>
+    </div>
+
+    <div class="ctx-bar">
+      <div class="item"><div><div class="lbl">Factory</div><div class="val"><i class="fa-solid fa-building"></i> <span data-bind="factory"></span></div></div></div>
+      <div class="item"><div><div class="lbl">Process</div><div class="val"><span data-bind="process"></span></div></div></div>
+      <div class="item"><div><div class="lbl">Operation</div><div class="val"><span data-bind="operation"></span></div></div></div>
+      <div class="item"><div><div class="lbl">Equipment</div><div class="val"><span data-bind="equipment"></span> <span class="badge badge-primary" style="margin-left:4px" data-bind="equipmentType"></span></div></div></div>
+      <div class="item"><div><div class="lbl">Operator</div><div class="val"><i class="fa-solid fa-user"></i> <span data-bind="operator"></span></div></div></div>
+      <div class="item"><div><div class="lbl">Shift</div><div class="val"><i class="fa-solid fa-clock"></i> <span data-bind="shift"></span></div></div></div>
+      <div class="flow">
+        <span class="step done"><span class="dot"></span>Released</span>
+        <i class="fa-solid fa-chevron-right arrow"></i>
+        <span class="step done"><span class="dot"></span>Ready</span>
+        <i class="fa-solid fa-chevron-right arrow"></i>
+        <span class="step current"><span class="dot"></span>In Progress</span>
+        <i class="fa-solid fa-chevron-right arrow"></i>
+        <span class="step"><span class="dot"></span>Confirmed</span>
+        <i class="fa-solid fa-chevron-right arrow"></i>
+        <span class="step"><span class="dot"></span>Decision</span>
+      </div>
+    </div>
+
+    <div class="main-grid">
+
+      <aside class="bm-card orders-card">
+        <div class="bm-card-header"><i class="fa-solid fa-clipboard-list"></i> Available Orders <span class="right" data-bind="ordersCount"></span></div>
+        <div class="order-search"><input type="text" placeholder="Filter…"></div>
+        <ul class="order-list" id="order-list"></ul>
+      </aside>
+
+      <section class="right-pane">
+
+        <!-- ORDER CONTEXT -->
+        <div class="bm-card full">
+          <div class="bm-card-header">
+            <i class="fa-solid fa-file-lines"></i> Order Context
+            <span class="right">
+              <span class="badge badge-info" data-bind="orderType"></span>
+              <span class="badge badge-warning">Line IN_PROGRESS</span>
+            </span>
+          </div>
+          <div class="bm-card-body">
+            <div class="kv-grid" style="grid-template-columns:repeat(6,1fr);">
+              <div><span class="k">Order</span><span class="v" data-bind="orderCode"></span></div>
+              <div><span class="k">Customer</span><span class="v" data-bind="customer"></span></div>
+              <div><span class="k">SKU</span><span class="v" data-bind="sku"></span></div>
+              <div><span class="k">Required</span><span class="v" data-bind="orderQty"></span></div>
+              <div><span class="k">Pending</span><span class="v" style="color:var(--color-warning)" data-bind="pendingQty"></span></div>
+              <div><span class="k">Delivery</span><span class="v" data-bind="deliveryDate"></span></div>
+            </div>
+            <div class="attr-list" id="attr-list" style="margin-top:6px"></div>
+          </div>
+        </div>
+
+        <!-- TIME &amp; SHIFT -->
+        <div class="bm-card full">
+          <div class="bm-card-header"><i class="fa-solid fa-stopwatch-20"></i> Time &amp; Shift
+            <span class="right" data-bind="pcRule"></span>
+          </div>
+          <div class="bm-card-body">
+            <div class="form-line" style="grid-template-columns:1.4fr 1.4fr 1fr 1.2fr">
+              <div class="field"><label>Start</label><div class="static" data-bind="startTime"></div></div>
+              <div class="field"><label>End</label><input type="text" data-bind-value="endTime"></div>
+              <div class="field"><label>Duration</label><div class="static" data-bind="duration"></div></div>
+              <div class="field"><label>Closing Shift</label><div class="static" data-bind="shift"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCED OUTPUT (NEW — multi-output split) -->
+        <div class="bm-card full">
+          <div class="bm-card-header produced">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i> Produced Output
+            <span class="right">
+              <span class="badge badge-info"><i class="fa-solid fa-code-fork"></i> <span data-bind="splitInfo"></span></span>
+              <span style="margin-left:4px">attribute capture per output</span>
+            </span>
+          </div>
+          <div class="bm-card-body">
+            <div class="req-list" id="produced-list"></div>
+          </div>
+        </div>
+
+        <!-- CONSUMED MATERIALS -->
+        <div class="bm-card full">
+          <div class="bm-card-header">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i> Consumed Materials
+            <span class="right">
+              <i class="fa-solid fa-circle-check" style="color:var(--color-success)"></i>
+              Multi-batch · attribute snapshot per row
+            </span>
+          </div>
+          <div class="bm-card-body">
+            <div class="req-list" id="materials"></div>
+          </div>
+        </div>
+
+        <!-- PROCESS PARAMETERS -->
+        <div class="bm-card full">
+          <div class="bm-card-header">
+            <i class="fa-solid fa-gauge-high"></i> Process Parameters
+            <span class="right">
+              <span class="badge badge-info"><i class="fa-solid fa-bolt"></i> Live PLC</span>
+              <span class="badge badge-warning"><i class="fa-solid fa-keyboard"></i> Manual</span>
+            </span>
+          </div>
+          <div class="bm-card-body" style="padding:0">
+            <table class="pp-table" id="process-params"></table>
+          </div>
+        </div>
+
+        <!-- SHIFT LOG (process only) -->
+        <div class="bm-card full process-only">
+          <div class="bm-card-header"><i class="fa-solid fa-people-arrows"></i> Shift Handover Log <span class="right">PC5b · multi-shift batch</span></div>
+          <div class="bm-card-body" style="padding:4px 8px"><table class="slog-table" id="shift-log"></table></div>
+        </div>
+
+        <!-- SECONDARY EQUIPMENT -->
+        <div class="bm-card">
+          <div class="bm-card-header">
+            <i class="fa-solid fa-screwdriver-wrench"></i> Secondary Equipment
+            <span class="right">Pick instance · auto life-tick</span>
+          </div>
+          <div class="bm-card-body" style="padding:0">
+            <table class="seq-table" id="secondary-eq"></table>
+            <div style="padding:6px 8px;border-top:1px dashed var(--color-border);background:#fafafa">
+              <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Instance</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONSUMABLES -->
+        <div class="bm-card">
+          <div class="bm-card-header">
+            <i class="fa-solid fa-droplet"></i> Consumables &amp; Utilities
+            <span class="right">Auto-meter · operator can adjust</span>
+          </div>
+          <div class="bm-card-body" style="padding:0">
+            <table class="cons-table" id="consumables"></table>
+            <div style="padding:6px 8px;border-top:1px dashed var(--color-border);background:#fafafa">
+              <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Consumable</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DELAY -->
+        <div class="bm-card full">
+          <div class="bm-card-header"><i class="fa-solid fa-triangle-exclamation"></i> Delay &amp; Notes <span class="right">Optional</span></div>
+          <div class="bm-card-body">
+            <div class="form-line">
+              <div class="field"><label>Delay Reason</label>
+                <select>
+                  <option>— No delay —</option>
+                  <option>Mechanical breakdown</option>
+                  <option>Material wait</option>
+                  <option>Operator unavailability</option>
+                  <option>Quality investigation</option>
+                </select>
+              </div>
+              <div class="field"><label>Delay (min)</label><input type="text" placeholder="0"></div>
+              <div class="field" style="grid-column:span 2"><label>Note</label><input type="text" placeholder="Operator note (optional)"></div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <div class="footer-bar">
+      <div class="summary">
+        <div><div class="lk">Confirmation</div><div class="lv" data-bind="confirmationId"></div></div>
+        <div><div class="lk">Outputs</div><div class="lv" data-bind="splitInfo"></div></div>
+        <div><div class="lk">Mother batch (consumed)</div><div class="lv" data-bind="motherInfo"></div></div>
+        <div><div class="lk">Lineage</div><div class="lv" style="color:var(--color-text-muted)" data-bind="lineage"></div></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+        <button class="btn btn-outline"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+        <button class="btn btn-success"><i class="fa-solid fa-check-double"></i> Confirm &amp; Submit</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const DATA = {
+  steel: {
+    factory: 'Bhilai Steel Plant', process: 'Hot Rolling', operation: 'Roughing &amp; Slitting Line',
+    equipment: 'Roughing Mill RM-2', equipmentType: 'BATCH 200t in',
+    operator: 'R. Kumar (EMP-1041)', shift: 'A · 06:00–14:00',
+    confirmationId: 'PC-2026-04-25-00318',
+    splitInfo: '1 mother → 3 daughter slabs (SPLIT)',
+    motherInfo: 'SL-A-2026-04-1532 (200 t)',
+    lineage: 'SL-A-1532 → MS-A-018 + MS-A-019 + MS-A-020',
+    orderCode: 'SO-2026-0421-04', customer: 'Tata Motors Ltd',
+    sku: 'HR Coil HRC-AISI1018-3.0×1250', orderQty: '180 t', pendingQty: '180 t',
+    deliveryDate: '2026-05-08', orderType: 'MTO · Local',
+    attributes: [['Grade','AISI-1018'],['Thk','3.00 mm'],['Width','1250 mm'],['Surface','Pickled'],['Length','4500 mm']],
+    pcRule: 'PC5a · Continuous · single shift',
+    ordersCount: '7 ready',
+    orders: [
+      { code: 'SO-2026-0421-04', customer: 'Tata Motors',  sku: 'HR Coil 3.0×1250', qty: '180 t', delivery: '2026-05-08', priority: 'high', active: true },
+      { code: 'SO-2026-0421-05', customer: 'Bajaj Auto',   sku: 'HR Coil 2.5×1100', qty: '120 t', delivery: '2026-05-10', priority: 'med' },
+      { code: 'SO-2026-0420-22', customer: 'L&T',          sku: 'Plate 12mm × 2400',qty: '95 t',  delivery: '2026-05-12', priority: 'med' },
+      { code: 'SO-2026-0420-09', customer: 'JSW Steel',    sku: 'CR Coil 1.2×1000', qty: '60 t',  delivery: '2026-05-14', priority: 'low' },
+      { code: 'SO-2026-0419-31', customer: 'Maruti',       sku: 'HR Coil 4.0×1500', qty: '210 t', delivery: '2026-05-15', priority: 'low' },
+      { code: 'SO-2026-0419-12', customer: 'Ashok Leyland',sku: 'Plate 8mm × 1800', qty: '70 t',  delivery: '2026-05-15', priority: 'low' },
+      { code: 'SO-2026-0418-41', customer: 'BHEL',         sku: 'HR Coil 3.5×1250', qty: '140 t', delivery: '2026-05-18', priority: 'low' },
+    ],
+    materials: [
+      {
+        name: 'Mother Slab (AISI-1018, 200×1250)',
+        meta: 'IM · Required attrs: Grade=AISI-1018 · Thk=200mm · W=1250mm',
+        unit: 't', req: '200.00', alloc: '200.00', match: 'ok',
+        batches: [
+          { batch: 'SL-A-2026-04-1532', heat: 'Heat #4421', qty: '200.00', attrs: [['Grade','AISI-1018','ok'],['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','9800 mm','ok'],['C%','0.18','ok'],['S%','0.018','ok']] },
+        ]
+      }
+    ],
+    produced: [
+      {
+        name: 'Daughter Slab (AISI-1018) — Cut to length',
+        meta: 'IM · Generated by SPLIT relation · ParentBatch SL-A-1532',
+        unit: 't', target: '195.00', actual: '195.00', match: 'ok', scrap: '5.00', yieldPct: '97.5 %',
+        outputs: [
+          { batch: 'MS-A-260425-018', material: 'MS-A-260425-018-#1', qty: '70.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3500 mm','ok'],['Grade','AISI-1018','ok']] },
+          { batch: 'MS-A-260425-019', material: 'MS-A-260425-019-#1', qty: '65.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3250 mm','ok'],['Grade','AISI-1018','ok']] },
+          { batch: 'MS-A-260425-020', material: 'MS-A-260425-020-#1', qty: '60.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3000 mm','ok'],['Grade','AISI-1018','ok']] },
+        ]
+      }
+    ],
+    processParams: [
+      { name: 'Roughing Mill Entry Temp', target: '1180', range: '1150–1200', reading: '1184', unit: '°C', source: 'plc', status: 'ok' },
+      { name: 'Mill Force', target: '24000', range: '22000–26000', reading: '23800', unit: 'kN', source: 'plc', status: 'ok' },
+      { name: 'Shear Cut Length Tol.', target: '±5', range: '0–10', reading: '3.2', unit: 'mm', source: 'plc', status: 'ok' },
+      { name: 'O₂ in Atmosphere', target: '<1.0', range: '0–1.0', reading: '0.62', unit: '%', source: 'plc', status: 'ok' },
+      { name: 'Surface Inspection', target: 'CLEAN', range: 'CLEAN', reading: 'CLEAN', unit: '', source: 'manual', status: 'ok', selectOptions: ['CLEAN','SCALE','PIT','CRACK'] },
+      { name: 'Cut Mark Position', target: 'OK', range: 'OK', reading: 'OK', unit: '', source: 'manual', status: 'ok', selectOptions: ['OK','NEAR-EDGE','REWORK'] },
+    ],
+    secondaryEq: [
+      { name: 'Work Roll', instances: ['WR-A-12 / SN-1001 (life 80%)','WR-A-13 / SN-1014 (life 32%)'], selected: 0, life: 80, tick: '195', unit: 't', warn: 'warn' },
+      { name: 'Backup Roll', instances: ['BR-A-04 / SN-2007 (life 42%)','BR-A-05 / SN-2011 (life 12%)'], selected: 0, life: 42, tick: '195', unit: 't', warn: 'ok' },
+      { name: 'Shear Blade', instances: ['SB-3 / SN-7022 (life 58%)','SB-4 / SN-7026 (life 18%)'], selected: 0, life: 58, tick: '3', unit: 'cuts', warn: 'ok' },
+    ],
+    consumables: [
+      { name: 'Natural Gas',   batches: ['NG-Apr-04','NG-Apr-03','NG-Mar-30'], selected: 0, qty: '850',  unit: 'm³',  source: 'meter' },
+      { name: 'Electricity',   batches: ['—'],                                  selected: 0, qty: '12.4', unit: 'MWh', source: 'meter' },
+      { name: 'Lubricant Oil', batches: ['LO-2026-03','LO-2026-04'],            selected: 0, qty: '18',   unit: 'L',   source: 'manual' },
+      { name: 'Cooling Water', batches: ['Utility'],                            selected: 0, qty: '4200', unit: 'L',   source: 'meter' },
+    ],
+    startTime: '2026-04-25 02:30:00', endTime: '2026-04-25 07:00:00', duration: '4 h 30 min',
+  },
+
+  process: {
+    factory: 'ChemCorp Pune', process: 'Resin Synthesis', operation: 'Polymerization &amp; Filling',
+    equipment: 'Reactor R-04 + Drum-fill Line', equipmentType: 'BATCH 800–1200L',
+    operator: 'A. Sharma (EMP-2087) · Closing', shift: 'C · 22:00–06:00',
+    confirmationId: 'PC-2026-04-25-00041',
+    splitInfo: '1 reactor → 4 IBC drums (SPLIT)',
+    motherInfo: 'M-101-204+205 + CAT-203-87 (1212 kg charge)',
+    lineage: 'M-101-204+205 → PR405-260423-A-007 (D1..D4)',
+    orderCode: 'PO-2026-0420-12', customer: '3M Industries',
+    sku: 'PR-405 Grade A', orderQty: '1080 L', pendingQty: '1080 L',
+    deliveryDate: '2026-05-02', orderType: 'MTS · Export',
+    attributes: [['Grade','A'],['Visc','4500–5500 cP'],['Solid','50–52 %'],['pH','6.8–7.5'],['Color','≤ 3']],
+    pcRule: 'PC5b · 6-shift batch',
+    ordersCount: '4 ready',
+    orders: [
+      { code: 'PO-2026-0420-12', customer: '3M Industries',     sku: 'PR-405 Grade A', qty: '1080 L', delivery: '2026-05-02', priority: 'high', active: true },
+      { code: 'PO-2026-0419-02', customer: 'Henkel Adhesives',  sku: 'PR-302 Grade B', qty: '900 L',  delivery: '2026-05-04', priority: 'med' },
+      { code: 'PO-2026-0418-19', customer: 'Pidilite Inds',     sku: 'EP-110 Grade A', qty: '600 L',  delivery: '2026-05-06', priority: 'med' },
+      { code: 'PO-2026-0418-04', customer: 'Asian Paints',      sku: 'PR-405 Grade C', qty: '1100 L', delivery: '2026-05-09', priority: 'low' },
+    ],
+    materials: [
+      {
+        name: 'Monomer M-101', meta: 'RM · BOM 1000 kg · Required: Purity ≥ 99.0 %',
+        unit: 'kg', req: '1000', alloc: '1000', match: 'ok',
+        batches: [
+          { batch: 'M-101-Lot-204', heat: 'Drum 12 · 2026-04', qty: '600', attrs: [['Purity','99.5 %','ok'],['Moisture','0.02 %','ok'],['Inhibitor','120 ppm','ok']] },
+          { batch: 'M-101-Lot-205', heat: 'Drum 14 · 2026-04', qty: '400', attrs: [['Purity','99.3 %','ok'],['Moisture','0.04 %','ok'],['Inhibitor','115 ppm','ok']] },
+        ]
+      },
+      {
+        name: 'Catalyst CAT-203', meta: 'RM · BOM 12 kg · Activated · Grade A only',
+        unit: 'kg', req: '12.00', alloc: '12.00', match: 'ok',
+        batches: [
+          { batch: 'CAT-203-Lot-87', heat: 'Activated 2026-04-22', qty: '12.00', attrs: [['Activation','PASS','ok'],['Grade','A','ok']] },
+        ]
+      },
+      {
+        name: 'Solvent S-9', meta: 'RM · BOM 200 L',
+        unit: 'L', req: '200', alloc: '200', match: 'ok',
+        batches: [
+          { batch: 'S9-2026-04-002', heat: 'Bulk tank', qty: '200', attrs: [['Water','25 ppm','ok'],['Density','0.879 g/mL','ok']] },
+        ]
+      },
+    ],
+    produced: [
+      {
+        name: 'Polymer Resin PR-405 Grade A — IBC Drums',
+        meta: 'FG · Generated by SPLIT relation · 1 batch decanted into 4 IBC drums',
+        unit: 'L', target: '1080', actual: '1080', match: 'ok', scrap: '20', yieldPct: '98.2 %',
+        outputs: [
+          { batch: 'PR405-260425-A-007-D1', material: 'IBC-2026-1101', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
+          { batch: 'PR405-260425-A-007-D2', material: 'IBC-2026-1102', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
+          { batch: 'PR405-260425-A-007-D3', material: 'IBC-2026-1103', qty: '270', attrs: [['Visc','4910 cP','ok'],['Solid','51.0 %','ok'],['pH','7.20','ok'],['Color','2 (Gardner)','ok']] },
+          { batch: 'PR405-260425-A-007-D4', material: 'IBC-2026-1104', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
+        ]
+      }
+    ],
+    processParams: [
+      { name: 'Reaction Temp', target: '85', range: '82–88', reading: '85.4', unit: '°C', source: 'plc', status: 'ok' },
+      { name: 'Reactor Pressure', target: '1.5', range: '1.4–1.6', reading: '1.51', unit: 'bar', source: 'plc', status: 'ok' },
+      { name: 'pH', target: '7.2', range: '6.8–7.5', reading: '7.18', unit: '', source: 'plc', status: 'ok' },
+      { name: 'Stirrer RPM', target: '120', range: '110–130', reading: '122', unit: 'rpm', source: 'plc', status: 'ok' },
+      { name: 'N₂ Purge Rate', target: '5', range: '4–6', reading: '5.1', unit: 'm³/h', source: 'plc', status: 'ok' },
+      { name: 'Reaction Duration', target: '48', range: '46–50', reading: '48.0', unit: 'h', source: 'plc', status: 'ok' },
+      { name: 'In-Process Viscosity', target: '4500–5500', range: '4500–5500', reading: '4920', unit: 'cP', source: 'manual', status: 'ok', placeholder: 'enter cP…' },
+      { name: 'Sample Color (Gardner)', target: '≤ 3', range: '0–3', reading: '2', unit: '', source: 'manual', status: 'ok', selectOptions: ['1','2','3','4','5'] },
+    ],
+    secondaryEq: [
+      { name: 'Agitator', instances: ['AG-04 / SN-1142 (life 35%)','AG-05 / SN-1148 (life 12%)'], selected: 0, life: 35, tick: '48.0', unit: 'h', warn: 'ok' },
+      { name: 'Heat Exchanger', instances: ['HX-12 / SN-3009 (life 64%)','HX-14 / SN-3015 (life 8%)'], selected: 0, life: 64, tick: '48.0', unit: 'h', warn: 'ok' },
+    ],
+    consumables: [
+      { name: 'Steam',         batches: ['Utility'],    selected: 0, qty: '1200', unit: 'kg',  source: 'meter' },
+      { name: 'Cooling Water', batches: ['Utility'],    selected: 0, qty: '8500', unit: 'L',   source: 'meter' },
+      { name: 'N₂ Gas',        batches: ['N2-2026-04'], selected: 0, qty: '50',   unit: 'm³',  source: 'meter' },
+      { name: 'Electricity',   batches: ['—'],          selected: 0, qty: '320',  unit: 'kWh', source: 'meter' },
+    ],
+    shiftLog: [
+      { shift: 'A · 23 Apr', op: 'A. Patel (EMP-2011)',  start: '23 Apr 06:00', end: '23 Apr 14:00' },
+      { shift: 'B · 23 Apr', op: 'V. Singh (EMP-2034)',  start: '23 Apr 14:00', end: '23 Apr 22:00' },
+      { shift: 'C · 23 Apr', op: 'A. Sharma (EMP-2087)', start: '23 Apr 22:00', end: '24 Apr 06:00' },
+      { shift: 'A · 24 Apr', op: 'A. Patel (EMP-2011)',  start: '24 Apr 06:00', end: '24 Apr 14:00' },
+      { shift: 'B · 24 Apr', op: 'V. Singh (EMP-2034)',  start: '24 Apr 14:00', end: '24 Apr 22:00' },
+      { shift: 'C · 24 Apr', op: 'A. Sharma · Closing',  start: '24 Apr 22:00', end: '25 Apr 08:00' },
+    ],
+    startTime: '2026-04-23 08:00:00', endTime: '2026-04-25 08:00:00', duration: '48 h · 6 shifts',
+  },
+
+  discrete: {
+    factory: 'Auto Components Pune', process: 'Engine Assembly',
+    operation: 'Crankshaft Assembly · Station S-7', equipment: 'Cell C-7',
+    equipmentType: 'CONTINUOUS pcs',
+    operator: 'S. Mehta (EMP-3120)', shift: 'B · 14:00–22:00',
+    confirmationId: 'PC-2026-04-25-00207',
+    splitInfo: '12 components → 12 engine blocks (MERGE × 12)',
+    motherInfo: 'CS-V6-1842 + BR-12-2031/2032 + BLT-9011',
+    lineage: 'CS-V6-1842 + BR-12-2031/2032 → EB-V6-260425-S7-001..012',
+    orderCode: 'SO-2026-0422-09', customer: 'Maruti Suzuki India',
+    sku: 'Engine Block EB-1500-V6', orderQty: '120 pcs', pendingQty: '108 pcs',
+    deliveryDate: '2026-05-05', orderType: 'MTO · Local',
+    attributes: [['Variant','V6-Turbo'],['Disp','1.5 L'],['Comp','10.5:1'],['Spec','MS-EB-V6-2026-Rev-C']],
+    pcRule: 'PC5a · Continuous · single shift',
+    ordersCount: '5 ready',
+    orders: [
+      { code: 'SO-2026-0422-09', customer: 'Maruti Suzuki', sku: 'EB-1500-V6',     qty: '120 pcs', delivery: '2026-05-05', priority: 'high', active: true },
+      { code: 'SO-2026-0422-11', customer: 'Tata Motors',   sku: 'EB-1200-I4',     qty: '200 pcs', delivery: '2026-05-07', priority: 'med' },
+      { code: 'SO-2026-0421-44', customer: 'Mahindra',      sku: 'EB-2200-D-Twin', qty: '80 pcs',  delivery: '2026-05-09', priority: 'med' },
+      { code: 'SO-2026-0421-30', customer: 'Bajaj',         sku: 'EB-150-Single',  qty: '450 pcs', delivery: '2026-05-12', priority: 'low' },
+      { code: 'SO-2026-0420-66', customer: 'TVS',           sku: 'EB-200-Twin',    qty: '180 pcs', delivery: '2026-05-12', priority: 'low' },
+    ],
+    materials: [
+      {
+        name: 'Crankshaft CS-V6', meta: 'IM · BOM 1 / piece · 12 required',
+        unit: 'pcs', req: '12', alloc: '12', match: 'ok',
+        batches: [
+          { batch: 'CS-V6-Lot-1842', heat: 'Forged 2026-04-22', qty: '12', attrs: [['Hardness','45 HRC','ok'],['Run-out','0.018 mm','ok'],['Balance','PASS','ok']] },
+        ]
+      },
+      {
+        name: 'Bearing BR-12', meta: 'RM · BOM 6 / piece · 72 required',
+        unit: 'pcs', req: '72', alloc: '72', match: 'ok',
+        batches: [
+          { batch: 'BR-12-Lot-2031', heat: 'Vendor SKF', qty: '48', attrs: [['Class','P5','ok'],['ID','25.000 mm','ok']] },
+          { batch: 'BR-12-Lot-2032', heat: 'Vendor SKF', qty: '24', attrs: [['Class','P5','ok'],['ID','25.001 mm','ok']] },
+        ]
+      },
+      {
+        name: 'Bolt M10×60', meta: 'RM · BOM 24 / piece · 288 required',
+        unit: 'pcs', req: '288', alloc: '288', match: 'ok',
+        batches: [
+          { batch: 'BLT-M10-Lot-9011', heat: 'Vendor', qty: '288', attrs: [['Grade','12.9','ok'],['Coating','Zn-Ni','ok']] },
+        ]
+      },
+    ],
+    produced: [
+      {
+        name: 'Engine Block EB-1500-V6 — Serialized',
+        meta: 'FG · 12 pieces · each individually serialized · MERGE relation captured',
+        unit: 'pcs', target: '12', actual: '12', match: 'ok', scrap: '0', yieldPct: '100.0 %',
+        outputs: [
+          { batch: 'EB-V6-260425-S7-001', material: 'Serial 001', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.8 Nm','ok'],['QC','PASS','ok']] },
+          { batch: 'EB-V6-260425-S7-002', material: 'Serial 002', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.9 Nm','ok'],['QC','PASS','ok']] },
+          { batch: 'EB-V6-260425-S7-003', material: 'Serial 003', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','35.0 Nm','ok'],['QC','PASS','ok']] },
+          { batch: 'EB-V6-260425-S7-004 .. 012', material: 'Serial 004–012 (9 pcs)', qty: '9', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.6–35.1 Nm','ok'],['QC','12/12 PASS','ok']] },
+        ]
+      }
+    ],
+    processParams: [
+      { name: 'Crank Bolt Torque', target: '35', range: '33–37', reading: '34.8', unit: 'Nm', source: 'plc', status: 'ok' },
+      { name: 'Run-out (TIR)', target: '<0.05', range: '0–0.05', reading: '0.018', unit: 'mm', source: 'plc', status: 'ok' },
+      { name: 'Vision Inspection', target: 'PASS', range: 'PASS', reading: '12 / 12 PASS', unit: '', source: 'plc', status: 'ok' },
+      { name: 'Leak Test', target: '<0.5', range: '0–0.5', reading: '0.18', unit: 'cc/min', source: 'plc', status: 'ok' },
+      { name: 'Cycle Time', target: '4.0', range: '3.5–4.5', reading: '4.05', unit: 'min', source: 'plc', status: 'ok' },
+      { name: 'Visual Final QC', target: 'PASS', range: 'PASS', reading: 'PASS', unit: '', source: 'manual', status: 'ok', selectOptions: ['PASS','REWORK','FAIL'] },
+    ],
+    secondaryEq: [
+      { name: 'Torque Wrench', instances: ['TW-04 / SN-441 (life 90%)','TW-06 / SN-449 (life 22%)'], selected: 0, life: 90, tick: '12', unit: 'cycles', warn: 'crit' },
+      { name: 'Assembly Jig V6', instances: ['JIG-7-V6 / SN-12 (life 55%)','JIG-8-V6 / SN-19 (life 8%)'], selected: 0, life: 55, tick: '12', unit: 'cycles', warn: 'ok' },
+    ],
+    consumables: [
+      { name: 'Sealant',  batches: ['SEAL-2026-04','SEAL-2026-03'], selected: 0, qty: '24',  unit: 'g',  source: 'manual' },
+      { name: 'Lube Oil', batches: ['LUB-2026-04','LUB-2026-03'],   selected: 0, qty: '600', unit: 'ml', source: 'meter' },
+    ],
+    startTime: '2026-04-25 14:32:00', endTime: '2026-04-25 15:20:48', duration: '48 min · 12 cycles',
+  },
+};
+
+function render(industry) {
+  const d = DATA[industry];
+
+  document.querySelectorAll('[data-bind]').forEach(el => {
+    const k = el.getAttribute('data-bind');
+    if (d[k] !== undefined) el.innerHTML = d[k];
+  });
+  document.querySelectorAll('[data-bind-html]').forEach(el => {
+    const k = el.getAttribute('data-bind-html');
+    if (d[k] !== undefined) el.innerHTML = d[k];
+  });
+  document.querySelectorAll('[data-bind-value]').forEach(el => {
+    const k = el.getAttribute('data-bind-value');
+    if (d[k] !== undefined) el.value = d[k];
+  });
+
+  document.body.className = 'industry-' + industry;
+
+  document.getElementById('attr-list').innerHTML =
+    d.attributes.map(([k,v]) => `<span class="attr-pill"><b>${k}:</b> ${v}</span>`).join('');
+
+  document.getElementById('order-list').innerHTML = d.orders.map(o => `
+    <li class="order-item ${o.active ? 'active' : ''}">
+      <div class="row1">
+        <span class="order-code">${o.code}</span>
+        <span class="badge ${o.priority === 'high' ? 'badge-danger' : o.priority === 'med' ? 'badge-warning' : 'badge-neutral'}">${o.priority.toUpperCase()}</span>
+      </div>
+      <div class="row2"><i class="fa-solid fa-user"></i> ${o.customer} · ${o.sku}</div>
+      <div class="row3"><span><i class="fa-regular fa-calendar"></i> ${o.delivery}</span><span class="qty">${o.qty}</span></div>
+    </li>`).join('');
+
+  // CONSUMED MATERIALS
+  document.getElementById('materials').innerHTML = d.materials.map(m => renderReqCard(m, 'consumed')).join('');
+
+  // PRODUCED OUTPUTS
+  document.getElementById('produced-list').innerHTML = d.produced.map(p => renderProducedCard(p)).join('');
+
+  // PROCESS PARAMS
+  document.getElementById('process-params').innerHTML = d.processParams.map(p => {
+    const cls = p.status === 'ok' ? 'badge-success' : p.status === 'warn' ? 'badge-warning' : 'badge-danger';
+    const txt = p.status === 'ok' ? 'IN RANGE' : p.status === 'warn' ? 'NEAR' : 'OUT';
+    const src = p.source === 'plc' ? '<i class="fa-solid fa-bolt"></i> PLC' : '<i class="fa-solid fa-keyboard"></i> Manual';
+    let readingCell;
+    if (p.source === 'manual' && p.selectOptions) {
+      readingCell = `<select class="cons-batch-pick" style="font-weight:600;border-color:var(--color-warning);background:var(--color-warning-light)">${p.selectOptions.map(o => `<option ${o === p.reading ? 'selected':''}>${o}</option>`).join('')}</select>`;
+    } else if (p.source === 'manual') {
+      readingCell = `<input type="text" value="${p.reading}" placeholder="${p.placeholder || ''}"> <span style="color:var(--color-text-muted);font-size:11px">${p.unit}</span>`;
+    } else {
+      readingCell = `${p.reading} <span style="color:var(--color-text-muted);font-weight:400;font-size:11px">${p.unit}</span>`;
+    }
+    return `<tr>
+      <td style="width:32%"><div class="pp-name">${p.name}</div><div class="pp-target">tgt <b>${p.target}</b> · ${p.range}</div></td>
+      <td style="width:24%" class="pp-reading ${p.source === 'manual' ? 'manual-input' : ''}">${readingCell}</td>
+      <td style="width:12%"><span class="pp-source ${p.source}">${src}</span></td>
+      <td style="width:14%"><span class="badge ${cls}">${txt}</span></td>
+      <td style="width:18%;text-align:right;color:var(--color-text-hint);font-size:10px">${p.source === 'plc' ? '<i class="fa-regular fa-clock"></i> live · 2s ago' : '<i class="fa-regular fa-pen-to-square"></i> by operator'}</td>
+    </tr>`;
+  }).join('');
+
+  // SHIFT LOG
+  const slogEl = document.getElementById('shift-log');
+  if (d.shiftLog) {
+    slogEl.innerHTML = d.shiftLog.map(s => `<tr>
+      <td><span class="badge badge-primary">${s.shift}</span></td>
+      <td><b>${s.op}</b></td>
+      <td class="slog-time">${s.start}</td>
+      <td class="slog-time">→ ${s.end}</td>
+    </tr>`).join('');
+  } else {
+    slogEl.innerHTML = '';
+  }
+
+  // SECONDARY EQ
+  document.getElementById('secondary-eq').innerHTML = `
+    <thead><tr>
+      <th style="width:24%">Equipment</th>
+      <th>Instance (life-aware)</th>
+      <th class="num" style="width:80px">Tick</th>
+      <th style="width:80px">Life Bar</th>
+      <th style="width:32px"></th>
+    </tr></thead>
+    <tbody>${d.secondaryEq.map(s => {
+      const cls = s.warn === 'crit' ? 'crit' : s.warn === 'warn' ? 'warn' : '';
+      const pctCls = s.life >= 90 ? 'crit' : s.life >= 70 ? 'warn' : 'ok';
+      return `<tr>
+        <td><div class="seq-name">${s.name}</div><div class="seq-meta">SecondaryEquipmentOperationMap</div></td>
+        <td><select class="seq-instance-pick">${s.instances.map((inst,i) => `<option ${i === s.selected ? 'selected':''}>${inst}</option>`).join('')}</select></td>
+        <td class="num"><input type="text" class="seq-tick-input" value="${s.tick}"> ${s.unit}</td>
+        <td><div class="seq-pct ${pctCls}" style="font-size:11px">${s.life}%</div><div class="life-bar ${cls}"><span style="width:${s.life}%"></span></div></td>
+        <td><button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button></td>
+      </tr>`;
+    }).join('')}</tbody>`;
+
+  // CONSUMABLES
+  document.getElementById('consumables').innerHTML = `
+    <thead><tr>
+      <th>Consumable</th>
+      <th>Batch / Lot</th>
+      <th class="num">Qty</th>
+      <th style="width:50px">Unit</th>
+      <th style="width:60px">Source</th>
+      <th style="width:32px"></th>
+    </tr></thead>
+    <tbody>${d.consumables.map(c => `<tr>
+      <td><b>${c.name}</b></td>
+      <td><select class="cons-batch-pick">${c.batches.map((b,i) => `<option ${i === c.selected ? 'selected':''}>${b}</option>`).join('')}</select></td>
+      <td class="num"><input type="text" class="cons-input" value="${c.qty}"></td>
+      <td>${c.unit}</td>
+      <td><span class="badge ${c.source === 'meter' ? 'badge-info' : 'badge-warning'}">${c.source === 'meter' ? '<i class="fa-solid fa-bolt"></i> Meter' : '<i class="fa-solid fa-keyboard"></i> Man'}</span></td>
+      <td><button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button></td>
+    </tr>`).join('')}</tbody>`;
+}
+
+function renderReqCard(m) {
+  const matchBadge = m.match === 'ok'
+    ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Match</span>'
+    : '<span class="badge badge-warning">Partial</span>';
+  const batches = m.batches.map(b => `
+    <tr>
+      <td><b>${b.batch}</b><div style="font-size:10px;color:var(--color-text-hint)">${b.heat}</div></td>
+      <td class="num"><input type="text" class="qty-in" value="${b.qty}"> ${m.unit}</td>
+      <td>
+        <div class="batch-attrs">
+          ${b.attrs.map(([ak,av,st]) => `<span class="a-pill ${st === 'warn' ? 'warn' : st === 'fail' ? 'fail' : ''}"><span class="a-k">${ak}:</span><span class="a-v">${av}</span></span>`).join('')}
+        </div>
+      </td>
+      <td style="width:40px;text-align:right">
+        <button class="icon-btn-mini" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button>
+      </td>
+    </tr>`).join('');
+  return `<div class="req-card">
+    <div class="req-card-head">
+      <div>
+        <div class="m-name">${m.name}</div>
+        <div class="m-meta">${m.meta}</div>
+      </div>
+      <div class="m-fig"><div class="fl">Required</div><div class="fv req">${m.req} ${m.unit}</div></div>
+      <div class="m-fig"><div class="fl">Allocated</div><div class="fv ${m.match === 'ok' ? 'alloc-ok' : 'alloc-bad'}">${m.alloc} ${m.unit}</div></div>
+      <div style="text-align:right">${matchBadge}</div>
+    </div>
+    <table class="batch-table">
+      <thead><tr><th style="width:24%">Batch / Lot</th><th class="num" style="width:14%">Qty</th><th>Attribute Values (per batch)</th><th></th></tr></thead>
+      <tbody>${batches}</tbody>
+    </table>
+    <div class="batch-add-row">
+      <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Batch</button>
+      <span style="font-size:11px;color:var(--color-text-hint)">attribute values auto-filled from inventory snapshot · operator can adjust</span>
+    </div>
+  </div>`;
+}
+
+function renderProducedCard(p) {
+  const matchBadge = p.match === 'ok'
+    ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Reconciled</span>'
+    : '<span class="badge badge-warning">Off</span>';
+  const rows = p.outputs.map((o,i) => `
+    <tr>
+      <td>
+        <b>${o.batch}</b>
+        <div style="font-size:10px;color:var(--color-text-hint)">Material # ${o.material} · Mother batch propagated</div>
+      </td>
+      <td class="num"><input type="text" class="qty-in" value="${o.qty}"> ${p.unit}</td>
+      <td>
+        <div class="batch-attrs">
+          ${o.attrs.map(([ak,av,st]) => `<span class="a-pill ${st === 'warn' ? 'warn' : st === 'fail' ? 'fail' : ''}"><span class="a-k">${ak}:</span><span class="a-v">${av}</span></span>`).join('')}
+        </div>
+      </td>
+      <td style="width:40px;text-align:right">
+        <button class="icon-btn-mini" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button>
+      </td>
+    </tr>`).join('');
+  return `<div class="req-card output">
+    <div class="req-card-head">
+      <div>
+        <div class="m-name"><i class="fa-solid fa-code-fork" style="color:var(--color-primary);margin-right:4px"></i>${p.name}</div>
+        <div class="m-meta">${p.meta}</div>
+      </div>
+      <div class="m-fig"><div class="fl">Target</div><div class="fv prim">${p.target} ${p.unit}</div></div>
+      <div class="m-fig"><div class="fl">Actual (Σ outputs)</div><div class="fv ${p.match === 'ok' ? 'alloc-ok' : 'alloc-bad'}">${p.actual} ${p.unit}</div></div>
+      <div style="text-align:right">${matchBadge}</div>
+    </div>
+    <table class="batch-table">
+      <thead><tr>
+        <th style="width:24%">Output Batch / Material #</th>
+        <th class="num" style="width:14%">Qty</th>
+        <th>Attribute Values (per output)</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="batch-add-row">
+      <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Output</button>
+      <span style="font-size:11px;color:var(--color-text-hint)">batch # auto from BatchNumberGenerationConfig · attrs default from input + measured</span>
+    </div>
+    <div class="output-summary">
+      <div class="ov"><div class="l">Suggested (BOM × Yield)</div><div class="v">${p.target} ${p.unit}</div></div>
+      <div class="ov"><div class="l">Total Produced</div><div class="v prim">${p.actual} ${p.unit}</div></div>
+      <div class="ov"><div class="l">Scrap / Loss</div><div class="v warn">${p.scrap} ${p.unit}</div></div>
+      <div class="ov"><div class="l">Yield</div><div class="v success">${p.yieldPct}</div></div>
+      <div style="margin-left:auto" class="alert-inline success"><i class="fa-solid fa-circle-check"></i> Σ outputs + scrap reconciles to consumed input · BatchRelations row will be written: SPLIT</div>
+    </div>
+  </div>`;
+}
+
+document.querySelectorAll('.industry-switch button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.industry-switch button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    render(b.dataset.industry);
+  });
+});
+
+render('steel');
+</script>
+</body>
+</html>
