@@ -76,6 +76,8 @@
   .flow .step { display:flex; align-items:center; gap:4px; color:var(--color-text-disabled); }
   .flow .step.done { color:var(--color-success); }
   .flow .step.current { color:var(--color-primary); font-weight:600; }
+  .flow .step.deferred { opacity:.45; font-style:italic; cursor:help; text-decoration:line-through; text-decoration-color:var(--color-text-disabled); text-decoration-thickness:1px; }
+  .flow .step.deferred .dot { background:var(--color-text-disabled); border:1px dashed var(--color-text-hint); }
   .flow .step .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
   .flow .arrow { color:var(--color-text-disabled); font-size:8px; }
 
@@ -87,25 +89,117 @@
   /* CARD */
   .bm-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; overflow:hidden; }
   .bm-card-header { padding:6px 10px; background:var(--color-bg-alt); border-bottom:1px solid var(--color-border-light); font:600 12px 'Roboto'; display:flex; align-items:center; gap:6px; }
+  .step-badge { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--color-primary); color:#fff; font:600 10px 'Roboto'; font-variant-numeric:tabular-nums; flex-shrink:0; }
+  .child-progress { display:flex; align-items:center; gap:8px; padding:6px 10px; margin-bottom:8px; background:var(--color-info-light); border:1px solid #90caf9; border-radius:4px; font-size:11px; color:#1565c0; }
+  .child-progress .label { font-weight:600; }
+  .child-progress .siblings { display:flex; gap:4px; margin-left:auto; }
+  .child-progress .sibling { padding:2px 6px; border-radius:3px; font-size:10px; font-weight:600; background:#fff; border:1px solid #90caf9; color:#1565c0; }
+  .child-progress .sibling.done { background:rgba(76,175,80,.14); color:#2e7d32; border-color:#a5d6a7; }
+  .child-progress .sibling.current { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
   .bm-card-header.produced { background:linear-gradient(90deg,#e8f5fd,#fafafa); }
   .bm-card-header i { color:var(--color-primary); font-size:11px; }
   .bm-card-header .right { margin-left:auto; font-weight:400; font-size:11px; color:var(--color-text-muted); display:flex; align-items:center; gap:6px; }
   .bm-card-body { padding:8px 10px; }
 
-  /* ORDERS */
+  /* SCHEDULE QUEUE (formerly Orders) */
   .orders-card { display:flex; flex-direction:column; height:100%; }
   .order-search { padding:6px 8px; border-bottom:1px solid var(--color-border); }
   .order-search input { width:100%; padding:5px 8px; border:1px solid var(--color-primary); border-radius:4px; font-size:12px; background:var(--color-primary-light); box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
   .order-list { list-style:none; padding:0; margin:0; overflow-y:auto; flex:1; }
-  .order-item { padding:6px 10px; border-bottom:1px solid var(--color-border-light); cursor:pointer; display:flex; flex-direction:column; gap:2px; }
-  .order-item:hover { background:var(--color-bg-alt); }
-  .order-item.active { background:var(--color-primary-light); border-left:3px solid var(--color-primary); padding-left:7px; }
-  .order-item .row1 { display:flex; align-items:center; gap:6px; }
-  .order-item .order-code { font-weight:600; font-size:12px; }
-  .order-item .row2 { font-size:11px; color:var(--color-text-muted); display:flex; align-items:center; gap:4px; }
-  .order-item .row2 i { font-size:9px; }
-  .order-item .row3 { display:flex; justify-content:space-between; font-size:10px; color:var(--color-text-hint); }
-  .order-item .qty { font-weight:600; color:var(--color-primary); }
+  .sched-item { padding:6px 10px; border-bottom:1px solid var(--color-border-light); cursor:pointer; display:flex; flex-direction:column; gap:3px; position:relative; }
+  .sched-item:hover { background:var(--color-bg-alt); }
+  .sched-item.active { background:var(--color-primary-light); border-left:3px solid var(--color-primary); padding-left:7px; }
+  .sched-item.held { opacity:.55; cursor:not-allowed; background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f5f5f5 6px,#f5f5f5 12px); }
+  .sched-item.held:hover { background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f5f5f5 6px,#f5f5f5 12px); }
+  .sched-item .row1 { display:flex; align-items:center; gap:6px; }
+  .sched-item .sch-num { font-weight:600; font-size:11px; font-variant-numeric:tabular-nums; }
+  .sched-item .row2 { font-size:11px; color:var(--color-text-secondary); }
+  .sched-item .row2 .mat { font-weight:500; }
+  .sched-item .row3 { display:flex; justify-content:space-between; font-size:10px; color:var(--color-text-hint); }
+  .sched-item .qty { font-weight:600; color:var(--color-primary); }
+  .sched-item .planned-time { font-variant-numeric:tabular-nums; }
+  .sched-item .child-pill { font-size:9px; padding:1px 5px; border-radius:8px; background:var(--color-bg-alt); color:var(--color-text-muted); border:1px solid var(--color-border-light); }
+  .charge-pill { font-size:9px; padding:1px 5px; border-radius:3px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+  .charge-pill.charged { background:rgba(76,175,80,.14); color:#2e7d32; }
+  .charge-pill.planned { background:rgba(33,150,243,.12); color:#1565c0; }
+  .charge-pill.hold { background:rgba(244,67,54,.14); color:#c62828; }
+  .charge-pill.confirmed { background:rgba(158,158,158,.16); color:#555; }
+  .charge-pill.rejected { background:rgba(255,87,34,.14); color:#bf360c; }
+  /* Schedule group header (groups its materials beneath) */
+  .sched-group-header { padding:5px 10px; background:linear-gradient(90deg,#f5f5f5,#fafafa); border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border-light); font-size:10px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600; display:flex; align-items:center; gap:6px; cursor:default; }
+  .sched-group-header:first-child { border-top:none; }
+  .sched-group-header .sg-num { color:var(--color-primary); font-variant-numeric:tabular-nums; }
+  .sched-group-header .sg-meta { margin-left:auto; font-weight:400; text-transform:none; color:var(--color-text-hint); font-size:10px; letter-spacing:0; }
+  /* Dummy material rows */
+  .sched-item.dummy { opacity:.55; cursor:not-allowed; background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f5f5f5 6px,#f5f5f5 12px); }
+  .sched-item.dummy:hover { background:repeating-linear-gradient(45deg,#fff,#fff 6px,#f5f5f5 6px,#f5f5f5 12px); }
+  .sched-item.dummy .row1 i.dummy-ic { color:var(--color-text-hint); }
+  .sched-item .dummy-hint { font-size:9px; color:var(--color-warning); display:flex; align-items:center; gap:4px; }
+  /* Empty state + Free Production CTA */
+  .queue-empty-state { padding:20px 14px; text-align:center; color:var(--color-text-muted); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .queue-empty-state .empty-ic { font-size:24px; color:var(--color-text-disabled); }
+  .free-prod-cta { width:100%; padding:8px 12px; background:transparent; border:1px dashed var(--color-primary); color:var(--color-primary); border-radius:4px; cursor:pointer; font:600 12px 'Roboto'; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .free-prod-cta:hover { background:var(--color-primary-light); }
+  .free-prod-divider { padding:6px 8px; border-bottom:1px solid var(--color-border-light); }
+  /* Free production mode: hide schedule context, show placeholder */
+  #free-prod-card { display:none; }
+  body.free-prod-mode #free-prod-card { display:block; }
+  body.free-prod-mode #schedule-context-card { display:none; }
+  /* In free-prod, swap Produced ↔ Consumed because produced qty drives consumed reactively. */
+  body.free-prod-mode .right-pane > [data-card="free-prod"]    { order: 1; }
+  body.free-prod-mode .right-pane > [data-card="time"]         { order: 2; }
+  body.free-prod-mode .right-pane > [data-card="produced"]     { order: 3; }
+  body.free-prod-mode .right-pane > [data-card="consumed"]     { order: 4; }
+  body.free-prod-mode .right-pane > [data-card="params"]       { order: 5; }
+  body.free-prod-mode .right-pane > .bm-card:not([data-card])  { order: 7; }
+  body.free-prod-mode .right-pane > .bm-card.process-only      { order: 6; }
+  /* Free production picker (Step A) */
+  .fp-picker input { width:100%; padding:6px 10px; border:1px solid var(--color-primary); border-radius:4px; font-size:12px; box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.1); }
+  .fp-picker input:focus { outline:none; box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.25); }
+  .fp-results { list-style:none; margin:8px 0 0 0; padding:0; max-height:240px; overflow-y:auto; border:1px solid var(--color-border); border-radius:4px; background:#fff; }
+  .fp-results li { padding:8px 10px; border-bottom:1px solid var(--color-border-light); cursor:pointer; }
+  .fp-results li:hover { background:var(--color-primary-light); }
+  .fp-results li:last-child { border-bottom:none; }
+  .fp-results li .id { font-weight:600; font-size:12px; color:var(--color-text-primary); }
+  .fp-results li .meta { font-size:10px; color:var(--color-text-muted); margin-top:2px; }
+  /* Free production summary (Step B) */
+  .fp-pick-summary { padding:10px 12px; background:var(--color-primary-light); border:1px solid var(--color-primary); border-radius:4px; }
+  .fp-pick-summary h3 { margin:0 0 4px; font-size:13px; color:var(--color-primary-dark); display:flex; align-items:center; gap:6px; }
+  .fp-pick-summary .meta { font-size:11px; color:var(--color-text-secondary); }
+  /* Free production action buttons */
+  .fp-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .fp-actions button { padding:6px 12px; font-size:12px; border:none; border-radius:3px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+  .fp-actions .back-btn { background:#757575; color:#fff; }
+  .fp-actions .back-btn:hover { background:#616161; }
+  /* Big "+ Add Produced Output" CTA */
+  .fp-cta { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; background:transparent; border:2px dashed var(--color-primary); color:var(--color-primary); border-radius:6px; cursor:pointer; font:600 13px 'Roboto'; width:100%; transition:background .15s; }
+  .fp-cta:hover { background:var(--color-primary-light); }
+  .fp-cta i { font-size:14px; }
+  /* "+ Add Material" subdued button */
+  .consumed-add-btn { padding:4px 10px; background:transparent; border:1px dashed var(--color-primary); color:var(--color-primary); border-radius:4px; cursor:pointer; font:500 11px 'Roboto'; display:inline-flex; align-items:center; gap:4px; }
+  .consumed-add-btn:hover { background:var(--color-primary-light); }
+  .fp-empty-hint { padding:20px;color:var(--color-text-hint);font-size:11px;text-align:center;font-style:italic; }
+  /* Free-prod-mode: editable consumed pills + empty value display */
+  body.free-prod-mode .req-card .a-pill { padding-right:18px; }
+  body.free-prod-mode .req-card .a-pill .a-v { cursor:text; }
+  body.free-prod-mode .req-card .a-pill:hover .a-v { border-color:var(--color-primary); background:#fff; }
+  body.free-prod-mode .req-card .a-pill .a-v[contenteditable="true"] { border-style:solid; background:#fff; box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.25); cursor:text; }
+  .a-pill .a-v.empty { color:var(--color-text-disabled); font-style:italic; font-weight:400; }
+  /* Schedule Context */
+  .amat-input { padding:2px 6px; border:1px solid var(--color-border); border-radius:3px; font:500 12px 'Roboto'; background:#fff; width:100%; }
+  /* Deviation deallocation */
+  .deviation-row td { padding:0 !important; border:none !important; }
+  .deviation-footer { padding:5px 10px; font-size:11px; display:flex; align-items:center; gap:6px; border-top:1px dashed; }
+  .deviation-footer.auto { background:rgba(244,67,54,.08); color:var(--color-danger); border-top-color:#ef9a9a; font-weight:500; }
+  .deviation-footer.flag { background:rgba(255,152,0,.08); color:var(--color-warning); border-top-color:#ffb74d; font-weight:500; }
+  .alloc-pill.deallocated { background:rgba(158,158,158,.18); color:var(--color-text-muted); text-decoration:line-through; }
+  .alloc-pill.deallocated::after { content:' · deallocated'; text-decoration:none; font-weight:400; font-size:9px; opacity:.8; }
+  .alloc-pill.flagged { background:rgba(255,152,0,.16); color:var(--color-warning); }
+  .alloc-pill.flagged::before { content:'\f071'; font-family:'Font Awesome 6 Free'; font-weight:900; margin-right:3px; font-size:9px; }
+  .amat-input:focus { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
+  .amat-input.edited { background:var(--color-warning-light); border-color:#ffd380; color:var(--color-warning); font-weight:600; }
+  .alloc-pill { padding:2px 8px; background:var(--color-primary-light); color:var(--color-primary-dark); border-radius:10px; font-size:10px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
+  .alloc-pill i { font-size:8px; opacity:.7; }
 
   /* BADGE */
   .badge { padding:1px 6px; border-radius:3px; font:600 10px 'Roboto'; text-transform:uppercase; letter-spacing:.3px; display:inline-block; }
@@ -151,6 +245,39 @@
   .batch-table .a-pill .a-v { color:var(--color-text-primary); font-weight:500; }
   .batch-table .a-pill.warn { background:var(--color-warning-light); border-color:#ffd380; }
   .batch-table .a-pill.fail { background:var(--color-danger-light); border-color:#ef9a9a; }
+  /* attribute pills (read-only by default; produced pills are editable) */
+  .batch-table .a-pill { position:relative; }
+  .batch-table .a-pill .a-v { padding:0 3px; border-radius:2px; border:1px dashed transparent; transition:border-color .12s, background .12s; outline:none; }
+  /* produced rows only — click value to edit, in-place via contenteditable, no layout shift */
+  .req-card.output .batch-table .a-pill { padding-right:18px; }
+  .req-card.output .batch-table .a-pill .a-v { cursor:text; }
+  .req-card.output .batch-table .a-pill:hover .a-v { border-color:var(--color-primary); background:#fff; }
+  .req-card.output .batch-table .a-pill .a-v[contenteditable="true"] { border-style:solid; background:#fff; box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.25); cursor:text; }
+  .batch-table .a-pill.edited { background:var(--color-warning-light); border-color:#ffd380; }
+  .batch-table .a-pill.edited .a-v { color:var(--color-warning); font-weight:600; }
+  .batch-table .a-pill.added { background:var(--color-info-light); border-color:#90caf9; }
+  .batch-table .a-pill.added .a-v { color:var(--color-info); }
+  /* mark icons are siblings of .a-v, absolutely positioned in reserved padding-right slot */
+  .batch-table .a-pill .a-edited-mark, .batch-table .a-pill .a-added-mark { position:absolute; right:5px; top:50%; transform:translateY(-50%); font-size:9px; }
+  .batch-table .a-pill .a-edited-mark { color:var(--color-warning); }
+  .batch-table .a-pill .a-added-mark { color:var(--color-info); }
+  /* unit suffix — sibling of .a-v, NOT editable, visually grouped with value */
+  .batch-table .a-pill .a-u { margin-left:2px; color:var(--color-text-secondary); font-weight:400; cursor:default; user-select:none; }
+  .batch-table .a-pill.edited .a-u { color:var(--color-warning); opacity:.75; }
+  .batch-table .a-pill.added .a-u { color:var(--color-info); opacity:.75; }
+  /* add-attribute affordance */
+  .attr-add-btn { padding:1px 8px; background:transparent; border:1px dashed var(--color-primary); color:var(--color-primary); border-radius:10px; font:500 10px 'Roboto'; cursor:pointer; display:inline-flex; align-items:center; gap:3px; height:18px; }
+  .attr-add-btn:hover { background:var(--color-primary-light); }
+  .attr-add-form { display:inline-flex; gap:3px; align-items:center; background:#fff; border:1px solid var(--color-primary); border-radius:10px; padding:1px 4px; box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
+  .attr-add-form input { border:1px solid var(--color-border); background:#fff; border-radius:2px; font:500 10px 'Roboto'; color:var(--color-text-primary); padding:1px 4px; }
+  .attr-add-form input.k { width:54px; }
+  .attr-add-form input.v { width:62px; }
+  .attr-add-form input:focus { outline:none; border-color:var(--color-primary); }
+  .attr-add-form .colon { color:var(--color-text-hint); font-size:9px; }
+  .attr-add-form .ok, .attr-add-form .cancel { cursor:pointer; padding:1px 3px; font-size:11px; }
+  .attr-add-form .ok { color:var(--color-success); }
+  .attr-add-form .cancel { color:var(--color-text-hint); }
+  .batch-attrs { display:flex; flex-wrap:wrap; gap:3px; align-items:center; }
   .batch-add-row { padding:4px 8px; background:#fafafa; border-top:1px dashed var(--color-border); display:flex; align-items:center; gap:8px; }
 
   /* Output summary footer */
@@ -162,18 +289,26 @@
   .output-summary .ov .v.warn { color:var(--color-warning); }
   .output-summary .ov .v.success { color:var(--color-success); }
 
-  /* PROCESS PARAM */
-  .pp-table { width:100%; border-collapse:collapse; font-size:11px; }
-  .pp-table td { padding:4px 6px; border-bottom:1px solid var(--color-border-light); vertical-align:middle; }
-  .pp-table tr:last-child td { border-bottom:none; }
-  .pp-name { font-weight:500; font-size:12px; }
-  .pp-target { font-size:10px; color:var(--color-text-muted); }
-  .pp-reading { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
+  /* PROCESS PARAM — 2-column compact grid */
+  .pp-grid { display:grid; grid-template-columns:1fr 1fr; font-size:11px; }
+  .pp-cell { padding:5px 10px; border-bottom:1px solid var(--color-border-light); display:grid; grid-template-columns:1fr auto; gap:1px 8px; align-items:center; min-height:42px; transition:background .15s; }
+  .pp-cell.status-warn { background:rgba(255,152,0,.06); }
+  .pp-cell.status-fail { background:rgba(244,67,54,.06); }
+  .pp-cell.status-warn .pp-reading { color:var(--color-warning); }
+  .pp-cell.status-fail .pp-reading { color:var(--color-danger); }
+  .pp-cell:nth-child(2n+1) { border-right:1px solid var(--color-border-light); }
+  .pp-cell:nth-last-child(-n+2) { border-bottom:none; }
+  .pp-name { font-weight:500; font-size:12px; line-height:1.2; }
+  .pp-target { font-size:10px; color:var(--color-text-muted); line-height:1.2; }
+  .pp-reading { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
   .pp-reading.manual-input { padding:0; }
-  .pp-reading input { width:80px; padding:3px 6px; border:1px solid var(--color-warning); border-radius:3px; font:600 12px 'Roboto'; text-align:right; background:var(--color-warning-light); }
+  .pp-reading input { width:74px; padding:2px 6px; border:1px solid var(--color-warning); border-radius:3px; font:600 12px 'Roboto'; text-align:right; background:var(--color-warning-light); }
   .pp-reading input:focus { outline:none; box-shadow:0 0 0 2px rgba(245,124,0,.2); }
-  .pp-source { font-size:10px; color:var(--color-info); white-space:nowrap; }
+  .pp-reading select { padding:2px 4px; }
+  .pp-source { font-size:9px; color:var(--color-info); white-space:nowrap; }
   .pp-source.manual { color:var(--color-warning); }
+  .pp-meta { display:flex; gap:4px; align-items:center; justify-content:flex-end; }
+  .pp-meta .badge { font-size:9px; padding:1px 5px; }
 
   /* TIME */
   .form-line { display:grid; grid-template-columns:repeat(4,1fr); gap:6px 10px; }
@@ -232,6 +367,77 @@
   .industry-process .steel-only, .industry-process .discrete-only,
   .industry-steel .process-only, .industry-steel .discrete-only,
   .industry-discrete .steel-only, .industry-discrete .process-only { display:none; }
+  /* BTN-WARNING (used for Release after hold) */
+  .btn-warning { background:var(--color-warning); color:#fff; }
+  .btn-warning:hover { background:#e66e00; }
+  .btn[disabled] { opacity:.5; cursor:not-allowed; }
+  /* HOLD MODAL */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; display:none; align-items:flex-start; justify-content:center; padding-top:80px; }
+  .modal-backdrop.open { display:flex; }
+  .modal { background:#fff; border-radius:8px; width:480px; max-width:90vw; max-height:80vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 16px 48px rgba(0,0,0,.3); }
+  .modal-header { padding:10px 14px; border-bottom:1px solid var(--color-border-light); display:flex; align-items:center; gap:8px; background:var(--color-warning-light); }
+  .modal-header i.head-ic { color:var(--color-warning); }
+  .modal-header h2 { margin:0; font-size:14px; font-weight:600; color:var(--color-text-primary); }
+  .modal-header .modal-close { margin-left:auto; cursor:pointer; color:var(--color-text-hint); padding:2px 6px; }
+  .modal-header .modal-close:hover { color:var(--color-danger); }
+  .modal-body { padding:14px 16px; overflow-y:auto; }
+  .modal-body .field { margin-bottom:12px; }
+  .modal-body .field label.fld-lbl { display:block; font-size:10px; color:var(--color-text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px; letter-spacing:.3px; }
+  .modal-body .req-mark { color:var(--color-danger); margin-left:2px; }
+  .modal-body select, .modal-body textarea, .modal-body input.txt { width:100%; padding:6px 8px; border:1px solid var(--color-border); border-radius:4px; font:12px 'Roboto'; background:#fff; }
+  .modal-body select:focus, .modal-body textarea:focus, .modal-body input.txt:focus { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15); }
+  .modal-body textarea { min-height:60px; resize:vertical; font-family:'Roboto'; }
+  .scope-radio { display:flex; gap:6px; flex-wrap:wrap; }
+  .scope-radio label.opt { display:flex; align-items:center; gap:5px; padding:6px 10px; border:1px solid var(--color-border); border-radius:4px; cursor:pointer; font-size:12px; flex:1; min-width:100px; color:var(--color-text-primary); text-transform:none; font-weight:400; margin:0; }
+  .scope-radio label.opt input { margin:0; cursor:pointer; }
+  .scope-radio label.opt:has(input:checked) { background:var(--color-warning-light); border-color:#ffb74d; color:#ef6c00; font-weight:500; }
+  .modal-footer { padding:10px 14px; border-top:1px solid var(--color-border-light); display:flex; gap:8px; justify-content:flex-end; background:var(--color-bg-alt); align-items:center; }
+  .modal-footer .err { margin-right:auto; color:var(--color-danger); font-size:11px; }
+  /* HOLD BANNER */
+  .hold-banner { background:linear-gradient(90deg,#fff3e0,#ffe9c8); border:1px solid #ffb74d; color:#ef6c00; padding:6px 12px; margin-bottom:8px; border-radius:6px; display:none; font-size:12px; align-items:center; gap:8px; font-weight:500; }
+  .hold-banner.active { display:flex; }
+  .hold-banner i.banner-ic { color:var(--color-warning); }
+  .hold-banner .release-btn { margin-left:auto; padding:4px 10px; background:var(--color-warning); color:#fff; border:none; border-radius:3px; cursor:pointer; font:500 11px 'Roboto'; display:inline-flex; align-items:center; gap:4px; }
+  .hold-banner .release-btn:hover { background:#e66e00; }
+  /* HELD body state */
+  body.is-held .flow .step.current { color:var(--color-warning); }
+  body.is-held .flow .step.current .dot { background:var(--color-warning); }
+  body.is-held .ctx-bar { border-color:#ffb74d; box-shadow:0 0 0 1px rgba(255,152,0,.2); }
+  /* QTY TYPE */
+  .qty-type-badge { font-size:10px; }
+  .qty-type-badge.qt-int { background:rgba(255,152,0,.14); color:#ef6c00; }
+  .qty-type-badge.qt-dec { background:rgba(33,150,243,.14); color:#1565c0; }
+  .batch-table input.qty-in.qt-int { background:rgba(255,152,0,.06); border-color:rgba(255,152,0,.4); }
+  .batch-table input.qty-in.qt-dec { background:rgba(33,150,243,.04); }
+  /* EQUIPMENT MULTI-PICKER */
+  .ctx-bar .item.eq-trigger { position:relative; cursor:pointer; }
+  .ctx-bar .item.eq-trigger:hover .eq-arrow { color:var(--color-primary); }
+  .eq-arrow { font-size:8px; color:var(--color-text-hint); margin-left:4px; transition:transform .15s; }
+  .ctx-bar .item.eq-trigger.open .eq-arrow { transform:rotate(180deg); color:var(--color-primary); }
+  .eq-display-name { font-weight:500; }
+  .eq-extra { background:var(--color-primary-light); color:var(--color-primary-dark); padding:1px 6px; border-radius:8px; font-size:10px; font-weight:600; margin-left:4px; }
+  .eq-picker { position:absolute; top:100%; left:0; margin-top:6px; width:340px; background:#fff; border:1px solid var(--color-border); border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.14); z-index:200; display:none; }
+  .eq-trigger.open .eq-picker { display:block; }
+  .eq-header { padding:8px 12px; border-bottom:1px solid var(--color-border-light); display:flex; align-items:center; gap:6px; font-size:11px; background:var(--color-bg-alt); border-radius:6px 6px 0 0; }
+  .eq-header i.fa-id-card-clip { color:var(--color-primary); }
+  .eq-close { margin-left:auto; cursor:pointer; color:var(--color-text-hint); padding:2px 4px; }
+  .eq-close:hover { color:var(--color-danger); }
+  .eq-list { max-height:260px; overflow-y:auto; }
+  .eq-opt { display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid var(--color-border-light); cursor:pointer; }
+  .eq-opt:hover { background:var(--color-bg-alt); }
+  .eq-opt:last-child { border-bottom:none; }
+  .eq-opt input[type="checkbox"] { margin:0; cursor:pointer; }
+  .eq-opt.disabled { opacity:.5; cursor:not-allowed; }
+  .eq-opt.disabled input { cursor:not-allowed; }
+  .eq-opt-info { flex:1; }
+  .eq-opt-name { font-weight:500; font-size:12px; }
+  .eq-opt-meta { font-size:10px; color:var(--color-text-hint); margin-top:1px; }
+  .eq-status { font-size:9px; padding:1px 5px; border-radius:3px; font-weight:600; text-transform:uppercase; letter-spacing:.3px; }
+  .eq-status.available { background:rgba(76,175,80,.12); color:#2e7d32; }
+  .eq-status.in_use { background:rgba(33,150,243,.12); color:#1565c0; }
+  .eq-status.maintenance { background:rgba(244,67,54,.12); color:#c62828; }
+  .eq-footer { padding:6px 12px; border-top:1px solid var(--color-border-light); background:var(--color-bg-alt); font-size:10px; color:var(--color-text-hint); border-radius:0 0 6px 6px; display:flex; gap:5px; align-items:center; }
+  .eq-footer i { color:var(--color-info); }
 </style>
 </head>
 
@@ -274,15 +480,23 @@
 
   <main class="bm-content">
 
+    <div class="hold-banner" id="hold-banner">
+      <i class="fa-solid fa-circle-pause banner-ic"></i>
+      <span>ON HOLD — <b>Produced Inventory</b> · Reason: <b id="hold-banner-reason"></b><span id="hold-banner-note" style="margin-left:8px;color:#a85a00;font-weight:400"></span></span>
+      <span style="font-size:10px;color:#a85a00;opacity:.85;margin-left:6px;font-weight:400">writes <code>inventory_holds</code> row · §7.4</span>
+      <button class="release-btn" id="release-btn"><i class="fa-solid fa-play"></i> Release Hold</button>
+    </div>
+
+
     <div class="page-bar">
       <div>
         <h1>Production Confirmation</h1>
         <div class="crumb">Production › Confirmation › <span data-bind="orderCode"></span></div>
       </div>
       <div class="actions">
-        <button class="btn btn-outline"><i class="fa-solid fa-pause"></i> Hold</button>
-        <button class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-        <button class="btn btn-success"><i class="fa-solid fa-check"></i> Confirm</button>
+        <button class="btn btn-outline btn-hold-toggle"><i class="fa-solid fa-pause"></i> Hold</button>
+        <button class="btn btn-secondary btn-confirm-toggle"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn btn-success btn-confirm-toggle"><i class="fa-solid fa-check"></i> Confirm</button>
       </div>
     </div>
 
@@ -290,57 +504,113 @@
       <div class="item"><div><div class="lbl">Factory</div><div class="val"><i class="fa-solid fa-building"></i> <span data-bind="factory"></span></div></div></div>
       <div class="item"><div><div class="lbl">Process</div><div class="val"><span data-bind="process"></span></div></div></div>
       <div class="item"><div><div class="lbl">Operation</div><div class="val"><span data-bind="operation"></span></div></div></div>
-      <div class="item"><div><div class="lbl">Equipment</div><div class="val"><span data-bind="equipment"></span> <span class="badge badge-primary" style="margin-left:4px" data-bind="equipmentType"></span></div></div></div>
+      <div class="item eq-trigger" id="eq-trigger" tabindex="0">
+        <div>
+          <div class="lbl">Equipment <i class="fa-solid fa-chevron-down eq-arrow"></i></div>
+          <div class="val" id="eq-display"></div>
+        </div>
+        <div class="eq-picker" id="eq-picker">
+          <div class="eq-header">
+            <i class="fa-solid fa-id-card-clip"></i>
+            Equipments authorized for <b><span data-bind="operator"></span></b>
+            <span class="eq-close" id="eq-close" title="Close"><i class="fa-solid fa-times"></i></span>
+          </div>
+          <div class="eq-list" id="eq-list"></div>
+          <div class="eq-footer"><i class="fa-solid fa-circle-info"></i> Tick all equipments used in this confirmation. Source: OperatorEquipmentMap ∩ OperationEquipmentMap.</div>
+        </div>
+      </div>
+      <div class="item"><div><div class="lbl">Qty Type</div><div class="val"><span class="badge qty-type-badge" data-bind="qtyType"></span> <span style="font-size:10px;color:var(--color-text-hint)" data-bind="qtyTypeMeta"></span></div></div></div>
       <div class="item"><div><div class="lbl">Operator</div><div class="val"><i class="fa-solid fa-user"></i> <span data-bind="operator"></span></div></div></div>
       <div class="item"><div><div class="lbl">Shift</div><div class="val"><i class="fa-solid fa-clock"></i> <span data-bind="shift"></span></div></div></div>
-      <div class="flow">
-        <span class="step done"><span class="dot"></span>Released</span>
+      <div class="flow" title="schedule_material.charge_status → production_confirmation.status (operations have no status; process has no status)">
+        <span class="step done"><span class="dot"></span>Planned</span>
         <i class="fa-solid fa-chevron-right arrow"></i>
-        <span class="step done"><span class="dot"></span>Ready</span>
+        <span class="step done"><span class="dot"></span>Charged</span>
         <i class="fa-solid fa-chevron-right arrow"></i>
-        <span class="step current"><span class="dot"></span>In Progress</span>
+        <span class="step current"><span class="dot"></span>Confirming</span>
         <i class="fa-solid fa-chevron-right arrow"></i>
         <span class="step"><span class="dot"></span>Confirmed</span>
         <i class="fa-solid fa-chevron-right arrow"></i>
-        <span class="step"><span class="dot"></span>Decision</span>
+        <span class="step deferred" title="usage_decisions / Quality Decision workflow is deferred to a post-PC design phase (declined per spec §22). Shown here for visual context of the eventual flow; not implemented in v1.">
+          <span class="dot"></span>Quality Decision
+          <span style="font-size:9px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;text-decoration:none;font-style:normal;margin-left:3px;color:var(--color-text-hint)">deferred</span>
+        </span>
       </div>
     </div>
 
     <div class="main-grid">
 
       <aside class="bm-card orders-card">
-        <div class="bm-card-header"><i class="fa-solid fa-clipboard-list"></i> Available Orders <span class="right" data-bind="ordersCount"></span></div>
-        <div class="order-search"><input type="text" placeholder="Filter…"></div>
-        <ul class="order-list" id="order-list"></ul>
+        <div class="bm-card-header">
+          <i class="fa-solid fa-calendar-days" id="left-card-icon"></i>
+          <span id="left-card-title">Schedule Queue</span>
+          <span class="right" id="sched-count"></span>
+        </div>
+        <div class="order-search"><input type="text" id="sched-filter" placeholder="Filter by Schedule, Material # or Order…"></div>
+        <div id="queue-filter-row" style="padding:4px 8px;border-bottom:1px solid var(--color-border-light);background:var(--color-bg-alt);font-size:10px;color:var(--color-text-muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer" title="§10.1 — show only schedules whose full BOM is covered by on-hand AVAILABLE inventory.">
+            <input type="checkbox" id="filter-bom-coverage" style="margin:0">
+            <span>BOM-covered only</span>
+          </label>
+          <span style="color:var(--color-text-disabled);font-size:9px" id="filter-alloc-hint" title="§10.1 — Discrete/Process: order list filtered to schedule_material_allocations of the selected SM. Steel intentionally broad (1 PC may SPLIT to multiple orders).">
+            <i class="fa-solid fa-circle-info"></i> <span id="filter-alloc-text"></span>
+          </span>
+        </div>
+        <ul class="order-list" id="sched-list"></ul>
       </aside>
 
       <section class="right-pane">
 
-        <!-- ORDER CONTEXT -->
-        <div class="bm-card full">
+        <!-- FREE PRODUCTION PLACEHOLDER (shown when body.free-prod-mode) -->
+        <div class="bm-card full" id="free-prod-card" data-card="free-prod">
+          <div class="bm-card-header" style="background:var(--color-info-light)">
+            <span class="step-badge" style="background:var(--color-info)">1</span>
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Free Production
+            <span class="right" style="color:var(--color-info)">no schedule</span>
+          </div>
+          <div class="bm-card-body">
+            <div class="fp-pick-summary" id="fp-pick-summary"></div>
+            <div class="fp-actions" id="fp-actions"></div>
+          </div>
+        </div>
+
+        <!-- SCHEDULE CONTEXT -->
+        <div class="bm-card full" id="schedule-context-card" data-card="schedule-ctx">
           <div class="bm-card-header">
-            <i class="fa-solid fa-file-lines"></i> Order Context
+            <span class="step-badge">1</span>
+            <i class="fa-solid fa-calendar-check"></i> Schedule Context
             <span class="right">
-              <span class="badge badge-info" data-bind="orderType"></span>
-              <span class="badge badge-warning">Line IN_PROGRESS</span>
+              <span class="charge-pill" id="sched-charge-pill"></span>
             </span>
           </div>
           <div class="bm-card-body">
             <div class="kv-grid" style="grid-template-columns:repeat(6,1fr);">
-              <div><span class="k">Order</span><span class="v" data-bind="orderCode"></span></div>
-              <div><span class="k">Customer</span><span class="v" data-bind="customer"></span></div>
-              <div><span class="k">SKU</span><span class="v" data-bind="sku"></span></div>
-              <div><span class="k">Required</span><span class="v" data-bind="orderQty"></span></div>
-              <div><span class="k">Pending</span><span class="v" style="color:var(--color-warning)" data-bind="pendingQty"></span></div>
-              <div><span class="k">Delivery</span><span class="v" data-bind="deliveryDate"></span></div>
+              <div><span class="k">Schedule #</span><span class="v" data-bind="scheduleNumber"></span></div>
+              <div><span class="k">Planned Mat #</span><span class="v" data-bind="plannedMaterialNumber"></span></div>
+              <div><span class="k">Actual Mat #</span><span class="v"><input type="text" id="actual-mat-input" class="amat-input" placeholder="(auto on charge)"></span></div>
+              <div><span class="k">Planned Start</span><span class="v" data-bind="plannedStart"></span></div>
+              <div><span class="k">Planned End</span><span class="v" data-bind="plannedEnd"></span></div>
+              <div><span class="k">Output Batches</span><span class="v" id="output-batches-cell" title="Number of schedule_material_childs (planned output SMCs) under this SM, with the planned input/output qty alongside."></span></div>
+            </div>
+            <div class="alloc-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="k" style="font-size:10px;text-transform:uppercase;color:var(--color-text-muted);font-weight:600;letter-spacing:.3px">Pre-allocated to</span>
+              <span id="alloc-list" style="display:flex;gap:4px;flex-wrap:wrap"></span>
+              <span class="alloc-hint" style="font-size:10px;color:var(--color-text-hint);margin-left:auto"><i class="fa-solid fa-lock"></i> scheduler-managed · operator cannot edit</span>
             </div>
             <div class="attr-list" id="attr-list" style="margin-top:6px"></div>
+            <div id="progress-note" style="margin-top:6px;font-size:11px;color:var(--color-text-hint)"></div>
+            <div id="op-config-row" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10px">
+              <span style="color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">Op config:</span>
+              <span id="planner-shape-chip" class="badge badge-neutral" title=""></span>
+              <span id="dev-mode-chip" class="badge badge-neutral" title="operations.deviation_mode — per-operation, controls what happens when produced attributes drift outside the allocated order's required range."></span>
+              <span id="rework-cap-chip" class="badge badge-neutral" title="operations.max_rework_count — null means unlimited."></span>
+            </div>
           </div>
         </div>
 
         <!-- TIME &amp; SHIFT -->
-        <div class="bm-card full">
-          <div class="bm-card-header"><i class="fa-solid fa-stopwatch-20"></i> Time &amp; Shift
+        <div class="bm-card full" data-card="time">
+          <div class="bm-card-header"><span class="step-badge">2</span><i class="fa-solid fa-stopwatch-20"></i> Time &amp; Shift
             <span class="right" data-bind="pcRule"></span>
           </div>
           <div class="bm-card-body">
@@ -353,27 +623,17 @@
           </div>
         </div>
 
-        <!-- PRODUCED OUTPUT (NEW — multi-output split) -->
-        <div class="bm-card full">
-          <div class="bm-card-header produced">
-            <i class="fa-solid fa-arrow-up-from-bracket"></i> Produced Output
-            <span class="right">
-              <span class="badge badge-info"><i class="fa-solid fa-code-fork"></i> <span data-bind="splitInfo"></span></span>
-              <span style="margin-left:4px">attribute capture per output</span>
-            </span>
-          </div>
-          <div class="bm-card-body">
-            <div class="req-list" id="produced-list"></div>
-          </div>
-        </div>
-
         <!-- CONSUMED MATERIALS -->
-        <div class="bm-card full">
+        <div class="bm-card full" data-card="consumed">
           <div class="bm-card-header">
+            <span class="step-badge">3</span>
             <i class="fa-solid fa-arrow-down-to-bracket"></i> Consumed Materials
-            <span class="right">
-              <i class="fa-solid fa-circle-check" style="color:var(--color-success)"></i>
-              Multi-batch · attribute snapshot per row
+            <span class="right" style="display:flex;align-items:center;gap:8px">
+              <label class="merge-only" id="cross-alloc-toggle-wrap" style="display:none;align-items:center;gap:4px;font-size:11px;color:var(--color-text-muted);cursor:pointer" title="§10.2 — by default, consumed inventory is filtered to SMAs matching the produced SMC's order_line, plus unallocated stock. Toggle on to also surface batches allocated to OTHER orders; selecting one releases the source SMA via audit_log ALLOCATION_RELEASE and defers re-balancing to material_allocator.">
+                <input type="checkbox" id="cross-alloc-toggle" style="margin:0">
+                <span>show cross-allocated</span>
+              </label>
+              <span style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-circle-check" style="color:var(--color-success)"></i> Multi-batch · attribute snapshot per row</span>
             </span>
           </div>
           <div class="bm-card-body">
@@ -382,16 +642,34 @@
         </div>
 
         <!-- PROCESS PARAMETERS -->
-        <div class="bm-card full">
-          <div class="bm-card-header">
+        <div class="bm-card full" data-card="params">
+          <div class="bm-card-header" title="Out-of-range process parameters surface as visual warnings (NEAR / OUT badges, status-fail row tint). They do NOT block Confirm & Submit. Operators decide whether to proceed; downstream quality workflow (or an inventory hold post-PC) is the gating mechanism, not the PC validation itself.">
+            <span class="step-badge">4</span>
             <i class="fa-solid fa-gauge-high"></i> Process Parameters
             <span class="right">
               <span class="badge badge-info"><i class="fa-solid fa-bolt"></i> Live PLC</span>
               <span class="badge badge-warning"><i class="fa-solid fa-keyboard"></i> Manual</span>
+              <span style="font-size:10px;color:var(--color-text-hint);font-weight:400;margin-left:4px" title="Out-of-range readings are advisory only.">warn-only</span>
             </span>
           </div>
           <div class="bm-card-body" style="padding:0">
-            <table class="pp-table" id="process-params"></table>
+            <div class="pp-grid" id="process-params"></div>
+          </div>
+        </div>
+
+        <!-- PRODUCED OUTPUT -->
+        <div class="bm-card full" data-card="produced">
+          <div class="bm-card-header produced">
+            <span class="step-badge">5</span>
+            <i class="fa-solid fa-arrow-up-from-bracket"></i> Produced Output
+            <span class="right">
+              <span class="badge badge-info"><i class="fa-solid fa-link"></i> <span data-bind="splitInfo"></span></span>
+              <span style="margin-left:4px">attribute capture per output</span>
+            </span>
+          </div>
+          <div class="bm-card-body">
+            <div class="child-progress" id="child-progress" style="display:none"></div>
+            <div class="req-list" id="produced-list"></div>
           </div>
         </div>
 
@@ -404,6 +682,7 @@
         <!-- SECONDARY EQUIPMENT -->
         <div class="bm-card">
           <div class="bm-card-header">
+            <span class="step-badge">6</span>
             <i class="fa-solid fa-screwdriver-wrench"></i> Secondary Equipment
             <span class="right">Pick instance · auto life-tick</span>
           </div>
@@ -418,8 +697,13 @@
         <!-- CONSUMABLES -->
         <div class="bm-card">
           <div class="bm-card-header">
+            <span class="step-badge">7</span>
             <i class="fa-solid fa-droplet"></i> Consumables &amp; Utilities
-            <span class="right">Auto-meter · operator can adjust</span>
+            <span class="right" title="consumable_operation_map drives auto-calc; operator can override.">
+              <span class="badge badge-info" style="font-size:9px"><i class="fa-solid fa-bolt"></i> METER</span>
+              <span class="badge badge-primary" style="font-size:9px"><i class="fa-solid fa-calculator"></i> EST</span>
+              <span class="badge badge-warning" style="font-size:9px"><i class="fa-solid fa-keyboard"></i> MAN</span>
+            </span>
           </div>
           <div class="bm-card-body" style="padding:0">
             <table class="cons-table" id="consumables"></table>
@@ -431,7 +715,7 @@
 
         <!-- DELAY -->
         <div class="bm-card full">
-          <div class="bm-card-header"><i class="fa-solid fa-triangle-exclamation"></i> Delay &amp; Notes <span class="right">Optional</span></div>
+          <div class="bm-card-header"><span class="step-badge">8</span><i class="fa-solid fa-triangle-exclamation"></i> Delay &amp; Notes <span class="right">Optional</span></div>
           <div class="bm-card-body">
             <div class="form-line">
               <div class="field"><label>Delay Reason</label>
@@ -456,27 +740,115 @@
       <div class="summary">
         <div><div class="lk">Confirmation</div><div class="lv" data-bind="confirmationId"></div></div>
         <div><div class="lk">Outputs</div><div class="lv" data-bind="splitInfo"></div></div>
-        <div><div class="lk">Mother batch (consumed)</div><div class="lv" data-bind="motherInfo"></div></div>
+        <div><div class="lk" id="consumed-inputs-label">Consumed inputs</div><div class="lv" data-bind="motherInfo"></div></div>
         <div><div class="lk">Lineage</div><div class="lv" style="color:var(--color-text-muted)" data-bind="lineage"></div></div>
       </div>
       <div class="actions">
-        <button class="btn btn-secondary"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+        <button class="btn btn-secondary btn-confirm-toggle" title="Save Draft persists the operator's in-progress UI state locally (e.g. localStorage) so they can resume after closing the screen. It does NOT create a production_confirmation row, change inventory, or affect schedule_materials.charge_status. Only Confirm & Submit writes to the backend."><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
         <button class="btn btn-outline"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-        <button class="btn btn-success"><i class="fa-solid fa-check-double"></i> Confirm &amp; Submit</button>
+        <button class="btn btn-success btn-confirm-toggle"><i class="fa-solid fa-check-double"></i> Confirm &amp; Submit</button>
       </div>
     </div>
 
   </main>
 </div>
 
+<!-- HOLD MODAL -->
+<div class="modal-backdrop" id="hold-modal">
+  <div class="modal" role="dialog" aria-labelledby="hold-modal-title">
+    <div class="modal-header">
+      <i class="fa-solid fa-pause head-ic"></i>
+      <h2 id="hold-modal-title">Apply Hold to Produced Inventory</h2>
+      <span class="modal-close" id="hold-cancel"><i class="fa-solid fa-times"></i></span>
+    </div>
+    <div class="modal-body">
+      <div class="alert-inline info" style="margin-bottom:12px">
+        <i class="fa-solid fa-circle-info"></i>
+        Holds apply to <b>inventory only</b> (§7.4). This will write an <code>inventory_holds</code> row against this PC's produced inventory and block downstream consumption until released.
+      </div>
+      <div class="field">
+        <label class="fld-lbl">Hold Reason <span class="req-mark">*</span></label>
+        <select id="hold-reason">
+          <option value="">— Select reason —</option>
+          <option>Quality Investigation</option>
+          <option>Awaiting Lab Result</option>
+          <option>Pending Inspection</option>
+          <option>Minor Damage</option>
+          <option>Customer Request</option>
+          <option>Cross-Contamination Suspected</option>
+          <option>Documentation Pending</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="fld-lbl">Note <span style="color:var(--color-text-hint);font-weight:400;text-transform:none">(optional)</span></label>
+        <textarea id="hold-note" placeholder="Additional context for traceability…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="err" id="hold-err"></span>
+      <button class="btn btn-secondary" id="hold-cancel-btn">Cancel</button>
+      <button class="btn btn-warning" id="hold-confirm"><i class="fa-solid fa-pause"></i> Apply Hold</button>
+    </div>
+  </div>
+</div>
+
 <script>
+const factoryConfig = {
+  allowFreeProduction: true,  // toggle: when true, queue empty-state offers a "+ Free Production" CTA
+};
 const DATA = {
   steel: {
     factory: 'Bhilai Steel Plant', process: 'Hot Rolling', operation: 'Roughing &amp; Slitting Line',
-    equipment: 'Roughing Mill RM-2', equipmentType: 'BATCH 200t in',
+    qtyType: 'DECIMAL', qtyTypeMeta: '2dp · t',
     operator: 'R. Kumar (EMP-1041)', shift: 'A · 06:00–14:00',
+    equipmentOptions: [
+      { id: 'RM-2', name: 'Roughing Mill RM-2', type: 'BATCH 200t', status: 'AVAILABLE', selected: true },
+      { id: 'RM-3', name: 'Roughing Mill RM-3', type: 'BATCH 180t', status: 'AVAILABLE', selected: true },
+      { id: 'SL-1', name: 'Slitting Line SL-1', type: 'CONTINUOUS 80t/h', status: 'AVAILABLE', selected: false },
+      { id: 'RM-4', name: 'Roughing Mill RM-4', type: 'BATCH 220t', status: 'MAINTENANCE', selected: false },
+    ],
+    industryAnchor: 'inventory',
+    deviationMode: 'auto',     // per-op: operations.deviation_mode (AUTO_DEALLOCATE for hot-rolling roughing)
+    plannerShape: 'nested',    // Steel uses Model B — one SM per heat with nested SMC tree (slabs → plates → cuts)
+    maxReworkCount: 2,         // operations.max_rework_count
+    freeProduction: {
+      availableInputs: [
+        { batchId: 'SL-A-1545', materialNumber: 'SL-A-2026-04-1545', qty: 200, unit: 't', sku: 'Mother Slab AISI-1018 200×1250', attrKeys: ['Grade','Thk','W','Length','C%','S%'] },
+        { batchId: 'SL-A-1546', materialNumber: 'SL-A-2026-04-1546', qty: 180, unit: 't', sku: 'Mother Slab AISI-1018 180×1250', attrKeys: ['Grade','Thk','W','Length','C%','S%'] },
+        { batchId: 'SL-A-1547', materialNumber: 'SL-A-2026-04-1547', qty: 220, unit: 't', sku: 'Mother Slab AISI-4140 220×1250', attrKeys: ['Grade','Thk','W','Length','C%','S%','Mo%'] },
+        { batchId: 'SL-A-1548', materialNumber: 'SL-A-2026-04-1548', qty: 200, unit: 't', sku: 'Mother Slab AISI-1018 200×1250', attrKeys: ['Grade','Thk','W','Length','C%','S%'] },
+      ],
+      producedAttrKeys: ['Thk','W','Length','Grade'],
+    },
+    schedule: {
+      current: {
+        scheduleNumber: 'SCH-RM2-260429-A',
+        plannedMaterialNumber: 'SL-A-2026-04-1532',
+        actualMaterialNumber: 'SL-A-2026-04-1532',
+        chargeStatus: 'CHARGED',
+        isHold: false,
+        plannedStart: '2026-04-29 02:30',
+        plannedEnd: '2026-04-29 07:00',
+        noOfChilds: 3,
+        materialWeight: '200 t (mother heat)',
+        sku: 'Mother Slab AISI-1018 200×1250',
+        allocatedOrders: ['SO-2026-0421-04', 'SO-2026-0421-05'],
+      },
+      schedules: [
+        {
+          scheduleNumber: 'SCH-RM2-260429-A',
+          equipment: 'Roughing Mill RM-2',
+          materials: [
+            { materialNumber: 'SL-A-1532', sku: '200×1250 AISI-1018', qty: '200 t', plannedStart: '02:30', plannedEnd: '07:00', materialSeq: 1, childs: 3, isDummy: false, active: true, allocatedOrders: ['SO-2026-0421-04', 'SO-2026-0421-05'] },
+            { materialNumber: 'SL-A-1535', sku: '180×1250 AISI-1018', qty: '180 t', plannedStart: '07:30', plannedEnd: '11:30', materialSeq: 2, childs: 4, isDummy: false, allocatedOrders: ['SO-2026-0421-05'] },
+            { materialNumber: 'SL-A-1538', sku: '220×1250 AISI-4140', qty: '220 t', plannedStart: '12:00', plannedEnd: '16:00', materialSeq: 3, childs: 3, isDummy: false, allocatedOrders: ['SO-2026-0420-22'] },
+            { materialNumber: '— pending upstream —', sku: 'CR Coil 1.2×1000 (post-anneal)', qty: 'TBD', plannedStart: '17:00', plannedEnd: '20:00', materialSeq: 4, childs: 0, isDummy: true, dummyReason: 'Awaiting cold-rolling batch from prior op', allocatedOrders: ['SO-2026-0420-09'] },
+          ],
+        },
+      ],
+    },
     confirmationId: 'PC-2026-04-25-00318',
-    splitInfo: '1 mother → 3 daughter slabs (SPLIT)',
+    splitInfo: '1 mother heat → 3 daughter slabs',
     motherInfo: 'SL-A-2026-04-1532 (200 t)',
     lineage: 'SL-A-1532 → MS-A-018 + MS-A-019 + MS-A-020',
     orderCode: 'SO-2026-0421-04', customer: 'Tata Motors Ltd',
@@ -509,17 +881,26 @@ const DATA = {
         name: 'Daughter Slab (AISI-1018) — Cut to length',
         meta: 'IM · Generated by SPLIT relation · ParentBatch SL-A-1532',
         unit: 't', target: '195.00', actual: '195.00', match: 'ok', scrap: '5.00', yieldPct: '97.5 %',
+        relationType: 'SPLIT', // batch_relations.relation_type
+        batchConfig: { matNumGranularity: 'PER_PIECE', batchGranularity: 'PER_PIECE' }, // Steel default — every slab its own batch + own mat#
+        firstPCofSM: true,     // drives PC11a cascade preview
+        massBalance: { applies: true, consumed: 200.00, scrap: 5.00, sumProduced: 195.00, tolerance: 0.5 }, // IC5a
+        requiredAttrRange: {
+          'Thk':    { min: 199.5, max: 200.5, unit: 'mm' },
+          'W':      { min: 1248,  max: 1252,  unit: 'mm' },
+          'Length': { min: 2900,  max: 4000,  unit: 'mm' },
+        },
         outputs: [
-          { batch: 'MS-A-260425-018', material: 'MS-A-260425-018-#1', qty: '70.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3500 mm','ok'],['Grade','AISI-1018','ok']] },
-          { batch: 'MS-A-260425-019', material: 'MS-A-260425-019-#1', qty: '65.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3250 mm','ok'],['Grade','AISI-1018','ok']] },
-          { batch: 'MS-A-260425-020', material: 'MS-A-260425-020-#1', qty: '60.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3000 mm','ok'],['Grade','AISI-1018','ok']] },
+          { batch: 'MS-A-260425-018', material: 'SL-A-2026-04-1532/1', qty: '70.00',  attrs: [['Thk','201.2 mm','ok'],['W','1250 mm','ok'],['Length','3500 mm','ok'],['Grade','AISI-1018','ok']], orderRef: 'SO-2026-0421-04' },
+          { batch: 'MS-A-260425-019', material: 'SL-A-2026-04-1532/2', qty: '65.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3250 mm','ok'],['Grade','AISI-1018','ok']], orderRef: 'SO-2026-0421-05' },
+          { batch: 'MS-A-260425-020', material: 'SL-A-2026-04-1532/3', qty: '60.00',  attrs: [['Thk','200 mm','ok'],['W','1250 mm','ok'],['Length','3000 mm','ok'],['Grade','AISI-1018','ok']], orderRef: 'SO-2026-0421-05' },
         ]
       }
     ],
     processParams: [
-      { name: 'Roughing Mill Entry Temp', target: '1180', range: '1150–1200', reading: '1184', unit: '°C', source: 'plc', status: 'ok' },
+      { name: 'Roughing Mill Entry Temp', target: '1180', range: '1150–1200', reading: '1208', unit: '°C', source: 'plc', status: 'fail' },
       { name: 'Mill Force', target: '24000', range: '22000–26000', reading: '23800', unit: 'kN', source: 'plc', status: 'ok' },
-      { name: 'Shear Cut Length Tol.', target: '±5', range: '0–10', reading: '3.2', unit: 'mm', source: 'plc', status: 'ok' },
+      { name: 'Shear Cut Length Tol.', target: '±5', range: '0–10', reading: '9.6', unit: 'mm', source: 'plc', status: 'warn' },
       { name: 'O₂ in Atmosphere', target: '<1.0', range: '0–1.0', reading: '0.62', unit: '%', source: 'plc', status: 'ok' },
       { name: 'Surface Inspection', target: 'CLEAN', range: 'CLEAN', reading: 'CLEAN', unit: '', source: 'manual', status: 'ok', selectOptions: ['CLEAN','SCALE','PIT','CRACK'] },
       { name: 'Cut Mark Position', target: 'OK', range: 'OK', reading: 'OK', unit: '', source: 'manual', status: 'ok', selectOptions: ['OK','NEAR-EDGE','REWORK'] },
@@ -530,22 +911,86 @@ const DATA = {
       { name: 'Shear Blade', instances: ['SB-3 / SN-7022 (life 58%)','SB-4 / SN-7026 (life 18%)'], selected: 0, life: 58, tick: '3', unit: 'cuts', warn: 'ok' },
     ],
     consumables: [
-      { name: 'Natural Gas',   batches: ['NG-Apr-04','NG-Apr-03','NG-Mar-30'], selected: 0, qty: '850',  unit: 'm³',  source: 'meter' },
-      { name: 'Electricity',   batches: ['—'],                                  selected: 0, qty: '12.4', unit: 'MWh', source: 'meter' },
-      { name: 'Lubricant Oil', batches: ['LO-2026-03','LO-2026-04'],            selected: 0, qty: '18',   unit: 'L',   source: 'manual' },
-      { name: 'Cooling Water', batches: ['Utility'],                            selected: 0, qty: '4200', unit: 'L',   source: 'meter' },
+      { name: 'Natural Gas',   batches: ['NG-Apr-04','NG-Apr-03','NG-Mar-30'], selected: 0, qty: '850',  unit: 'm³',  source: 'meter',     basis: 'PER_HOUR',  rate: 188.9 },
+      { name: 'Electricity',   batches: ['—'],                                  selected: 0, qty: '12.4', unit: 'MWh', source: 'meter',     basis: 'PER_HOUR',  rate: 2.756 },
+      { name: 'Lubricant Oil', batches: ['LO-2026-03','LO-2026-04'],            selected: 0, qty: '17.96',unit: 'L',   source: 'estimated', basis: 'PER_UNIT',  rate: 0.092 },
+      { name: 'Cooling Water', batches: ['Utility'],                            selected: 0, qty: '4200', unit: 'L',   source: 'meter',     basis: 'PER_HOUR',  rate: 933.3 },
+      { name: 'Mold Release',  batches: ['MR-2026-04'],                         selected: 0, qty: '1.0',  unit: 'kg',  source: 'estimated', basis: 'PER_BATCH', rate: 1.0 },
     ],
     startTime: '2026-04-25 02:30:00', endTime: '2026-04-25 07:00:00', duration: '4 h 30 min',
   },
 
   process: {
     factory: 'ChemCorp Pune', process: 'Resin Synthesis', operation: 'Polymerization &amp; Filling',
-    equipment: 'Reactor R-04 + Drum-fill Line', equipmentType: 'BATCH 800–1200L',
+    qtyType: 'DECIMAL', qtyTypeMeta: '2dp · L / kg',
     operator: 'A. Sharma (EMP-2087) · Closing', shift: 'C · 22:00–06:00',
+    equipmentOptions: [
+      { id: 'R-04', name: 'Reactor R-04', type: 'BATCH 800–1200L', status: 'AVAILABLE', selected: true },
+      { id: 'DF-1', name: 'Drum-fill Line DF-1', type: 'CONTINUOUS', status: 'AVAILABLE', selected: true },
+      { id: 'R-06', name: 'Reactor R-06', type: 'BATCH 1500L', status: 'AVAILABLE', selected: false },
+      { id: 'DF-2', name: 'Drum-fill Line DF-2', type: 'CONTINUOUS', status: 'MAINTENANCE', selected: false },
+    ],
+    industryAnchor: 'order',
+    deviationMode: 'flag',     // per-op: operations.deviation_mode (FLAG_FOR_REVIEW for resin filling — chemistry deviation needs human judgment)
+    plannerShape: 'flat',      // Process uses flat-per-op SM model (one SM per op-level production batch); inter-stage lineage via consumed_inventory only
+    maxReworkCount: null,      // unlimited rework allowed
+    freeProduction: {
+      availableOrders: [
+        { orderCode: 'PO-2026-0420-12', customer: '3M Industries',     sku: 'PR-405 Grade A', qty: 1080, unit: 'L', delivery: '2026-05-02', producedAttrKeys: ['Visc','Solid','pH','Color'] },
+        { orderCode: 'PO-2026-0419-02', customer: 'Henkel Adhesives',  sku: 'PR-302 Grade B', qty: 900,  unit: 'L', delivery: '2026-05-04', producedAttrKeys: ['Visc','Solid','pH','Tack'] },
+        { orderCode: 'PO-2026-0418-19', customer: 'Pidilite Inds',     sku: 'EP-110 Grade A', qty: 600,  unit: 'L', delivery: '2026-05-06', producedAttrKeys: ['Visc','Solid','pH'] },
+        { orderCode: 'PO-2026-0418-04', customer: 'Asian Paints',      sku: 'PR-405 Grade C', qty: 1100, unit: 'L', delivery: '2026-05-09', producedAttrKeys: ['Visc','Solid','pH','Color'] },
+      ],
+      bom: [
+        { name: 'Monomer M-101',     ratio: 250/270, unit: 'kg', attrKeys: ['Purity','Moisture','Inhibitor'] },
+        { name: 'Catalyst CAT-203',  ratio: 3/270,   unit: 'kg', attrKeys: ['Activation','Grade'] },
+        { name: 'Solvent S-9',       ratio: 50/270,  unit: 'L',  attrKeys: ['Water','Density'] },
+      ],
+    },
+    schedule: {
+      current: {
+        scheduleNumber: 'SCH-R04-260423-A',
+        plannedMaterialNumber: 'PR405-260423-A-007 (Reactor Charge)',
+        actualMaterialNumber: 'PR405-260423-A-007',
+        chargeStatus: 'CHARGED',
+        isHold: false,
+        plannedStart: '2026-04-23 08:00',
+        plannedEnd: '2026-04-25 08:00',
+        noOfChilds: 4,
+        materialWeight: '1212 kg charge',
+        sku: 'PR-405 Grade A',
+        allocatedOrders: ['PO-2026-0420-12'],
+        progressNote: 'PC 1 of 4 (drum D1) — sibling drums confirm separately.',
+        siblings: [
+          { name: 'D1', current: true },
+          { name: 'D2' },
+          { name: 'D3' },
+          { name: 'D4' },
+        ],
+      },
+      schedules: [
+        {
+          scheduleNumber: 'SCH-R04-260423-A',
+          equipment: 'Reactor R-04 + DF-1',
+          materials: [
+            { materialNumber: 'PR405-260423-A-007', sku: 'PR-405 Grade A · 4 IBC', qty: '1080 L', plannedStart: 'Apr 23 08:00', plannedEnd: 'Apr 25 08:00', materialSeq: 1, childs: 4, isDummy: false, active: true, orderRef: 'PO-2026-0420-12', customer: '3M Industries', allocatedOrders: ['PO-2026-0420-12'] },
+            { materialNumber: 'PR302-260425-B-008', sku: 'PR-302 Grade B · 4 IBC', qty: '900 L', plannedStart: 'Apr 25 09:00', plannedEnd: 'Apr 27 09:00', materialSeq: 2, childs: 4, isDummy: false, orderRef: 'PO-2026-0419-02', customer: 'Henkel Adhesives', allocatedOrders: ['PO-2026-0419-02'] },
+          ],
+        },
+        {
+          scheduleNumber: 'SCH-R06-260424-X',
+          equipment: 'Reactor R-06',
+          materials: [
+            { materialNumber: 'EP110-260424-A-002', sku: 'EP-110 Grade A · 6 IBC', qty: '1500 L', plannedStart: 'Apr 24 06:00', plannedEnd: 'Apr 26 06:00', materialSeq: 1, childs: 6, isDummy: false, orderRef: 'PO-2026-0418-19', customer: 'Pidilite Inds', allocatedOrders: ['PO-2026-0418-19'] },
+            { materialNumber: '— pending upstream —', sku: 'PR-405 Grade C · 4 IBC', qty: 'TBD', plannedStart: 'Apr 27 10:00', plannedEnd: 'Apr 29 10:00', materialSeq: 2, childs: 0, isDummy: true, dummyReason: 'Awaiting bulk-charge confirmation from prior op', orderRef: 'PO-2026-0418-04', customer: 'Asian Paints', allocatedOrders: ['PO-2026-0418-04'] },
+          ],
+        },
+      ],
+    },
     confirmationId: 'PC-2026-04-25-00041',
-    splitInfo: '1 reactor → 4 IBC drums (SPLIT)',
-    motherInfo: 'M-101-204+205 + CAT-203-87 (1212 kg charge)',
-    lineage: 'M-101-204+205 → PR405-260423-A-007 (D1..D4)',
+    splitInfo: '3 RM lots → 1 IBC drum (D1 of 4 in this SM)',
+    motherInfo: 'M-101-204+205 + CAT-203-87 + S9-002 (303 kg consumed here)',
+    lineage: 'M-101-204+205 → PR405-260425-A-007-D1 (this PC) · sibling PCs produce D2, D3, D4',
     orderCode: 'PO-2026-0420-12', customer: '3M Industries',
     sku: 'PR-405 Grade A', orderQty: '1080 L', pendingQty: '1080 L',
     deliveryDate: '2026-05-02', orderType: 'MTS · Export',
@@ -560,46 +1005,52 @@ const DATA = {
     ],
     materials: [
       {
-        name: 'Monomer M-101', meta: 'RM · BOM 1000 kg · Required: Purity ≥ 99.0 %',
-        unit: 'kg', req: '1000', alloc: '1000', match: 'ok',
+        name: 'Monomer M-101', meta: 'RM · BOM 250 kg per drum · Required: Purity ≥ 99.0 %',
+        unit: 'kg', req: '250', alloc: '250', match: 'ok',
         batches: [
-          { batch: 'M-101-Lot-204', heat: 'Drum 12 · 2026-04', qty: '600', attrs: [['Purity','99.5 %','ok'],['Moisture','0.02 %','ok'],['Inhibitor','120 ppm','ok']] },
-          { batch: 'M-101-Lot-205', heat: 'Drum 14 · 2026-04', qty: '400', attrs: [['Purity','99.3 %','ok'],['Moisture','0.04 %','ok'],['Inhibitor','115 ppm','ok']] },
+          { batch: 'M-101-Lot-204', heat: 'Drum 12 · 2026-04 · 350 kg reserved for sibling PCs', qty: '250', attrs: [['Purity','99.5 %','ok'],['Moisture','0.02 %','ok'],['Inhibitor','120 ppm','ok']] },
         ]
       },
       {
-        name: 'Catalyst CAT-203', meta: 'RM · BOM 12 kg · Activated · Grade A only',
-        unit: 'kg', req: '12.00', alloc: '12.00', match: 'ok',
+        name: 'Catalyst CAT-203', meta: 'RM · BOM 3 kg per drum · Activated · Grade A only',
+        unit: 'kg', req: '3.00', alloc: '3.00', match: 'ok',
         batches: [
-          { batch: 'CAT-203-Lot-87', heat: 'Activated 2026-04-22', qty: '12.00', attrs: [['Activation','PASS','ok'],['Grade','A','ok']] },
+          { batch: 'CAT-203-Lot-87', heat: 'Activated 2026-04-22 · 9 kg reserved for sibling PCs', qty: '3.00', attrs: [['Activation','PASS','ok'],['Grade','A','ok']] },
         ]
       },
       {
-        name: 'Solvent S-9', meta: 'RM · BOM 200 L',
-        unit: 'L', req: '200', alloc: '200', match: 'ok',
+        name: 'Solvent S-9', meta: 'RM · BOM 50 L per drum',
+        unit: 'L', req: '50', alloc: '50', match: 'ok',
         batches: [
-          { batch: 'S9-2026-04-002', heat: 'Bulk tank', qty: '200', attrs: [['Water','25 ppm','ok'],['Density','0.879 g/mL','ok']] },
+          { batch: 'S9-2026-04-002', heat: 'Bulk tank · 150 L reserved for sibling PCs', qty: '50', attrs: [['Water','25 ppm','ok'],['Density','0.879 g/mL','ok']] },
         ]
       },
     ],
     produced: [
       {
-        name: 'Polymer Resin PR-405 Grade A — IBC Drums',
-        meta: 'FG · Generated by SPLIT relation · 1 batch decanted into 4 IBC drums',
-        unit: 'L', target: '1080', actual: '1080', match: 'ok', scrap: '20', yieldPct: '98.2 %',
+        name: 'Polymer Resin PR-405 Grade A — IBC Drum',
+        meta: 'FG · IBC-fill operation · sibling drums confirmed in separate PCs',
+        unit: 'L', target: '270', actual: '268', match: 'ok', scrap: '2', yieldPct: '99.3 %',
+        relationType: 'MERGE',      // multi-input BOM (M-101 + CAT-203 + S-9) → 1 IBC drum
+        batchConfig: { matNumGranularity: 'PER_LOT', batchGranularity: 'PER_SM' }, // Process: shared QC batch across the SM's 4 fills
+        firstPCofSM: true,           // drum D1 is first; SM-wide batch generated here, D2-D4 will reuse it
+        primaryParentSKU: 'Monomer M-101', // bill_of_materials.line_seq=1 designates primary parent for parent_material_number
+        yieldVarianceMetricOnly: true, // Gap 39: yield variance is a captured metric, not a validation failure (Process)
+        requiredAttrRange: {
+          'Visc':  { min: 4500, max: 5500, unit: 'cP' },
+          'Solid': { min: 50,   max: 52,   unit: '%' },
+          'pH':    { min: 6.8,  max: 7.5,  unit: '' },
+        },
         outputs: [
-          { batch: 'PR405-260425-A-007-D1', material: 'IBC-2026-1101', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
-          { batch: 'PR405-260425-A-007-D2', material: 'IBC-2026-1102', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
-          { batch: 'PR405-260425-A-007-D3', material: 'IBC-2026-1103', qty: '270', attrs: [['Visc','4910 cP','ok'],['Solid','51.0 %','ok'],['pH','7.20','ok'],['Color','2 (Gardner)','ok']] },
-          { batch: 'PR405-260425-A-007-D4', material: 'IBC-2026-1104', qty: '270', attrs: [['Visc','4920 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']] },
+          { batch: 'PR405-260425-A-007-D1', material: 'IBC-2026-1101', qty: '270', attrs: [['Visc','5740 cP','ok'],['Solid','51.2 %','ok'],['pH','7.18','ok'],['Color','2 (Gardner)','ok']], orderRef: 'PO-2026-0420-12' },
         ]
       }
     ],
     processParams: [
       { name: 'Reaction Temp', target: '85', range: '82–88', reading: '85.4', unit: '°C', source: 'plc', status: 'ok' },
-      { name: 'Reactor Pressure', target: '1.5', range: '1.4–1.6', reading: '1.51', unit: 'bar', source: 'plc', status: 'ok' },
+      { name: 'Reactor Pressure', target: '1.5', range: '1.4–1.6', reading: '1.62', unit: 'bar', source: 'plc', status: 'fail' },
       { name: 'pH', target: '7.2', range: '6.8–7.5', reading: '7.18', unit: '', source: 'plc', status: 'ok' },
-      { name: 'Stirrer RPM', target: '120', range: '110–130', reading: '122', unit: 'rpm', source: 'plc', status: 'ok' },
+      { name: 'Stirrer RPM', target: '120', range: '110–130', reading: '108', unit: 'rpm', source: 'plc', status: 'warn' },
       { name: 'N₂ Purge Rate', target: '5', range: '4–6', reading: '5.1', unit: 'm³/h', source: 'plc', status: 'ok' },
       { name: 'Reaction Duration', target: '48', range: '46–50', reading: '48.0', unit: 'h', source: 'plc', status: 'ok' },
       { name: 'In-Process Viscosity', target: '4500–5500', range: '4500–5500', reading: '4920', unit: 'cP', source: 'manual', status: 'ok', placeholder: 'enter cP…' },
@@ -610,10 +1061,10 @@ const DATA = {
       { name: 'Heat Exchanger', instances: ['HX-12 / SN-3009 (life 64%)','HX-14 / SN-3015 (life 8%)'], selected: 0, life: 64, tick: '48.0', unit: 'h', warn: 'ok' },
     ],
     consumables: [
-      { name: 'Steam',         batches: ['Utility'],    selected: 0, qty: '1200', unit: 'kg',  source: 'meter' },
-      { name: 'Cooling Water', batches: ['Utility'],    selected: 0, qty: '8500', unit: 'L',   source: 'meter' },
-      { name: 'N₂ Gas',        batches: ['N2-2026-04'], selected: 0, qty: '50',   unit: 'm³',  source: 'meter' },
-      { name: 'Electricity',   batches: ['—'],          selected: 0, qty: '320',  unit: 'kWh', source: 'meter' },
+      { name: 'Steam',         batches: ['Utility'],    selected: 0, qty: '1200', unit: 'kg',  source: 'meter',     basis: 'PER_HOUR',  rate: 25.0 },
+      { name: 'Cooling Water', batches: ['Utility'],    selected: 0, qty: '8500', unit: 'L',   source: 'meter',     basis: 'PER_HOUR',  rate: 177.1 },
+      { name: 'N₂ Gas',        batches: ['N2-2026-04'], selected: 0, qty: '50',   unit: 'm³',  source: 'estimated', basis: 'PER_HOUR',  rate: 1.04 },
+      { name: 'Electricity',   batches: ['—'],          selected: 0, qty: '320',  unit: 'kWh', source: 'meter',     basis: 'PER_HOUR',  rate: 6.67 },
     ],
     shiftLog: [
       { shift: 'A · 23 Apr', op: 'A. Patel (EMP-2011)',  start: '23 Apr 06:00', end: '23 Apr 14:00' },
@@ -628,13 +1079,69 @@ const DATA = {
 
   discrete: {
     factory: 'Auto Components Pune', process: 'Engine Assembly',
-    operation: 'Crankshaft Assembly · Station S-7', equipment: 'Cell C-7',
-    equipmentType: 'CONTINUOUS pcs',
+    operation: 'Crankshaft Assembly · Station S-7',
+    qtyType: 'INTEGER', qtyTypeMeta: 'whole pcs',
     operator: 'S. Mehta (EMP-3120)', shift: 'B · 14:00–22:00',
+    equipmentOptions: [
+      { id: 'C-7', name: 'Cell C-7', type: 'CONTINUOUS pcs', status: 'AVAILABLE', selected: true },
+      { id: 'C-7B', name: 'Cell C-7B (V6 lane)', type: 'CONTINUOUS pcs', status: 'AVAILABLE', selected: false },
+      { id: 'C-8', name: 'Cell C-8 (Inline)', type: 'CONTINUOUS pcs', status: 'AVAILABLE', selected: false },
+      { id: 'C-9', name: 'Cell C-9 (V6/V8)', type: 'CONTINUOUS pcs', status: 'IN_USE', selected: false },
+    ],
+    industryAnchor: 'order',
+    deviationMode: 'auto',     // per-op: operations.deviation_mode (AUTO_DEALLOCATE for engine assy — torque OOR auto-rebins to stock)
+    plannerShape: 'flat',      // Discrete uses flat-per-op SM model — frame SM, wheel SM, drivetrain SM, bicycle SM each separate
+    maxReworkCount: 1,         // operations.max_rework_count — torque retighten only
+    freeProduction: {
+      availableOrders: [
+        { orderCode: 'SO-2026-0422-09', customer: 'Maruti Suzuki', sku: 'EB-1500-V6',     qty: 120, unit: 'pcs', delivery: '2026-05-05', producedAttrKeys: ['Variant','Torque','QC'] },
+        { orderCode: 'SO-2026-0422-11', customer: 'Tata Motors',   sku: 'EB-1200-I4',     qty: 200, unit: 'pcs', delivery: '2026-05-07', producedAttrKeys: ['Variant','Torque','QC'] },
+        { orderCode: 'SO-2026-0421-44', customer: 'Mahindra',      sku: 'EB-2200-D-Twin', qty: 80,  unit: 'pcs', delivery: '2026-05-09', producedAttrKeys: ['Variant','Torque','QC'] },
+        { orderCode: 'SO-2026-0421-30', customer: 'Bajaj',         sku: 'EB-150-Single',  qty: 450, unit: 'pcs', delivery: '2026-05-12', producedAttrKeys: ['Variant','Torque','QC'] },
+      ],
+      bom: [
+        { name: 'Crankshaft CS-V6', ratio: 1,  unit: 'pcs', attrKeys: ['Hardness','Run-out','Balance'] },
+        { name: 'Bearing BR-12',    ratio: 6,  unit: 'pcs', attrKeys: ['Class','ID'] },
+        { name: 'Bolt M10×60',      ratio: 24, unit: 'pcs', attrKeys: ['Grade','Coating'] },
+      ],
+    },
+    schedule: {
+      current: {
+        scheduleNumber: 'SCH-C7-260425-A',
+        plannedMaterialNumber: 'EB-V6-260425-S7-Batch-A',
+        actualMaterialNumber: 'EB-V6-260425-S7-Batch-A',
+        chargeStatus: 'CHARGED',
+        isHold: false,
+        plannedStart: '2026-04-25 14:30',
+        plannedEnd: '2026-04-25 15:30',
+        noOfChilds: 1,
+        materialWeight: '12 pcs',
+        sku: 'Engine Block EB-1500-V6',
+        allocatedOrders: ['SO-2026-0422-09'],
+      },
+      schedules: [
+        {
+          scheduleNumber: 'SCH-C7-260425-A',
+          equipment: 'Cell C-7',
+          materials: [
+            { materialNumber: 'EB-V6-260425-S7-Batch-A', sku: 'EB-1500-V6 (12 pcs)', qty: '12 pcs', plannedStart: '14:30', plannedEnd: '15:30', materialSeq: 1, childs: 1, isDummy: false, active: true, orderRef: 'SO-2026-0422-09', customer: 'Maruti Suzuki', allocatedOrders: ['SO-2026-0422-09'] },
+            { materialNumber: 'EB-I4-260425-S7-Batch-B', sku: 'EB-1200-I4 (20 pcs)', qty: '20 pcs', plannedStart: '15:45', plannedEnd: '17:30', materialSeq: 2, childs: 1, isDummy: false, orderRef: 'SO-2026-0422-11', customer: 'Tata Motors', allocatedOrders: ['SO-2026-0422-11'] },
+            { materialNumber: 'EB-V6-260425-S7-Batch-C', sku: 'EB-1500-V6 (8 pcs)', qty: '8 pcs', plannedStart: '17:45', plannedEnd: '18:30', materialSeq: 3, childs: 1, isDummy: false, orderRef: 'SO-2026-0422-09', customer: 'Maruti Suzuki', allocatedOrders: ['SO-2026-0422-09'] },
+          ],
+        },
+        {
+          scheduleNumber: 'SCH-C7B-260425-B',
+          equipment: 'Cell C-7B (V6 lane)',
+          materials: [
+            { materialNumber: 'EB-D-260425-S7B-Batch-A', sku: 'EB-2200-D-Twin (6 pcs)', qty: '6 pcs', plannedStart: '18:30', plannedEnd: '19:30', materialSeq: 1, childs: 1, isDummy: false, orderRef: 'SO-2026-0421-44', customer: 'Mahindra', allocatedOrders: ['SO-2026-0421-44'] },
+          ],
+        },
+      ],
+    },
     confirmationId: 'PC-2026-04-25-00207',
-    splitInfo: '12 components → 12 engine blocks (MERGE × 12)',
+    splitInfo: '3 IM lots → 1 engine batch · qty 12 under one batch #',
     motherInfo: 'CS-V6-1842 + BR-12-2031/2032 + BLT-9011',
-    lineage: 'CS-V6-1842 + BR-12-2031/2032 → EB-V6-260425-S7-001..012',
+    lineage: 'CS-V6-1842 + BR-12-2031/2032 + BLT-9011 → EB-V6-260425-S7-Batch-A (12 pcs)',
     orderCode: 'SO-2026-0422-09', customer: 'Maruti Suzuki India',
     sku: 'Engine Block EB-1500-V6', orderQty: '120 pcs', pendingQty: '108 pcs',
     deliveryDate: '2026-05-05', orderType: 'MTO · Local',
@@ -674,20 +1181,21 @@ const DATA = {
     ],
     produced: [
       {
-        name: 'Engine Block EB-1500-V6 — Serialized',
-        meta: 'FG · 12 pieces · each individually serialized · MERGE relation captured',
+        name: 'Engine Block EB-1500-V6',
+        meta: 'FG · MERGE relation · multi-input BOM (crank + bearings + bolts) → 1 engine batch',
         unit: 'pcs', target: '12', actual: '12', match: 'ok', scrap: '0', yieldPct: '100.0 %',
+        relationType: 'MERGE',
+        batchConfig: { matNumGranularity: 'PER_LOT', batchGranularity: 'PER_PC' }, // 12 pcs share one batch # and one mat #
+        firstPCofSM: true,
+        primaryParentSKU: 'Crankshaft CS-V6', // bill_of_materials.line_seq=1 designates primary
         outputs: [
-          { batch: 'EB-V6-260425-S7-001', material: 'Serial 001', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.8 Nm','ok'],['QC','PASS','ok']] },
-          { batch: 'EB-V6-260425-S7-002', material: 'Serial 002', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.9 Nm','ok'],['QC','PASS','ok']] },
-          { batch: 'EB-V6-260425-S7-003', material: 'Serial 003', qty: '1', attrs: [['Variant','V6-Turbo','ok'],['Torque','35.0 Nm','ok'],['QC','PASS','ok']] },
-          { batch: 'EB-V6-260425-S7-004 .. 012', material: 'Serial 004–012 (9 pcs)', qty: '9', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.6–35.1 Nm','ok'],['QC','12/12 PASS','ok']] },
+          { batch: 'EB-V6-260425-S7-Batch-A', material: 'EB-V6-260425-S7-Batch-A', qty: '12', attrs: [['Variant','V6-Turbo','ok'],['Torque','34.6–35.1 Nm','ok'],['QC','12/12 PASS','ok']], orderRef: 'SO-2026-0422-09' },
         ]
       }
     ],
     processParams: [
-      { name: 'Crank Bolt Torque', target: '35', range: '33–37', reading: '34.8', unit: 'Nm', source: 'plc', status: 'ok' },
-      { name: 'Run-out (TIR)', target: '<0.05', range: '0–0.05', reading: '0.018', unit: 'mm', source: 'plc', status: 'ok' },
+      { name: 'Crank Bolt Torque', target: '35', range: '33–37', reading: '32.7', unit: 'Nm', source: 'plc', status: 'fail' },
+      { name: 'Run-out (TIR)', target: '<0.05', range: '0–0.05', reading: '0.048', unit: 'mm', source: 'plc', status: 'warn' },
       { name: 'Vision Inspection', target: 'PASS', range: 'PASS', reading: '12 / 12 PASS', unit: '', source: 'plc', status: 'ok' },
       { name: 'Leak Test', target: '<0.5', range: '0–0.5', reading: '0.18', unit: 'cc/min', source: 'plc', status: 'ok' },
       { name: 'Cycle Time', target: '4.0', range: '3.5–4.5', reading: '4.05', unit: 'min', source: 'plc', status: 'ok' },
@@ -698,8 +1206,9 @@ const DATA = {
       { name: 'Assembly Jig V6', instances: ['JIG-7-V6 / SN-12 (life 55%)','JIG-8-V6 / SN-19 (life 8%)'], selected: 0, life: 55, tick: '12', unit: 'cycles', warn: 'ok' },
     ],
     consumables: [
-      { name: 'Sealant',  batches: ['SEAL-2026-04','SEAL-2026-03'], selected: 0, qty: '24',  unit: 'g',  source: 'manual' },
-      { name: 'Lube Oil', batches: ['LUB-2026-04','LUB-2026-03'],   selected: 0, qty: '600', unit: 'ml', source: 'meter' },
+      { name: 'Sealant',  batches: ['SEAL-2026-04','SEAL-2026-03'], selected: 0, qty: '24',  unit: 'g',  source: 'estimated', basis: 'PER_UNIT',  rate: 2.0 },
+      { name: 'Lube Oil', batches: ['LUB-2026-04','LUB-2026-03'],   selected: 0, qty: '600', unit: 'ml', source: 'meter',     basis: 'PER_UNIT',  rate: 50.0 },
+      { name: 'Loctite Threadlocker', batches: ['LOC-04','LOC-03'], selected: 0, qty: '2.5', unit: 'g',  source: 'manual',    basis: 'PER_UNIT', rate: null },
     ],
     startTime: '2026-04-25 14:32:00', endTime: '2026-04-25 15:20:48', duration: '48 min · 12 cycles',
   },
@@ -707,6 +1216,28 @@ const DATA = {
 
 function render(industry) {
   const d = DATA[industry];
+
+  // Project schedule.current onto the data object so generic data-bind picks it up
+  if (d.schedule && d.schedule.current) {
+    const c = d.schedule.current;
+    d.scheduleNumber = c.scheduleNumber;
+    d.plannedMaterialNumber = c.plannedMaterialNumber;
+    d.plannedStart = c.plannedStart;
+    d.plannedEnd = c.plannedEnd;
+    d.noOfChilds = c.noOfChilds;
+    d.materialWeight = c.materialWeight;
+  }
+
+  // Output Batches cell — pluralized SMC count + planned qty.
+  // "Output Batches" = count of schedule_material_childs rows under this SM. The qty alongside
+  // is whatever each industry tracks at SM granularity (mother heat for Steel, reactor charge
+  // for Process, batch contents for Discrete) — annotated in materialWeight to disambiguate.
+  const obCell = document.getElementById('output-batches-cell');
+  if (obCell && d.schedule && d.schedule.current) {
+    const c = d.schedule.current;
+    const word = c.noOfChilds === 1 ? 'batch' : 'batches';
+    obCell.innerHTML = `<b>${c.noOfChilds}</b> ${word} · ${c.materialWeight || ''}`;
+  }
 
   document.querySelectorAll('[data-bind]').forEach(el => {
     const k = el.getAttribute('data-bind');
@@ -726,21 +1257,82 @@ function render(industry) {
   document.getElementById('attr-list').innerHTML =
     d.attributes.map(([k,v]) => `<span class="attr-pill"><b>${k}:</b> ${v}</span>`).join('');
 
-  document.getElementById('order-list').innerHTML = d.orders.map(o => `
-    <li class="order-item ${o.active ? 'active' : ''}">
-      <div class="row1">
-        <span class="order-code">${o.code}</span>
-        <span class="badge ${o.priority === 'high' ? 'badge-danger' : o.priority === 'med' ? 'badge-warning' : 'badge-neutral'}">${o.priority.toUpperCase()}</span>
-      </div>
-      <div class="row2"><i class="fa-solid fa-user"></i> ${o.customer} · ${o.sku}</div>
-      <div class="row3"><span><i class="fa-regular fa-calendar"></i> ${o.delivery}</span><span class="qty">${o.qty}</span></div>
-    </li>`).join('');
+  // SCHEDULE QUEUE — only CHARGED + non-held schedules are eligible for PC.
+  // (Free-prod mode renders a picker into #sched-list via renderFreeProdLeftPicker; skip this block.)
+  if (!freeProdState.active) {
+  // Restore left-card header (in case we just came back from free-prod-mode)
+  const lt = document.getElementById('left-card-title');
+  const li_icon = document.getElementById('left-card-icon');
+  const sf = document.getElementById('sched-filter');
+  if (lt) lt.textContent = 'Schedule Queue';
+  if (li_icon) li_icon.className = 'fa-solid fa-calendar-days';
+  if (sf) sf.placeholder = 'Filter by Schedule, Material # or Order…';
 
-  // CONSUMED MATERIALS
-  document.getElementById('materials').innerHTML = d.materials.map(m => renderReqCard(m, 'consumed')).join('');
+  const schedules = (d.schedule && d.schedule.schedules) || [];
+  const anchor = d.industryAnchor || 'inventory';
+  const list = document.getElementById('sched-list');
 
-  // PRODUCED OUTPUTS
-  document.getElementById('produced-list').innerHTML = d.produced.map(p => renderProducedCard(p)).join('');
+  // §10.1 alloc-hint text — Steel is broad, Discrete/Process filter through schedule_material_allocations.
+  const allocText = document.getElementById('filter-alloc-text');
+  if (allocText) {
+    allocText.textContent = anchor === 'inventory'
+      ? 'Steel · order list intentionally broad (one SPLIT PC may serve multiple orders)'
+      : 'Discrete/Process · orders filtered through schedule_material_allocations of selected SM';
+  }
+
+  // Count actionable rows (non-dummy + at least one schedule visible)
+  const actionableCount = schedules.reduce((n, sch) => n + (sch.materials || []).filter(m => !m.isDummy).length, 0);
+  document.getElementById('sched-count').textContent = actionableCount + ' charged · ready for PC';
+
+  if (schedules.length === 0 || actionableCount === 0) {
+    // empty queue → optional Free Production CTA
+    list.innerHTML = `<li class="queue-empty-state">
+      <i class="fa-solid fa-calendar-xmark empty-ic"></i>
+      <div>${factoryConfig.allowFreeProduction ? 'No charged schedules · start a free production?' : 'No charged schedules — wait for the planner to charge one.'}</div>
+      ${factoryConfig.allowFreeProduction ? '<button class="free-prod-cta" id="free-prod-cta-empty"><i class="fa-solid fa-plus"></i> Free Production</button>' : ''}
+    </li>`;
+  } else {
+    let html = '';
+    if (factoryConfig.allowFreeProduction) {
+      html += `<li class="free-prod-divider"><button class="free-prod-cta" id="free-prod-cta-top"><i class="fa-solid fa-plus"></i> Free Production (no schedule)</button></li>`;
+    }
+    // Flat list. Each row leads with ScheduleID, then MaterialNumber (with OrderCode for order-anchor industries).
+    // No SKU/attribute description, no planned start/end. Filterable via the search input on ScheduleID, MaterialNumber, OrderCode.
+    for (const sch of schedules) {
+      for (const m of (sch.materials || [])) {
+        const activeCls = m.active ? 'active' : '';
+        const dummyCls = m.isDummy ? 'dummy' : '';
+        const orderRef = m.orderRef || (m.allocatedOrders && m.allocatedOrders[0]) || '';
+        const dataAttrs = `data-schedule="${sch.scheduleNumber}" data-material="${m.materialNumber}" data-order="${orderRef}"`;
+        const seqChip = `<span class="child-pill" style="font-variant-numeric:tabular-nums" title="MaterialSeq">#${m.materialSeq}</span>`;
+        const childChip = !m.isDummy ? `<span class="child-pill" title="No. of children"><i class="fa-solid fa-code-fork"></i> ${m.childs}</span>` : '';
+        // Row 2: MaterialNumber, plus OrderCode for order-anchor (process/discrete)
+        let row2;
+        if (anchor === 'inventory') {
+          row2 = `<div class="row2"><span class="mat">${m.materialNumber}</span></div>`;
+        } else {
+          const orderHtml = orderRef ? ` · <b>${orderRef}</b>${m.customer ? ' · ' + m.customer : ''}` : '';
+          row2 = `<div class="row2"><span class="mat">${m.materialNumber}</span>${orderHtml}</div>`;
+        }
+        const dummyHint = m.isDummy ? `<div class="dummy-hint"><i class="fa-solid fa-hourglass-half dummy-ic"></i> ${m.dummyReason || 'Awaiting upstream batch'}</div>` : '';
+        html += `<li class="sched-item ${activeCls} ${dummyCls}" ${dataAttrs} title="${sch.scheduleNumber} · ${m.materialNumber}">
+          <div class="row1"><span class="sch-num">${sch.scheduleNumber}</span><span class="charge-pill ${m.isDummy ? 'planned' : 'charged'}">${m.isDummy ? 'PENDING' : 'CHARGED'}</span></div>
+          ${row2}
+          <div class="row3"><span style="color:var(--color-text-hint)">qty ${m.qty}</span><span style="display:flex;gap:4px">${seqChip}${childChip}</span></div>
+          ${dummyHint}
+        </li>`;
+      }
+    }
+    list.innerHTML = html;
+  }
+  applyQueueFilter();
+  } // close: if (!freeProdState.active)
+
+  // CONSUMED MATERIALS (in free-prod, free-prod renderers overwrite this below)
+  if (!freeProdState.active) {
+    document.getElementById('materials').innerHTML = d.materials.map(m => renderReqCard(m, 'consumed')).join('');
+    document.getElementById('produced-list').innerHTML = d.produced.map(p => renderProducedCard(p)).join('');
+  }
 
   // PROCESS PARAMS
   document.getElementById('process-params').innerHTML = d.processParams.map(p => {
@@ -755,13 +1347,12 @@ function render(industry) {
     } else {
       readingCell = `${p.reading} <span style="color:var(--color-text-muted);font-weight:400;font-size:11px">${p.unit}</span>`;
     }
-    return `<tr>
-      <td style="width:32%"><div class="pp-name">${p.name}</div><div class="pp-target">tgt <b>${p.target}</b> · ${p.range}</div></td>
-      <td style="width:24%" class="pp-reading ${p.source === 'manual' ? 'manual-input' : ''}">${readingCell}</td>
-      <td style="width:12%"><span class="pp-source ${p.source}">${src}</span></td>
-      <td style="width:14%"><span class="badge ${cls}">${txt}</span></td>
-      <td style="width:18%;text-align:right;color:var(--color-text-hint);font-size:10px">${p.source === 'plc' ? '<i class="fa-regular fa-clock"></i> live · 2s ago' : '<i class="fa-regular fa-pen-to-square"></i> by operator'}</td>
-    </tr>`;
+    return `<div class="pp-cell status-${p.status}">
+      <div class="pp-name" title="${p.range}">${p.name}</div>
+      <div class="pp-reading ${p.source === 'manual' ? 'manual-input' : ''}">${readingCell}</div>
+      <div class="pp-target">tgt <b>${p.target}</b> · ${p.range}</div>
+      <div class="pp-meta"><span class="pp-source ${p.source}">${src}</span><span class="badge ${cls}">${txt}</span></div>
+    </div>`;
   }).join('');
 
   // SHIFT LOG
@@ -798,24 +1389,230 @@ function render(industry) {
       </tr>`;
     }).join('')}</tbody>`;
 
-  // CONSUMABLES
+  // CONSUMABLES — wired to consumable_operation_map: consumption_basis × rate auto-fills,
+  // with consumable_usage.source ∈ (METER / ESTIMATED / MANUAL) reflecting how qty was sourced.
   document.getElementById('consumables').innerHTML = `
     <thead><tr>
       <th>Consumable</th>
       <th>Batch / Lot</th>
+      <th style="width:90px">Basis</th>
+      <th class="num" style="width:90px">Rate</th>
       <th class="num">Qty</th>
-      <th style="width:50px">Unit</th>
-      <th style="width:60px">Source</th>
+      <th style="width:46px">Unit</th>
+      <th style="width:90px">Source</th>
       <th style="width:32px"></th>
     </tr></thead>
-    <tbody>${d.consumables.map(c => `<tr>
-      <td><b>${c.name}</b></td>
-      <td><select class="cons-batch-pick">${c.batches.map((b,i) => `<option ${i === c.selected ? 'selected':''}>${b}</option>`).join('')}</select></td>
-      <td class="num"><input type="text" class="cons-input" value="${c.qty}"></td>
-      <td>${c.unit}</td>
-      <td><span class="badge ${c.source === 'meter' ? 'badge-info' : 'badge-warning'}">${c.source === 'meter' ? '<i class="fa-solid fa-bolt"></i> Meter' : '<i class="fa-solid fa-keyboard"></i> Man'}</span></td>
-      <td><button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button></td>
-    </tr>`).join('')}</tbody>`;
+    <tbody>${d.consumables.map(c => {
+      const basisLabel = { PER_UNIT: '/ unit', PER_HOUR: '/ hour', PER_BATCH: '/ batch' }[c.basis] || '—';
+      const rateTxt = c.rate != null ? `${c.rate} ${c.unit}` : '—';
+      const srcConfig = {
+        meter:     { cls: 'badge-info',    ic: 'fa-bolt',         label: 'METER' },
+        estimated: { cls: 'badge-primary', ic: 'fa-calculator',   label: 'EST'   },
+        manual:    { cls: 'badge-warning', ic: 'fa-keyboard',     label: 'MAN'   },
+      }[c.source] || { cls: 'badge-neutral', ic: 'fa-question', label: '?' };
+      const srcTitle = c.source === 'meter'     ? 'METER · physical meter reading (e.g., kWh, flowmeter)'
+                     : c.source === 'estimated' ? `ESTIMATED · auto-fill from consumption_basis (${c.basis}) × rate (${rateTxt}); operator can override`
+                     :                            'MANUAL · operator-typed value';
+      return `<tr>
+        <td><b>${c.name}</b></td>
+        <td><select class="cons-batch-pick">${c.batches.map((b,i) => `<option ${i === c.selected ? 'selected':''}>${b}</option>`).join('')}</select></td>
+        <td><span class="badge badge-neutral" style="font-size:9px" title="consumption_basis">${c.basis || '—'}</span> <span style="font-size:10px;color:var(--color-text-hint)">${basisLabel}</span></td>
+        <td class="num" style="font-variant-numeric:tabular-nums;color:var(--color-text-muted);font-size:11px">${rateTxt}</td>
+        <td class="num"><input type="text" class="cons-input" value="${c.qty}"></td>
+        <td>${c.unit}</td>
+        <td><span class="badge ${srcConfig.cls}" title="${srcTitle}"><i class="fa-solid ${srcConfig.ic}"></i> ${srcConfig.label}</span></td>
+        <td><button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button></td>
+      </tr>`;
+    }).join('')}</tbody>`;
+
+  applyQtyType(d.qtyType);
+  applyEquipmentSelection(d);
+  applyScheduleContext(d);
+  applyChildProgress(d, industry);
+  applyMergeTopologyHints(d, industry);
+
+  // If free-prod-mode is active, the free-prod renderers own consumed + produced + picker
+  if (freeProdState.active) {
+    renderFreeProdPicker();
+    renderFreeProdConsumed();
+    renderFreeProdProduced();
+  }
+}
+
+function applyMergeTopologyHints(d, industry) {
+  // Cross-allocated toggle (§10.2) is meaningful only for MERGE PCs in Discrete/Process where
+  // pooled IM stock may be allocated to multiple orders. Steel SPLIT consumes a single mother batch
+  // determined by the SMC tree, so the toggle is irrelevant.
+  const wrap = document.getElementById('cross-alloc-toggle-wrap');
+  if (wrap) {
+    const isMerge = (d.produced || []).some(p => (p.relationType === 'MERGE'));
+    wrap.style.display = isMerge ? 'inline-flex' : 'none';
+  }
+  // Footer "consumed inputs" label adapts to relation type so Discrete/Process don't see Steel
+  // "Mother batch" terminology when the topology is multi-input MERGE.
+  const lbl = document.getElementById('consumed-inputs-label');
+  if (lbl) {
+    const rt = (d.produced || [])[0]?.relationType;
+    lbl.textContent = rt === 'SPLIT'     ? 'Mother batch (consumed)'
+                    : rt === 'MERGE'     ? 'Consumed inputs (primary first)'
+                    : rt === 'TRANSFORM' ? 'Input batch (consumed)'
+                    : rt === 'REWORK'    ? 'Defective batch (reworked)'
+                    :                      'Consumed inputs';
+  }
+}
+
+function applyChildProgress(d, industry) {
+  const el = document.getElementById('child-progress');
+  if (!el) return;
+  const c = d.schedule && d.schedule.current;
+  // Show only when this PC is one of N siblings (process: multi-drum) AND not in free-prod-mode.
+  // Clear innerHTML when hiding so accessibility-tree readers / codegen tools don't see stale
+  // sibling pills carried over from a previous Process render.
+  if (freeProdState.active || industry !== 'process' || !c || !c.siblings || c.siblings.length <= 1) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  const total = c.siblings.length;
+  const currentIdx = c.siblings.findIndex(s => s.current);
+  const label = `Confirming child ${currentIdx + 1} of ${total} · sibling drums confirm separately`;
+  const pills = c.siblings.map(s => {
+    const cls = s.confirmed ? 'done' : (s.current ? 'current' : '');
+    const ic = s.confirmed ? '✓ ' : (s.current ? '▸ ' : '☐ ');
+    return `<span class="sibling ${cls}">${ic}${s.name}</span>`;
+  }).join('');
+  el.style.display = '';
+  el.innerHTML = `<i class="fa-solid fa-code-fork"></i><span class="label">${label}</span><span class="siblings">${pills}</span>`;
+}
+
+function applyScheduleContext(d) {
+  const c = d.schedule && d.schedule.current;
+  if (!c) return;
+
+  // Charge status pill (always CHARGED on the PC screen — separate workflow charges it before it lands here)
+  const pill = document.getElementById('sched-charge-pill');
+  if (pill) {
+    pill.textContent = c.chargeStatus;
+    pill.className = 'charge-pill ' + c.chargeStatus.toLowerCase();
+  }
+
+  // Actual material number — operator-editable at production time
+  const amInput = document.getElementById('actual-mat-input');
+  if (amInput) {
+    amInput.value = c.actualMaterialNumber || '';
+    amInput.classList.toggle('edited', !!(c.actualMaterialNumber && c.actualMaterialNumber !== c.plannedMaterialNumber));
+    amInput.placeholder = c.plannedMaterialNumber;
+  }
+
+  // Pre-allocated orders (read-only, scheduler-managed). Annotate with deviation state if any
+  // produced output has an attribute violation, per the configured deviation mode.
+  const allocList = document.getElementById('alloc-list');
+  if (allocList) {
+    const ind = (document.body.className.match(/industry-(\w+)/) || [])[1];
+    const deviationMode = (DATA[ind] && DATA[ind].deviationMode) || 'auto';
+    const deviatedOrders = new Set();
+    const produced = (DATA[ind] && DATA[ind].produced) || [];
+    for (const p of produced) {
+      for (const o of (p.outputs || [])) {
+        if (detectViolations(o, p.requiredAttrRange).length > 0 && o.orderRef) {
+          deviatedOrders.add(o.orderRef);
+        }
+      }
+    }
+    allocList.innerHTML = (c.allocatedOrders || []).map(o => {
+      let cls = '';
+      if (deviatedOrders.has(o)) cls = deviationMode === 'auto' ? 'deallocated' : 'flagged';
+      return `<span class="alloc-pill ${cls}"><i class="fa-solid fa-link"></i>${o}</span>`;
+    }).join('') || '<span style="font-size:10px;color:var(--color-text-hint)">none — produced output goes to stock</span>';
+  }
+
+  // Progress-note line — purely cosmetic operator hint (e.g. "PC 1 of 4 sibling drums").
+  // Charge timestamp / operator are NOT shown here — they are not stored on schedule_materials
+  // (declined per spec §22). If ever needed for display, derive from audit_log CHARGE event.
+  const info = document.getElementById('progress-note');
+  if (info) {
+    info.innerHTML = c.progressNote
+      ? `<i class="fa-solid fa-circle-info" style="color:var(--color-info)"></i> ${c.progressNote}`
+      : '';
+  }
+
+  // Per-op config chips — planner shape, deviation mode, rework cap
+  const ind = (document.body.className.match(/industry-(\w+)/) || [])[1];
+  const idata = DATA[ind] || {};
+  const shapeChip = document.getElementById('planner-shape-chip');
+  if (shapeChip) {
+    if (idata.plannerShape === 'nested') {
+      shapeChip.innerHTML = '<i class="fa-solid fa-sitemap"></i> nested SM tree (Model B)';
+      shapeChip.title = 'Steel pattern — one SM per heat, SMC tree with parent_schedule_material_child_id linking slabs → plates → cut pieces.';
+    } else {
+      shapeChip.innerHTML = '<i class="fa-solid fa-grip-lines"></i> flat-per-op SM';
+      shapeChip.title = 'Discrete/Process pattern — one SM per op-level production batch. All SMCs top-level (parent_schedule_material_child_id = null). Inter-stage lineage via consumed_inventory only.';
+    }
+  }
+  const devChip = document.getElementById('dev-mode-chip');
+  if (devChip) {
+    const isAuto = idata.deviationMode === 'auto';
+    devChip.className = 'badge ' + (isAuto ? 'badge-warning' : 'badge-info');
+    devChip.innerHTML = isAuto
+      ? '<i class="fa-solid fa-circle-xmark"></i> deviation: AUTO_DEALLOCATE'
+      : '<i class="fa-solid fa-flag"></i> deviation: FLAG_FOR_REVIEW';
+  }
+  const rwChip = document.getElementById('rework-cap-chip');
+  if (rwChip) {
+    const cap = idata.maxReworkCount;
+    rwChip.innerHTML = cap == null
+      ? '<i class="fa-solid fa-infinity"></i> rework cap: unlimited'
+      : `<i class="fa-solid fa-rotate-right"></i> rework cap: ${cap}`;
+  }
+}
+
+function applyEquipmentSelection(d) {
+  const opts = d.equipmentOptions || [];
+  const selected = opts.filter(o => o.selected);
+  const primary = selected[0] || opts[0];
+  const overflow = Math.max(0, selected.length - 1);
+
+  const display = document.getElementById('eq-display');
+  if (display && primary) {
+    const overflowChip = overflow > 0 ? `<span class="eq-extra">+${overflow} more</span>` : '';
+    display.innerHTML = `<span class="eq-display-name">${primary.name}</span> <span class="badge badge-primary" style="margin-left:4px">${primary.type}</span>${overflowChip}`;
+  } else if (display) {
+    display.innerHTML = '<span style="color:var(--color-warning)">No equipment selected</span>';
+  }
+
+  const list = document.getElementById('eq-list');
+  if (list) {
+    list.innerHTML = opts.map((o, i) => {
+      const disabled = o.status !== 'AVAILABLE' && !o.selected;
+      const statusCls = o.status.toLowerCase();
+      return `<label class="eq-opt ${disabled ? 'disabled' : ''}">
+        <input type="checkbox" data-eq-idx="${i}" ${o.selected ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+        <div class="eq-opt-info">
+          <div class="eq-opt-name">${o.name}</div>
+          <div class="eq-opt-meta">${o.type}</div>
+        </div>
+        <span class="eq-status ${statusCls}">${o.status}</span>
+      </label>`;
+    }).join('');
+  }
+}
+
+function applyQtyType(qtyType) {
+  const isInt = qtyType === 'INTEGER';
+  // Badge color in ctx-bar
+  const qtb = document.querySelector('.qty-type-badge');
+  if (qtb) {
+    qtb.classList.toggle('qt-int', isInt);
+    qtb.classList.toggle('qt-dec', !isInt);
+  }
+  // Apply input mode + visual hint to all batch qty inputs (consumed + produced)
+  document.querySelectorAll('.batch-table .qty-in').forEach(inp => {
+    inp.inputMode = isInt ? 'numeric' : 'decimal';
+    inp.setAttribute('pattern', isInt ? '[0-9]*' : '[0-9]*([.][0-9]+)?');
+    inp.title = isInt ? 'INTEGER · whole numbers only' : 'DECIMAL · up to 2 decimal places';
+    inp.classList.toggle('qt-int', isInt);
+    inp.classList.toggle('qt-dec', !isInt);
+  });
 }
 
 function renderReqCard(m) {
@@ -828,11 +1625,10 @@ function renderReqCard(m) {
       <td class="num"><input type="text" class="qty-in" value="${b.qty}"> ${m.unit}</td>
       <td>
         <div class="batch-attrs">
-          ${b.attrs.map(([ak,av,st]) => `<span class="a-pill ${st === 'warn' ? 'warn' : st === 'fail' ? 'fail' : ''}"><span class="a-k">${ak}:</span><span class="a-v">${av}</span></span>`).join('')}
+          ${b.attrs.map(([ak,av,st]) => attrPillHtml(ak, av, st, { editable: false })).join('')}
         </div>
       </td>
       <td style="width:40px;text-align:right">
-        <button class="icon-btn-mini" title="Edit"><i class="fa-solid fa-pen"></i></button>
         <button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button>
       </td>
     </tr>`).join('');
@@ -847,75 +1643,1024 @@ function renderReqCard(m) {
       <div style="text-align:right">${matchBadge}</div>
     </div>
     <table class="batch-table">
-      <thead><tr><th style="width:24%">Batch / Lot</th><th class="num" style="width:14%">Qty</th><th>Attribute Values (per batch)</th><th></th></tr></thead>
+      <thead><tr><th style="width:24%">Batch / Lot</th><th class="num" style="width:14%">Qty</th><th>Attribute Values (per batch · read-only)</th><th></th></tr></thead>
       <tbody>${batches}</tbody>
     </table>
     <div class="batch-add-row">
       <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Batch</button>
-      <span style="font-size:11px;color:var(--color-text-hint)">attribute values auto-filled from inventory snapshot · operator can adjust</span>
+      <span style="font-size:11px;color:var(--color-text-hint)">attribute values inherited from inventory snapshot</span>
     </div>
   </div>`;
 }
 
+function detectViolations(o, requiredAttrRange) {
+  const violations = [];
+  if (!requiredAttrRange) return violations;
+  for (const [ak, av] of o.attrs) {
+    const req = requiredAttrRange[ak];
+    if (!req) continue;
+    const num = parseFloat(av);
+    if (isNaN(num)) continue;
+    if ((req.min !== undefined && num < req.min) || (req.max !== undefined && num > req.max)) {
+      violations.push({ ak, av, req });
+    }
+  }
+  return violations;
+}
+
+function relationTypeBadge(rt) {
+  const m = {
+    SPLIT:     { ic: 'fa-code-fork',          cls: 'badge-info',    txt: 'SPLIT'     },
+    MERGE:     { ic: 'fa-object-group',       cls: 'badge-primary', txt: 'MERGE'     },
+    TRANSFORM: { ic: 'fa-arrows-turn-to-dots',cls: 'badge-neutral', txt: 'TRANSFORM' },
+    REWORK:    { ic: 'fa-rotate-right',       cls: 'badge-warning', txt: 'REWORK'    },
+  }[rt] || { ic: 'fa-link', cls: 'badge-neutral', txt: rt || '—' };
+  return `<span class="badge ${m.cls}" title="batch_relations.relation_type"><i class="fa-solid ${m.ic}"></i> ${m.txt}</span>`;
+}
+
+function batchConfigChip(cfg) {
+  if (!cfg) return '';
+  const matLbl = cfg.matNumGranularity === 'PER_PIECE' ? 'mat#/piece' : 'mat#/lot';
+  const batchLbl = cfg.batchGranularity === 'PER_PIECE' ? 'batch/piece'
+                 : cfg.batchGranularity === 'PER_PC'    ? 'batch/PC'
+                 : cfg.batchGranularity === 'PER_SM'    ? 'batch/SM (shared QC lot)'
+                 : 'batch/?';
+  return `<span class="badge badge-neutral" style="font-size:9px" title="batch_number_generation_config: material_number_granularity=${cfg.matNumGranularity}, batch_granularity=${cfg.batchGranularity}"><i class="fa-solid fa-fingerprint"></i> ${matLbl} · ${batchLbl}</span>`;
+}
+
 function renderProducedCard(p) {
+  const isSplit = p.outputs.length > 1;
+  const rt = p.relationType || (isSplit ? 'SPLIT' : 'TRANSFORM');
   const matchBadge = p.match === 'ok'
     ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i> Reconciled</span>'
     : '<span class="badge badge-warning">Off</span>';
-  const rows = p.outputs.map((o,i) => `
-    <tr>
+  const ind = (document.body.className.match(/industry-(\w+)/) || [])[1];
+  const deviationMode = (DATA[ind] && DATA[ind].deviationMode) || 'auto';
+  const rows = p.outputs.map(o => {
+    const violations = detectViolations(o, p.requiredAttrRange);
+    const violatedKeys = new Set(violations.map(v => v.ak));
+    const attrsHtml = o.attrs.map(([ak, av, st]) => {
+      const finalSt = violatedKeys.has(ak) ? 'fail' : st;
+      return attrPillHtml(ak, av, finalSt, { editable: true });
+    }).join('');
+    let footer = '';
+    if (violations.length > 0) {
+      const v = violations[0];
+      const range = `${v.req.min !== undefined ? v.req.min : ''}–${v.req.max !== undefined ? v.req.max : ''} ${v.req.unit || ''}`.trim();
+      const order = o.orderRef || 'allocated order';
+      const msg = `${v.ak} ${v.av} out of range ${range}`;
+      footer = deviationMode === 'auto'
+        ? `<tr class="deviation-row"><td colspan="4"><div class="deviation-footer auto"><i class="fa-solid fa-circle-xmark"></i> Auto-deallocated from <b>${order}</b> · ${msg} · this child now goes to stock <span style="opacity:.7;margin-left:4px">(operations.deviation_mode = AUTO_DEALLOCATE)</span></div></td></tr>`
+        : `<tr class="deviation-row"><td colspan="4"><div class="deviation-footer flag"><i class="fa-solid fa-flag"></i> Flagged for planner review · ${msg} · allocation to <b>${order}</b> pending decision <span style="opacity:.7;margin-left:4px">(operations.deviation_mode = FLAG_FOR_REVIEW)</span></div></td></tr>`;
+    }
+    const matSrc = rt === 'SPLIT'   ? 'cascaded from parent (PC11a)'
+                 : rt === 'MERGE'   ? `inherits from primary parent (line_seq=1${p.primaryParentSKU ? ' · ' + p.primaryParentSKU : ''})`
+                 : rt === 'TRANSFORM' ? '1:1 from input batch'
+                 : 'auto from batch_number_generation_config';
+    return `<tr>
       <td>
         <b>${o.batch}</b>
-        <div style="font-size:10px;color:var(--color-text-hint)">Material # ${o.material} · Mother batch propagated</div>
+        <div style="font-size:10px;color:var(--color-text-hint)">Material # ${o.material} · ${matSrc}</div>
       </td>
       <td class="num"><input type="text" class="qty-in" value="${o.qty}"> ${p.unit}</td>
       <td>
         <div class="batch-attrs">
-          ${o.attrs.map(([ak,av,st]) => `<span class="a-pill ${st === 'warn' ? 'warn' : st === 'fail' ? 'fail' : ''}"><span class="a-k">${ak}:</span><span class="a-v">${av}</span></span>`).join('')}
+          ${attrsHtml}
+          <button class="attr-add-btn" title="Add an unplanned attribute reading. Picker source: global_attributes WHERE use_for_inventory = true and the attribute is not already captured for this output. The attribute's global_attributes.column_reference decides which wide-column slot (ra_*_min / ra_*_max for ranges, va_* for discrete values) the value is written into — no free-slot allocation needed."><i class="fa-solid fa-plus"></i> attr</button>
         </div>
       </td>
       <td style="width:40px;text-align:right">
-        <button class="icon-btn-mini" title="Edit"><i class="fa-solid fa-pen"></i></button>
-        <button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button>
+        <button class="icon-btn-mini" title="Edit row"><i class="fa-solid fa-pen"></i></button>
+        ${isSplit ? '<button class="icon-btn-mini" title="Remove"><i class="fa-solid fa-times"></i></button>' : ''}
       </td>
-    </tr>`).join('');
+    </tr>${footer}`;
+  }).join('');
+  const headerIcon = isSplit
+    ? '<i class="fa-solid fa-code-fork" style="color:var(--color-primary);margin-right:4px"></i>'
+    : '';
+  const addRow = isSplit
+    ? `<div class="batch-add-row">
+        <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Output</button>
+        <span style="font-size:11px;color:var(--color-text-hint)">batch # auto from <code>batch_number_generation_config</code> · attrs default from input + measured</span>
+      </div>`
+    : '';
+  // PC11a cascade preview — fires at the first PC of an SM. Steel SPLIT cascades to N children;
+  // Discrete/Process MERGE cascades to a single SMC; PER_SM batch granularity additionally generates
+  // the SM-wide batch here (later PCs in the SM look it up by schedule_material_id).
+  let cascadeBanner = '';
+  if (p.firstPCofSM && p.outputs.length > 0) {
+    const cur = (DATA[ind] && DATA[ind].schedule && DATA[ind].schedule.current) || {};
+    const actual = cur.actualMaterialNumber || cur.plannedMaterialNumber || '';
+    const isPerSM = p.batchConfig && p.batchConfig.batchGranularity === 'PER_SM';
+    if (rt === 'SPLIT' || rt === 'TRANSFORM') {
+      const previewN = Math.min(3, p.outputs.length);
+      const previewItems = p.outputs.slice(0, previewN).map(o => `<code data-cascade-child>${o.material}</code>`).join(', ');
+      const more = p.outputs.length > previewN ? ` … <span style="opacity:.75">(+${p.outputs.length - previewN} more)</span>` : '';
+      cascadeBanner = `<div class="alert-inline info" style="margin:0 10px 6px"><i class="fa-solid fa-stream"></i> <b>PC11a cascade</b> — first PC of this SM. <code data-cascade-root>${actual || '(actual_material_number)'}</code> stamps every child material_number across the planned tree: ${previewItems}${more}. Default format <code>{parent}/{index}</code>.${isPerSM ? ' <span style="opacity:.85">SM-wide batch generated here.</span>' : ''}</div>`;
+    } else if (rt === 'MERGE') {
+      cascadeBanner = `<div class="alert-inline info" style="margin:0 10px 6px"><i class="fa-solid fa-stream"></i> <b>PC11a cascade</b> — first PC of this SM (flat model · single SMC). <code data-cascade-root>${actual || '(actual_material_number)'}</code> applied to this batch.${isPerSM ? ' SM-wide batch generated here · subsequent PCs in this SM will <b>reuse</b> it (lookup by <code>schedule_material_id</code>).' : ''}</div>`;
+    }
+  } else if (!p.firstPCofSM && p.batchConfig && p.batchConfig.batchGranularity === 'PER_SM') {
+    cascadeBanner = `<div class="alert-inline info" style="margin:0 10px 6px"><i class="fa-solid fa-recycle"></i> <b>PER_SM batch reuse</b> — this SM's batch was generated by an earlier PC; this PC links to it via <code>schedule_material_id</code> rather than creating a new batch.</div>`;
+  }
+  // IC5a mass-balance reconciliation — Steel SPLIT inventory-anchor only.
+  let massBalanceBanner = '';
+  if (p.massBalance && p.massBalance.applies) {
+    const mb = p.massBalance;
+    const lhs = mb.sumProduced + mb.scrap;
+    const diff = Math.abs(lhs - mb.consumed);
+    const pass = diff <= (mb.tolerance || 0);
+    const cls = pass ? 'success' : 'warn';
+    const icon = pass ? 'fa-circle-check' : 'fa-triangle-exclamation';
+    const msg = pass
+      ? `Σ produced (<b>${mb.sumProduced.toFixed(2)} ${p.unit}</b>) + scrap (<b>${mb.scrap.toFixed(2)} ${p.unit}</b>) = consumed (<b>${mb.consumed.toFixed(2)} ${p.unit}</b>) <span style="opacity:.7">· within ±${mb.tolerance} ${p.unit} (operations.precision)</span>`
+      : `Σ produced + scrap (${lhs.toFixed(2)}) ≠ consumed (${mb.consumed.toFixed(2)}) — out by ${diff.toFixed(2)} ${p.unit}. Confirmation blocked until reconciled (IC5a).`;
+    massBalanceBanner = `<div class="alert-inline ${cls}" style="margin:0 10px 6px"><i class="fa-solid ${icon}"></i> <b>IC5a mass balance</b> · ${msg}</div>`;
+  }
+  // Yield-as-metric badge for Process MERGE/TRANSFORM where physics determines output.
+  let yieldNote = '';
+  if (p.yieldVarianceMetricOnly) {
+    yieldNote = `<div class="alert-inline info" style="margin:0 10px 6px;font-size:10px"><i class="fa-solid fa-circle-info"></i> Yield variance is a captured metric here — IC5 validates consumed against planned BOM, not against actual produced. Under-production does not fail the PC.</div>`;
+  }
+  const summaryAlert = rt === 'SPLIT'
+    ? '<i class="fa-solid fa-code-fork"></i> writes <code>batch_relations</code> rows: relation_type=SPLIT · one row per child'
+    : rt === 'MERGE'
+      ? '<i class="fa-solid fa-object-group"></i> writes <code>batch_relations</code> rows: relation_type=MERGE · one row per consumed parent'
+      : rt === 'TRANSFORM'
+        ? '<i class="fa-solid fa-arrows-turn-to-dots"></i> writes <code>batch_relations</code> row: relation_type=TRANSFORM · 1:1 lineage'
+        : '<i class="fa-solid fa-rotate-right"></i> writes <code>batch_relations</code> row: relation_type=REWORK';
+  const actualLabel = isSplit ? 'Actual (Σ outputs)' : 'Actual';
+  const producedLabel = isSplit ? 'Total Produced' : 'Produced';
+  const colHeader = isSplit ? 'Attribute Values (per output)' : 'Attribute Values';
   return `<div class="req-card output">
-    <div class="req-card-head">
+    <div class="req-card-head" style="grid-template-columns:1.6fr auto auto auto auto">
       <div>
-        <div class="m-name"><i class="fa-solid fa-code-fork" style="color:var(--color-primary);margin-right:4px"></i>${p.name}</div>
+        <div class="m-name">${headerIcon}${p.name}</div>
         <div class="m-meta">${p.meta}</div>
       </div>
       <div class="m-fig"><div class="fl">Target</div><div class="fv prim">${p.target} ${p.unit}</div></div>
-      <div class="m-fig"><div class="fl">Actual (Σ outputs)</div><div class="fv ${p.match === 'ok' ? 'alloc-ok' : 'alloc-bad'}">${p.actual} ${p.unit}</div></div>
+      <div class="m-fig"><div class="fl">${actualLabel}</div><div class="fv ${p.match === 'ok' ? 'alloc-ok' : 'alloc-bad'}">${p.actual} ${p.unit}</div></div>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">${relationTypeBadge(rt)}${batchConfigChip(p.batchConfig)}</div>
       <div style="text-align:right">${matchBadge}</div>
     </div>
+    ${cascadeBanner}${massBalanceBanner}${yieldNote}
     <table class="batch-table">
       <thead><tr>
         <th style="width:24%">Output Batch / Material #</th>
         <th class="num" style="width:14%">Qty</th>
-        <th>Attribute Values (per output)</th><th></th>
+        <th>${colHeader}</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="batch-add-row">
-      <button class="btn-add"><i class="fa-solid fa-plus"></i> Add Output</button>
-      <span style="font-size:11px;color:var(--color-text-hint)">batch # auto from BatchNumberGenerationConfig · attrs default from input + measured</span>
-    </div>
+    ${addRow}
     <div class="output-summary">
       <div class="ov"><div class="l">Suggested (BOM × Yield)</div><div class="v">${p.target} ${p.unit}</div></div>
-      <div class="ov"><div class="l">Total Produced</div><div class="v prim">${p.actual} ${p.unit}</div></div>
+      <div class="ov"><div class="l">${producedLabel}</div><div class="v prim">${p.actual} ${p.unit}</div></div>
       <div class="ov"><div class="l">Scrap / Loss</div><div class="v warn">${p.scrap} ${p.unit}</div></div>
-      <div class="ov"><div class="l">Yield</div><div class="v success">${p.yieldPct}</div></div>
-      <div style="margin-left:auto" class="alert-inline success"><i class="fa-solid fa-circle-check"></i> Σ outputs + scrap reconciles to consumed input · BatchRelations row will be written: SPLIT</div>
+      <div class="ov"><div class="l">Yield${p.yieldVarianceMetricOnly ? ' <span style="font-size:9px;font-weight:400;opacity:.7">(metric)</span>' : ''}</div><div class="v success">${p.yieldPct}</div></div>
+      <div style="margin-left:auto" class="alert-inline ${rt === 'SPLIT' ? 'success' : 'info'}">${summaryAlert}</div>
     </div>
   </div>`;
 }
+
+// === Inline attribute editing ===
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const UNIT_TOKENS = new Set([
+  'mm','cm','m','kg','g','t','L','mL','pcs',
+  '%','ppm','°C','°F','cP','HRC','Nm','min','h','rpm',
+  'm³/h','kN','MWh','kWh','m³','cycles','cuts','bar',
+  'cc/min','g/mL','(Gardner)','µm','sec','s'
+]);
+function splitVal(s) {
+  const str = String(s).trim();
+  // number(s) (with optional sign / decimal / range / slash) + space + unit
+  const m = str.match(/^([\-+]?[\d\.,]+(?:[\-–\/][\d\.,]+)?)\s+(.+)$/);
+  if (m && UNIT_TOKENS.has(m[2])) return { val: m[1], unit: m[2] };
+  // number stuck to % or ° (no space)
+  const m2 = str.match(/^([\-+]?[\d\.,]+)(%|°[CF]?)$/);
+  if (m2) return { val: m2[1], unit: m2[2] };
+  return { val: str, unit: '' };
+}
+function attrPillHtml(ak, av, st, opts) {
+  const sv = splitVal(av);
+  const cls = st === 'warn' ? 'warn' : st === 'fail' ? 'fail' : '';
+  const isEmpty = !sv.val || sv.val === '—';
+  const valCls = isEmpty ? 'empty' : '';
+  const title = (opts && opts.editable) ? 'Click value to edit' : '';
+  const unitHtml = sv.unit ? `<span class="a-u">${escapeHtml(sv.unit)}</span>` : '';
+  return `<span class="a-pill ${cls}" title="${title}"><span class="a-k">${escapeHtml(ak)}:</span><span class="a-v ${valCls}">${escapeHtml(sv.val)}</span>${unitHtml}</span>`;
+}
+
+function enterAttrEditMode(span) {
+  if (span.isContentEditable) return;
+  const pill = span.closest('.a-pill');
+  const pureValue = span.textContent.trim();
+  const wasAdded = pill.classList.contains('added');
+  const hadMark = !!pill.querySelector(':scope > .a-edited-mark, :scope > .a-added-mark');
+
+  span.contentEditable = 'true';
+  span.spellcheck = false;
+  span.focus();
+
+  // Select all text inside the span so first keystroke replaces it
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  let cancelled = false;
+  let done = false;
+
+  const finalize = (val, showMark) => {
+    if (done) return;
+    done = true;
+    span.contentEditable = 'false';
+    // Re-split in case the operator typed "203 cm" (value + unit) instead of just the number;
+    // unit slot updates accordingly. If only a number was entered, keep the existing unit.
+    const sv = splitVal(val);
+    span.textContent = sv.val;
+    // Empty-value placeholder ("—") class — clear when a real value is entered, restore otherwise
+    span.classList.toggle('empty', !sv.val || sv.val === '—');
+    let unitSpan = pill.querySelector(':scope > .a-u');
+    if (sv.unit) {
+      if (!unitSpan) {
+        unitSpan = document.createElement('span');
+        unitSpan.className = 'a-u';
+        span.insertAdjacentElement('afterend', unitSpan);
+      }
+      unitSpan.textContent = sv.unit;
+    }
+    pill.querySelectorAll(':scope > .a-edited-mark, :scope > .a-added-mark').forEach(n => n.remove());
+    if (showMark) {
+      const mark = document.createElement('i');
+      if (wasAdded) {
+        mark.className = 'fa-solid fa-circle-plus a-added-mark';
+        mark.title = 'Added by operator';
+      } else {
+        mark.className = 'fa-solid fa-pen-to-square a-edited-mark';
+        mark.title = 'Edited by operator · ' + new Date().toLocaleTimeString();
+      }
+      pill.appendChild(mark);
+    }
+    span.removeEventListener('keydown', onKey);
+    span.removeEventListener('blur', onBlur);
+    span.removeEventListener('paste', onPaste);
+  };
+
+  const onBlur = () => {
+    if (cancelled) return;
+    const newVal = span.textContent.trim() || pureValue;
+    const changed = newVal !== pureValue;
+    if (changed && !wasAdded && !pill.classList.contains('warn') && !pill.classList.contains('fail')) {
+      pill.classList.add('edited');
+    }
+    finalize(newVal, changed || hadMark || wasAdded);
+  };
+
+  const onKey = (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); span.blur(); }
+    else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      cancelled = true;
+      finalize(pureValue, hadMark);
+    }
+  };
+
+  // Force plain-text paste so we don't get rich HTML inside the pill
+  const onPaste = (ev) => {
+    ev.preventDefault();
+    const text = (ev.clipboardData || window.clipboardData).getData('text');
+    document.execCommand('insertText', false, text);
+  };
+
+  span.addEventListener('keydown', onKey);
+  span.addEventListener('blur', onBlur);
+  span.addEventListener('paste', onPaste);
+}
+
+function showAddAttrForm(btn) {
+  if (btn.parentElement.querySelector('.attr-add-form')) return;
+  btn.style.display = 'none';
+  const form = document.createElement('span');
+  form.className = 'attr-add-form';
+  form.innerHTML = `
+    <input class="k" placeholder="key" maxlength="20" />
+    <span class="colon">:</span>
+    <input class="v" placeholder="value" maxlength="30" />
+    <i class="fa-solid fa-check ok" title="Save (Enter)"></i>
+    <i class="fa-solid fa-times cancel" title="Cancel (Esc)"></i>
+  `;
+  btn.parentElement.insertBefore(form, btn);
+  const kIn = form.querySelector('input.k');
+  kIn.focus();
+  form.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); commitAddAttr(form); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); cancelAddAttr(form); }
+    });
+  });
+}
+
+function commitAddAttr(form) {
+  const k = form.querySelector('input.k').value.trim();
+  const v = form.querySelector('input.v').value.trim();
+  if (!k) { form.querySelector('input.k').focus(); return; }
+  if (!v) { form.querySelector('input.v').focus(); return; }
+  const cell = form.parentElement;
+  const pill = document.createElement('span');
+  pill.className = 'a-pill added';
+  pill.title = 'Operator-added attribute · click value to edit';
+  const sv = splitVal(v);
+  const unitHtml = sv.unit ? `<span class="a-u">${escapeHtml(sv.unit)}</span>` : '';
+  pill.innerHTML = `<span class="a-k">${escapeHtml(k)}:</span><span class="a-v">${escapeHtml(sv.val)}</span>${unitHtml}<i class="fa-solid fa-circle-plus a-added-mark" title="Added by operator"></i>`;
+  cell.insertBefore(pill, form);
+  cancelAddAttr(form);
+}
+
+function cancelAddAttr(form) {
+  const cell = form.parentElement;
+  const btn = cell.querySelector('.attr-add-btn');
+  form.remove();
+  if (btn) btn.style.display = '';
+}
+
+document.addEventListener('click', (e) => {
+  // Produced-card pills are always editable. Consumed-card pills are editable only in free-prod-mode.
+  const inFreeProd = document.body.classList.contains('free-prod-mode');
+  const editableSelector = inFreeProd
+    ? '.req-card .batch-table .a-pill .a-v'
+    : '.req-card.output .batch-table .a-pill .a-v';
+  const valueSpan = e.target.closest(editableSelector);
+  if (valueSpan) { e.stopPropagation(); enterAttrEditMode(valueSpan); return; }
+  const addBtn = e.target.closest('.attr-add-btn');
+  if (addBtn) { e.stopPropagation(); showAddAttrForm(addBtn); return; }
+  const okIcon = e.target.closest('.attr-add-form .ok');
+  if (okIcon) { e.stopPropagation(); commitAddAttr(okIcon.parentElement); return; }
+  const cancelIcon = e.target.closest('.attr-add-form .cancel');
+  if (cancelIcon) { e.stopPropagation(); cancelAddAttr(cancelIcon.parentElement); return; }
+
+  // Equipment picker open/close
+  const closeBtn = e.target.closest('#eq-close');
+  if (closeBtn) { e.stopPropagation(); document.getElementById('eq-trigger').classList.remove('open'); return; }
+  const insidePicker = e.target.closest('#eq-picker');
+  const onTrigger = e.target.closest('#eq-trigger');
+  if (onTrigger && !insidePicker) { e.stopPropagation(); onTrigger.classList.toggle('open'); return; }
+  if (!onTrigger) {
+    const trig = document.getElementById('eq-trigger');
+    if (trig) trig.classList.remove('open');
+  }
+});
+
+// Equipment checkbox toggle
+document.addEventListener('change', (e) => {
+  const cb = e.target.closest('#eq-list input[type="checkbox"]');
+  if (cb) {
+    const idx = parseInt(cb.dataset.eqIdx, 10);
+    const industry = (document.body.className.match(/industry-(\w+)/) || [])[1];
+    if (industry && DATA[industry] && DATA[industry].equipmentOptions[idx]) {
+      DATA[industry].equipmentOptions[idx].selected = cb.checked;
+      applyEquipmentSelection(DATA[industry]);
+    }
+  }
+});
 
 document.querySelectorAll('.industry-switch button').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.industry-switch button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
+    // Industry change resets the free-prod picker selection (different anchor list per industry)
+    if (freeProdState.active) {
+      freeProdState.picked = null;
+      freeProdState.producedRows = [];
+      freeProdState.consumedSpec = null;
+      const search = document.getElementById('fp-search');
+      if (search) search.value = '';
+    }
     render(b.dataset.industry);
   });
+});
+
+// === HOLD WORKFLOW ===
+const holdState = { active: false, scope: '', reason: '', note: '' };
+
+function openHoldModal() {
+  document.getElementById('hold-reason').value = '';
+  document.getElementById('hold-note').value = '';
+  document.getElementById('hold-err').textContent = '';
+  document.getElementById('hold-modal').classList.add('open');
+  setTimeout(() => document.getElementById('hold-reason').focus(), 50);
+}
+function closeHoldModal() { document.getElementById('hold-modal').classList.remove('open'); }
+
+function applyHold() {
+  const reason = document.getElementById('hold-reason').value;
+  const note = document.getElementById('hold-note').value.trim();
+  if (!reason) {
+    document.getElementById('hold-err').textContent = 'Hold reason is mandatory';
+    document.getElementById('hold-reason').focus();
+    return;
+  }
+  holdState.active = true;
+  holdState.scope = 'Inventory';
+  holdState.reason = reason;
+  holdState.note = note;
+
+  document.body.classList.add('is-held');
+  document.getElementById('hold-banner').classList.add('active');
+  document.getElementById('hold-banner-reason').textContent = reason;
+  document.getElementById('hold-banner-note').textContent = note ? `· "${note}"` : '';
+
+  document.querySelectorAll('.btn-hold-toggle').forEach(b => {
+    b.innerHTML = '<i class="fa-solid fa-play"></i> Release';
+    b.classList.remove('btn-outline');
+    b.classList.add('btn-warning');
+  });
+  document.querySelectorAll('.btn-confirm-toggle').forEach(b => b.disabled = true);
+  closeHoldModal();
+}
+
+function releaseHold() {
+  holdState.active = false;
+  document.body.classList.remove('is-held');
+  document.getElementById('hold-banner').classList.remove('active');
+  document.querySelectorAll('.btn-hold-toggle').forEach(b => {
+    b.innerHTML = '<i class="fa-solid fa-pause"></i> Hold';
+    b.classList.remove('btn-warning');
+    b.classList.add('btn-outline');
+  });
+  document.querySelectorAll('.btn-confirm-toggle').forEach(b => b.disabled = false);
+}
+
+document.querySelectorAll('.btn-hold-toggle').forEach(b => {
+  b.addEventListener('click', () => holdState.active ? releaseHold() : openHoldModal());
+});
+
+function getCurrentIndustry() {
+  const m = document.body.className.match(/industry-(\w+)/);
+  return m && m[1];
+}
+
+// ===================================================================
+// FREE PRODUCTION
+// Steel: three modes — schedule-driven (default), free-prod case (a) inventory-anchor,
+// free-prod case (b) output-anchor (no consumed input — legacy seeding / external heat).
+// Process & Discrete: order-anchor only (case a equivalent).
+// ===================================================================
+const freeProdState = {
+  active: false,
+  steelOutputAnchor: false, // Steel only: case (b) toggle — no consumed input
+  picked: null,             // { kind: 'input' | 'order', value: <selected entry> }
+  producedRows: [],         // [{ batchId, qty, scrap, attrs:[[k,v]] }]
+  consumedSpec: null,       // BOM spec used for reactive recompute
+};
+
+function applyStepBadgeNumbers() {
+  // In free-prod-mode the operator drives produced first; consumed is computed.
+  // Swap badge numbers 3 ↔ 5 to keep them consistent with visual order.
+  const inFreeProd = document.body.classList.contains('free-prod-mode');
+  const map = inFreeProd
+    ? { consumed: 4, produced: 3, params: 5 }
+    : { consumed: 3, produced: 5, params: 4 };
+  Object.entries(map).forEach(([card, num]) => {
+    const el = document.querySelector(`[data-card="${card}"] .step-badge`);
+    if (el) el.textContent = num;
+  });
+}
+
+function enterFreeProdMode() {
+  freeProdState.active = true;
+  freeProdState.steelOutputAnchor = false;
+  freeProdState.picked = null;
+  freeProdState.producedRows = [];
+  freeProdState.consumedSpec = null;
+  document.body.classList.add('free-prod-mode');
+  applyStepBadgeNumbers();
+  renderFreeProdPicker();
+  renderFreeProdConsumed();
+  renderFreeProdProduced();
+}
+
+function exitFreeProdMode() {
+  freeProdState.active = false;
+  freeProdState.steelOutputAnchor = false;
+  freeProdState.picked = null;
+  freeProdState.producedRows = [];
+  freeProdState.consumedSpec = null;
+  document.body.classList.remove('free-prod-mode');
+  applyStepBadgeNumbers();
+  const ind = getCurrentIndustry();
+  if (ind) render(ind);
+}
+
+function setSteelFreeProdMode(outputAnchor) {
+  if (getCurrentIndustry() !== 'steel') return;
+  freeProdState.steelOutputAnchor = !!outputAnchor;
+  freeProdState.picked = outputAnchor ? { kind: 'output', value: { sku: 'Output-anchor batch (legacy / external)', unit: 't', qty: 0 } } : null;
+  freeProdState.producedRows = [];
+  freeProdState.consumedSpec = null;
+  renderFreeProdPicker();
+  renderFreeProdConsumed();
+  renderFreeProdProduced();
+}
+
+function renderFreeProdPicker() {
+  // In free-prod-mode the LEFT pane is repurposed as the picker. The RIGHT-pane Free Production
+  // card shows the picked anchor summary (or a "pick from left" hint if nothing picked yet).
+  renderFreeProdLeftPicker();
+  renderFreeProdRightSummary();
+}
+
+function renderFreeProdLeftPicker() {
+  const ind = getCurrentIndustry();
+  const fp = DATA[ind] && DATA[ind].freeProduction;
+  if (!fp) return;
+  const isSteel = ind === 'steel';
+  const outputAnchor = isSteel && freeProdState.steelOutputAnchor;
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  const items = outputAnchor ? [] : (isInventory ? (fp.availableInputs || []) : (fp.availableOrders || []));
+  const search = (document.getElementById('sched-filter')?.value || '').toLowerCase();
+
+  // Update left-card header text
+  const title = document.getElementById('left-card-title');
+  const icon = document.getElementById('left-card-icon');
+  const count = document.getElementById('sched-count');
+  if (title) title.textContent = outputAnchor ? 'Free Production · Output-anchor (b)' : (isInventory ? 'Free Production · Pick Inventory (a)' : 'Free Production · Pick Order');
+  if (icon) icon.className = outputAnchor ? 'fa-solid fa-arrow-up-from-bracket' : (isInventory ? 'fa-solid fa-cube' : 'fa-solid fa-clipboard-list');
+  if (count) count.textContent = outputAnchor ? 'no input · output-only' : `${items.length} available`;
+
+  // Update placeholder text on filter input
+  const filt = document.getElementById('sched-filter');
+  if (filt) filt.placeholder = outputAnchor ? '— filter not applicable —' : (isInventory ? 'Filter inventory…' : 'Filter orders…');
+
+  // Render picker rows into #sched-list
+  const list = document.getElementById('sched-list');
+  if (!list) return;
+  const filtered = items.filter(item => {
+    if (!search) return true;
+    const hay = isInventory
+      ? `${item.batchId} ${item.materialNumber} ${item.sku}`.toLowerCase()
+      : `${item.orderCode} ${item.customer} ${item.sku}`.toLowerCase();
+    return hay.includes(search);
+  });
+
+  let html = `<li class="free-prod-divider"><button class="free-prod-cta" id="back-to-queue-cta"><i class="fa-solid fa-arrow-left"></i> Back to Schedule Queue</button></li>`;
+  // Steel-only mode toggle — case (a) inventory anchor vs case (b) output anchor
+  if (isSteel) {
+    html += `<li class="free-prod-divider" style="display:flex;gap:4px;padding:8px 8px 6px">
+      <button id="fp-mode-a" class="free-prod-cta" style="flex:1;padding:6px;font-size:11px;${!outputAnchor ? 'background:var(--color-primary-light);color:var(--color-primary-dark);border-style:solid' : ''}"><i class="fa-solid fa-cube"></i> (a) Inventory anchor</button>
+      <button id="fp-mode-b" class="free-prod-cta" style="flex:1;padding:6px;font-size:11px;${outputAnchor ? 'background:var(--color-primary-light);color:var(--color-primary-dark);border-style:solid' : ''}" title="Legacy seeding / externally-cast heats / untracked re-melt — no consumed input recorded; IC5a mass balance does not apply."><i class="fa-solid fa-arrow-up-from-bracket"></i> (b) Output anchor</button>
+    </li>`;
+  }
+  if (outputAnchor) {
+    html += `<li class="queue-empty-state"><i class="fa-solid fa-arrow-up-from-bracket empty-ic"></i><div style="text-align:center;padding:8px">Output-anchor mode · no input batch is consumed.<br><span style="opacity:.7">Used for legacy seeding, externally-cast heats, untracked re-melt.</span><br><br>Skip directly to <b>Produced Output</b> on the right.</div></li>`;
+    list.innerHTML = html;
+    return;
+  }
+  if (!filtered.length) {
+    html += '<li class="queue-empty-state"><div style="color:var(--color-text-hint);font-style:italic">No matches</div></li>';
+  } else {
+    html += filtered.map(item => {
+      const pickedCls = freeProdState.picked && (
+        (isInventory && freeProdState.picked.value.batchId === item.batchId) ||
+        (!isInventory && freeProdState.picked.value.orderCode === item.orderCode)
+      ) ? 'active' : '';
+      if (isInventory) {
+        return `<li class="sched-item ${pickedCls}" data-fp-pick="${item.batchId}" data-schedule="" data-material="${item.materialNumber}" data-order="">
+          <div class="row1"><span class="sch-num">${item.materialNumber}</span><span class="charge-pill charged">AVAILABLE</span></div>
+          <div class="row2"><span class="mat">${item.sku}</span></div>
+          <div class="row3"><span style="color:var(--color-text-hint)">qty ${item.qty} ${item.unit}</span></div>
+        </li>`;
+      } else {
+        return `<li class="sched-item ${pickedCls}" data-fp-pick="${item.orderCode}" data-schedule="" data-material="" data-order="${item.orderCode}">
+          <div class="row1"><span class="sch-num">${item.orderCode}</span><span class="charge-pill charged">PENDING</span></div>
+          <div class="row2"><span class="mat">${item.customer}</span> · ${item.sku}</div>
+          <div class="row3"><span style="color:var(--color-text-hint)">qty ${item.qty} ${item.unit} · due ${item.delivery}</span></div>
+        </li>`;
+      }
+    }).join('');
+  }
+  list.innerHTML = html;
+}
+
+function renderFreeProdRightSummary() {
+  const ind = getCurrentIndustry();
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  const isSteel = ind === 'steel';
+  const outputAnchor = isSteel && freeProdState.steelOutputAnchor;
+  const summary = document.getElementById('fp-pick-summary');
+  const actions = document.getElementById('fp-actions');
+  if (!summary || !actions) return;
+
+  if (outputAnchor) {
+    summary.innerHTML = `<h3><i class="fa-solid fa-arrow-up-from-bracket"></i> Steel free-production case (b) · output-anchor</h3>
+       <div class="meta">No input batch consumed. Used for legacy seeding, externally-cast heats, untracked re-melt entering the MES for the first time.</div>
+       <div class="meta" style="margin-top:6px"><i class="fa-solid fa-circle-info"></i> IC5a mass-balance does <b>not</b> apply (no consumed side). Skip Consumed Materials and add the produced output(s) directly.</div>`;
+    actions.innerHTML = `<button class="btn btn-secondary" id="fp-change-btn"><i class="fa-solid fa-rotate-left"></i> Change mode</button>`;
+    return;
+  }
+
+  if (!freeProdState.picked) {
+    summary.innerHTML = `<div style="padding:12px 14px;border:1px dashed var(--color-border);border-radius:4px;background:var(--color-bg-alt);color:var(--color-text-muted);font-size:12px;display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-arrow-left" style="color:var(--color-primary)"></i>
+      ${isSteel ? 'Steel · pick an inventory batch (case a) on the left, or switch to output-anchor (case b).' : 'Pick an anchor (' + (isInventory ? 'input batch' : 'order line') + ') from the panel on the left.'}
+    </div>`;
+    actions.innerHTML = '';
+    return;
+  }
+
+  const v = freeProdState.picked.value;
+  summary.innerHTML = isInventory
+    ? `<h3><i class="fa-solid fa-cube"></i> ${v.materialNumber} · ${v.qty} ${v.unit}</h3>
+       <div class="meta">${v.sku}</div>
+       <div class="meta" style="margin-top:6px"><i class="fa-solid fa-circle-info"></i> Steel free-production case (a) · inventory anchor. Consumed = picked input. IC5a mass-balance applies. Attribute values entered manually.</div>`
+    : `<h3><i class="fa-solid fa-clipboard-list"></i> ${v.orderCode} · ${v.customer}</h3>
+       <div class="meta">${v.sku} · ${v.qty} ${v.unit} · due ${v.delivery}</div>
+       <div class="meta" style="margin-top:6px"><i class="fa-solid fa-circle-info"></i> Consumed materials proposed from BOM. Quantities recompute as produced qty is entered. Attribute values entered manually.</div>`;
+  actions.innerHTML = `
+    <button class="btn btn-secondary" id="fp-change-btn"><i class="fa-solid fa-rotate-left"></i> Change selection</button>
+  `;
+}
+
+function pickFreeProdAnchor(itemId) {
+  const ind = getCurrentIndustry();
+  const fp = DATA[ind] && DATA[ind].freeProduction;
+  if (!fp) return;
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  const items = isInventory ? fp.availableInputs : fp.availableOrders;
+  const item = items.find(i => (isInventory ? i.batchId : i.orderCode) === itemId);
+  if (!item) return;
+  freeProdState.picked = { kind: isInventory ? 'input' : 'order', value: item };
+  freeProdState.producedRows = [];
+  renderFreeProdPicker();
+  renderFreeProdConsumed();
+  renderFreeProdProduced();
+}
+
+function clearFreeProdSelection() {
+  freeProdState.picked = null;
+  freeProdState.producedRows = [];
+  freeProdState.consumedSpec = null;
+  renderFreeProdPicker();
+  renderFreeProdConsumed();
+  renderFreeProdProduced();
+}
+
+function renderFreeProdConsumed() {
+  const list = document.getElementById('materials');
+  if (!list) return;
+  // Steel free-prod case (b) output-anchor: no consumed input.
+  if (freeProdState.steelOutputAnchor) {
+    list.innerHTML = `<div class="fp-empty-hint" style="color:var(--color-info);font-style:normal;padding:24px"><i class="fa-solid fa-circle-info" style="margin-right:6px"></i><b>Output-anchor mode</b> — no consumed input recorded for this PC. <span style="color:var(--color-text-hint)">IC5a mass-balance does not apply; this is a "seed" PC for an untracked / externally-cast batch entering the system.</span></div>`;
+    freeProdState.consumedSpec = null;
+    return;
+  }
+  if (!freeProdState.picked) {
+    list.innerHTML = '<div class="fp-empty-hint">Pick an anchor in the left panel to load consumed materials.</div>';
+    freeProdState.consumedSpec = null;
+    return;
+  }
+  const ind = getCurrentIndustry();
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  let materials;
+  if (isInventory) {
+    const v = freeProdState.picked.value;
+    materials = [{
+      name: `Mother input · ${v.materialNumber}`,
+      meta: `IM · picked input · 0 of ${v.qty} ${v.unit} consumed`,
+      unit: v.unit,
+      req: '0', alloc: '0', match: 'ok',
+      _isInputBatch: true,
+      _inputQty: v.qty,
+      batches: [{ batch: v.batchId, heat: 'Picked from inventory', qty: '0', attrs: v.attrKeys.map(k => [k, '—', 'ok']) }],
+    }];
+  } else {
+    const fp = DATA[ind].freeProduction;
+    materials = (fp.bom || []).map(b => ({
+      name: b.name,
+      meta: `BOM · ${(+b.ratio).toFixed(3)} ${b.unit} per produced unit · attribute values entered manually`,
+      unit: b.unit,
+      req: '0', alloc: '0', match: 'ok',
+      _ratio: b.ratio,
+      batches: [{ batch: '— pick batch —', heat: 'Operator picks from inventory', qty: '0', attrs: b.attrKeys.map(k => [k, '—', 'ok']) }],
+    }));
+  }
+  freeProdState.consumedSpec = materials;
+  list.innerHTML = materials.map(m => renderReqCard(m)).join('') +
+    `<div style="padding:8px 4px;text-align:left">
+       <button class="consumed-add-btn"><i class="fa-solid fa-plus"></i> Add Material</button>
+       <span style="font-size:10px;color:var(--color-text-hint);margin-left:6px">picker UI deferred · adds a placeholder row</span>
+     </div>`;
+}
+
+function renderFreeProdProduced() {
+  const list = document.getElementById('produced-list');
+  if (!list) return;
+  if (!freeProdState.picked && !freeProdState.steelOutputAnchor) {
+    list.innerHTML = '<div class="fp-empty-hint">Pick an anchor in the left panel first.</div>';
+    return;
+  }
+  const ind = getCurrentIndustry();
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  const isSteel = ind === 'steel';
+  const outputAnchor = isSteel && freeProdState.steelOutputAnchor;
+  const v = outputAnchor ? { sku: 'Output-anchor batch (legacy / external)', unit: 't', qty: 0 } : freeProdState.picked.value;
+  const sku = v.sku;
+  const orderRef = (isInventory || outputAnchor) ? '' : v.orderCode;
+  const producedAttrKeys = (isInventory || outputAnchor) ? (DATA[ind].freeProduction.producedAttrKeys || []) : (v.producedAttrKeys || []);
+  const yymmdd = (new Date()).toISOString().slice(2, 10).replace(/-/g, '');
+
+  const rowsHtml = freeProdState.producedRows.map((row, idx) => {
+    const attrSource = row.attrs.length ? row.attrs : producedAttrKeys.map(k => [k, '—']);
+    const attrPills = attrSource
+      .map(([k, val]) => `<span class="a-pill" title="Click value to edit"><span class="a-k">${escapeHtml(k)}:</span><span class="a-v ${val === '—' ? 'empty' : ''}">${escapeHtml(val)}</span></span>`)
+      .join('');
+    const removeBtn = isSteel ? `<button class="icon-btn-mini fp-remove-row" data-fp-row="${idx}" title="Remove daughter"><i class="fa-solid fa-times"></i></button>` : '';
+    const dataUnit = isInventory ? v.unit : v.unit;
+    const placeholder = `FP-${yymmdd}-${String(idx + 1).padStart(3, '0')}`;
+    return `<div class="req-card output">
+      <div class="req-card-head">
+        <div>
+          <div class="m-name">${sku}${isSteel ? ' · daughter ' + (idx + 1) : ''}</div>
+          <div class="m-meta">FG · operator-added · ${orderRef ? 'producing for ' + orderRef : 'no order anchor (allocation handled later)'}</div>
+        </div>
+        <div class="m-fig"><div class="fl">Qty</div><div class="fv prim"><input type="text" class="qty-in fp-qty-in" data-fp-row="${idx}" value="${escapeHtml(row.qty || '')}" placeholder="0" style="width:80px;text-align:right"> ${dataUnit}</div></div>
+        <div class="m-fig"><div class="fl">Scrap</div><div class="fv warn"><input type="text" class="qty-in fp-scrap-in" data-fp-row="${idx}" value="${escapeHtml(row.scrap || '')}" placeholder="0" style="width:60px;text-align:right"> ${dataUnit}</div></div>
+        <div style="text-align:right">${removeBtn}</div>
+      </div>
+      <table class="batch-table"><thead><tr>
+        <th style="width:32%">Output Batch / Material #</th>
+        <th>Attribute Values (entered manually)</th>
+      </tr></thead>
+      <tbody><tr>
+        <td><b><input type="text" class="qty-in fp-batch-in" data-fp-row="${idx}" value="${escapeHtml(row.batchId || '')}" placeholder="${placeholder}" style="width:auto;min-width:160px;text-align:left"></b><div style="font-size:10px;color:var(--color-text-hint);margin-top:2px">Auto-suggested · operator can override</div></td>
+        <td><div class="batch-attrs">${attrPills}<button class="attr-add-btn" title="Add attribute"><i class="fa-solid fa-plus"></i> attr</button></div></td>
+      </tr></tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  const showCta = isSteel || freeProdState.producedRows.length === 0;
+  const cta = showCta
+    ? `<button class="fp-cta" id="fp-add-produced"><i class="fa-solid fa-plus-circle"></i> Add Produced Output${isSteel && freeProdState.producedRows.length > 0 ? ' (another daughter)' : ''}</button>`
+    : '';
+  list.innerHTML = (rowsHtml || '') + (rowsHtml ? '<div style="height:8px"></div>' : '') + cta;
+}
+
+function addFreeProdProducedRow() {
+  const ind = getCurrentIndustry();
+  const isSteel = ind === 'steel';
+  if (!isSteel && freeProdState.producedRows.length >= 1) return;
+  freeProdState.producedRows.push({ batchId: '', qty: '', scrap: '', attrs: [] });
+  renderFreeProdProduced();
+  recalcConsumedFromProduced();
+}
+
+function recalcConsumedFromProduced() {
+  if (!freeProdState.active || !freeProdState.picked) return;
+  const ind = getCurrentIndustry();
+  const isInventory = DATA[ind].industryAnchor === 'inventory';
+  const totalProduced = freeProdState.producedRows.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+  const totalScrap = freeProdState.producedRows.reduce((s, r) => s + (parseFloat(r.scrap) || 0), 0);
+
+  if (isInventory) {
+    const v = freeProdState.picked.value;
+    const consumedTotal = totalProduced + totalScrap;
+    const remaining = (v.qty - consumedTotal);
+    document.querySelectorAll('#materials .req-card').forEach(card => {
+      const figs = card.querySelectorAll('.m-fig .fv');
+      if (figs[0]) figs[0].textContent = `${consumedTotal.toFixed(2)} ${v.unit}`;
+      if (figs[1]) figs[1].textContent = `${consumedTotal.toFixed(2)} ${v.unit}`;
+      const qtyIn = card.querySelector('.batch-table .qty-in');
+      if (qtyIn) qtyIn.value = consumedTotal.toFixed(2);
+      const meta = card.querySelector('.m-meta');
+      if (meta) meta.innerHTML = `IM · picked input · <b>${consumedTotal.toFixed(2)} of ${v.qty}</b> ${v.unit} consumed · ${remaining.toFixed(2)} ${v.unit} remaining`;
+    });
+  } else {
+    const spec = freeProdState.consumedSpec || [];
+    document.querySelectorAll('#materials .req-card').forEach((card, idx) => {
+      const m = spec[idx];
+      if (!m || m._ratio === undefined) return;
+      const need = totalProduced * m._ratio;
+      const figs = card.querySelectorAll('.m-fig .fv');
+      if (figs[0]) figs[0].textContent = `${need.toFixed(2)} ${m.unit}`;
+      if (figs[1]) figs[1].textContent = `${need.toFixed(2)} ${m.unit}`;
+      const qtyIn = card.querySelector('.batch-table .qty-in');
+      if (qtyIn) qtyIn.value = need.toFixed(2);
+    });
+  }
+}
+
+// Actual Material Number — operator-editable at production time; flags deviation from planned
+// Delegated handlers for free-prod controls (rendered dynamically into left + right pane)
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#back-to-queue-cta')) {
+    e.stopPropagation();
+    exitFreeProdMode();
+    return;
+  }
+  if (e.target.closest('#fp-change-btn')) {
+    e.stopPropagation();
+    clearFreeProdSelection();
+    return;
+  }
+  if (e.target.closest('#fp-mode-a')) {
+    e.stopPropagation();
+    setSteelFreeProdMode(false);
+    return;
+  }
+  if (e.target.closest('#fp-mode-b')) {
+    e.stopPropagation();
+    setSteelFreeProdMode(true);
+    return;
+  }
+});
+
+// Free-prod produced area: Add Output, qty/scrap/batch input changes, remove row
+document.getElementById('materials')?.addEventListener('click', (e) => {
+  if (!freeProdState.active) return;
+  const addBtn = e.target.closest('.consumed-add-btn');
+  if (addBtn) {
+    if (!freeProdState.consumedSpec) freeProdState.consumedSpec = [];
+    freeProdState.consumedSpec.push({
+      name: 'Operator-added material', meta: 'Free-prod · placeholder · pick batch from inventory (picker UI deferred)',
+      unit: 'unit', req: '0', alloc: '0', match: 'ok',
+      _ratio: 0,
+      batches: [{ batch: '— pick batch —', heat: 'Pending', qty: '0', attrs: [['Attr1','—','ok'],['Attr2','—','ok']] }],
+    });
+    const list = document.getElementById('materials');
+    list.innerHTML = freeProdState.consumedSpec.map(m => renderReqCard(m)).join('') +
+      `<div style="padding:8px 4px;text-align:left">
+         <button class="consumed-add-btn"><i class="fa-solid fa-plus"></i> Add Material</button>
+         <span style="font-size:10px;color:var(--color-text-hint);margin-left:6px">picker UI deferred · adds a placeholder row</span>
+       </div>`;
+    recalcConsumedFromProduced();
+  }
+});
+
+document.getElementById('produced-list')?.addEventListener('click', (e) => {
+  if (!freeProdState.active) return;
+  if (e.target.closest('#fp-add-produced')) { addFreeProdProducedRow(); return; }
+  const removeBtn = e.target.closest('.fp-remove-row');
+  if (removeBtn) {
+    const idx = parseInt(removeBtn.dataset.fpRow, 10);
+    freeProdState.producedRows.splice(idx, 1);
+    renderFreeProdProduced();
+    recalcConsumedFromProduced();
+    return;
+  }
+});
+
+document.getElementById('produced-list')?.addEventListener('input', (e) => {
+  if (!freeProdState.active) return;
+  const el = e.target;
+  const idx = parseInt(el.dataset.fpRow, 10);
+  if (isNaN(idx) || !freeProdState.producedRows[idx]) return;
+  if (el.classList.contains('fp-qty-in')) {
+    freeProdState.producedRows[idx].qty = el.value;
+    recalcConsumedFromProduced();
+  } else if (el.classList.contains('fp-scrap-in')) {
+    freeProdState.producedRows[idx].scrap = el.value;
+    recalcConsumedFromProduced();
+  } else if (el.classList.contains('fp-batch-in')) {
+    freeProdState.producedRows[idx].batchId = el.value;
+  }
+});
+
+// Schedule queue filter — also drives the free-prod picker filter when in free-prod-mode.
+function applyQueueFilter() {
+  if (freeProdState.active) {
+    renderFreeProdLeftPicker();
+    return;
+  }
+  const q = (document.getElementById('sched-filter')?.value || '').trim().toLowerCase();
+  const items = document.querySelectorAll('#sched-list .sched-item');
+  items.forEach(li => {
+    if (!q) { li.style.display = ''; return; }
+    const hay = [
+      li.dataset.schedule || '',
+      li.dataset.material || '',
+      li.dataset.order || '',
+    ].join(' ').toLowerCase();
+    li.style.display = hay.includes(q) ? '' : 'none';
+  });
+}
+document.getElementById('sched-filter')?.addEventListener('input', applyQueueFilter);
+
+// §10.1 — BOM-coverage toggle (demo): hides every other row when on, with an inline note.
+document.getElementById('filter-bom-coverage')?.addEventListener('change', (e) => {
+  const items = document.querySelectorAll('#sched-list .sched-item');
+  items.forEach((li, i) => {
+    if (e.target.checked && i % 2 === 1 && !li.classList.contains('dummy')) {
+      li.style.opacity = '0.35';
+      li.title = 'Hidden by BOM-coverage filter (mockup demo) — full BOM not on hand';
+    } else {
+      li.style.opacity = '';
+      li.title = li.dataset.schedule + ' · ' + li.dataset.material;
+    }
+  });
+});
+
+// §10.2 — cross-allocated toggle (demo): when on, append a phantom cross-allocated batch row to
+// the first multi-batch consumed material with an ALLOCATION_RELEASE warning footer.
+document.getElementById('cross-alloc-toggle')?.addEventListener('change', (e) => {
+  const list = document.getElementById('materials');
+  if (!list) return;
+  const existing = list.querySelector('.cross-alloc-demo-row');
+  if (!e.target.checked) { if (existing) existing.remove(); return; }
+  if (existing) return;
+  const firstReq = list.querySelector('.req-card .batch-table tbody');
+  if (!firstReq) return;
+  const tr = document.createElement('tr');
+  tr.className = 'cross-alloc-demo-row';
+  tr.innerHTML = `
+    <td><b style="color:var(--color-warning)">XB-OTHER-LOT-7799</b><div style="font-size:10px;color:var(--color-warning)"><i class="fa-solid fa-triangle-exclamation"></i> Cross-allocated to SO-2026-0420-22 (other order)</div></td>
+    <td class="num"><input type="text" class="qty-in" value="0" placeholder="0"> </td>
+    <td colspan="2"><div class="alert-inline warn" style="font-size:10px"><i class="fa-solid fa-circle-info"></i> Selecting this row releases the source SMA (audit_log <code>ALLOCATION_RELEASE</code>) and defers re-balancing to <code>material_allocator</code>.</div></td>
+  `;
+  firstReq.appendChild(tr);
+});
+
+document.getElementById('actual-mat-input')?.addEventListener('input', (e) => {
+  const ind = getCurrentIndustry();
+  const c = DATA[ind] && DATA[ind].schedule && DATA[ind].schedule.current;
+  if (!c) return;
+  c.actualMaterialNumber = e.target.value;
+  e.target.classList.toggle('edited', !!(e.target.value && e.target.value !== c.plannedMaterialNumber));
+  // Live-update the PC11a cascade banner so the operator sees the {parent}/{idx} preview as they type.
+  const newRoot = e.target.value || c.plannedMaterialNumber;
+  document.querySelectorAll('.req-card.output').forEach((card, i) => {
+    const p = (DATA[ind].produced || [])[i];
+    if (!p || !p.firstPCofSM) return;
+    const root = card.querySelector('[data-cascade-root]');
+    if (root) root.textContent = newRoot;
+    card.querySelectorAll('[data-cascade-child]').forEach((el, j) => {
+      el.textContent = `${newRoot}/${j + 1}`;
+    });
+  });
+});
+
+// Schedule queue: click a charged + non-dummy material row to switch active confirmation.
+// In free-prod-mode the same list holds picker rows; route those to pickFreeProdAnchor.
+document.getElementById('sched-list')?.addEventListener('click', (e) => {
+  // Free Production CTA (top or empty-state) — switches into free-prod-mode
+  if (e.target.closest('#free-prod-cta-top, #free-prod-cta-empty')) {
+    enterFreeProdMode();
+    return;
+  }
+  // In free-prod-mode, list rows are picker entries
+  if (freeProdState.active) {
+    const li = e.target.closest('li[data-fp-pick]');
+    if (li) pickFreeProdAnchor(li.dataset.fpPick);
+    return;
+  }
+  const li = e.target.closest('.sched-item');
+  if (!li || li.classList.contains('dummy')) return;
+  const schNum = li.dataset.schedule;
+  const matNum = li.dataset.material;
+  const ind = getCurrentIndustry();
+  const schedules = DATA[ind] && DATA[ind].schedule && DATA[ind].schedule.schedules;
+  if (!schedules) return;
+  let target = null, parentSched = null;
+  for (const sch of schedules) {
+    for (const m of (sch.materials || [])) {
+      m.active = false;
+      if (sch.scheduleNumber === schNum && m.materialNumber === matNum) {
+        target = m; parentSched = sch;
+      }
+    }
+  }
+  if (!target) return;
+  // Picking a real schedule exits free-prod-mode entirely
+  if (freeProdState.active) {
+    freeProdState.active = false;
+    freeProdState.picked = null;
+    freeProdState.producedRows = [];
+    freeProdState.consumedSpec = null;
+    document.body.classList.remove('free-prod-mode');
+  }
+  target.active = true;
+  const cur = DATA[ind].schedule.current;
+  cur.scheduleNumber = parentSched.scheduleNumber;
+  cur.plannedMaterialNumber = target.materialNumber;
+  cur.actualMaterialNumber = target.materialNumber;
+  cur.noOfChilds = target.childs;
+  cur.materialWeight = target.qty;
+  cur.plannedStart = target.plannedStart;
+  cur.plannedEnd = target.plannedEnd;
+  cur.allocatedOrders = target.allocatedOrders || cur.allocatedOrders;
+  render(ind);
+});
+document.getElementById('hold-cancel').addEventListener('click', closeHoldModal);
+document.getElementById('hold-cancel-btn').addEventListener('click', closeHoldModal);
+document.getElementById('hold-confirm').addEventListener('click', applyHold);
+document.getElementById('release-btn').addEventListener('click', releaseHold);
+document.getElementById('hold-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'hold-modal') closeHoldModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('hold-modal').classList.contains('open')) closeHoldModal();
 });
 
 render('steel');
