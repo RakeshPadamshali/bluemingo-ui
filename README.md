@@ -1,2 +1,2 @@
-# bluemingo-demand-planner
-bluemingo-demand-planner
+# bluemingo-ui
+bluemingo-ui
