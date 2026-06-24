@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Certificates / MTC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:840px;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:520px;}
+.modal-head{padding:14px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+/* ===== MTC document ===== */
+.mtc{border:1px solid #888;padding:18px 20px;font-size:12px;color:#222;background:#fff;}
+.mtc-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:10px;}
+.mtc-top .co{font-size:16px;font-weight:700;}
+.mtc-top .co small{display:block;font-size:10px;font-weight:400;color:#666;}
+.mtc-top .ti{text-align:right;}
+.mtc-top .ti .t1{font-size:14px;font-weight:700;letter-spacing:.5px;}
+.mtc-top .ti .t2{font-size:10px;color:#666;}
+.mtc-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 0;border:1px solid #ccc;margin-bottom:12px;}
+.mtc-meta div{padding:4px 8px;border-bottom:1px solid #eee;font-size:11px;}
+.mtc-meta div b{color:#000;}
+.mtc-meta div span{color:#666;display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;}
+.mtc-sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:#f0f4f7;border:1px solid #ccc;border-bottom:none;padding:4px 8px;}
+.mtc-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;}
+.mtc-table th,.mtc-table td{border:1px solid #ccc;padding:3px 6px;text-align:center;font-variant-numeric:tabular-nums;}
+.mtc-table th{background:#fafafa;font-weight:600;}
+.mtc-table td.lbl{text-align:left;background:#fafafa;font-weight:500;white-space:nowrap;}
+.mtc-table td.bad{color:#c62828;font-weight:700;}
+.mtc-remarks{font-size:11px;border:1px solid #ccc;padding:6px 8px;margin-bottom:12px;}
+.mtc-remarks b{display:block;font-size:10px;text-transform:uppercase;color:#666;margin-bottom:3px;}
+.mtc-decl{font-size:10.5px;color:#444;font-style:italic;border-top:1px dashed #bbb;padding-top:8px;margin-bottom:16px;}
+.mtc-sign{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.mtc-sign div{font-size:11px;text-align:center;padding-top:26px;border-top:1px solid #333;color:#444;}
+.mtc-sign div b{display:block;color:#000;}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search TC, heat…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html" class="active"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Certificates / MTC</h1><div class="sub">Generate the Mill Test Certificate from heat chemistry + test results against the TDC — spec vs actual, in the customer's format</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openGen()"><i class="fa-solid fa-plus"></i> Generate MTC</button>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="TC / heat / customer / grade…" oninput="render()"/></div>
+      <select id="fStatus" onchange="render()"><option value="">All statuses</option></select>
+      <select id="fCustomer" onchange="render()"><option value="">All customers</option></select>
+      <select id="fGrade" onchange="render()"><option value="">All grades</option></select>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><span id="rowCount"></span></div>
+    </div>
+  </main>
+</div>
+
+<!-- MTC preview modal -->
+<div class="overlay" id="mtcOverlay">
+  <div class="modal">
+    <div class="modal-head">Mill Test Certificate — Preview <span class="x" onclick="closeMtc()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body"><div class="mtc" id="mtcDoc"></div></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeMtc()">Close</button>
+      <button class="btn btn-ghost" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+      <button class="btn btn-primary" onclick="closeMtc()"><i class="fa-solid fa-paper-plane"></i> Issue &amp; sign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate modal -->
+<div class="overlay" id="genOverlay">
+  <div class="modal sm">
+    <div class="modal-head">Generate MTC <span class="x" onclick="closeGen()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="mgrid">
+        <div class="fld full"><label>Heat / lot</label><select id="gHeat"></select></div>
+        <div class="fld"><label>Certificate type</label><select id="gType"><option>EN 10204 3.1</option><option>EN 10204 3.2</option><option>EN 10204 2.2</option></select></div>
+        <div class="fld"><label>Customer</label><select id="gCustomer"></select></div>
+      </div>
+      <div style="font-size:12px;color:#666;margin-top:12px"><i class="fa-solid fa-circle-info"></i> The MTC pulls TDC characteristics flagged <b>print</b>, joins heat chemistry + test actuals, and renders spec-vs-actual.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeGen()">Cancel</button>
+      <button class="btn btn-primary" onclick="genMtc()"><i class="fa-solid fa-file-circle-check"></i> Build &amp; preview</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUSES=['DRAFT','ISSUED','SIGNED','SENT','CANCELLED'];
+const STB={'DRAFT':'b-draft','ISSUED':'b-info','SIGNED':'b-clr','SENT':'b-done','CANCELLED':'b-hold'};
+const CUSTOMERS=['Ambica Steels','JSW Steel','Bharat Forge','L&T Valves'];
+const GRADES=['316L','17-4PH','304L','416'];
+// spec + actual per grade (chem %, mech) — actuals within spec (PASS certs)
+const GRADE_DATA={
+ '316L':{chem:[['C',0,0.030,0.022],['Si',0,1.00,0.45],['Mn',0,2.00,1.62],['P',0,0.045,0.031],['S',0,0.030,0.004],['Cr',16.0,18.0,16.8],['Ni',10.0,14.0,10.4],['Mo',2.0,3.0,2.1],['N',0,0.10,0.04]],
+   mech:[['Yield Strength Rp0.2','N/mm²','≥170',285],['Tensile Strength Rm','N/mm²','≥485',595],['Elongation A','%','≥40',52],['Reduction of Area','%','≥50',68],['Hardness','HRB','≤95',84]]},
+ '17-4PH':{chem:[['C',0,0.07,0.045],['Si',0,1.00,0.62],['Mn',0,1.00,0.71],['P',0,0.040,0.028],['S',0,0.030,0.005],['Cr',15.0,17.5,15.8],['Ni',3.0,5.0,4.3],['Cu',3.0,5.0,3.4],['Nb',0.15,0.45,0.28]],
+   mech:[['Yield Strength Rp0.2','N/mm²','≥795',865],['Tensile Strength Rm','N/mm²','≥965',1010],['Elongation A','%','≥10',16],['Reduction of Area','%','≥45',54],['Hardness','HRC','≤36',33]]},
+ '304L':{chem:[['C',0,0.030,0.019],['Si',0,1.00,0.42],['Mn',0,2.00,1.55],['P',0,0.045,0.029],['S',0,0.030,0.003],['Cr',18.0,20.0,18.4],['Ni',8.0,12.0,8.6],['N',0,0.10,0.05]],
+   mech:[['Yield Strength Rp0.2','N/mm²','≥170',295],['Tensile Strength Rm','N/mm²','≥485',610],['Elongation A','%','≥40',55],['Reduction of Area','%','≥50',70],['Hardness','HRB','≤92',82]]},
+ '416':{chem:[['C',0.08,0.15,0.12],['Si',0,1.00,0.55],['Mn',0,1.25,0.92],['P',0,0.060,0.022],['S',0.15,0.35,0.27],['Cr',12.0,14.0,12.8]],
+   mech:[['Yield Strength Rp0.2','N/mm²','≥415',585],['Tensile Strength Rm','N/mm²','≥620',758],['Elongation A','%','≥18',22],['Reduction of Area','%','≥45',52],['Hardness','HRC','24–32',28]]}
+};
+const REMARKS='Material manufactured by Electric Arc Furnace + AOD route, fully killed. Free from mercury contamination. Marking: heat no. + grade + Bluemingo logo. Colour code as per TDC.';
+
+const CERTS=[
+ {tc:'TC-2526-0488',date:'2026-06-24',type:'EN 10204 3.1',heat:'2526-16783',grade:'316L',customer:'Ambica Steels',so:'SO-2526-0712',wo:'FPO-2526-0344',std:'ASTM A276',size:'23 Hex',form:'Hex Bar',qty:12.2,htc:'Solution Annealed',status:'ISSUED',by:'A. Mehta'},
+ {tc:'TC-2526-0489',date:'2026-06-24',type:'EN 10204 3.1',heat:'2526-16496',grade:'17-4PH',customer:'JSW Steel',so:'SO-2526-0708',wo:'FPO-2526-0341',std:'ASTM A564',size:'68 Dia',form:'Round Bar',qty:18.6,htc:'H1150',status:'SIGNED',by:'A. Mehta'},
+ {tc:'TC-2526-0486',date:'2026-06-23',type:'EN 10204 3.1',heat:'2526-16798',grade:'304L',customer:'Ambica Steels',so:'SO-2526-0705',wo:'FPO-2526-0339',std:'ASTM A276',size:'40 Dia',form:'Round Bar',qty:9.8,htc:'Annealed',status:'SENT',by:'R. Iyer'},
+ {tc:'TC-2526-0490',date:'2026-06-24',type:'EN 10204 3.2',heat:'2526-16482',grade:'416',customer:'Bharat Forge',so:'SO-2526-0714',wo:'FPO-2526-0345',std:'ASTM A582',size:'26 Dia',form:'Round Bar',qty:20.5,htc:'Q&T (T)',status:'DRAFT',by:'R. Iyer'},
+ {tc:'TC-2526-0491',date:'2026-06-24',type:'EN 10204 3.1',heat:'2526-16819',grade:'316L',customer:'Ambica Steels',so:'SO-2526-0716',wo:'FPO-2526-0347',std:'ASTM A276',size:'19 Hex',form:'Hex Bar',qty:6.4,htc:'Solution Annealed',status:'DRAFT',by:'A. Mehta'},
+ {tc:'TC-2526-0485',date:'2026-06-22',type:'EN 10204 3.1',heat:'2526-16480',grade:'304L',customer:'L&T Valves',so:'SO-2526-0701',wo:'FPO-2526-0336',std:'ASTM A479',size:'32 Dia',form:'Round Bar',qty:14.2,htc:'Annealed',status:'SENT',by:'R. Iyer'},
+ {tc:'TC-2526-0492',date:'2026-06-24',type:'EN 10204 3.1',heat:'2526-16496',grade:'17-4PH',customer:'JSW Steel',so:'SO-2526-0709',wo:'FPO-2526-0342',std:'ASTM A564',size:'68 Dia',form:'Round Bar',qty:7.2,htc:'H1075',status:'DRAFT',by:'A. Mehta'}
+];
+
+const COLS=[
+ {k:'tc',label:'TC No',cls:'mono'},{k:'date',label:'Date'},{k:'type',label:'Type'},{k:'heat',label:'Heat No',cls:'mono'},
+ {k:'grade',label:'Grade'},{k:'customer',label:'Customer'},{k:'wo',label:'Work Order',cls:'mono'},{k:'std',label:'Standard'},
+ {k:'size',label:'Size'},{k:'qty',label:'Qty(MT)',cls:'num'},{k:'status',label:'Status',badge:true},{k:'by',label:'Prepared by'},
+ {k:'actions',label:'',actions:true}
+];
+let sortKey=null,sortDir=1;
+
+function fill(sel,arr){document.getElementById(sel).insertAdjacentHTML('beforeend',arr.map(o=>`<option>${o}</option>`).join(''));}
+function cell(c,r,i){
+  if(c.actions) return `<button class="btn-icon" title="Preview MTC" onclick="openMtc(${i})"><i class="fa-solid fa-file-lines"></i></button>`+
+                       `<button class="btn-icon" title="Print" onclick="openMtc(${i})"><i class="fa-solid fa-print"></i></button>`+
+                       `<button class="btn-icon" title="View" onclick="openViewEl(this)"><i class="fa-solid fa-eye"></i></button>`;
+  if(c.badge) return `<span class="badge ${STB[r.status]}">${r.status}</span>`;
+  let v=r[c.k]; if(c.k==='qty')v=(+v).toFixed(1); if(v===''||v==null)v='-'; return v;
+}
+function cmp(a,b){return (''+(a??'')).localeCompare(''+(b??''),undefined,{numeric:true,sensitivity:'base'});}
+function passes(r){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const fs=document.getElementById('fStatus').value,fc=document.getElementById('fCustomer').value,fg=document.getElementById('fGrade').value;
+  if(q&&!(r.tc+' '+r.heat+' '+r.customer+' '+r.grade+' '+r.wo).toLowerCase().includes(q))return false;
+  if(fs&&r.status!==fs)return false; if(fc&&r.customer!==fc)return false; if(fg&&r.grade!==fg)return false;
+  return true;
+}
+function buildHead(){
+  document.getElementById('thead').innerHTML='<tr>'+COLS.map(c=>{
+    if(c.actions)return '<th class="col-actions"></th>';
+    const car=sortKey===c.k?`<span class="car on">${sortDir>0?'▲':'▼'}</span>`:'<span class="car">⇅</span>';
+    return `<th class="${c.cls==='num'?'num':''}" onclick="sortBy('${c.k}')">${c.label} ${car}</th>`;
+  }).join('')+'</tr>';
+}
+function sortBy(k){ if(sortKey===k){ if(sortDir>0)sortDir=-1; else {sortKey=null;sortDir=1;} } else {sortKey=k;sortDir=1;} buildHead(); render(); }
+function render(){
+  let rows=CERTS.map((r,i)=>({r,i})).filter(x=>passes(x.r));
+  if(sortKey) rows.sort((a,b)=>cmp(a.r[sortKey],b.r[sortKey])*sortDir);
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML=`<tr class="empty"><td colspan="${COLS.length}">No certificates match the filters.</td></tr>`;}
+  else tb.innerHTML=rows.map(({r,i})=>`<tr>${COLS.map(c=>`<td class="${c.cls||''}${c.actions?' actions':''}">${cell(c,r,i)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('rowCount').textContent=`${rows.length} of ${CERTS.length} certificates`;
+  const draft=CERTS.filter(r=>r.status==='DRAFT').length;
+  document.getElementById('meta').textContent=`${draft} draft · ${CERTS.length-draft} issued/sent`;
+}
+
+/* ===== MTC preview ===== */
+function chk(min,max,act){const a=+act;const okMin=(min===0||min==null)?true:a>=min;const okMax=(max==null||max==='')?true:a<=max;return okMin&&okMax;}
+function openMtc(i){
+  const r=CERTS[i], gd=GRADE_DATA[r.grade]||GRADE_DATA['316L'];
+  const chemHead=gd.chem.map(c=>`<th>${c[0]}</th>`).join('');
+  const chemSpec=gd.chem.map(c=>`<td>${c[1]>0?c[1].toFixed(3)+'–':'≤'}${c[2].toFixed(3)}</td>`).join('');
+  const chemAct =gd.chem.map(c=>`<td class="${chk(c[1],c[2],c[3])?'':'bad'}">${(+c[3]).toFixed(3)}</td>`).join('');
+  const mechRows=gd.mech.map(m=>`<tr><td class="lbl">${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td></tr>`).join('');
+  document.getElementById('mtcDoc').innerHTML=`
+    <div class="mtc-top">
+      <div class="co">BLUEMINGO STEELS<small>Stainless Long Products · Plant: Unit-1 · GST 27ABCDE1234F1Z5</small></div>
+      <div class="ti"><div class="t1">MILL TEST CERTIFICATE</div><div class="t2">${r.type} &nbsp;·&nbsp; ${r.tc} &nbsp;·&nbsp; ${r.date}</div></div>
+    </div>
+    <div class="mtc-meta">
+      <div><span>Customer</span><b>${r.customer}</b></div><div><span>Sales Order</span><b>${r.so}</b></div><div><span>Work Order</span><b>${r.wo}</b></div>
+      <div><span>Grade</span><b>${r.grade}</b></div><div><span>Specification</span><b>${r.std}</b></div><div><span>TDC</span><b>TDC-${r.grade}-01</b></div>
+      <div><span>Heat No</span><b>${r.heat}</b></div><div><span>Size / Form</span><b>${r.size} · ${r.form}</b></div><div><span>Quantity</span><b>${r.qty} MT</b></div>
+      <div><span>Condition / HT</span><b>${r.htc}</b></div><div><span>Marking</span><b>Heat + Grade</b></div><div><span>Result</span><b style="color:#388e3c">ACCEPTED</b></div>
+    </div>
+    <div class="mtc-sec">Chemical Composition (% by mass)</div>
+    <table class="mtc-table"><thead><tr><th class="lbl">Element</th>${chemHead}</tr></thead>
+      <tbody><tr><td class="lbl">Specified</td>${chemSpec}</tr><tr><td class="lbl">Found</td>${chemAct}</tr></tbody></table>
+    <div class="mtc-sec">Mechanical Properties</div>
+    <table class="mtc-table"><thead><tr><th class="lbl">Property</th><th>Unit</th><th>Specified</th><th>Actual</th></tr></thead><tbody>${mechRows}</tbody></table>
+    <div class="mtc-remarks"><b>Remarks</b>${REMARKS}</div>
+    <div class="mtc-decl">We hereby certify that the material described above has been manufactured, sampled, tested and inspected in accordance with ${r.std} and the applicable TDC, and the results meet the specified requirements. ${r.type==='EN 10204 3.2'?'Verified by the authorised independent inspector.':''}</div>
+    <div class="mtc-sign"><div>Prepared by<b>${r.by}</b></div><div>Approved by<b>Quality Head</b></div><div>Authorised Signatory<b>Plant Head</b></div></div>`;
+  document.getElementById('mtcOverlay').classList.add('open');
+}
+function closeMtc(){document.getElementById('mtcOverlay').classList.remove('open');}
+
+/* ===== Generate ===== */
+function openGen(){
+  document.getElementById('gHeat').innerHTML=[...new Set(CERTS.map(c=>`${c.heat} · ${c.grade}`))].map(h=>`<option>${h}</option>`).join('');
+  document.getElementById('gCustomer').innerHTML=CUSTOMERS.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('genOverlay').classList.add('open');
+}
+function closeGen(){document.getElementById('genOverlay').classList.remove('open');}
+function genMtc(){
+  const sel=document.getElementById('gHeat').value, heat=sel.split(' · ')[0], grade=sel.split(' · ')[1];
+  const n=493+CERTS.length;
+  CERTS.unshift({tc:'TC-2526-0'+n,date:'2026-06-24',type:document.getElementById('gType').value,heat,grade,customer:document.getElementById('gCustomer').value,
+    so:'SO-2526-07'+n,wo:'FPO-2526-03'+n,std:grade==='17-4PH'?'ASTM A564':'ASTM A276',size:'—',form:'Round Bar',qty:0,htc:'As per TDC',status:'DRAFT',by:'A. Mehta'});
+  closeGen(); render(); openMtc(0);
+}
+
+fill('fStatus',STATUSES); fill('fCustomer',CUSTOMERS); fill('fGrade',GRADES);
+buildHead(); render();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[\u25B2\u25BC\u21C5]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Salvage &amp; NCR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:620px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:520px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld textarea{resize:vertical;min-height:58px;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.calc-band{grid-column:1/-1;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;display:flex;flex-wrap:wrap;gap:22px;font-size:var(--fs-sm);align-items:center;}
+.calc-band span{color:var(--color-text-muted);}
+.calc-band b{color:var(--color-text-primary);font-variant-numeric:tabular-nums;font-size:14px;}
+.calc-band b.danger{color:var(--color-danger);}
+.route-note{grid-column:1/-1;font-size:var(--fs-sm);color:var(--color-primary-dark);background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:8px 12px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+/* context chips + capa list (shared pattern) */
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.prog{font-size:var(--fs-sm);color:var(--color-text-muted);margin-bottom:var(--sp2);}
+.prog b{color:var(--color-primary-dark);}
+.steps{list-style:none;margin:0;padding:0;}
+.steps li{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border:1px solid var(--color-border-light);border-radius:var(--r-sm);margin-bottom:6px;}
+.steps li.done{background:#e8f5e9;border-color:#c8e6c9;}
+.steps li input{margin-top:3px;width:auto;}
+.steps li .txt{font-size:var(--fs-sm);flex:1;}
+.steps li .txt .meta-row{color:var(--color-text-hint);font-size:var(--fs-xs);margin-top:2px;}
+.steps li.done .txt b{color:#2e7d32;}
+.captype{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:1px 6px;border-radius:3px;margin-right:6px;text-transform:uppercase;}
+.ct-correction{background:rgba(33,150,243,.14);color:#1976d2;} .ct-corrective{background:rgba(255,152,0,.14);color:#ef6c00;} .ct-preventive{background:rgba(103,58,183,.14);color:#673ab7;}
+.note-band{font-size:var(--fs-sm);color:var(--color-text-muted);margin-top:var(--sp3);}
+.addcapa{margin-top:var(--sp2);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search NCR, heat…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html" class="active"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Salvage &amp; NCR</h1><div class="sub">Disposition non-conforming material — resample / rework / reroute / re-HT / downgrade / scrap — with NCR, loss tracking &amp; CAPA</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openRaise()"><i class="fa-solid fa-plus"></i> Raise NCR</button>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="NCR / heat / UID / issue…" oninput="render()"/></div>
+      <select id="fStatus" onchange="render()"><option value="">All statuses</option></select>
+      <select id="fSev" onchange="render()"><option value="">All severities</option></select>
+      <select id="fDispo" onchange="render()"><option value="">All dispositions</option></select>
+      <select id="fAgainst" onchange="render()"><option value="">All — against</option></select>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><span id="rowCount"></span></div>
+    </div>
+  </main>
+</div>
+
+<!-- Raise NCR modal -->
+<div class="overlay" id="raiseOverlay">
+  <div class="modal">
+    <div class="modal-head">Raise Non-Conformance Report <span class="x" onclick="closeRaise()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="mgrid">
+        <div class="fld full"><label>Source (heat · stage · document)</label><select id="rSrc" onchange="srcChange()"></select></div>
+        <div class="fld"><label>NC against</label><select id="rAgainst"></select></div>
+        <div class="fld"><label>Category</label><select id="rCat"></select></div>
+        <div class="fld"><label>Severity</label><select id="rSev"></select></div>
+        <div class="fld"><label>Detected by</label><input id="rDet" value="QA Engineer"/></div>
+        <div class="fld full"><label>Non-conformance (title)</label><input id="rTitle" placeholder="e.g. Cu 3.05% below TDC min 3.15%"/></div>
+        <div class="fld full"><label>Description</label><textarea id="rDesc" placeholder="What deviated, where, and against which spec…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeRaise()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRaise()"><i class="fa-solid fa-flag"></i> Raise NCR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Disposition / Salvage modal -->
+<div class="overlay" id="dispoOverlay">
+  <div class="modal">
+    <div class="modal-head">Disposition material (Salvage) <span class="x" onclick="closeDispo()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="dispoCtx"></div>
+      <div class="mgrid">
+        <div class="fld full"><label>Disposition</label><select id="dType" onchange="dispoChange()"></select></div>
+        <div class="fld hide" id="dTargetFld"><label>Target operation</label><select id="dTarget"></select></div>
+        <div class="fld hide" id="dDownFld"><label>Downgrade to grade</label><input id="dDown" placeholder="e.g. 416 (commercial)"/></div>
+        <div class="fld" id="dInFld"><label>Qty in (MT)</label><input id="dIn" type="number" step="any" oninput="calcLoss()"/></div>
+        <div class="fld" id="dOutFld"><label>Qty recovered (MT)</label><input id="dOut" type="number" step="any" oninput="calcLoss()"/></div>
+        <div class="calc-band"><span>Material loss</span> <b id="dLossMt">0.000</b> <span>MT</span> <span>·</span> <span>Loss</span> <b id="dLossPct">0.0</b> <span>%</span> <span>·</span> <span>Outcome</span> <b id="dOutcome">—</b></div>
+        <div class="fld full"><label>Remarks</label><input id="dRemarks" placeholder="Disposition note…"/></div>
+        <div class="route-note" id="dRoute"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeDispo()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDispo()"><i class="fa-solid fa-check"></i> Apply disposition</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAPA modal -->
+<div class="overlay" id="capaOverlay">
+  <div class="modal sm">
+    <div class="modal-head"><span id="capaTitle">CAPA</span> <span class="x" onclick="closeCapa()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body" id="capaBody"></div>
+    <div id="capaWarn" style="display:none;margin:0 20px 12px;font-size:var(--fs-sm);color:#c62828;background:rgba(244,67,54,.1);border:1px solid #ffcdd2;border-radius:var(--r-sm);padding:8px 12px;"><i class="fa-solid fa-triangle-exclamation"></i> Verify all CAPA actions before closing the NCR.</div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="addCapa()"><i class="fa-solid fa-plus"></i> Add action</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost" onclick="closeCapa()">Close</button>
+      <button class="btn btn-primary" onclick="closeNcr()"><i class="fa-solid fa-lock"></i> Close NCR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- master-driven disposition vocabulary (mes_qc_salvage_type) ---- */
+const DISPOS={
+ 'Resample':          {flag:'b-info', routes:'Sampling',   target:false, down:false, terminal:false},
+ 'Reinspect':         {flag:'b-info', routes:'Inspection',  target:false, down:false, terminal:false},
+ 'Rework (same op)':  {flag:'b-pend', routes:'Production',  target:false, down:false, terminal:false},
+ 'Rework (other op)': {flag:'b-pend', routes:'Production',  target:true,  down:false, terminal:false},
+ 'Reroute':           {flag:'b-pend', routes:'Production',  target:true,  down:false, terminal:false},
+ 'Re-Heat-Treat':     {flag:'b-pend', routes:'Production',  target:true,  down:false, terminal:false},
+ 'Downgrade':         {flag:'b-clr',  routes:'Production',  target:false, down:true,  terminal:false},
+ 'Deviation accept':  {flag:'b-done', routes:'None',        target:false, down:false, terminal:false},
+ 'Scrap':             {flag:'b-hold', routes:'None',        target:false, down:false, terminal:true},
+ 'Return to supplier':{flag:'b-hold', routes:'Supplier',    target:false, down:false, terminal:true}
+};
+const ROUTEMSG={Sampling:'Routes back to <b>Sampling</b> — a fresh sample will be drawn & re-tested.',
+ Inspection:'Routes back to <b>Inspection</b> — material is re-inspected at the stage.',
+ Production:'Routes to <b>Production</b> for rework — re-enters QA at the destination operation.',
+ Supplier:'Routes to <b>RM Quality</b> — quarantined & returned to supplier (RMA / supplier NC).',
+ None:'Terminal disposition — no re-routing.'};
+const OPERATIONS=['OP_CASTING','OP_ROLLING','OP_HEAT TREATMENT','OP_FINISHING','OP_INSPECTION','OP_PICKLING','OP_STRAIGHTENING'];
+const CATEGORIES=['Chemistry','Mechanical','Dimensional','Surface','NDT','Metallurgical','Marking','Documentation','Handling'];
+const AGAINST=['Internal','Operation','Supplier','Process'];
+const SEVERITIES=['Minor','Major','Critical'];
+const STATUSES=['OPEN','UNDER REVIEW','DISPOSITIONED','ACTIONED','CLOSED','CANCELLED'];
+const SEVB={'Minor':'b-info','Major':'b-pend','Critical':'b-hold'};
+const STB={'OPEN':'b-pend','UNDER REVIEW':'b-info','DISPOSITIONED':'b-clr','ACTIONED':'b-info','CLOSED':'b-done','CANCELLED':'b-draft'};
+
+/* source lots for Raise-NCR prefill */
+const LOTS=[
+ {ref:'CHM-2526-0190', src:'Heat Chemistry', heat:'2526-16482', grade:'416',   uid:'B030840', stage:'OP_CASTING'},
+ {ref:'INS-2526-0480', src:'Inspection',     heat:'2526-16798', grade:'304L',  uid:'E122319', stage:'OP_ROLLING'},
+ {ref:'SMP-2526-0490', src:'Test',           heat:'2526-16783', grade:'316L',  uid:'A002668', stage:'OP_HEAT TREATMENT'},
+ {ref:'UD-2526-0120',  src:'Usage Decision', heat:'2526-16783', grade:'316L',  uid:'A002668', stage:'OP_FINISHING'},
+ {ref:'DEF-2526-0312', src:'Defect',         heat:'2526-16798', grade:'304L',  uid:'E122319', stage:'OP_ROLLING'}
+];
+
+const NCRS=[
+ {no:'NCR-2526-0188',date:'24-Jun 06:20',src:'Heat Chemistry',ref:'CHM-2526-0188',heat:'2526-16496',grade:'17-4PH',uid:'B030268',stage:'OP_CASTING',against:'Internal',cat:'Chemistry',sev:'Major',issue:'Cu 3.05% below TDC min 3.15%',dispo:'Resample',target:'',qtyIn:0,qtyOut:0,status:'DISPOSITIONED'},
+ {no:'NCR-2526-0455',date:'23-Jun 20:10',src:'Test',ref:'SMP-2526-0455',heat:'2526-16482',grade:'416',uid:'B030840',stage:'OP_HEAT TREATMENT',against:'Operation',cat:'Mechanical',sev:'Critical',issue:'Impact 18J below TDC min 27J',dispo:'Re-Heat-Treat',target:'OP_HEAT TREATMENT',qtyIn:8.60,qtyOut:8.42,status:'ACTIONED'},
+ {no:'NCR-2526-0471',date:'24-Jun 11:05',src:'Inspection',ref:'INS-2526-0471',heat:'2526-16798',grade:'304L',uid:'E122319',stage:'OP_ROLLING',against:'Operation',cat:'Surface',sev:'Major',issue:'Surface seam >0.3mm at 1.2m',dispo:'Rework (same op)',target:'',qtyIn:5.20,qtyOut:5.00,status:'DISPOSITIONED'},
+ {no:'NCR-2526-0462',date:'23-Jun 17:50',src:'Inspection',ref:'INS-2526-0462',heat:'2526-16783',grade:'316L',uid:'A002668',stage:'OP_FINISHING',against:'Operation',cat:'Dimensional',sev:'Minor',issue:'Dia 22.94 below tol 22.95–23.00',dispo:'Rework (same op)',target:'',qtyIn:3.10,qtyOut:3.05,status:'CLOSED'},
+ {no:'NCR-2526-0480',date:'24-Jun 07:35',src:'Heat Chemistry',ref:'CHM-2526-0190',heat:'2526-16482',grade:'416',uid:'B030840',stage:'OP_CASTING',against:'Internal',cat:'Chemistry',sev:'Critical',issue:'S 0.34% above max 0.33% (free-machining)',dispo:'Downgrade',target:'416 (commercial)',qtyIn:9.00,qtyOut:9.00,status:'UNDER REVIEW'},
+ {no:'NCR-2526-0466',date:'24-Jun 09:40',src:'Test',ref:'UT-2526-0071',heat:'2526-16798',grade:'304L',uid:'E122319',stage:'OP_ROLLING',against:'Internal',cat:'NDT',sev:'Major',issue:'UT indication exceeds A388 reference',dispo:'Reroute',target:'OP_ROLLING',qtyIn:5.00,qtyOut:4.60,status:'DISPOSITIONED'},
+ {no:'NCR-2526-0205',date:'22-Jun 14:15',src:'RM Inward',ref:'RMA-2526-0205',heat:'EXT-44021',grade:'316L',uid:'—',stage:'OP_RM_INWARD',against:'Supplier',cat:'Surface',sev:'Major',issue:'RM bar laps observed at inward inspection',dispo:'Return to supplier',target:'',qtyIn:12.00,qtyOut:0,status:'ACTIONED'},
+ {no:'NCR-2526-0452',date:'24-Jun 10:30',src:'Test',ref:'SMP-2526-0452',heat:'2526-16496',grade:'17-4PH',uid:'B030268',stage:'OP_HEAT TREATMENT',against:'Internal',cat:'Metallurgical',sev:'Minor',issue:'Macro: faint centre segregation, within accept',dispo:'Deviation accept',target:'',qtyIn:0,qtyOut:0,status:'CLOSED'},
+ {no:'NCR-2526-0490',date:'24-Jun 12:50',src:'Test',ref:'SMP-2526-0448',heat:'2526-16783',grade:'316L',uid:'A002668',stage:'OP_HEAT TREATMENT',against:'Internal',cat:'Mechanical',sev:'Major',issue:'YS 168 below TDC min 170 N/mm²',dispo:'',target:'',qtyIn:0,qtyOut:0,status:'OPEN'}
+];
+
+const CAPAS={
+ 'NCR-2526-0188':[{type:'CORRECTION',text:'Re-draw & re-analyse chemistry sample',resp:'Lab',due:'24-Jun',status:'VERIFIED'}],
+ 'NCR-2526-0455':[
+   {type:'CORRECTION',text:'Re-heat-treat lot per HT-23 cycle',resp:'HT Cell',due:'25-Jun',status:'VERIFIED'},
+   {type:'CORRECTIVE',text:'Verify furnace zone-2 thermocouple calibration',resp:'Maintenance',due:'26-Jun',status:'DONE'},
+   {type:'PREVENTIVE',text:'Add soak-time interlock to HT recipe',resp:'Process Engg',due:'30-Jun',status:'OPEN'}],
+ 'NCR-2526-0462':[{type:'CORRECTION',text:'Centreless re-grind to size',resp:'Finishing',due:'24-Jun',status:'VERIFIED'}],
+ 'NCR-2526-0480':[{type:'CORRECTIVE',text:'Review desulphurisation practice with melt shop',resp:'Melt Shop',due:'28-Jun',status:'OPEN'}],
+ 'NCR-2526-0205':[
+   {type:'CORRECTION',text:'Quarantine & return RM lot to supplier',resp:'Stores',due:'24-Jun',status:'VERIFIED'},
+   {type:'CORRECTIVE',text:'Raise SCAR; await supplier 8D report',resp:'SQA',due:'01-Jul',status:'OPEN'}]
+};
+
+const COLS=[
+ {k:'no',label:'NCR No',cls:'mono'},{k:'date',label:'Date'},{k:'src',label:'Source'},{k:'ref',label:'Ref',cls:'mono'},
+ {k:'heat',label:'Heat No',cls:'mono'},{k:'grade',label:'Grade'},{k:'uid',label:'UID',cls:'mono'},{k:'stage',label:'Stage'},
+ {k:'against',label:'Against'},{k:'sev',label:'Severity',sev:true},{k:'issue',label:'Non-conformance'},
+ {k:'dispo',label:'Disposition',dispo:true},{k:'target',label:'Target'},
+ {k:'lossMt',label:'Loss(MT)',cls:'num',calc:'lossMt'},{k:'lossPct',label:'Loss%',cls:'num',calc:'lossPct'},
+ {k:'capa',label:'CAPA',cls:'num',capa:true},{k:'status',label:'Status',badge:true},{k:'actions',label:'',actions:true}
+];
+let sortKey=null,sortDir=1,curDispo=null,curCapa=null;
+
+function lossMt(r){return Math.max(0,(r.qtyIn||0)-(r.qtyOut||0));}
+function lossPct(r){return r.qtyIn?((lossMt(r)/r.qtyIn)*100):0;}
+function capaCount(no){const a=CAPAS[no]||[];return {v:a.filter(x=>x.status==='VERIFIED').length,t:a.length};}
+function fill(sel,arr,blank){const el=document.getElementById(sel);el.insertAdjacentHTML('beforeend',arr.map(o=>`<option>${o}</option>`).join(''));}
+
+function cell(c,r,i){
+  if(c.actions) return `<button class="btn-icon" title="Disposition / Salvage" onclick="openDispo(${i})"><i class="fa-solid fa-screwdriver-wrench"></i></button>`+
+                       `<button class="btn-icon" title="CAPA" onclick="openCapa(${i})"><i class="fa-solid fa-list-check"></i></button>`+
+                       `<button class="btn-icon" title="View" onclick="openViewEl(this)"><i class="fa-solid fa-eye"></i></button>`;
+  if(c.sev)   return `<span class="badge ${SEVB[r.sev]}">${r.sev}</span>`;
+  if(c.badge) return `<span class="badge ${STB[r.status]}">${r.status}</span>`;
+  if(c.dispo) return r.dispo?`<span class="badge ${DISPOS[r.dispo]?.flag||'b-draft'}">${r.dispo}</span>`:'—';
+  if(c.capa){const cc=capaCount(r.no);return cc.t?`${cc.v}/${cc.t}`:'—';}
+  if(c.calc==='lossMt'){return r.dispo?lossMt(r).toFixed(3):'—';}
+  if(c.calc==='lossPct'){return r.dispo?lossPct(r).toFixed(1):'—';}
+  let v=r[c.k]; if(v===''||v==null)v='—'; return v;
+}
+function cmp(a,b){return (''+(a??'')).localeCompare(''+(b??''),undefined,{numeric:true,sensitivity:'base'});}
+function sortVal(r,c){if(c.calc==='lossMt')return lossMt(r);if(c.calc==='lossPct')return lossPct(r);if(c.capa)return capaCount(r.no).t;return r[c.k];}
+function passes(r){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const fs=document.getElementById('fStatus').value,fv=document.getElementById('fSev').value,
+        fd=document.getElementById('fDispo').value,fa=document.getElementById('fAgainst').value;
+  if(q&&!(r.no+' '+r.heat+' '+r.uid+' '+r.grade+' '+r.ref+' '+r.issue).toLowerCase().includes(q))return false;
+  if(fs&&r.status!==fs)return false; if(fv&&r.sev!==fv)return false;
+  if(fd&&r.dispo!==fd)return false; if(fa&&r.against!==fa)return false;
+  return true;
+}
+function buildHead(){
+  document.getElementById('thead').innerHTML='<tr>'+COLS.map(c=>{
+    if(c.actions)return '<th class="col-actions"></th>';
+    const car=sortKey===c.k?`<span class="car on">${sortDir>0?'▲':'▼'}</span>`:'<span class="car">⇅</span>';
+    return `<th class="${c.cls==='num'?'num':''}" onclick="sortBy('${c.k}')">${c.label} ${car}</th>`;
+  }).join('')+'</tr>';
+}
+function sortBy(k){ if(sortKey===k){ if(sortDir>0)sortDir=-1; else {sortKey=null;sortDir=1;} } else {sortKey=k;sortDir=1;} buildHead(); render(); }
+function render(){
+  let rows=NCRS.map((r,i)=>({r,i})).filter(x=>passes(x.r));
+  if(sortKey){const c=COLS.find(x=>x.k===sortKey);rows.sort((a,b)=>cmp(sortVal(a.r,c),sortVal(b.r,c))*sortDir);}
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML=`<tr class="empty"><td colspan="${COLS.length}">No NCRs match the filters.</td></tr>`;}
+  else tb.innerHTML=rows.map(({r,i})=>`<tr>${COLS.map(c=>`<td class="${c.cls||''}${c.actions?' actions':''}" ${c.k==='issue'?`title="${r.issue}"`:''}>${cell(c,r,i)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('rowCount').textContent=`${rows.length} of ${NCRS.length} NCRs`;
+  const openN=NCRS.filter(r=>r.status==='OPEN'||r.status==='UNDER REVIEW').length;
+  const loss=NCRS.reduce((s,r)=>s+(r.dispo?lossMt(r):0),0);
+  document.getElementById('meta').textContent=`${openN} open · ${loss.toFixed(2)} MT loss`;
+}
+
+/* ===== Raise NCR ===== */
+function openRaise(){
+  document.getElementById('rSrc').innerHTML=LOTS.map((l,i)=>`<option value="${i}">${l.heat} · ${l.stage} · ${l.src} (${l.ref})</option>`).join('');
+  document.getElementById('rAgainst').innerHTML=AGAINST.map(a=>`<option>${a}</option>`).join('');
+  document.getElementById('rCat').innerHTML=CATEGORIES.map(a=>`<option>${a}</option>`).join('');
+  document.getElementById('rSev').innerHTML=SEVERITIES.map(a=>`<option ${a==='Major'?'selected':''}>${a}</option>`).join('');
+  document.getElementById('rTitle').value=''; document.getElementById('rDesc').value=''; srcChange();
+  document.getElementById('raiseOverlay').classList.add('open');
+}
+function srcChange(){const l=LOTS[+document.getElementById('rSrc').value]; /* placeholder for richer prefill */}
+function closeRaise(){document.getElementById('raiseOverlay').classList.remove('open');}
+function saveRaise(){
+  const l=LOTS[+document.getElementById('rSrc').value];
+  const n=915+NCRS.length;
+  NCRS.unshift({no:'NCR-2526-0'+n,date:'24-Jun 13:40',src:l.src,ref:l.ref,heat:l.heat,grade:l.grade,uid:l.uid,stage:l.stage,
+    against:document.getElementById('rAgainst').value,cat:document.getElementById('rCat').value,sev:document.getElementById('rSev').value,
+    issue:document.getElementById('rTitle').value||'(non-conformance)',dispo:'',target:'',qtyIn:0,qtyOut:0,status:'OPEN'});
+  closeRaise(); render();
+}
+
+/* ===== Disposition / Salvage ===== */
+function openDispo(i){
+  curDispo=i; const r=NCRS[i];
+  document.getElementById('dispoCtx').innerHTML=
+    `<span class="chip">NCR <b>${r.no}</b></span><span class="chip">Heat <b>${r.heat}</b></span><span class="chip">Grade <b>${r.grade}</b></span>`+
+    `<span class="chip">Stage <b>${r.stage}</b></span><span class="chip">Sev <b>${r.sev}</b></span><span class="chip">${r.issue}</span>`;
+  document.getElementById('dType').innerHTML=Object.keys(DISPOS).map(d=>`<option ${d===r.dispo?'selected':''}>${d}</option>`).join('');
+  document.getElementById('dTarget').innerHTML=OPERATIONS.map(o=>`<option ${o===r.target?'selected':''}>${o}</option>`).join('');
+  document.getElementById('dDown').value=(DISPOS[r.dispo]&&DISPOS[r.dispo].down)?r.target:'';
+  document.getElementById('dIn').value=r.qtyIn||''; document.getElementById('dOut').value=r.qtyOut||'';
+  document.getElementById('dRemarks').value='';
+  dispoChange();
+  document.getElementById('dispoOverlay').classList.add('open');
+}
+function dispoChange(){
+  const d=DISPOS[document.getElementById('dType').value];
+  document.getElementById('dTargetFld').classList.toggle('hide',!d.target);
+  document.getElementById('dDownFld').classList.toggle('hide',!d.down);
+  const noLoss=d.terminal&&d.routes==='Supplier'; // return-to-supplier: full qty leaves
+  document.getElementById('dRoute').innerHTML='<i class="fa-solid fa-route"></i> '+ROUTEMSG[d.routes];
+  calcLoss();
+}
+function calcLoss(){
+  const d=DISPOS[document.getElementById('dType').value];
+  const qi=+document.getElementById('dIn').value||0, qo=+document.getElementById('dOut').value||0;
+  const loss=Math.max(0,qi-qo), pct=qi?loss/qi*100:0;
+  document.getElementById('dLossMt').textContent=loss.toFixed(3);
+  document.getElementById('dLossPct').textContent=pct.toFixed(1);
+  const lp=document.getElementById('dLossPct'); lp.classList.toggle('danger',pct>=10);
+  document.getElementById('dLossMt').classList.toggle('danger',pct>=10);
+  let outcome='—';
+  if(d.terminal&&d.routes==='Supplier')outcome='RETURNED'; else if(d.terminal)outcome='SCRAPPED';
+  else if(qi&&loss===0)outcome='RECOVERED'; else if(loss>0)outcome='PARTIAL'; else if(d.routes!=='None')outcome='RECOVERED';
+  else outcome='ACCEPTED';
+  document.getElementById('dOutcome').textContent=outcome;
+}
+function closeDispo(){document.getElementById('dispoOverlay').classList.remove('open');}
+function saveDispo(){
+  const r=NCRS[curDispo], dt=document.getElementById('dType').value, d=DISPOS[dt];
+  r.dispo=dt;
+  r.target=d.target?document.getElementById('dTarget').value:(d.down?document.getElementById('dDown').value:'');
+  r.qtyIn=+document.getElementById('dIn').value||0; r.qtyOut=+document.getElementById('dOut').value||0;
+  if(r.status==='OPEN'||r.status==='UNDER REVIEW')r.status='DISPOSITIONED';
+  closeDispo(); render();
+}
+
+/* ===== CAPA ===== */
+function openCapa(i){curCapa=i; const r=NCRS[i]; if(!CAPAS[r.no])CAPAS[r.no]=[];
+  document.getElementById('capaTitle').textContent='CAPA — '+r.no;
+  document.getElementById('capaWarn').style.display='none';
+  renderCapa(); document.getElementById('capaOverlay').classList.add('open');}
+function renderCapa(){
+  const r=NCRS[curCapa], list=CAPAS[r.no]||[], cc=capaCount(r.no);
+  const body=`<div class="prep-ctx"><span class="chip">NCR <b>${r.no}</b></span><span class="chip">Heat <b>${r.heat}</b></span><span class="chip">${r.issue}</span></div>`+
+    `<div class="prog"><b>${cc.v}/${cc.t}</b> actions verified</div>`+
+    (list.length?`<ul class="steps">${list.map((a,ai)=>`
+      <li class="${a.status==='VERIFIED'?'done':''}">
+        <input type="checkbox" ${a.status==='VERIFIED'?'checked':''} onchange="toggleCapa(${ai},this.checked)"/>
+        <span class="txt"><span class="captype ct-${a.type.toLowerCase()}">${a.type}</span><b>${a.text}</b>
+          <span class="meta-row">Owner: ${a.resp} · Due: ${a.due} · Status: ${a.status}</span></span>
+      </li>`).join('')}</ul>`:`<div class="note-band">No CAPA actions yet — add a correction / corrective / preventive action.</div>`)+
+    `<div class="note-band"><i class="fa-solid fa-circle-info"></i> All actions must be <b>verified</b> before the NCR can be closed.</div>`;
+  document.getElementById('capaBody').innerHTML=body;
+}
+function toggleCapa(ai,on){const r=NCRS[curCapa];CAPAS[r.no][ai].status=on?'VERIFIED':'OPEN';
+  if(r.status==='DISPOSITIONED')r.status='ACTIONED'; renderCapa(); render();}
+function addCapa(){const r=NCRS[curCapa]; if(curCapa==null)return; (CAPAS[r.no]=CAPAS[r.no]||[]).push({type:'CORRECTIVE',text:'(new action — describe)',resp:'—',due:'—',status:'OPEN'});
+  if(r.status==='DISPOSITIONED')r.status='ACTIONED'; renderCapa(); render();}
+function closeNcr(){const r=NCRS[curCapa]; const cc=capaCount(r.no);
+  if(cc.t===0||cc.v<cc.t){document.getElementById('capaWarn').style.display='block';return;}
+  r.status='CLOSED'; closeCapa(); render();}
+function closeCapa(){document.getElementById('capaOverlay').classList.remove('open');}
+
+fill('fStatus',STATUSES); fill('fSev',SEVERITIES); fill('fDispo',Object.keys(DISPOS)); fill('fAgainst',AGAINST);
+buildHead(); render();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[\u25B2\u25BC\u21C5]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

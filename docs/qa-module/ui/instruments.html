@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Instruments &amp; Calibration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
+.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
+.spec-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.spec-table th{text-align:left;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--color-border);}
+.spec-table th.num,.spec-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.spec-table td{padding:4px 8px;border-bottom:1px solid #f3f3f3;}
+.spec-table input{width:100%;padding:5px 7px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;text-align:right;}
+.spec-table input:focus{outline:none;border-color:var(--color-primary);}
+.spec-table td.okcell{text-align:center;font-weight:700;}
+.ok-yes{color:var(--color-success);} .ok-no{color:var(--color-danger);}
+.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
+.result-band span{color:var(--color-text-muted);}
+.result-band b{font-variant-numeric:tabular-nums;}
+.steps{list-style:none;margin:0;padding:0;}
+.steps li{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--color-border-light);border-radius:var(--r-sm);margin-bottom:6px;}
+.steps li.done{background:#e8f5e9;border-color:#c8e6c9;}
+.steps li input{margin:0;width:auto;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search instrument…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html" class="active"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Instruments &amp; Calibration</h1><div class="sub">Gauge &amp; instrument register with calibration intervals, re-cal alerts and in-use verification</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openAdd()"><i class="fa-solid fa-plus"></i> Add Instrument</button>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Code / name / type / location…" oninput="render()"/></div>
+      <select id="fType" onchange="render()"><option value="">All types</option></select>
+      <select id="fCal" onchange="render()"><option value="">All cal-status</option><option>OVERDUE</option><option>DUE SOON</option><option>CALIBRATED</option><option>UNDER CAL</option><option>OUT OF SERVICE</option></select>
+      <select id="fLoc" onchange="render()"><option value="">All locations</option></select>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><span id="rowCount"></span></div>
+    </div>
+  </main>
+</div>
+
+<!-- Calibrate modal -->
+<div class="overlay" id="calOverlay">
+  <div class="modal">
+    <div class="modal-head">Record Calibration <span class="x" onclick="closeCal()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="calCtx"></div>
+      <div class="mgrid">
+        <div class="fld"><label>Calibration date</label><input id="cDate" value="2026-06-24"/></div>
+        <div class="fld"><label>Type</label><select id="cType" onchange="calTypeChange()"><option>INTERNAL</option><option>EXTERNAL</option></select></div>
+        <div class="fld hide" id="cAgencyFld"><label>Calibration agency</label><select id="cAgency"></select></div>
+        <div class="fld"><label>Certificate no.</label><input id="cCert"/></div>
+        <div class="fld full"><label>Reference standard (traceability)</label><input id="cRef" placeholder="Master gauge / NABL-traceable standard"/></div>
+      </div>
+      <div class="sec-label">Multi-point accuracy check</div>
+      <table class="spec-table"><thead><tr><th class="num">Nominal</th><th style="width:130px" class="num">Measured</th><th class="num">Error</th><th class="num">Tolerance ±</th><th class="okcell" style="width:50px">OK?</th></tr></thead><tbody id="calBody"></tbody></table>
+      <div class="result-band">
+        <span>Points</span> <b id="cPoints">0/0 OK</b> <span>·</span>
+        <span>Result</span> <select id="cResult" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px"><option>PASS</option><option>ADJUSTED</option><option>FAIL</option></select> <span>·</span>
+        <span>Next due</span> <b id="cNextDue">—</b>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCal()"><i class="fa-solid fa-check"></i> Save calibration</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verify modal -->
+<div class="overlay" id="verOverlay">
+  <div class="modal sm">
+    <div class="modal-head">In-use Verification <span class="x" onclick="closeVer()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body" id="verBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeVer()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVer()"><i class="fa-solid fa-check"></i> Record verification</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Instrument modal -->
+<div class="overlay" id="addOverlay">
+  <div class="modal sm">
+    <div class="modal-head">Add Instrument <span class="x" onclick="closeAdd()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="mgrid">
+        <div class="fld"><label>Instrument code</label><input id="aCode"/></div>
+        <div class="fld"><label>Type</label><select id="aType"></select></div>
+        <div class="fld full"><label>Name</label><input id="aName"/></div>
+        <div class="fld"><label>Make</label><input id="aMake"/></div>
+        <div class="fld"><label>Model</label><input id="aModel"/></div>
+        <div class="fld"><label>Range</label><input id="aRange"/></div>
+        <div class="fld"><label>Least count</label><input id="aLc"/></div>
+        <div class="fld"><label>Location</label><input id="aLoc"/></div>
+        <div class="fld"><label>Cal interval (days)</label><input id="aInterval" type="number" value="180"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAdd()"><i class="fa-solid fa-check"></i> Add &amp; schedule calibration</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TODAY=new Date('2026-06-24T00:00:00Z');
+function parseD(s){return new Date(s+'T00:00:00Z');}
+function fmtD(d){return d.toISOString().slice(0,10);}
+function addDays(iso,n){return fmtD(new Date(parseD(iso).getTime()+n*86400000));}
+function daysTo(iso){return Math.round((parseD(iso)-TODAY)/86400000);}
+function nextCal(r){return addDays(r.lastCal,r.interval);}
+function calStatus(r){
+  if(r.status==='UNDER_CALIBRATION')return {t:'UNDER CAL',b:'b-info'};
+  if(r.status==='OUT_OF_SERVICE')return {t:'OUT OF SERVICE',b:'b-hold'};
+  const d=daysTo(nextCal(r));
+  if(d<0)return {t:'OVERDUE',b:'b-hold'};
+  if(d<=30)return {t:'DUE SOON',b:'b-pend'};
+  return {t:'CALIBRATED',b:'b-done'};
+}
+const AGENCIES=['NABL Lab — Metro Cal','NABL Lab — Precision Std','TPI-Bureau Veritas'];
+const TYPES=['Caliper','Micrometer','UTM','Spectrometer','Hardness','UT','Thermocouple','Scale','Profile Projector'];
+const CAL_POINTS={
+ 'Caliper':[{nom:50,tol:0.03},{nom:100,tol:0.03},{nom:150,tol:0.04}],
+ 'Micrometer':[{nom:5,tol:0.004},{nom:15,tol:0.004},{nom:25,tol:0.004}],
+ 'UTM':[{nom:100,tol:1.0},{nom:300,tol:3.0},{nom:500,tol:5.0}],
+ 'Spectrometer':[{nom:18.0,tol:0.15},{nom:8.0,tol:0.10}],
+ 'Hardness':[{nom:25,tol:1.0},{nom:45,tol:1.0},{nom:63,tol:1.5}],
+ 'UT':[{nom:25,tol:0.5},{nom:100,tol:1.0}],
+ 'Thermocouple':[{nom:200,tol:2.0},{nom:600,tol:3.0},{nom:1000,tol:4.0}],
+ 'Scale':[{nom:500,tol:0.5},{nom:1000,tol:1.0},{nom:2000,tol:2.0}],
+ 'Profile Projector':[{nom:10,tol:0.01},{nom:50,tol:0.02}]
+};
+function calPoints(t){return CAL_POINTS[t]||[{nom:10,tol:0.1},{nom:50,tol:0.1}];}
+const VERIFY_ITEMS=['Zero / reference check','Physical condition (no damage)','Cleanliness & free movement','Calibration sticker valid'];
+
+const INSTRUMENTS=[
+ {code:'VC-014',name:'Digital Vernier Caliper 0-200',type:'Caliper',make:'Mitutoyo',model:'CD-8AX',range:'0-200 mm',lc:'0.01 mm',loc:'Inspection Bay',dept:'QA',interval:180,lastCal:'2026-04-02',cert:'CAL-2526-0098',status:'ACTIVE',critical:false},
+ {code:'MM-007',name:'Outside Micrometer 25-50',type:'Micrometer',make:'Mitutoyo',model:'103-138',range:'25-50 mm',lc:'0.001 mm',loc:'Inspection Bay',dept:'QA',interval:180,lastCal:'2026-01-05',cert:'CAL-2526-0041',status:'ACTIVE',critical:false},
+ {code:'UTM-002',name:'Universal Testing Machine 600kN',type:'UTM',make:'FIE',model:'UTE-60',range:'0-600 kN',lc:'0.5 kN',loc:'Mech Lab',dept:'QA-Lab',interval:365,lastCal:'2025-09-15',cert:'CAL-2425-0301',status:'ACTIVE',critical:true},
+ {code:'SPEC-001',name:'Optical Emission Spectrometer',type:'Spectrometer',make:'Thermo Fisher',model:'ARL 3460',range:'multi-element',lc:'0.001 %',loc:'Chem Lab',dept:'QA-Lab',interval:90,lastCal:'2026-03-20',cert:'CAL-2526-0077',status:'ACTIVE',critical:true},
+ {code:'HRD-003',name:'Rockwell Hardness Tester',type:'Hardness',make:'Mitutoyo',model:'HR-430',range:'20-70 HRC',lc:'0.5 HRC',loc:'Mech Lab',dept:'QA-Lab',interval:180,lastCal:'2026-02-10',cert:'CAL-2526-0055',status:'ACTIVE',critical:false},
+ {code:'UT-005',name:'UT Flaw Detector',type:'UT',make:'Olympus',model:'EPOCH 650',range:'0-500 mm',lc:'-',loc:'NDT Bay',dept:'QA',interval:365,lastCal:'2025-07-01',cert:'CAL-2425-0188',status:'ACTIVE',critical:true},
+ {code:'TC-021',name:'Furnace Thermocouple Zone-2',type:'Thermocouple',make:'Tempsens',model:'Type-K',range:'0-1300 C',lc:'1 C',loc:'HT Cell',dept:'Maintenance',interval:90,lastCal:'2026-03-28',cert:'CAL-2526-0081',status:'ACTIVE',critical:true},
+ {code:'WS-009',name:'Platform Weighing Scale 2T',type:'Scale',make:'Avery',model:'BP-2000',range:'0-2000 kg',lc:'0.5 kg',loc:'Dispatch',dept:'Stores',interval:365,lastCal:'2025-05-20',cert:'CAL-2425-0140',status:'ACTIVE',critical:false},
+ {code:'PP-002',name:'Profile Projector',type:'Profile Projector',make:'Nikon',model:'V-12B',range:'0-100 mm',lc:'0.001 mm',loc:'Inspection Bay',dept:'QA',interval:365,lastCal:'2026-06-01',cert:'-',status:'UNDER_CALIBRATION',critical:false},
+ {code:'MM-012',name:'Outside Micrometer 0-25',type:'Micrometer',make:'Mitutoyo',model:'103-137',range:'0-25 mm',lc:'0.001 mm',loc:'Finishing',dept:'Production',interval:180,lastCal:'2025-11-15',cert:'CAL-2425-0210',status:'OUT_OF_SERVICE',critical:false}
+];
+
+const COLS=[
+ {k:'code',label:'Code',cls:'mono'},{k:'name',label:'Instrument',name:true},{k:'type',label:'Type'},
+ {k:'makeModel',label:'Make / Model',calc:r=>`${r.make} ${r.model}`},{k:'range',label:'Range'},{k:'lc',label:'Least count'},
+ {k:'loc',label:'Location'},{k:'dept',label:'Dept'},{k:'interval',label:'Interval(d)',cls:'num'},
+ {k:'lastCal',label:'Last cal'},{k:'nextCal',label:'Next cal',next:true},{k:'calStatus',label:'Cal status',calbadge:true},
+ {k:'cert',label:'Cert no',cls:'mono'},{k:'actions',label:'',actions:true}
+];
+let sortKey=null,sortDir=1,curCal=null,curPoints=[],curVer=null,verState=[];
+
+function fill(sel,arr){document.getElementById(sel).insertAdjacentHTML('beforeend',arr.map(o=>`<option>${o}</option>`).join(''));}
+function cell(c,r,i){
+  if(c.actions) return `<button class="btn-icon" title="Calibrate" onclick="openCal(${i})"><i class="fa-solid fa-screwdriver-wrench"></i></button>`+
+                       `<button class="btn-icon" title="Verify" onclick="openVer(${i})"><i class="fa-solid fa-list-check"></i></button>`+
+                       `<button class="btn-icon" title="View" onclick="openViewEl(this)"><i class="fa-solid fa-eye"></i></button>`;
+  if(c.name)    return `${r.name}${r.critical?'<i class="fa-solid fa-star crit" title="Critical instrument"></i>':''}`;
+  if(c.next){const nc=nextCal(r),d=daysTo(nc);const hint=d<0?`${-d}d overdue`:`in ${d}d`;return `${nc} <span class="due-hint">(${hint})</span>`;}
+  if(c.calbadge){const s=calStatus(r);return `<span class="badge ${s.b}">${s.t}</span>`;}
+  if(c.calc) return c.calc(r);
+  let v=r[c.k]; if(v===''||v==null)v='-'; return v;
+}
+function cmp(a,b){return (''+(a??'')).localeCompare(''+(b??''),undefined,{numeric:true,sensitivity:'base'});}
+function sortVal(r,k){if(k==='nextCal')return nextCal(r);if(k==='calStatus')return calStatus(r).t;if(k==='makeModel')return r.make+' '+r.model;return r[k];}
+function passes(r){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const ft=document.getElementById('fType').value,fc=document.getElementById('fCal').value,fl=document.getElementById('fLoc').value;
+  if(q&&!(r.code+' '+r.name+' '+r.type+' '+r.loc+' '+r.make).toLowerCase().includes(q))return false;
+  if(ft&&r.type!==ft)return false; if(fl&&r.loc!==fl)return false;
+  if(fc&&calStatus(r).t!==fc)return false;
+  return true;
+}
+function buildHead(){
+  document.getElementById('thead').innerHTML='<tr>'+COLS.map(c=>{
+    if(c.actions)return '<th class="col-actions"></th>';
+    const car=sortKey===c.k?`<span class="car on">${sortDir>0?'▲':'▼'}</span>`:'<span class="car">⇅</span>';
+    return `<th class="${c.cls==='num'?'num':''}" onclick="sortBy('${c.k}')">${c.label} ${car}</th>`;
+  }).join('')+'</tr>';
+}
+function sortBy(k){ if(sortKey===k){ if(sortDir>0)sortDir=-1; else {sortKey=null;sortDir=1;} } else {sortKey=k;sortDir=1;} buildHead(); render(); }
+function render(){
+  let rows=INSTRUMENTS.map((r,i)=>({r,i})).filter(x=>passes(x.r));
+  if(sortKey) rows.sort((a,b)=>cmp(sortVal(a.r,sortKey),sortVal(b.r,sortKey))*sortDir);
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML=`<tr class="empty"><td colspan="${COLS.length}">No instruments match the filters.</td></tr>`;}
+  else tb.innerHTML=rows.map(({r,i})=>`<tr>${COLS.map(c=>`<td class="${c.cls||''}${c.actions?' actions':''}">${cell(c,r,i)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('rowCount').textContent=`${rows.length} of ${INSTRUMENTS.length} instruments`;
+  const over=INSTRUMENTS.filter(r=>calStatus(r).t==='OVERDUE').length, due=INSTRUMENTS.filter(r=>calStatus(r).t==='DUE SOON').length;
+  document.getElementById('meta').textContent=`${over} overdue · ${due} due soon`;
+}
+
+/* ===== Calibrate ===== */
+function openCal(i){
+  curCal=i; const r=INSTRUMENTS[i], pts=calPoints(r.type);
+  document.getElementById('calCtx').innerHTML=
+    `<span class="chip">Code <b>${r.code}</b></span><span class="chip">${r.name}</span><span class="chip">Type <b>${r.type}</b></span>`+
+    `<span class="chip">Range <b>${r.range}</b></span><span class="chip">LC <b>${r.lc}</b></span><span class="chip">Interval <b>${r.interval}d</b></span>`;
+  curPoints=pts.map(p=>({nom:p.nom,tol:p.tol,measured:p.nom})); // prefill measured = nominal (perfect)
+  document.getElementById('cAgency').innerHTML=AGENCIES.map(a=>`<option>${a}</option>`).join('');
+  document.getElementById('cType').value='INTERNAL'; calTypeChange();
+  document.getElementById('cCert').value='CAL-2526-0'+(120+i);
+  document.getElementById('cRef').value=''; document.getElementById('cDate').value='2026-06-24';
+  renderCalPoints(); recomputeCal();
+  document.getElementById('calOverlay').classList.add('open');
+}
+function calTypeChange(){document.getElementById('cAgencyFld').classList.toggle('hide',document.getElementById('cType').value!=='EXTERNAL');}
+function renderCalPoints(){
+  document.getElementById('calBody').innerHTML=curPoints.map((p,pi)=>{
+    const err=+(p.measured-p.nom).toFixed(4), ok=Math.abs(err)<=p.tol;
+    return `<tr><td class="num">${p.nom}</td><td><input type="number" step="any" value="${p.measured}" oninput="setMeasured(${pi},this.value)"/></td>`+
+           `<td class="num" id="err${pi}">${err>=0?'+':''}${err}</td><td class="num">${p.tol}</td>`+
+           `<td class="okcell ${ok?'ok-yes':'ok-no'}" id="cok${pi}">${ok?'✓':'✗'}</td></tr>`;
+  }).join('');
+}
+function setMeasured(pi,v){curPoints[pi].measured=parseFloat(v)||0; const p=curPoints[pi];
+  const err=+(p.measured-p.nom).toFixed(4), ok=Math.abs(err)<=p.tol;
+  document.getElementById('err'+pi).textContent=(err>=0?'+':'')+err;
+  const ce=document.getElementById('cok'+pi); ce.textContent=ok?'✓':'✗'; ce.className='okcell '+(ok?'ok-yes':'ok-no');
+  recomputeCal();}
+function recomputeCal(){
+  const oks=curPoints.map(p=>Math.abs(p.measured-p.nom)<=p.tol);
+  const nOk=oks.filter(Boolean).length;
+  document.getElementById('cPoints').textContent=`${nOk}/${curPoints.length} OK`;
+  document.getElementById('cResult').value = nOk===curPoints.length?'PASS':'FAIL';
+  const r=INSTRUMENTS[curCal];
+  document.getElementById('cNextDue').textContent=addDays(document.getElementById('cDate').value,r.interval);
+}
+function closeCal(){document.getElementById('calOverlay').classList.remove('open');}
+function saveCal(){
+  const r=INSTRUMENTS[curCal], res=document.getElementById('cResult').value;
+  r.lastCal=document.getElementById('cDate').value; r.cert=document.getElementById('cCert').value;
+  r.status = res==='FAIL' ? 'OUT_OF_SERVICE' : 'ACTIVE';
+  closeCal(); render();
+}
+
+/* ===== Verify ===== */
+function openVer(i){curVer=i; const r=INSTRUMENTS[i]; verState=VERIFY_ITEMS.map(()=>true);
+  renderVer(); document.getElementById('verOverlay').classList.add('open');}
+function renderVer(){
+  const r=INSTRUMENTS[curVer];
+  document.getElementById('verBody').innerHTML=
+    `<div class="prep-ctx"><span class="chip">Code <b>${r.code}</b></span><span class="chip">${r.name}</span></div>`+
+    `<ul class="steps">${VERIFY_ITEMS.map((it,vi)=>`<li class="${verState[vi]?'done':''}"><input type="checkbox" ${verState[vi]?'checked':''} onchange="toggleVer(${vi},this.checked)"/><span>${it}</span></li>`).join('')}</ul>`+
+    `<div class="result-band"><span>Result</span> <b id="vRes">${verState.every(Boolean)?'OK':'NOT OK'}</b></div>`;
+}
+function toggleVer(vi,on){verState[vi]=on; renderVer();}
+function closeVer(){document.getElementById('verOverlay').classList.remove('open');}
+function saveVer(){closeVer();}
+
+/* ===== Add ===== */
+function openAdd(){document.getElementById('aType').innerHTML=TYPES.map(t=>`<option>${t}</option>`).join('');
+  ['aCode','aName','aMake','aModel','aRange','aLc','aLoc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('aInterval').value=180; document.getElementById('addOverlay').classList.add('open');}
+function closeAdd(){document.getElementById('addOverlay').classList.remove('open');}
+function saveAdd(){
+  INSTRUMENTS.unshift({code:document.getElementById('aCode').value||'NEW-001',name:document.getElementById('aName').value||'(new instrument)',
+    type:document.getElementById('aType').value,make:document.getElementById('aMake').value,model:document.getElementById('aModel').value,
+    range:document.getElementById('aRange').value,lc:document.getElementById('aLc').value,loc:document.getElementById('aLoc').value,dept:'QA',
+    interval:+document.getElementById('aInterval').value||180,lastCal:'2026-06-24',cert:'-',status:'UNDER_CALIBRATION',critical:false});
+  closeAdd(); render();
+}
+
+fill('fType',TYPES); fill('fLoc',[...new Set(INSTRUMENTS.map(r=>r.loc))]);
+buildHead(); render();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[\u25B2\u25BC\u21C5]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

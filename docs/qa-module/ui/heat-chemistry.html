@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Heat Chemistry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px; --sp6:24px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px;
+  --shadow-md:0 4px 12px rgba(0,0,0,.1); --shadow-lg:0 4px 20px rgba(0,0,0,.15);
+  --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+
+/* shell */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search input::placeholder{color:rgba(255,255,255,.45);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s,box-shadow .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-primary:disabled{background:#87D3F0;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-danger{background:var(--color-danger);color:#fff;}.btn-danger:hover{background:#c62828;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.b-pass{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-fail{background:rgba(244,67,54,.12);color:#d32f2f;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;}
+.b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+
+/* master-detail */
+.hc-wrap{display:grid;grid-template-columns:300px 1fr;gap:var(--sp3);flex:1;min-height:0;}
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+
+/* heat list */
+.hc-list .lhead{padding:var(--sp3);border-bottom:1px solid var(--color-border-light);}
+.hc-list .lhead .lh-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;margin-bottom:6px;}
+.hc-list .lsearch{position:relative;}
+.hc-list .lsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.hc-list .lsearch input{width:100%;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.hc-list .lsearch input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.hc-list .litems{overflow-y:auto;flex:1;}
+.litem{padding:9px 12px;border-bottom:1px solid #f3f3f3;cursor:pointer;border-left:3px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:var(--sp2);}
+.litem:hover{background:#eef7fc;}
+.litem.sel{background:var(--color-primary-light);border-left-color:var(--color-primary);}
+.litem .lh{font-weight:600;font-size:var(--fs-sm);font-variant-numeric:tabular-nums;}
+.litem .lg{font-size:var(--fs-xs);color:var(--color-text-muted);}
+
+/* detail */
+.hc-detail{min-width:0;}
+.hc-dhead{padding:var(--sp3) var(--sp4);border-bottom:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp3);flex-wrap:wrap;}
+.hc-heat{font-size:var(--fs-md);font-weight:600;display:flex;align-items:center;gap:var(--sp2);}
+.hc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.hc-chips .chip{font-size:var(--fs-sm);color:var(--color-text-secondary);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.hc-chips .chip b{color:var(--color-text-primary);font-weight:600;margin-left:3px;}
+.hc-chips .chip.src{background:var(--color-primary-light);border-color:#b3e5fc;color:var(--color-primary-dark);}
+.hc-actions{display:flex;gap:var(--sp2);}
+.hc-tabs{display:flex;gap:2px;padding:var(--sp2) var(--sp4) 0;border-bottom:1px solid var(--color-border-light);}
+.hc-tab{padding:8px 16px;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-muted);cursor:pointer;border-bottom:2px solid transparent;}
+.hc-tab:hover{color:var(--color-primary);}
+.hc-tab.on{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+.hc-grid-wrap{flex:1;min-height:0;overflow:auto;padding:0 var(--sp4);}
+table.hc-grid{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.hc-grid thead th{position:sticky;top:0;background:#f0f4f7;text-align:left;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--color-border);white-space:nowrap;}
+.hc-grid td{padding:4px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;}
+.hc-grid tbody tr:hover td{background:#fafbfc;}
+.hc-grid .el{font-weight:600;}
+.hc-grid .spec{color:var(--color-text-muted);font-variant-numeric:tabular-nums;}
+.hc-grid input{width:110px;padding:5px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;font-variant-numeric:tabular-nums;text-align:right;}
+.hc-grid input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.hc-grid input.bad{border-color:var(--color-danger);background:#fff5f5;}
+.hc-grid input.good{border-color:#a5d6a7;}
+.hc-foot{padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:center;gap:var(--sp3);}
+.hc-foot .ov{display:flex;align-items:center;gap:var(--sp2);font-size:var(--fs-sm);color:var(--color-text-muted);}
+.hc-foot .ov .big{font-size:var(--fs-base);}
+.hc-note{font-size:var(--fs-sm);}
+.hc-note.ok{color:var(--color-success);}.hc-note.warn{color:var(--color-danger);}
+.empty-detail{display:flex;align-items:center;justify-content:center;flex:1;color:var(--color-text-hint);font-style:italic;}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div>
+    <div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat, material…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html" class="active"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div>
+        <h1>Heat Chemistry</h1>
+        <div class="sub">Heat-level chemical composition — actual (L2 / manual) validated against TDC element limits</div>
+      </div>
+    </div>
+
+    <div class="hc-wrap">
+      <!-- Heat list -->
+      <div class="card hc-list">
+        <div class="lhead">
+          <div class="lh-title">Heats — chemistry</div>
+          <div class="lsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="heatSearch" placeholder="Type heat no…" /></div>
+        </div>
+        <div class="litems" id="heatList"></div>
+      </div>
+
+      <!-- Detail -->
+      <div class="card hc-detail" id="detail"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ===== Grade chemistry specs (element, unit, min, max) — null = unbounded that side ===== */
+const SPEC={
+ '316L':[['C','%',null,0.030],['Mn','%',null,2.00],['Si','%',null,0.75],['S','%',null,0.030],['P','%',null,0.045],['Cr','%',16.0,18.0],['Ni','%',10.0,14.0],['Mo','%',2.0,3.0],['N','%',null,0.10],['Cu','%',null,0.50],['Co','%',null,0.20]],
+ '304L':[['C','%',null,0.030],['Mn','%',null,2.00],['Si','%',null,0.75],['S','%',null,0.030],['P','%',null,0.045],['Cr','%',18.0,20.0],['Ni','%',8.0,12.0],['Mo','%',null,0.50],['N','%',null,0.10],['Cu','%',null,0.50]],
+ '17-4PH':[['C','%',null,0.07],['Mn','%',null,1.00],['Si','%',null,1.00],['S','%',null,0.030],['P','%',null,0.040],['Cr','%',15.0,17.5],['Ni','%',3.0,5.0],['Cu','%',3.0,5.0],['Nb','%',0.15,0.45],['Mo','%',null,0.50]],
+ '416':[['C','%',null,0.15],['Mn','%',null,1.25],['Si','%',null,1.00],['S','%',0.15,0.35],['P','%',null,0.060],['Cr','%',12.0,14.0],['Ni','%',null,0.50],['Mo','%',null,0.60]]
+};
+const TYPES=['Ladle','Product','Check'];
+const HEATS=[
+ {heat:'2526-16496',grade:'17-4PH',tdc:'TDC-004275',sample:'CHM-2526-0188',cast:'24-Jun 05:40',furnace:'Furnace-20T',state:'PASS'},
+ {heat:'2526-16783',grade:'316L',tdc:'TDC-006132',sample:'CHM-2526-0189',cast:'24-Jun 06:02',furnace:'Furnace-6T',state:'PASS'},
+ {heat:'2526-16776',grade:'304L',tdc:'TDC-004810',sample:'CHM-2526-0190',cast:'24-Jun 06:18',furnace:'Furnace-20T',state:'FAIL'},
+ {heat:'2526-16482',grade:'416',tdc:'TDC-003922',sample:'CHM-2526-0191',cast:'23-Jun 22:40',furnace:'Furnace-6T',state:'PASS'},
+ {heat:'2626-00028',grade:'304L',tdc:'TDC-004810',sample:'CHM-2526-0192',cast:'24-Jun 06:35',furnace:'Furnace-20T',state:'PENDING'},
+ {heat:'2526-16819',grade:'316L',tdc:'TDC-006132',sample:'CHM-2526-0193',cast:'24-Jun 05:20',furnace:'Furnace-6T',state:'PENDING'},
+ {heat:'2526-16426',grade:'416',tdc:'TDC-003922',sample:'CHM-2526-0187',cast:'23-Jun 20:10',furnace:'Furnace-20T',state:'PASS'},
+ {heat:'2526-16798',grade:'304L',tdc:'TDC-004810',sample:'CHM-2526-0186',cast:'23-Jun 18:55',furnace:'Furnace-6T',state:'HOLD'}
+];
+const BADGE={PASS:'b-pass',FAIL:'b-fail',PENDING:'b-pend',HOLD:'b-hold',CLEARED:'b-clr'};
+
+/* ===== deterministic mock actuals ===== */
+function rnd(v){const a=Math.abs(v);return a<1?+v.toFixed(3):a<100?+v.toFixed(2):Math.round(v);}
+function hashIdx(str,n){let h=0;for(const ch of str)h=(h*33+ch.charCodeAt(0))>>>0;return n?h%n:0;}
+function deriveVal(heat,i,e,isFail){
+  const min=e[2],max=e[3]; let h=0,s=heat+'#'+i;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;const f=(h%1000)/1000;
+  if(isFail){ if(max!=null) return rnd(max*(1.04+f*0.05)); if(min!=null) return rnd(min*(0.90-f*0.05)); return rnd(99); }
+  if(min!=null&&max!=null) return rnd(min+(0.25+0.5*f)*(max-min));
+  if(min!=null) return rnd(min*(1.05+f*0.10));
+  if(max!=null) return rnd(max*(0.35+f*0.5));
+  return rnd(f);
+}
+/* store[heat] = {Ladle:{el:val}, Product:{}, Check:{}, _src:{Ladle:'L2'} } */
+const store={};
+HEATS.forEach(h=>{
+  store[h.heat]={Ladle:{},Product:{},Check:{},_src:{}};
+  if(h.state!=='PENDING'){
+    const spec=SPEC[h.grade], failEl=(h.state==='FAIL'||h.state==='HOLD')?hashIdx(h.heat,spec.length):-1;
+    spec.forEach((e,i)=>store[h.heat].Ladle[e[0]]=deriveVal(h.heat,i,e,i===failEl));
+    store[h.heat]._src.Ladle='L2';
+  }
+});
+
+let cur=0, curType='Ladle';
+
+/* ===== eval ===== */
+function elResult(e,v){ if(v===''||v==null||isNaN(parseFloat(v))) return ''; const n=parseFloat(v);
+  if(e[2]!=null&&n<e[2])return'FAIL'; if(e[3]!=null&&n>e[3])return'FAIL'; return'PASS'; }
+function overall(){ const h=HEATS[cur],spec=SPEC[h.grade],vals=store[h.heat][curType];
+  let fail=false,empty=false; spec.forEach(e=>{const r=elResult(e,vals[e[0]]); if(r==='')empty=true; else if(r==='FAIL')fail=true;});
+  return fail?'FAIL':(empty?'PENDING':'PASS'); }
+function fmtSpec(e){ const mn=e[2],mx=e[3]; if(mn!=null&&mx!=null)return mn.toFixed(mn<1?3:2)+' – '+mx.toFixed(mx<1?3:2); if(mx!=null)return '≤ '+mx.toFixed(mx<1?3:2); if(mn!=null)return '≥ '+mn.toFixed(mn<1?3:2); return '—'; }
+
+/* ===== render list ===== */
+function renderList(){
+  const q=(document.getElementById('heatSearch').value||'').toLowerCase();
+  document.getElementById('heatList').innerHTML=HEATS.map((h,i)=>{
+    if(q&&!(h.heat+' '+h.grade).toLowerCase().includes(q))return'';
+    return `<div class="litem ${i===cur?'sel':''}" onclick="selectHeat(${i})">
+      <div><div class="lh">${h.heat}</div><div class="lg">${h.grade} · ${h.sample}</div></div>
+      <span class="badge ${BADGE[h.state]}">${h.state}</span></div>`;
+  }).join('');
+}
+function selectHeat(i){cur=i;curType='Ladle';renderList();renderDetail();}
+
+/* ===== render detail ===== */
+function renderDetail(){
+  const h=HEATS[cur], spec=SPEC[h.grade], vals=store[h.heat][curType], src=store[h.heat]._src[curType]||'—';
+  const chips=[['Grade',h.grade],['TDC',h.tdc],['Sample',h.sample],['Cast',h.cast],['Furnace',h.furnace]]
+    .map(p=>`<span class="chip">${p[0]}<b>${p[1]}</b></span>`).join('')
+    +`<span class="chip src">Source<b>${src}</b></span>`;
+  const tabs=TYPES.map(t=>`<div class="hc-tab ${t===curType?'on':''}" onclick="setType('${t}')">${t}${t==='Ladle'?'':' <span style="font-size:10px;color:#999">(opt)</span>'}</div>`).join('');
+  const rows=spec.map((e,i)=>{
+    const v=vals[e[0]]??'', r=elResult(e,v), cls=r==='FAIL'?'bad':(r==='PASS'?'good':'');
+    const badge=r===''?'<span class="badge b-pend">—</span>':`<span class="badge ${r==='PASS'?'b-pass':'b-fail'}">${r}</span>`;
+    return `<tr><td class="el">${e[0]}</td><td class="spec">${e[1]}</td><td class="spec">${fmtSpec(e)}</td>
+      <td><input class="${cls}" data-el="${e[0]}" type="number" step="any" value="${v}" placeholder="—" oninput="onEdit(this)"/></td>
+      <td>${badge}</td></tr>`;
+  }).join('');
+  const ov=overall();
+  document.getElementById('detail').innerHTML=`
+    <div class="hc-dhead">
+      <div>
+        <div class="hc-heat">Heat ${h.heat} <span class="badge ${BADGE[h.state]}">${h.state}</span></div>
+        <div class="hc-chips">${chips}</div>
+      </div>
+      <div class="hc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="importL2()"><i class="fa-solid fa-satellite-dish"></i> Import from L2</button>
+        <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+    <div class="hc-tabs">${tabs}</div>
+    <div class="hc-grid-wrap">
+      <table class="hc-grid">
+        <thead><tr><th>Element</th><th>Unit</th><th>TDC Spec</th><th style="text-align:right">Actual</th><th>Result</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="hc-foot">
+      <div class="ov">Overall chemistry: <span class="badge big ${ov==='PASS'?'b-pass':ov==='FAIL'?'b-fail':'b-pend'}" id="ovBadge">${ov}</span> <span class="hc-note" id="hcNote"></span></div>
+      <button class="btn ${ov==='FAIL'?'btn-danger':'btn-primary'}" id="clrBtn" onclick="doClearance()" ${ov==='PENDING'?'disabled':''}>
+        <i class="fa-solid ${ov==='FAIL'?'fa-ban':'fa-circle-check'}"></i> ${ov==='FAIL'?'Put heat on hold':'Record chemistry clearance'}</button>
+    </div>`;
+}
+function setType(t){curType=t;renderDetail();}
+function onEdit(inp){
+  const h=HEATS[cur]; store[h.heat][curType][inp.dataset.el]=inp.value;
+  store[h.heat]._src[curType]='Manual';
+  /* live: recompute just this row class + overall, without full re-render to keep focus */
+  const e=SPEC[h.grade].find(x=>x[0]===inp.dataset.el), r=elResult(e,inp.value);
+  inp.className=r==='FAIL'?'bad':(r==='PASS'?'good':'');
+  inp.closest('tr').querySelector('td:last-child').innerHTML=r===''?'<span class="badge b-pend">—</span>':`<span class="badge ${r==='PASS'?'b-pass':'b-fail'}">${r}</span>`;
+  refreshOverall();
+  /* update source chip */
+  const chip=document.querySelector('.hc-chips .chip.src b'); if(chip)chip.textContent='Manual';
+}
+function refreshOverall(){
+  const ov=overall(), b=document.getElementById('ovBadge'); if(!b)return;
+  b.textContent=ov; b.className='badge big '+(ov==='PASS'?'b-pass':ov==='FAIL'?'b-fail':'b-pend');
+  const btn=document.getElementById('clrBtn');
+  btn.disabled=ov==='PENDING';
+  btn.className='btn '+(ov==='FAIL'?'btn-danger':'btn-primary');
+  btn.innerHTML=`<i class="fa-solid ${ov==='FAIL'?'fa-ban':'fa-circle-check'}"></i> ${ov==='FAIL'?'Put heat on hold':'Record chemistry clearance'}`;
+}
+function importL2(){
+  const h=HEATS[cur], spec=SPEC[h.grade];
+  const failEl=(h.state==='FAIL'||h.state==='HOLD')?hashIdx(h.heat,spec.length):-1;
+  spec.forEach((e,i)=>store[h.heat][curType][e[0]]=deriveVal(h.heat,i,e,i===failEl));
+  store[h.heat]._src[curType]='L2';
+  renderDetail();
+  const n=document.getElementById('hcNote'); n.textContent='✓ Pulled spectro analysis from L2'; n.className='hc-note ok';
+}
+function doClearance(){
+  const h=HEATS[cur], ov=overall(); const n=()=>document.getElementById('hcNote');
+  if(ov==='PASS'){h.state='CLEARED'; renderList(); renderDetail(); n().textContent='✓ Chemistry cleared — heat released to production'; n().className='hc-note ok';}
+  else if(ov==='FAIL'){h.state='HOLD'; renderList(); renderDetail(); n().textContent='⚠ Heat held — chemistry out of TDC; route to disposition / re-test'; n().className='hc-note warn';}
+}
+
+document.getElementById('heatSearch').oninput=renderList;
+renderList(); renderDetail();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+</body>
+</html>

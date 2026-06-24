@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — TDC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-danger{background:var(--color-danger);color:#fff;}.btn-danger:hover{background:#c62828;}
+.btn-success{background:var(--color-success);color:#fff;}.btn-success:hover{background:#2e7d32;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.b-pass{background:rgba(76,175,80,.12);color:#388e3c;} .b-pend{background:rgba(255,152,0,.12);color:#ef6c00;}
+.b-clr{background:rgba(103,58,183,.12);color:#673ab7;} .b-draft{background:rgba(158,158,158,.14);color:#757575;}
+.b-rej{background:rgba(244,67,54,.12);color:#d32f2f;} .b-info{background:rgba(33,150,243,.12);color:#1976d2;}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:var(--sp3);flex:1;min-height:0;}
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.lhead{padding:var(--sp3);border-bottom:1px solid var(--color-border-light);display:flex;flex-direction:column;gap:8px;}
+.lhead .lh-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.lsearch{position:relative;}
+.lsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.lsearch input{width:100%;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.litems{overflow-y:auto;flex:1;}
+.litem{padding:9px 12px;border-bottom:1px solid #f3f3f3;cursor:pointer;border-left:3px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:var(--sp2);}
+.litem:hover{background:#eef7fc;} .litem.sel{background:var(--color-primary-light);border-left-color:var(--color-primary);}
+.litem .lh{font-weight:600;font-size:var(--fs-sm);}
+.litem .lg{font-size:var(--fs-xs);color:var(--color-text-muted);}
+.detail{min-width:0;}
+.dhead{padding:var(--sp3) var(--sp4);border-bottom:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp3);flex-wrap:wrap;}
+.dh-title{font-size:var(--fs-md);font-weight:600;display:flex;align-items:center;gap:var(--sp2);flex-wrap:wrap;}
+.dh-sub{font-size:var(--fs-sm);color:var(--color-text-muted);margin-top:3px;}
+.dactions{display:flex;gap:var(--sp2);flex-wrap:wrap;}
+.std-strip{display:flex;align-items:center;gap:var(--sp2);flex-wrap:wrap;padding:var(--sp2) var(--sp4);background:var(--color-bg-alt);border-bottom:1px solid var(--color-border-light);}
+.std-strip .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;}
+.std-chip{font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.std-chip b{color:var(--color-text-primary);}
+.std-strip .note{font-size:var(--fs-sm);color:var(--color-success);margin-left:auto;}
+.tabs{display:flex;gap:2px;padding:var(--sp2) var(--sp4) 0;border-bottom:1px solid var(--color-border-light);overflow-x:auto;}
+.tab{padding:8px 14px;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab:hover{color:var(--color-primary);} .tab.on{color:var(--color-primary);border-bottom-color:var(--color-primary);}
+.tabbody{flex:1;min-height:0;overflow:auto;padding:var(--sp4);}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp3) var(--sp4);max-width:920px;}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.chkfld{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);padding:8px 2px;cursor:pointer;}
+.chkfld input{width:auto;margin:0;}
+.mini-table input[type=checkbox]{width:auto;}
+.sec-h{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;margin:var(--sp4) 0 var(--sp2);}
+.tdc-grid{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tdc-grid th{background:#f0f4f7;color:var(--color-text-muted);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--color-border);white-space:nowrap;text-align:left;}
+.tdc-grid th.grp{text-align:center;} .tdc-grid th.grp-cus{color:var(--color-info);} .tdc-grid th.grp-app{color:var(--color-primary-dark);}
+.tdc-grid td{padding:3px 8px;border-bottom:1px solid #f3f3f3;white-space:nowrap;}
+.tdc-grid td.el{font-weight:600;} .tdc-grid td.u{color:var(--color-text-muted);}
+.tdc-grid input.num{width:62px;padding:4px 6px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;text-align:right;font-variant-numeric:tabular-nums;}
+.tdc-grid input.num:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.tdc-grid input.cus{background:#fffdf3;}
+.tdc-grid td.tapp,.tdc-grid td.tappx{background:rgba(37,169,224,.07);font-weight:600;text-align:right;font-variant-numeric:tabular-nums;}
+.tdc-grid td.pr{text-align:center;} .tdc-grid input[type=checkbox]{accent-color:var(--color-primary);}
+.tdc-grid td.gline,.tdc-grid th.gline{border-left:1px solid var(--color-border);}
+.mini-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);max-width:920px;}
+.mini-table th{background:#f0f4f7;color:var(--color-text-muted);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;font-weight:600;padding:7px 9px;text-align:left;border-bottom:1px solid var(--color-border);}
+.mini-table td{padding:6px 9px;border-bottom:1px solid #f3f3f3;}
+.mini-table input,.mini-table select{padding:5px 7px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;width:100%;}
+.mini-table input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.mini-table .pc{text-align:center;}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search TDC, customer…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html" class="active"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>TDC</h1><div class="sub">Technical Delivery Conditions — customer spec overlaid on standards (standard → customer → applied)</div></div>
+      <button class="btn btn-primary btn-sm" onclick="alert('New TDC — create a draft, pick standard(s), Fill standards, customer overlay, approve. (demo)')"><i class="fa-solid fa-plus"></i> New TDC</button>
+    </div>
+    <div class="wrap">
+      <div class="card">
+        <div class="lhead"><div class="lh-title">TDCs</div>
+          <div class="lsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="TDC / customer / grade…" /></div></div>
+        <div class="litems" id="list"></div>
+      </div>
+      <div class="card detail" id="detail"></div>
+    </div>
+  </main>
+</div>
+<script>
+/* ===== Standard specs (drive Fill-from-standard). [name, uom, min, max] ===== */
+const STD_CHEM={
+ '17-4PH':[['C','%',null,0.07],['Mn','%',null,1.00],['Si','%',null,1.00],['S','%',null,0.030],['P','%',null,0.040],['Cr','%',15.0,17.5],['Ni','%',3.0,5.0],['Cu','%',3.0,5.0],['Nb','%',0.15,0.45]],
+ '304L':[['C','%',null,0.030],['Mn','%',null,2.00],['Si','%',null,0.75],['S','%',null,0.030],['P','%',null,0.045],['Cr','%',18.0,20.0],['Ni','%',8.0,12.0],['N','%',null,0.10]],
+ '316L':[['C','%',null,0.030],['Mn','%',null,2.00],['Si','%',null,0.75],['S','%',null,0.030],['P','%',null,0.045],['Cr','%',16.0,18.0],['Ni','%',10.0,14.0],['Mo','%',2.0,3.0],['N','%',null,0.10]],
+ '416':[['C','%',null,0.15],['Mn','%',null,1.25],['Si','%',null,1.00],['S','%',0.15,0.35],['P','%',null,0.060],['Cr','%',12.0,14.0]]
+};
+const STD_MECH={
+ '17-4PH':[['YS 0.2%','MPa',520,null],['UTS','MPa',690,null],['Elongation','%',16,null],['R.A.','%',45,null],['Hardness','HRC',28,36],['Impact CVN','J',40,null]],
+ '304L':[['YS 0.2%','MPa',170,null],['UTS','MPa',485,null],['Elongation','%',40,null],['Hardness','HRB',null,92]],
+ '316L':[['YS 0.2%','MPa',170,null],['UTS','MPa',485,null],['Elongation','%',40,null],['Hardness','HRB',null,95]],
+ '416':[['YS 0.2%','MPa',275,null],['UTS','MPa',515,null],['Elongation','%',20,null],['Hardness','HRC',20,30]]
+};
+const TESTS_DEFAULT=[['Tensile','ASTM A 370',true],['Hardness','ASTM A 370',true],['Impact (CVN)','ASTM A 370',false],['Ultrasonic','ASTM A 388',false],['Macro etch','ASTM E 381',false],['IGC','ASTM A 262',false],['Grain size','ASTM E 112',false]];
+const TDCS=[
+ {no:'TDC-004275',customer:'Ambica Steels',shortCode:'ASL',custTdcNo:'For Stock',grade:'17-4PH',series:'600',group:'17-4PH',shape:'RO',exec:'P.S.Q.',htc:'HT-23 Quenched',std:'ASTM A 564:2025',status:'RELEASED',rev:2,custGrades:[['GR075','17-4PH'],['630','SS 17-4']]},
+ {no:'TDC-006132',customer:'Ganesh Metal Works',shortCode:'GMW',custTdcNo:'For Stock',grade:'304L',series:'300',group:'304L',shape:'RO',exec:'Cold Drawn, Ground & Polished',htc:'HT-16 Solution Annealed',std:'ASTM A 276:2025',status:'APPROVED',rev:1,custGrades:[['GR028','304 L']]},
+ {no:'TDC-004810',customer:'PCS',shortCode:'PCS',custTdcNo:'PCS-22',grade:'316L',series:'300',group:'316L',shape:'Hex',exec:'Cold Finished',htc:'HT-16 Solution Annealed',std:'ASTM A 276:2025',status:'RELEASED',rev:3,custGrades:[['GR031','316 L']]},
+ {no:'TDC-003922',customer:'SEA',shortCode:'SEA',custTdcNo:'',grade:'416',series:'400',group:'416',shape:'RO',exec:'Cold Drawn',htc:'HT-23 Quenched',status:'DRAFT',std:'ASTM A 582:2025',rev:1,custGrades:[['GR075','416']]},
+ {no:'TDC-006140',customer:'EGG',shortCode:'EGG',custTdcNo:'',grade:'316L',series:'300',group:'316L',shape:'Flat',exec:'P.S.Q.',htc:'HT-16 Solution Annealed',std:'ASTM A 276:2025',status:'PENDING',rev:1,custGrades:[['GR031','316 L']]}
+];
+const SBADGE={RELEASED:'b-clr',APPROVED:'b-pass',DRAFT:'b-draft',PENDING:'b-pend',BLOCKED:'b-rej',STOPPED:'b-rej'};
+const TABS=['General','Chemical','Mechanical','Dimensional','Tests & Standards','Remarks','Approval'];
+
+function rnd(v){const a=Math.abs(v);return a<1?+v.toFixed(3):a<100?+v.toFixed(2):Math.round(v);}
+function nv(v){return v==null?'':v;} function fm(v){return v==null?'—':v;}
+function cusOverlay(no,kind,i,mn,mx){ if(mn==null||mx==null)return{}; let h=0,s=no+kind+i;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0; if(h%3!==0)return{}; const r=mx-mn; return {min:rnd(mn+0.10*r),max:rnd(mx-0.10*r)}; }
+
+let curIdx=0, curTab='General', work={chem:[],mech:[]};
+const cur=()=>TDCS[curIdx];
+function buildRows(spec,no,kind){return (spec||[]).map((s,i)=>{const[name,uom,mn,mx]=s;const c=cusOverlay(no,kind,i,mn,mx);
+  const r={name,uom,stdMin:mn,stdMax:mx,cusMin:c.min??null,cusMax:c.max??null,print:(mn!=null||mx!=null)};
+  r.appMin=r.cusMin??r.stdMin; r.appMax=r.cusMax??r.stdMax; return r;});}
+function initWork(){const t=cur();work.chem=buildRows(STD_CHEM[t.grade],t.no,'chem');work.mech=buildRows(STD_MECH[t.grade],t.no,'mech');}
+
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  document.getElementById('list').innerHTML=TDCS.map((t,i)=>{
+    if(q&&!(t.no+' '+t.customer+' '+t.grade).toLowerCase().includes(q))return'';
+    return `<div class="litem ${i===curIdx?'sel':''}" onclick="sel(${i})">
+      <div><div class="lh">${t.no}</div><div class="lg">${t.customer} · ${t.grade}</div></div>
+      <span class="badge ${SBADGE[t.status]}">${t.status}</span></div>`;
+  }).join('');
+}
+function sel(i){curIdx=i;curTab='General';initWork();renderList();renderDetail();}
+function setTab(t){curTab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===t));document.getElementById('tabbody').innerHTML=tabHtml();}
+
+function renderDetail(){
+  const t=cur();
+  const actions=`
+    <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
+    <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-code-branch"></i> New revision</button>
+    ${t.status==='BLOCKED'?'<button class="btn btn-ghost btn-sm"><i class="fa-solid fa-unlock"></i> Unblock</button>':'<button class="btn btn-ghost btn-sm"><i class="fa-solid fa-ban"></i> Block</button>'}
+    <button class="btn btn-ghost btn-sm" onclick="alert('Cust TDC Report — prints characteristics where Print=on + remarks targeted to TEST_CERT. (demo)')"><i class="fa-solid fa-print"></i> Print</button>`;
+  document.getElementById('detail').innerHTML=`
+    <div class="dhead">
+      <div><div class="dh-title">${t.no} <span class="badge ${SBADGE[t.status]}">${t.status}</span> <span class="badge b-info">Rev ${t.rev}</span></div>
+        <div class="dh-sub">${t.customer} · ${t.grade} · ${t.shape} · ${t.exec}</div></div>
+      <div class="dactions">${actions}</div>
+    </div>
+    <div class="std-strip">
+      <span class="lbl">Standards</span>
+      <span class="std-chip"><b>${t.std}</b> · primary</span>
+      <span class="std-chip">ASTM A 370 · mechanical</span>
+      <span class="std-chip">ASTM A 388 · UT</span>
+      <button class="btn btn-ghost btn-sm" onclick="fillStd()"><i class="fa-solid fa-file-import"></i> Fill standards</button>
+      <button class="btn btn-ghost btn-sm" onclick="fillMinMax()"><i class="fa-solid fa-calculator"></i> Fill Min/Max</button>
+      <span class="note" id="note"></span>
+    </div>
+    <div class="tabs">${TABS.map(t2=>`<div class="tab ${t2===curTab?'on':''}" data-t="${t2}" onclick="setTab('${t2}')">${t2}</div>`).join('')}</div>
+    <div class="tabbody" id="tabbody">${tabHtml()}</div>`;
+}
+
+function tabHtml(){
+  switch(curTab){
+    case 'Chemical': return tierGrid('chem','Element');
+    case 'Mechanical': return tierGrid('mech','Property');
+    case 'General': return generalTab();
+    case 'Dimensional': return dimensionalTab();
+    case 'Tests & Standards': return testsTab();
+    case 'Remarks': return remarksTab();
+    case 'Approval': return approvalTab();
+  }
+}
+function tierGrid(kind,label){
+  const rows=work[kind];
+  const body=rows.map((r,i)=>`<tr>
+    <td class="el">${r.name}</td><td class="u">${r.uom}</td>
+    <td class="gline"><input class="num" data-k="${kind}" data-i="${i}" data-f="stdMin" value="${nv(r.stdMin)}" oninput="onEdit(this)"/></td>
+    <td><input class="num" data-k="${kind}" data-i="${i}" data-f="stdMax" value="${nv(r.stdMax)}" oninput="onEdit(this)"/></td>
+    <td class="gline"><input class="num cus" data-k="${kind}" data-i="${i}" data-f="cusMin" value="${nv(r.cusMin)}" oninput="onEdit(this)"/></td>
+    <td><input class="num cus" data-k="${kind}" data-i="${i}" data-f="cusMax" value="${nv(r.cusMax)}" oninput="onEdit(this)"/></td>
+    <td class="tapp gline" id="app-${kind}-${i}-min">${fm(r.appMin)}</td>
+    <td class="tappx" id="app-${kind}-${i}-max">${fm(r.appMax)}</td>
+    <td class="pr"><input type="checkbox" ${r.print?'checked':''} onchange="work.${kind}[${i}].print=this.checked"/></td>
+  </tr>`).join('');
+  return `<table class="tdc-grid">
+    <thead>
+      <tr><th rowspan="2">${label}</th><th rowspan="2">UOM</th>
+        <th class="grp gline" colspan="2">Standard</th><th class="grp grp-cus gline" colspan="2">Customer</th>
+        <th class="grp grp-app gline" colspan="2">Applied (effective)</th><th rowspan="2">Print</th></tr>
+      <tr><th class="gline">Min</th><th>Max</th><th class="gline">Min</th><th>Max</th><th class="gline">Min</th><th>Max</th></tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>
+  <p style="font-size:12px;color:#888;margin-top:10px"><i class="fa-solid fa-circle-info"></i> <b>Applied = Customer if entered, else Standard.</b> "Fill standards" repopulates the Standard tier from the linked standard; "Fill Min/Max" recomputes Applied. The <b>Print</b> flag drives what appears on the certificate.</p>`;
+}
+function onEdit(inp){
+  const k=inp.dataset.k,i=+inp.dataset.i,f=inp.dataset.f;
+  work[k][i][f]=inp.value===''?null:parseFloat(inp.value);
+  const r=work[k][i]; r.appMin=r.cusMin??r.stdMin; r.appMax=r.cusMax??r.stdMax;
+  document.getElementById(`app-${k}-${i}-min`).textContent=fm(r.appMin);
+  document.getElementById(`app-${k}-${i}-max`).textContent=fm(r.appMax);
+}
+function fillStd(){const t=cur();
+  ['chem','mech'].forEach(k=>{const spec=(k==='chem'?STD_CHEM:STD_MECH)[t.grade]||[];work[k].forEach((r,i)=>{if(spec[i]){r.stdMin=spec[i][2];r.stdMax=spec[i][3];}r.appMin=r.cusMin??r.stdMin;r.appMax=r.cusMax??r.stdMax;});});
+  if(curTab==='Chemical'||curTab==='Mechanical')document.getElementById('tabbody').innerHTML=tabHtml();
+  note('✓ Standard tier filled from '+t.std);
+}
+function fillMinMax(){['chem','mech'].forEach(k=>work[k].forEach(r=>{r.appMin=r.cusMin??r.stdMin;r.appMax=r.cusMax??r.stdMax;}));
+  if(curTab==='Chemical'||curTab==='Mechanical')document.getElementById('tabbody').innerHTML=tabHtml();
+  note('✓ Applied (effective) limits recomputed');
+}
+function note(m){const n=document.getElementById('note');if(n){n.textContent=m;setTimeout(()=>{const x=document.getElementById('note');if(x)x.textContent='';},2500);}}
+
+function fldR(label,val,ro){return `<div class="fld"><label>${label}</label><input value="${val??''}" ${ro?'readonly':''}/></div>`;}
+function chk(label,on){return `<label class="chkfld"><input type="checkbox" ${on?'checked':''}/> ${label}</label>`;}
+function generalTab(){const t=cur();
+  return `<div class="fgrid">
+    ${fldR('Customer account',t.customer)}${fldR('Customer short code',t.shortCode)}
+    ${fldR('Customer TDC No.',t.custTdcNo)}<div class="fld"><label>Item category (steel)</label><select><option>SS — Stainless</option><option>CS — Carbon</option><option>AS — Alloy</option></select></div>
+    ${fldR('Grade series',t.series)}${fldR('Grade group',t.group)}
+    <div class="fld"><label>Shape</label><select><option ${t.shape==='RO'?'selected':''}>RO</option><option ${t.shape==='Hex'?'selected':''}>Hex</option><option ${t.shape==='Flat'?'selected':''}>Flat</option></select></div>
+    ${fldR('Execution',t.exec)}
+    ${fldR('HTC code',t.htc)}${fldR('Primary standard',t.std)}
+    ${fldR('Print grade description',t.grade)}${fldR('Size range text','')}
+    ${chk('HT chart required',true)}${chk('IBR report',false)}${chk('CE mark',false)}
+  </div>
+  <div class="sec-h">Customer grades</div>
+  <table class="mini-table"><thead><tr><th>#</th><th>Customer grade code</th><th>Customer grade name</th><th></th></tr></thead>
+  <tbody>${t.custGrades.map((g,i)=>`<tr><td>${i+1}</td><td><input value="${g[0]}"/></td><td><input value="${g[1]}"/></td><td class="pc"><i class="fa-solid fa-xmark" style="color:#bbb;cursor:pointer"></i></td></tr>`).join('')}
+  <tr><td colspan="4"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-plus"></i> Add customer grade</button></td></tr></tbody></table>`;
+}
+function dimensionalTab(){
+  return `<div class="fgrid">
+    ${fldR('Size / tolerance','')}${fldR('Surface roughness','')}
+    ${fldR('Straightness','')}${fldR('Out of roundness','')}
+    <div class="fld"><label>Eddy current</label><select><option>Not required</option><option>Required</option></select></div>
+    <div class="fld"><label>MPI</label><select><option>Not required</option><option>Required</option></select></div>
+    <div class="fld"><label>UT requirement</label><select><option>Required</option><option>Not required</option></select></div>
+    ${fldR('Chamfering & degree','')}
+    ${fldR('End cutting','')}${fldR('Color code','Pink + White')}
+    ${fldR('Material marking','Sticker above 30 mm')}${fldR('Bundle weight','')}
+  </div>`;
+}
+function testsTab(){
+  return `<p style="font-size:12px;color:#888;margin:0 0 10px"><i class="fa-solid fa-circle-info"></i> Each test method is governed by its own standard, and may be required or optional for this TDC.</p>
+  <table class="mini-table"><thead><tr><th>Test method</th><th>Test standard</th><th class="pc">Required</th><th>Acceptance remark</th></tr></thead>
+  <tbody>${TESTS_DEFAULT.map(r=>`<tr>
+    <td><b>${r[0]}</b></td><td><input value="${r[1]}"/></td>
+    <td class="pc"><input type="checkbox" ${r[2]?'checked':''}/></td>
+    <td><input placeholder="—"/></td></tr>`).join('')}
+  <tr><td colspan="4"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-plus"></i> Add test</button></td></tr></tbody></table>`;
+}
+function remarksTab(){
+  const remarks=[['Test certificate as per EN 10204 3.1',[1,0,0,0,1]],['Material to be supplied in solution-annealed condition',[0,1,1,0,1]],['Positive material identification required at dispatch',[1,1,0,1,1]]];
+  return `<p style="font-size:12px;color:#888;margin:0 0 10px"><i class="fa-solid fa-circle-info"></i> A remark prints on whichever documents it is targeted to.</p>
+  <table class="mini-table"><thead><tr><th style="width:46%">Remark</th><th class="pc">SO</th><th class="pc">WO</th><th class="pc">HT</th><th class="pc">BC</th><th class="pc">TC</th></tr></thead>
+  <tbody>${remarks.map(r=>`<tr><td><input value="${r[0]}"/></td>${r[1].map(v=>`<td class="pc"><input type="checkbox" ${v?'checked':''}/></td>`).join('')}</tr>`).join('')}
+  <tr><td colspan="6"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-plus"></i> Add remark</button></td></tr></tbody></table>
+  <p style="font-size:11px;color:#999;margin-top:8px">SO = Sales Order · WO = Work Order · HT = HT Card · BC = Barcode · TC = Test Certificate</p>`;
+}
+function approvalTab(){
+  const t=cur();
+  const lvls=[['Planner','A. Rao'],['Quality','M. Iyer'],['Plant Head','S. Verma']];
+  const approvedTo = (t.status==='RELEASED'||t.status==='APPROVED')?3 : t.status==='PENDING'?2 : 0;
+  const rows=lvls.map((l,idx)=>{const lvl=idx+1; const ok=lvl<=approvedTo;
+    return `<tr><td>${lvl}</td><td><b>${l[0]}</b></td><td>${ok?l[1]:'—'}</td>
+      <td>${ok?'<span class="badge b-pass">Approved</span>':(lvl===approvedTo+1?'<span class="badge b-pend">Pending</span>':'<span class="badge b-draft">Waiting</span>')}</td>
+      <td>${ok?'24-Jun 10:0'+lvl:'—'}</td><td><input placeholder="—"/></td></tr>`;}).join('');
+  const action = approvedTo>=3?'<span class="badge b-pass">Fully approved</span>'
+    : t.status==='DRAFT'?'<button class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i> Submit for approval</button>'
+    : `<button class="btn btn-success btn-sm"><i class="fa-solid fa-check-double"></i> Approve (Level ${approvedTo+1} · ${lvls[approvedTo][0]})</button>`;
+  return `<table class="mini-table"><thead><tr><th>Level</th><th>Role</th><th>Approver</th><th>Status</th><th>Date</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
+  <div style="margin-top:14px">${action}</div>`;
+}
+
+document.getElementById('search').oninput=renderList;
+initWork(); renderList(); renderDetail();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+</body>
+</html>

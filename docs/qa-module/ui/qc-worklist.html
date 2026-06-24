@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — QC Worklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+/* ===== Design tokens (from styles.scss) ===== */
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px; --sp6:24px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px;
+  --shadow-md:0 4px 12px rgba(0,0,0,.1); --shadow-lg:0 4px 20px rgba(0,0,0,.15);
+  --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+
+/* ===== App shell (CSS grid) ===== */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;
+  grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:260px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search input::placeholder{color:rgba(255,255,255,.45);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .h-icon{color:rgba(255,255,255,.7);width:32px;height:32px;display:grid;place-items:center;border-radius:var(--r-sm);}
+.header .h-icon:hover{background:rgba(255,255,255,.08);}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+
+/* ===== Sidebar ===== */
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+
+/* ===== Content ===== */
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.toolbar{display:flex;gap:var(--sp2);align-items:center;}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s,box-shadow .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover{background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+
+/* ===== Exclusive filter bar ===== */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .fb-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;margin-right:var(--sp1);}
+.fb-btn{padding:7px 12px;font-size:var(--fs-sm);gap:6px;}
+.fb-btn.fb-active{border-color:var(--color-primary);color:var(--color-primary);background:var(--color-primary-light);}
+.fb-count{background:var(--color-primary);color:#fff;border-radius:10px;font-size:10px;padding:0 6px;font-weight:600;line-height:16px;}
+.fb-clear{color:var(--color-primary);font-size:var(--fs-sm);cursor:pointer;margin-left:var(--sp1);}
+.filterbar .picker-panel{top:38px;left:0;right:auto;}
+.picker-search{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--color-border-light);}
+.picker-search i{color:var(--color-text-hint);font-size:11px;}
+.picker-search input{flex:1;border:1px solid #ddd;border-radius:var(--r-sm);padding:5px 8px;font-size:var(--fs-sm);font-family:inherit;}
+.picker-search input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+
+/* ===== Card ===== */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0;}
+.card-head{padding:var(--sp3) var(--sp4);border-bottom:1px solid var(--color-border-light);display:flex;align-items:center;justify-content:space-between;}
+.card-head .title{font-weight:600;font-size:var(--fs-base);}
+.card-head .meta{font-size:var(--fs-sm);color:var(--color-text-muted);}
+
+/* ===== Table ===== */
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);}
+.tbl thead tr.filters th{top:33px;background:#f7fafc;padding:5px 8px;z-index:2;}
+.tbl thead tr.filters input{width:100%;padding:4px 7px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.tbl thead tr.filters input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.tbl thead tr.filters input.active{background:#fff7e1;border-color:#f0c14b;}
+.tbl thead th.sortable{cursor:pointer;user-select:none;}
+.tbl thead th.sortable:hover{color:var(--color-primary);}
+.tbl thead th .caret{font-size:9px;color:#c2c2c2;margin-left:3px;}
+.tbl thead th .caret.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary);}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;}
+.tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl td .mono{font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}
+.tbl td.actions .btn-icon{margin-left:4px;}
+/* Frozen Actions column — stays visible despite horizontal scroll */
+.tbl th.col-actions{position:sticky;right:0;z-index:4;}
+.tbl td.actions{position:sticky;right:0;z-index:1;background:#fff;}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;}
+.tbl tbody tr:hover td.actions{background:#eef7fc;}
+.tbl th.col-actions,.tbl td.actions{box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.empty-row td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+
+/* ===== Badges ===== */
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.b-pass{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-fail{background:rgba(244,67,54,.12);color:#d32f2f;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;}
+.b-cond{background:rgba(33,150,243,.12);color:#1976d2;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;}
+.b-prog{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+.b-rej{background:rgba(244,67,54,.12);color:#d32f2f;}
+.b-insp{background:rgba(37,169,224,.12);color:#1E8FBF;}
+.b-test{background:rgba(103,58,183,.12);color:#673ab7;}
+
+/* ===== Pagination ===== */
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+.pager .pg{padding:5px 10px;border:1px solid var(--color-border);background:#fff;border-radius:var(--r-sm);color:var(--color-text-secondary);}
+.pager .pg:hover:not(:disabled){border-color:var(--color-primary);color:var(--color-primary);}
+.pager .pg:disabled{opacity:.45;cursor:not-allowed;}
+.pager select{padding:5px 8px;border:1px solid var(--color-border);border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.pager .info{margin:0 var(--sp2);}
+
+/* ===== Column picker ===== */
+.picker{position:relative;}
+.picker-panel{position:absolute;right:0;top:38px;z-index:50;background:#fff;border:1px solid var(--color-border);border-radius:var(--r-md);box-shadow:var(--shadow-md);width:230px;display:none;}
+.picker-panel.open{display:block;}
+.picker-acts{display:flex;justify-content:space-between;padding:var(--sp2) var(--sp3);border-bottom:1px solid var(--color-border-light);}
+.picker-acts a{color:var(--color-primary);font-size:var(--fs-sm);cursor:pointer;}
+.picker-list{max-height:280px;overflow:auto;padding:var(--sp2);}
+.picker-list label{display:flex;align-items:center;gap:var(--sp2);padding:5px 8px;font-size:var(--fs-sm);border-radius:var(--r-sm);cursor:pointer;}
+.picker-list label:hover{background:var(--color-bg-alt);}
+.picker-list input{accent-color:var(--color-primary);}
+
+/* ===== Modal ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:500px;max-width:92vw;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;}
+.modal-head{padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:var(--sp5);display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.modal-body .full{grid-column:1/-1;}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:var(--sp1);}
+.fld input,.fld select{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-base);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.modal-foot{padding:var(--sp4) var(--sp5);border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+/* ===== Record Result modal ===== */
+.modal.modal-lg{width:740px;}
+.rm-ctx{display:flex;flex-wrap:wrap;gap:var(--sp2);padding:var(--sp3) var(--sp5);background:var(--color-bg-alt);border-bottom:1px solid var(--color-border-light);}
+.rm-ctx .chip{font-size:var(--fs-sm);color:var(--color-text-secondary);background:#fff;border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.rm-ctx .chip b{color:var(--color-text-primary);font-weight:600;margin-left:3px;}
+.rm-grid-wrap{padding:var(--sp3) var(--sp5);max-height:44vh;overflow:auto;}
+table.rm-grid{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.rm-grid th{text-align:left;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--color-border);white-space:nowrap;}
+.rm-grid td{padding:4px 8px;border-bottom:1px solid #f3f3f3;}
+.rm-grid input,.rm-grid select{padding:5px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;width:100%;}
+.rm-grid input:focus,.rm-grid select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.rm-grid .spec{color:var(--color-text-muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.rm-foot-bar{display:flex;align-items:center;gap:var(--sp4);padding:var(--sp2) var(--sp5);border-top:1px solid var(--color-border-light);}
+.rm-foot-bar input{flex:1;padding:7px 12px;border:1px solid #ddd;border-radius:var(--r-sm);font-family:inherit;font-size:var(--fs-sm);}
+.helper{font-size:var(--fs-sm);color:var(--color-text-secondary);background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:var(--sp3);display:flex;gap:var(--sp2);align-items:flex-start;}
+.helper i{color:var(--color-primary-dark);margin-top:2px;}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div>
+    <div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat, material, inspection…" /></div>
+    <div class="h-icon"><i class="fa-regular fa-bell"></i></div>
+    <div class="avatar">QA</div>
+  </header>
+
+  <!-- Sidebar -->
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html" class="active"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="roll-shop.html"><i class="fa-solid fa-record-vinyl"></i> Roll Shop</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div>
+        <h1>QC Worklist</h1>
+        <div class="sub">Inspections &amp; tests against production-confirmation lots, per operation</div>
+      </div>
+      <div class="toolbar">
+        <div class="picker">
+          <button class="btn btn-ghost" id="colBtn"><i class="fa-solid fa-table-columns"></i> Columns</button>
+          <div class="picker-panel" id="colPanel">
+            <div class="picker-acts"><a id="colAll">Select all</a><a id="colClear">Clear</a></div>
+            <div class="picker-list" id="colList"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost"><i class="fa-solid fa-filter"></i> Saved filters</button>
+        <button class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Export</button>
+        <button class="btn btn-primary" id="newBtn"><i class="fa-solid fa-plus"></i> Raise Inspection</button>
+      </div>
+    </div>
+
+    <!-- Exclusive (multi-select) filters -->
+    <div class="filterbar" id="filterbar"></div>
+
+    <!-- Table card -->
+    <div class="card">
+      <div class="card-head">
+        <span class="title">Lots &amp; Records</span>
+        <span class="meta" id="rowMeta"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button class="pg" id="pgFirst" title="First">&laquo;</button>
+        <button class="pg" id="pgPrev" title="Prev">&lsaquo;</button>
+        <span class="info" id="pgInfo">Page 1</span>
+        <button class="pg" id="pgNext" title="Next">&rsaquo;</button>
+        <button class="pg" id="pgLast" title="Last">&raquo;</button>
+        <span style="flex:1"></span>
+        <span>Rows:</span>
+        <select id="pgSize"><option>50</option><option>100</option><option>250</option><option>500</option></select>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Record Result modal (opened from a worklist row) -->
+<div class="overlay" id="overlay">
+  <div class="modal modal-lg">
+    <div class="modal-head"><span id="rmTitle">Record Result</span> <span class="x" id="modalX"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="rm-ctx" id="rmCtx"></div>
+    <div class="rm-grid-wrap"><table class="rm-grid" id="rmGrid"></table></div>
+    <div class="rm-foot-bar"><div>Overall:&nbsp;<span id="rmOverall" class="badge b-pend">PENDING</span></div><input id="rmRemark" placeholder="Remarks…" /></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+      <button class="btn btn-primary" id="modalSave"><i class="fa-solid fa-check"></i> Save result</button>
+    </div>
+  </div>
+</div>
+
+<!-- Raise Inspection modal (ad-hoc / re-inspection) -->
+<div class="overlay" id="raiseOverlay">
+  <div class="modal">
+    <div class="modal-head">Raise Inspection <span class="x" id="raiseX"><i class="fa-solid fa-xmark"></i></span></div>
+    <div style="padding:var(--sp5);">
+      <div class="helper"><i class="fa-solid fa-circle-info"></i><span>Most QC items are created automatically when a lot is confirmed at a QC-required operation. Use this only for an ad-hoc inspection or a re-inspection after rework.</span></div>
+      <div class="modal-body" style="padding:0;">
+        <div class="fld"><label>Production Confirmation (lot)</label><select><option>PC-2526-04417 · OP_CASTING · Heat 2526-16496</option><option>PC-2526-04420 · OP_ROLLING · Heat 2526-16798</option></select></div>
+        <div class="fld"><label>QC item</label><select><option>Inspection · Dimensional</option><option>Inspection · Visual</option><option>Inspection · UT</option><option>Test · Mechanical</option><option>Test · Chemical</option></select></div>
+        <div class="fld full"><label>Reason</label><input placeholder="e.g. re-inspection after straightening rework" /></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="raiseCancel">Cancel</button>
+      <button class="btn btn-primary" id="raiseSave">Raise</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Columns ===== */
+const COLS=[
+  {key:'no',label:'QC No'},{key:'kind',label:'Kind'},{key:'type',label:'Type'},{key:'stage',label:'Stage'},
+  {key:'heat',label:'Heat No'},{key:'uid',label:'Material / UID'},{key:'grade',label:'Grade'},{key:'form',label:'Form'},
+  {key:'result',label:'Result'},{key:'status',label:'Status'},{key:'date',label:'Date'},{key:'by',label:'Inspector'},
+  {key:'actions',label:'',noFilter:true}
+];
+let visible=COLS.map(c=>c.key);
+
+/* ===== Mock data ===== */
+const RAW=[
+ ['INS-2526-0012','Inspection','Dimensional','OP_ROLLING','2526-16496','B030268','17-4PH','Round Bar','PASS','COMPLETED','24-Jun 09:14','R. Sahoo'],
+ ['TST-2526-0034','Test','Mechanical','OP_HEAT TREATMENT','2526-16496','B030268','17-4PH','Round Bar','PENDING','IN PROGRESS','24-Jun 09:40','Lab-A'],
+ ['CHM-2526-0188','Test','Chemical','OP_CASTING','2526-16783','A002668','316L','Hex','PASS','CLEARED','24-Jun 06:02','L2 / OES'],
+ ['INS-2526-0013','Inspection','Visual','OP_CENTERLESS GRINDING','2526-16794','A002669','316L','Hex','FAIL','REJECTED','24-Jun 10:21','M. Iyer'],
+ ['UT-2526-0071','Inspection','UT','OP_PEELING','2526-16828','E120381','316L','Hex','PASS','COMPLETED','24-Jun 08:55','S. Khan'],
+ ['CHM-2526-0189','Test','Chemical','OP_CASTING','2526-16776','E121717','304L','Hex','FAIL','HOLD','24-Jun 06:18','L2 / OES'],
+ ['TST-2526-0035','Test','Mechanical','OP_HEAT TREATMENT','2526-16781','E121718','304L','Hex','PASS','CLEARED','23-Jun 17:30','Lab-B'],
+ ['INS-2526-0014','Inspection','Dimensional','OP_DRAWING2','2526-16798','E122319','304L','Round Bar','PENDING','DRAFT','24-Jun 11:02','—'],
+ ['UT-2526-0072','Inspection','UT','OP_ROLLING','2526-16837','E122644','304L','Round Bar','COND','COMPLETED','24-Jun 07:46','S. Khan'],
+ ['CHM-2526-0190','Test','Chemical','OP_CASTING','2526-16795','E122810','304L','Hex','PASS','CLEARED','24-Jun 05:50','L2 / OES'],
+ ['INS-2526-0015','Inspection','Visual','OP_BELT_POLISH2','2526-16796','E122792','304L','Round Bar','PASS','COMPLETED','24-Jun 11:33','M. Iyer'],
+ ['TST-2526-0036','Test','Mechanical','OP_HEAT TREATMENT','2526-16482','B030840','416','Round Bar','FAIL','HOLD','23-Jun 19:05','Lab-A'],
+ ['CHM-2526-0191','Test','Chemical','OP_CASTING','2526-16426','E120808','416','Round Bar','PASS','CLEARED','23-Jun 22:40','L2 / OES'],
+ ['INS-2526-0016','Inspection','Dimensional','OP_STRAIGHTENING','2526-16495','E120636','416','Round Bar','PENDING','IN PROGRESS','24-Jun 12:01','R. Sahoo'],
+ ['UT-2526-0073','Inspection','UT','OP_PEELING','2526-16493','B030068','416','Round Bar','PASS','COMPLETED','24-Jun 09:58','S. Khan'],
+ ['CHM-2526-0192','Test','Chemical','OP_CASTING','2626-00028','STK','X46Cr13','Round Bar','COND','IN PROGRESS','24-Jun 06:35','L2 / OES'],
+ ['INS-2526-0017','Inspection','Visual','OP_PICKLING3','2526-16852','B030767','316L','Hex','PASS','COMPLETED','24-Jun 12:20','M. Iyer'],
+ ['TST-2526-0037','Test','Mechanical','OP_HEAT TREATMENT','2526-16819','E122789','316L','Hex','PENDING','DRAFT','24-Jun 12:44','—'],
+ ['INS-2526-0018','Inspection','Dimensional','OP_ROLLING','2526-16030','E122956','304L','Flat Bar','PASS','COMPLETED','24-Jun 08:11','R. Sahoo'],
+ ['UT-2526-0074','Inspection','UT','OP_ROLLING','2526-16866','E121724','316L','Hex','FAIL','REJECTED','24-Jun 10:49','S. Khan'],
+ ['CHM-2526-0193','Test','Chemical','OP_CASTING','2526-16857','B030227','304L','Hex','PASS','CLEARED','24-Jun 05:20','L2 / OES'],
+ ['INS-2526-0019','Inspection','Visual','OP_CHAMFERING','2526-16858','E120390','304L','Round Bar','PASS','COMPLETED','24-Jun 13:02','M. Iyer'],
+];
+const DATA=RAW.map(r=>({no:r[0],kind:r[1],type:r[2],stage:r[3],heat:r[4],uid:r[5],grade:r[6],form:r[7],result:r[8],status:r[9],date:r[10],by:r[11]}));
+
+/* ===== Badges ===== */
+const RESULT_B={PASS:'b-pass',FAIL:'b-fail',PENDING:'b-pend',COND:'b-cond'};
+const STATUS_B={'COMPLETED':'b-done','IN PROGRESS':'b-prog','DRAFT':'b-draft','CLEARED':'b-clr','HOLD':'b-hold','REJECTED':'b-rej'};
+function cell(c,row){
+  const v=row[c.key];
+  if(c.key==='kind') return `<span class="badge ${v==='Test'?'b-test':'b-insp'}">${v}</span>`;
+  if(c.key==='result') return `<span class="badge ${RESULT_B[v]||'b-draft'}">${v}</span>`;
+  if(c.key==='status') return `<span class="badge ${STATUS_B[v]||'b-draft'}">${v}</span>`;
+  if(c.key==='actions') return `<button class="btn-icon" title="View (read-only)" onclick="openRecord('${row.no}','view')"><i class="fa-solid fa-eye"></i></button><button class="btn-icon" title="${row.result==='PENDING'?'Record result':'Edit result'}" onclick="openRecord('${row.no}','edit')"><i class="fa-solid fa-pen"></i></button>`;
+  return v??'';
+}
+
+/* ===== State ===== */
+const filters={}; let page=1, pageSize=50, sortKey=null, sortDir=1;
+
+/* ===== Head — filter row rebuilt on column change (preserves caret while typing);
+   sort row updated in place so sorting never disturbs filter focus ===== */
+function buildHead(){
+  const cols=COLS.filter(c=>visible.includes(c.key));
+  const h2=cols.map(c=>c.noFilter?'<th class="col-actions"></th>':`<th><input data-k="${c.key}" placeholder="filter…" value="${filters[c.key]||''}"/></th>`).join('');
+  document.getElementById('thead').innerHTML=`<tr id="hRow"></tr><tr class="filters">${h2}</tr>`;
+  buildSortRow();
+  document.querySelectorAll('.filters input').forEach(inp=>{
+    inp.classList.toggle('active',!!inp.value);
+    inp.addEventListener('input',e=>{const k=e.target.dataset.k;filters[k]=e.target.value;e.target.classList.toggle('active',!!e.target.value);page=1;renderBody();});
+  });
+}
+function buildSortRow(){
+  const cols=COLS.filter(c=>visible.includes(c.key));
+  document.getElementById('hRow').innerHTML=cols.map(c=>{
+    if(c.noFilter) return '<th class="col-actions"></th>';
+    const car=sortKey===c.key?`<span class="caret on">${sortDir>0?'▲':'▼'}</span>`:'<span class="caret">⇅</span>';
+    return `<th class="sortable" data-sk="${c.key}">${c.label} ${car}</th>`;
+  }).join('');
+  document.querySelectorAll('#hRow .sortable').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.sk;
+    if(sortKey===k){ if(sortDir>0) sortDir=-1; else { sortKey=null; sortDir=1; } }
+    else { sortKey=k; sortDir=1; }
+    buildSortRow(); renderBody();
+  });
+}
+function cmp(x,y){return (''+(x??'')).localeCompare(''+(y??''),undefined,{numeric:true,sensitivity:'base'});}
+function passes(row){
+  for(const p of PICKERS){ if(!picked[p.key].has(row[p.key])) return false; }   /* exclusive multi-select filters */
+  return COLS.every(c=>{const f=(filters[c.key]||'').trim().toLowerCase();return !f|| String(row[c.key]??'').toLowerCase().includes(f);});
+}
+function renderBody(){
+  const cols=COLS.filter(c=>visible.includes(c.key));
+  let rows=DATA.filter(passes);
+  if(sortKey) rows=rows.slice().sort((a,b)=>cmp(a[sortKey],b[sortKey])*sortDir);
+  const pages=Math.max(1,Math.ceil(rows.length/pageSize)); if(page>pages)page=pages;
+  const slice=rows.slice((page-1)*pageSize,page*pageSize);
+  const tb=document.getElementById('tbody');
+  if(!slice.length){tb.innerHTML=`<tr class="empty-row"><td colspan="${cols.length}">No records match the current filters.</td></tr>`;}
+  else{tb.innerHTML=slice.map(r=>`<tr>${cols.map(c=>`<td class="${c.key==='actions'?'actions':''}">${cell(c,r)}</td>`).join('')}</tr>`).join('');}
+  document.getElementById('rowMeta').textContent=`${rows.length} of ${DATA.length} records`;
+  document.getElementById('pgInfo').textContent=`Page ${page} / ${pages}`;
+  document.getElementById('pgFirst').disabled=document.getElementById('pgPrev').disabled=page<=1;
+  document.getElementById('pgNext').disabled=document.getElementById('pgLast').disabled=page>=pages;
+}
+/* ===== Exclusive (multi-select) filters ===== */
+const PICKERS=[
+  {key:'kind',label:'Kind'},{key:'type',label:'Type'},{key:'stage',label:'Stage'},
+  {key:'result',label:'Result'},{key:'status',label:'Status'},{key:'heat',label:'Heat No',search:true}
+];
+const distinct=k=>[...new Set(DATA.map(r=>r[k]))].sort(cmp);
+const picked={};
+PICKERS.forEach(p=>picked[p.key]=new Set(distinct(p.key)));   /* default: all selected = no filter */
+function closeAllPanels(){document.querySelectorAll('.picker-panel').forEach(p=>p.classList.remove('open'));}
+function pickerBtnHtml(key){
+  const all=picked[key].size===distinct(key).length, lbl=PICKERS.find(p=>p.key===key).label;
+  return `${lbl}${all?'':` <span class="fb-count">${picked[key].size}</span>`} <i class="fa-solid fa-chevron-down" style="font-size:9px"></i>`;
+}
+function buildFilterBar(){
+  const bar=document.getElementById('filterbar');
+  bar.innerHTML=`<span class="fb-label">Filters</span>`+PICKERS.map(p=>{
+    const vals=distinct(p.key),sel=picked[p.key],all=sel.size===vals.length;
+    return `<div class="picker" data-fp="${p.key}">
+      <button class="btn btn-ghost fb-btn ${all?'':'fb-active'}">${pickerBtnHtml(p.key)}</button>
+      <div class="picker-panel">
+        <div class="picker-acts"><a data-act="all">Select all</a><a data-act="clear">Clear</a></div>
+        ${p.search?`<div class="picker-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Type heat no…" data-search="${p.key}"/></div>`:''}
+        <div class="picker-list">${vals.map(v=>`<label><input type="checkbox" value="${v}" ${sel.has(v)?'checked':''}/> ${v}</label>`).join('')}</div>
+      </div></div>`;
+  }).join('')+`<a class="fb-clear" id="fbClear">Reset all</a>`;
+  bar.querySelectorAll('.picker').forEach(pk=>{
+    const key=pk.dataset.fp,btn=pk.querySelector('.fb-btn');
+    btn.onclick=e=>{const panel=pk.querySelector('.picker-panel'),open=panel.classList.contains('open');closeAllPanels();if(!open)panel.classList.add('open');e.stopPropagation();};
+    pk.querySelectorAll('.picker-list input').forEach(cb=>cb.onchange=()=>{cb.checked?picked[key].add(cb.value):picked[key].delete(cb.value);applyPicker(pk,key);});
+    pk.querySelector('[data-act="all"]').onclick=()=>{picked[key]=new Set(distinct(key));syncChecks(pk,key);applyPicker(pk,key);};
+    pk.querySelector('[data-act="clear"]').onclick=()=>{picked[key]=new Set();syncChecks(pk,key);applyPicker(pk,key);};
+    const sb=pk.querySelector('[data-search]');
+    if(sb)sb.oninput=()=>{const q=sb.value.trim().toLowerCase();pk.querySelectorAll('.picker-list label').forEach(lb=>{lb.style.display=lb.textContent.trim().toLowerCase().includes(q)?'':'none';});};
+  });
+  document.getElementById('fbClear').onclick=()=>{PICKERS.forEach(p=>picked[p.key]=new Set(distinct(p.key)));buildFilterBar();page=1;renderBody();};
+}
+function applyPicker(pk,key){
+  const btn=pk.querySelector('.fb-btn');
+  btn.classList.toggle('fb-active',picked[key].size!==distinct(key).length);
+  btn.innerHTML=pickerBtnHtml(key);
+  page=1;renderBody();
+}
+function syncChecks(pk,key){pk.querySelectorAll('.picker-list input').forEach(cb=>cb.checked=picked[key].has(cb.value));}
+
+/* ===== Column picker ===== */
+function buildPicker(){
+  document.getElementById('colList').innerHTML=COLS.filter(c=>c.label).map(c=>`<label><input type="checkbox" data-k="${c.key}" ${visible.includes(c.key)?'checked':''}/> ${c.label}</label>`).join('');
+  document.querySelectorAll('#colList input').forEach(i=>i.addEventListener('change',e=>{
+    const k=e.target.dataset.k; visible=COLS.filter(c=>c.key===k?e.target.checked:visible.includes(c.key)).map(c=>c.key);
+    buildHead();renderBody();
+  }));
+}
+colBtn.onclick=e=>{const open=colPanel.classList.contains('open');closeAllPanels();if(!open)colPanel.classList.add('open');e.stopPropagation();};
+document.addEventListener('click',e=>{if(!e.target.closest('.picker'))closeAllPanels();});
+colAll.onclick=()=>{visible=COLS.map(c=>c.key);buildPicker();buildHead();renderBody();};
+colClear.onclick=()=>{visible=['no','actions'];buildPicker();buildHead();renderBody();};
+
+/* ===== Pager ===== */
+pgFirst.onclick=()=>{page=1;renderBody();};
+pgPrev.onclick=()=>{page--;renderBody();};
+pgNext.onclick=()=>{page++;renderBody();};
+pgLast.onclick=()=>{page=1e9;renderBody();};
+pgSize.onchange=e=>{pageSize=+e.target.value;page=1;renderBody();};
+
+/* ===== Record Result modal ===== */
+/* Demo attribute sets per inspection/test type (real ones come from stage_qc_map + the test's attributes; limits from TDC) */
+const TYPE_ATTRS={
+  Dimensional:[{n:'Diameter',u:'mm',min:67.90,max:68.10},{n:'Length',u:'mm',min:3000,max:3050},{n:'Straightness',u:'mm/m',min:null,max:1.0},{n:'Out of roundness',u:'mm',min:null,max:0.05}],
+  Visual:[],
+  UT:[{n:'UT soundness',u:'',min:null,max:null,text:true},{n:'Max indication',u:'mm',min:null,max:1.5}],
+  Chemical:[{n:'C',u:'%',min:null,max:0.07},{n:'Mn',u:'%',min:null,max:1.00},{n:'Si',u:'%',min:null,max:1.00},{n:'S',u:'%',min:null,max:0.030},{n:'P',u:'%',min:null,max:0.040},{n:'Cr',u:'%',min:15.0,max:17.5},{n:'Ni',u:'%',min:3.0,max:5.0}],
+  Mechanical:[{n:'YS 0.2%',u:'MPa',min:520,max:null},{n:'UTS',u:'MPa',min:690,max:null},{n:'Elongation',u:'%',min:16,max:null},{n:'R.A.',u:'%',min:45,max:null},{n:'Hardness',u:'HRC',min:28,max:36}]
+};
+let rmRow=null;
+function openRecord(no,mode){
+  mode=mode||'edit';
+  rmRow=DATA.find(r=>r.no===no); if(!rmRow)return;
+  const ro=mode==='view', recorded=rmRow.result!=='PENDING', willFail=rmRow.result==='FAIL';
+  document.getElementById('rmTitle').textContent=(ro?'View Result — ':(recorded?'Edit Result — ':'Record Result — '))+rmRow.no;
+  document.getElementById('rmCtx').innerHTML=[['Kind',rmRow.kind],['Type',rmRow.type],['Stage',rmRow.stage],['Heat',rmRow.heat],['Material',rmRow.uid],['Grade',rmRow.grade],['Form',rmRow.form],['TDC','TDC-004275']].map(p=>`<span class="chip">${p[0]}<b>${p[1]}</b></span>`).join('');
+  const attrs=TYPE_ATTRS[rmRow.type]||[];
+  let hh=0; for(const ch of rmRow.no) hh=(hh*33+ch.charCodeAt(0))>>>0; const failIdx=attrs.length?hh%attrs.length:-1;
+  const head='<tr><th>Characteristic</th><th>Unit</th><th>TDC Min</th><th>TDC Max</th><th>Actual</th><th>Source</th><th>Result</th></tr>';
+  const body=attrs.length?attrs.map((a,i)=>{
+    const val=derive(rmRow,a,i,recorded,willFail&&i===failIdx);
+    const actual=a.text
+      ?`<select data-i="${i}" ${ro?'disabled':''} onchange="evalRm()"><option value=""></option><option ${val==='OK'?'selected':''}>OK</option><option ${val==='NOT OK'?'selected':''}>NOT OK</option></select>`
+      :`<input data-i="${i}" type="number" step="any" value="${val}" placeholder="enter…" ${ro?'disabled':''} oninput="evalRm()"/>`;
+    return `<tr><td>${a.n}</td><td>${a.u||'—'}</td><td class="spec">${a.min??'—'}</td><td class="spec">${a.max??'—'}</td><td>${actual}</td><td><select ${ro?'disabled':''}><option>L2</option><option>Manual</option><option>Instrument</option></select></td><td><span class="badge b-pend" id="rmr-${i}">—</span></td></tr>`;
+  }).join(''):`<tr><td colspan="7" style="color:#888;font-style:italic;padding:14px;">No measured characteristics for a ${rmRow.type} inspection — record defects only (next iteration).</td></tr>`;
+  document.getElementById('rmGrid').innerHTML=head+body;
+  const rem=document.getElementById('rmRemark'); rem.value=''; rem.disabled=ro;
+  modalSave.style.display=ro?'none':''; modalCancel.textContent=ro?'Close':'Cancel';
+  evalRm();
+  overlay.classList.add('open');
+}
+function rnd(v){const a=Math.abs(v);return a<1?+v.toFixed(3):a<100?+v.toFixed(2):Math.round(v);}
+function derive(row,a,i,recorded,isFail){
+  if(!recorded) return '';
+  if(a.text) return isFail?'NOT OK':'OK';
+  let h=0,s=row.no+'#'+i; for(const ch of s) h=(h*31+ch.charCodeAt(0))>>>0; const f=(h%1000)/1000;
+  if(isFail){ if(a.max!=null) return rnd(a.max*(1.03+f*0.05)); if(a.min!=null) return rnd(a.min*(0.90-f*0.05)); return rnd(999); }
+  if(a.min!=null&&a.max!=null) return rnd(a.min+(0.25+0.5*f)*(a.max-a.min));
+  if(a.min!=null) return rnd(a.min*(1.02+f*0.08));
+  if(a.max!=null) return rnd(a.max*(0.4+f*0.5));
+  return rnd(50+f*50);
+}
+function evalRm(){
+  const attrs=TYPE_ATTRS[rmRow.type]||[]; let anyFail=false,anyEmpty=false,any=false;
+  attrs.forEach((a,i)=>{
+    const ctrl=document.querySelector(`[data-i="${i}"]`); const badge=document.getElementById('rmr-'+i);
+    const v=ctrl?ctrl.value:''; let res='—',cls='b-pend';
+    if(v===''){anyEmpty=true;}
+    else{any=true;
+      if(a.text){res=v==='OK'?'PASS':'FAIL';}
+      else{const n=parseFloat(v);let ok=true;if(a.min!=null&&n<a.min)ok=false;if(a.max!=null&&n>a.max)ok=false;res=ok?'PASS':'FAIL';}
+      cls=res==='PASS'?'b-pass':'b-fail'; if(res==='FAIL')anyFail=true;
+    }
+    if(badge){badge.textContent=res;badge.className='badge '+cls;}
+  });
+  const o=document.getElementById('rmOverall'); let ov='PENDING',oc='b-pend';
+  if(attrs.length&&anyFail){ov='FAIL';oc='b-fail';}
+  else if(attrs.length&&!anyEmpty&&any){ov='PASS';oc='b-pass';}
+  o.textContent=ov;o.className='badge '+oc;
+}
+newBtn.onclick=()=>raiseOverlay.classList.add('open');
+modalX.onclick=modalCancel.onclick=modalSave.onclick=()=>overlay.classList.remove('open');
+overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove('open');};
+raiseX.onclick=raiseCancel.onclick=raiseSave.onclick=()=>raiseOverlay.classList.remove('open');
+raiseOverlay.onclick=e=>{if(e.target===raiseOverlay)raiseOverlay.classList.remove('open');};
+
+/* ===== Init ===== */
+buildHead();buildPicker();buildFilterBar();renderBody();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "roll-shop.html": {"t": "Roll Shop", "i": "fa-record-vinyl"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+</body>
+</html>
