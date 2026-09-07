@@ -12,6 +12,8 @@
   .moqgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; }
   .moqcell { border:1px solid var(--color-border); border-radius:6px; padding:6px 9px; text-align:center; } .moqcell .c { font-weight:700; font-size:14px; } .moqcell .m { font-size:10px; color:var(--color-text-muted); text-transform:uppercase; }
   .load-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; } .load-row .ln{width:180px;} .load-row .lt{flex:1;height:12px;background:#eef1f4;border-radius:6px;overflow:hidden;} .load-row .lf{display:block;height:100%;border-radius:6px;} .load-row .lv{width:90px;text-align:right;font-variant-numeric:tabular-nums;}
+  .tbl-wrap { max-height:380px; overflow:auto; } .ref { border-left:3px solid #c2c8cf; } .ref .card-head { background:#f6f7f9; }
+  .win select { font:12px 'Roboto'; padding:3px 6px; border:1px solid var(--color-border); border-radius:5px; }
 </style>
 <script src="vss-embed.js"></script>
 </head>
@@ -20,17 +22,30 @@
   <main class="bm-content">
     <div class="page-bar">
       <div><h1>Casting — Steel Melt Shop (SMS)</h1><div class="crumb">Production Plan › Casting · SMS › <span id="ctx"></span></div></div>
-      <div class="actions"><a class="btn btn-outline" href="vss-rolling.html"><i class="fa-solid fa-bars-staggered"></i> Rolling</a></div>
+      <div class="actions"><a class="btn btn-outline" href="vss-inventory.html"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a><a class="btn btn-outline" href="vss-rolling.html"><i class="fa-solid fa-bars-staggered"></i> Rolling</a><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
     </div>
     <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Casting plan — caster bookings <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
+      <div class="card-body"><div class="gantt" id="gantt"></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>Same basis as the Dashboard flow strip and the Master Gantt: every order without open billet stock (or short of it) gets a caster booking in <b>billet MT</b> (bar qty ÷ 90 % mill yield). Colour = order, as on the Master Gantt.</span></div></div>
+    </div>
     <div class="grid2">
-      <div class="card"><div class="card-head"><i class="fa-solid fa-industry"></i> Caster sections &amp; capacity</div><div class="card-body"><div class="cfg" id="sections"></div><div class="note"><i class="fa-solid fa-circle-info"></i> Target sequence <b>1+1</b> · section change 1 h · min order qty clubbed per heat = MOQ by supply condition.</div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-calendar-day"></i> Casting plan by day — heats vs caster capacity <span class="right">40 MT heats · 22 heats/day</span></div><div class="card-body"><div class="tbl-wrap" style="max-height:300px"><table class="tbl" id="daily"></table></div></div></div>
       <div class="card"><div class="card-head"><i class="fa-solid fa-boxes-stacked"></i> Billet stock — open stock first</div><div class="card-body" id="billet"></div></div>
     </div>
-    <div class="card"><div class="card-head"><i class="fa-solid fa-scale-balanced"></i> MOQ per supply condition (MT/heat)</div><div class="card-body"><div class="moqgrid" id="moq"></div></div></div>
+    <div class="grid2">
+      <div class="card"><div class="card-head"><i class="fa-solid fa-industry"></i> Caster sections &amp; capacity</div><div class="card-body"><div class="cfg" id="sections"></div><div class="note"><i class="fa-solid fa-circle-info"></i> Target sequence <b>1+1</b> · section change 1 h · min order qty clubbed per heat = MOQ by supply condition.</div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-scale-balanced"></i> MOQ per supply condition (MT/heat)</div><div class="card-body"><div class="moqgrid" id="moq"></div></div></div>
+    </div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-fire-flame-curved"></i> Casting plan — heats <span class="right" id="hmeta"></span></div>
-      <div class="card-body"><table class="tbl" id="tbl"></table></div>
+      <div class="card-head"><i class="fa-solid fa-list"></i> Caster bookings — order by order <span class="right" id="bmeta"></span></div>
+      <div class="card-body"><div class="tbl-wrap"><table class="tbl" id="book"></table></div></div>
+    </div>
+    <div class="card ref">
+      <div class="card-head"><i class="fa-solid fa-file-excel"></i> Reference — sample heat sequence from Scenario.xlsx (SMS process sheet) <span class="right" id="hmeta"></span></div>
+      <div class="card-body"><table class="tbl" id="tbl"></table>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>These 13 heats are the worked example in the workbook (zone, section, 1+1 sequence, production order, heat serial). They illustrate the heat format and MOQ check; the plan above covers the whole order book.</span></div></div>
     </div>
   </main>
 </div>
@@ -39,51 +54,30 @@
 <script src="vss-data.js"></script>
 <script src="vss-core.js"></script>
 <script>
-  var V=window.VSS, heats=vssMOQGap(), b=vssBilletBuckets(), PL=vssPlan(), INV=vssInventory();
-  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + V.smsCfg.sections.length + ' sections';
+  var V=window.VSS, heats=vssMOQGap(), b=vssBilletBuckets(), PL=vssPlan(), INV=vssInventory(), R=vssStageReport('Billet'), HEAT=V.smsCfg.heatMT||40, CAPH=V.smsCfg.capHeatsDay||22;
+  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + V.smsCfg.sections.length + ' sections · as of ' + vssFmtDate(V.meta.asOf);
   var gaps=heats.filter(function(h){return h.gap>0;}).length;
-  var toCast=Math.round(PL.load['Caster (SMS)']?PL.load['Caster (SMS)'].mt:0);   // billet MT the plan casts (full need for no-stock orders + top-ups)
-  [['Heats planned',heats.length,'sample window','blue'],
-   ['Heat size',V.smsCfg.heatMT+' MT','× '+V.smsCfg.capHeatsDay+'/day','blue'],
-   ['Sections',V.smsCfg.sections.length,'160/200/210','accent'],
-   ['MOQ gaps',gaps,'below min-order','amber'],
-   ['To cast',toCast+' MT','billet MT after open stock · incl. '+INV.topUp.mt+' MT top-up','green'],
-   ['Billet allocated',b.allocated+' MT','to orders','green']
+  [['Orders to cast',R.orders,R.lines+' lines · '+INV.topUp.n+' stock top-ups','blue'],
+   ['Billet to cast',Math.round(R.mt)+' MT','whole order book · bar ÷ 90 % yield','blue'],
+   ['Cast so far',Math.round(R.doneMT)+' MT',R.doneN+' bookings · as of 6 Jul','green'],
+   ['Heats',Math.ceil(R.mt/HEAT),HEAT+' MT heats · '+Math.round(R.hours)+' h on the caster','accent'],
+   ['Caster days',(R.hours/24).toFixed(1),'at '+Math.round(R.hours*60/Math.max(R.last-R.first,1)*100)+'% utilisation in span','accent'],
+   ['Billet allocated',b.allocated+' MT','open stock first · '+INV.fullCover+' orders skip casting','green']
   ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
-
-  document.getElementById('sections').innerHTML = V.smsCfg.sections.map(function(s){
-    return '<div class="mini"><span class="mk">'+s.section+'</span><span class="mv">'+s.heatMT+' MT · '+s.capHeatsDay+'/day</span><span class="hint" style="font-size:10px">change '+s.changeHr+' h</span></div>';
-  }).join('');
-
+  function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Caster',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:130}); document.getElementById('gmeta').textContent=R.bookings.length+' bookings · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
+  document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
+  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Billet MT</th><th>Orders</th><th>Heats</th><th>vs 22 heats / '+(HEAT*CAPH)+' MT</th><th>Status</th></tr></thead><tbody>'+R.byDay.map(function(d){ var h=Math.ceil(d.mt/HEAT), pc=Math.round(h/CAPH*100), past=d.start+1440<=VSS_ASOF_MIN;
+    return '<tr'+(past?' style="opacity:.75"':'')+'><td class="mono">'+vssDateMin(d.start)+'</td><td class="mono right-al strong">'+Math.round(d.mt)+'</td><td class="mono right-al">'+d.orderCount+'</td><td class="mono right-al">'+h+'</td><td><div class="pbar"><span class="track"><span class="fill '+(pc>100?'fill-red':pc>=80?'fill-green':'fill-amber')+'" style="width:'+Math.min(100,pc)+'%"></span></span><span class="pct">'+pc+'%</span></div></td><td>'+(pc>100?'<span class="badge b-red">over capacity</span>':pc>=80?'<span class="badge b-green">'+(past?'cast':'full')+'</span>':'<span class="badge b-blue">'+(past?'cast':'light')+'</span>')+'</td></tr>'; }).join('')+'</tbody>';
+  document.getElementById('sections').innerHTML = V.smsCfg.sections.map(function(s){ return '<div class="mini"><span class="mk">'+s.section+'</span><span class="mv">'+s.heatMT+' MT · '+s.capHeatsDay+'/day</span><span class="hint" style="font-size:10px">change '+s.changeHr+' h</span></div>'; }).join('');
   var tb=b.allocated+b.unallocated+b.notOkay||1;
-  document.getElementById('billet').innerHTML =
-    [['Allocated to orders',b.allocated,'#2e7d32'],['Un-allocated (sampling)',b.unallocated,'#f0a020'],['Not-Okay (off quality)',b.notOkay,'#d84a4a']].map(function(x){
-      var pc=Math.round(x[1]/tb*100);
-      return '<div class="load-row"><span class="ln">'+x[0]+'</span><span class="lt"><span class="lf" style="width:'+pc+'%;background:'+x[2]+'"></span></span><span class="lv">'+x[1]+' MT</span></div>';
-    }).join('') + '<div class="note"><i class="fa-solid fa-circle-info"></i><span>Allocated stock is drawn at the mill order by order ('+INV.fullCover+' orders fully covered, '+INV.topUp.n+' need a top-up cast) — <a href="vss-inventory.html">Inventory Consumption</a> shows the run-down.</span></div>';
-
-  document.getElementById('moq').innerHTML = Object.keys(V.smsCfg.moq).map(function(k){
-    return '<div class="moqcell"><div class="c">'+V.smsCfg.moq[k]+'</div><div class="m">'+k+'</div></div>';
-  }).join('');
-
+  document.getElementById('billet').innerHTML=[['Allocated to orders',b.allocated,'#2e7d32'],['Un-allocated (sampling)',b.unallocated,'#f0a020'],['Not-Okay (off quality)',b.notOkay,'#d84a4a']].map(function(x){ var pc=Math.round(x[1]/tb*100); return '<div class="load-row"><span class="ln">'+x[0]+'</span><span class="lt"><span class="lf" style="width:'+pc+'%;background:'+x[2]+'"></span></span><span class="lv">'+x[1]+' MT</span></div>'; }).join('')+
+    '<div class="note"><i class="fa-solid fa-circle-info"></i><span>Allocated stock is drawn at the mill order by order ('+INV.fullCover+' orders fully covered, '+INV.topUp.n+' need a top-up cast of '+INV.topUp.mt+' MT) — <a href="vss-inventory.html">Inventory Consumption</a> shows the run-down.</span></div>';
+  document.getElementById('moq').innerHTML = Object.keys(V.smsCfg.moq).map(function(k){ return '<div class="moqcell"><div class="c">'+V.smsCfg.moq[k]+'</div><div class="m">'+k+'</div></div>'; }).join('');
+  var shown=vssBookingTable(document.getElementById('book'),R.bookings,{cap:600}); document.getElementById('bmeta').textContent=(shown<R.bookings.length?'first '+shown+' of ':'')+R.bookings.length+' bookings · billet MT';
   var COLS=['Heat','Zone','Customer','Sales order','Grade · Cat','Supply','Section','IH qty','MOQ','Cast date','Prod order','Status'];
-  document.getElementById('hmeta').textContent = heats.length+' heats · target seq 1+1';
-  document.getElementById('tbl').innerHTML = '<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
-    heats.map(function(h,i){
-      return '<tr><td class="mono strong">'+(h.heatSrl||(i+1))+'</td>'+
-        '<td><span class="chip">'+(h.zone||'—')+'</span></td>'+
-        '<td>'+(h.cust||'—')+'</td>'+
-        '<td class="mono">'+(h.so||'—')+'</td>'+
-        '<td class="strong">'+(h.grade||'')+'<div class="hint" style="font-weight:400">'+(h.category||'')+'</div></td>'+
-        '<td>'+(h.supplyCond||'—')+'</td>'+
-        '<td class="mono">'+(h.billetSize||'—')+'</td>'+
-        '<td class="mono right-al">'+(h.ihQty!=null?h.ihQty:'—')+'</td>'+
-        '<td class="mono right-al">'+(h.moq||'—')+'</td>'+
-        '<td class="mono">'+(h.castDate||'—')+'</td>'+
-        '<td class="mono">'+(h.prodOrder||'—')+'</td>'+
-        '<td>'+(h.moqOk?'<span class="badge b-green">MOQ ok</span>':'<span class="badge b-amber">gap '+h.gap.toFixed(0)+' MT</span>')+'</td>'+
-        '</tr>';
-    }).join('')+'</tbody>';
+  document.getElementById('hmeta').textContent = heats.length+' sample heats · '+gaps+' MOQ gaps · target seq 1+1';
+  document.getElementById('tbl').innerHTML = '<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+heats.map(function(h,i){
+    return '<tr><td class="mono strong">'+(h.heatSrl||(i+1))+'</td><td><span class="chip">'+(h.zone||'—')+'</span></td><td>'+(h.cust||'—')+'</td><td class="mono">'+(h.so||'—')+'</td><td class="strong">'+(h.grade||'')+'<div class="hint" style="font-weight:400">'+(h.category||'')+'</div></td><td>'+(h.supplyCond||'—')+'</td><td class="mono">'+(h.billetSize||'—')+'</td><td class="mono right-al">'+(h.ihQty!=null?h.ihQty:'—')+'</td><td class="mono right-al">'+(h.moq||'—')+'</td><td class="mono">'+(h.castDate||'—')+'</td><td class="mono">'+(h.prodOrder||'—')+'</td><td>'+(h.moqOk?'<span class="badge b-green">MOQ ok</span>':'<span class="badge b-amber">gap '+h.gap.toFixed(0)+' MT</span>')+'</td></tr>'; }).join('')+'</tbody>';
 </script>
 </body>
 </html>

@@ -8,11 +8,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="vss-shell.css">
 <style>
-  .tbl-wrap { max-height:calc(100vh - 430px); overflow:auto; } .dot { width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:0; }
+  .tbl-wrap { max-height:380px; overflow:auto; } .dot { width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:0; }
   .capgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   .capbox { border:1px solid var(--color-border,#dfe4e9); border-radius:8px; padding:10px 12px; background:#fff; }
   .capbox .t { font-size:10.5px; text-transform:uppercase; letter-spacing:.3px; color:var(--color-text-hint); font-weight:600; margin-bottom:6px; }
   .capbox .row { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:2px 0; } .capbox .row b { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ref { border-left:3px solid #c2c8cf; } .ref .card-head { background:#f6f7f9; }
+  .win select { font:12px 'Roboto'; padding:3px 6px; border:1px solid var(--color-border); border-radius:5px; }
 </style>
 <script src="vss-embed.js"></script>
 </head>
@@ -21,23 +23,27 @@
   <main class="bm-content">
     <div class="page-bar">
       <div><h1>Rolling Mill — Schedule</h1><div class="crumb">Production Plan › Rolling Mill › <span id="ctx"></span></div></div>
-      <div class="actions"><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
+      <div class="actions"><a class="btn btn-outline" href="vss-load.html"><i class="fa-solid fa-scale-balanced"></i> Machine Load</a><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-gauge-high"></i> Mill capacity basis — what the order-level plan runs at <span class="right">from Rolling Plan (Bdgt Prdty / Day · Productive hours · Input vs Finish) and Roll Set (feeders · changeover times)</span></div>
-      <div class="card-body"><div class="capgrid" id="cap"></div></div>
+      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Rolling plan — mill bookings, order by order <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
+      <div class="card-body"><div class="gantt" id="gantt"></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>Same basis as the Dashboard flow strip and the Master Gantt: all 788 order lines are rolled (22,227 MT of bar). Sequence = RDD week, descending size within the week (rolling-cycle rule); durations from the mill capacity basis below. Colour = order.</span></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-head"><i class="fa-solid fa-calendar-day"></i> Rolling plan by day — vs budget productivity <span class="right">968 MT/day budget · size runs</span></div><div class="card-body"><div class="tbl-wrap" style="max-height:300px"><table class="tbl" id="daily"></table></div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-gauge-high"></i> Mill capacity basis — what the plan runs at <span class="right">Rolling Plan + Roll Set sheets</span></div><div class="card-body"><div class="capgrid" id="cap" style="grid-template-columns:1fr 1fr"></div></div></div>
     </div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Rolling cycles — sequence &amp; timing <span class="right" id="gmeta"></span></div>
-      <div class="card-body">
-        <div class="gantt" id="gantt"></div>
-        <div class="note"><i class="fa-solid fa-circle-info"></i> One lane per rolling cycle/phase; each bar is a size token with its real start→finish time. Rules: MOQ 100 MT/size · rolling sequence descending · changeover = RC/size-setting time.</div>
-      </div>
+      <div class="card-head"><i class="fa-solid fa-list"></i> Mill bookings — order by order <span class="right" id="bmeta"></span></div>
+      <div class="card-body"><div class="filters"><span class="fl">Search</span><input id="q" placeholder="SO / customer / size" size="16"><span class="hint" id="bc" style="margin-left:auto"></span></div><div class="tbl-wrap"><table class="tbl" id="book"></table></div></div>
     </div>
-    <div class="card">
-      <div class="card-head"><i class="fa-solid fa-bars-staggered"></i> Cycle detail <span class="right" id="tmeta"></span></div>
-      <div class="card-body"><div class="tbl-wrap"><table class="tbl" id="tbl"></table></div></div>
+    <div class="card ref">
+      <div class="card-head"><i class="fa-solid fa-file-excel"></i> Reference — actual rolling cycles 1–12 Jul from Scenario.xlsx (tokens 5766–5795) <span class="right" id="rmeta"></span></div>
+      <div class="card-body"><div class="gantt" id="rgantt"></div>
+        <div class="tbl-wrap" style="max-height:300px;margin-top:10px"><table class="tbl" id="rtbl"></table></div>
+        <div class="note"><i class="fa-solid fa-circle-info"></i><span>The workbook's Rolling Plan sheet lists 30 cycle tokens with real start → finish stamps: <b>7,616 MT in 12 days</b>. They are a sample of actual operation, not the whole order book, and the plan uses them for the size-wise budget productivity, 90 % yield and changeover times shown above. The token on an order line (Order Book) is this sheet's current cycle for that size.</span></div></div>
     </div>
   </main>
 </div>
@@ -46,77 +52,41 @@
 <script src="vss-data.js"></script>
 <script src="vss-core.js"></script>
 <script>
-  var V = window.VSS;
+  var V = window.VSS, P = vssPlan(), R = vssStageReport('Rolled'), RM = P.roll, RS = V.rollset;
+  document.getElementById('ctx').textContent = V.meta.plant + ' · as of ' + vssFmtDate(V.meta.asOf);
   var cyc = V.rolling.filter(function(c){return c.startMin!=null;}).sort(function(a,b){return a.startMin-b.startMin;});
-  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + vssFmtDate(cyc[0].startISO) + ' → ' + vssFmtDate(cyc[cyc.length-1].finishISO);
-
-  var tFin = cyc.reduce(function(a,c){return a+(c.finishQty||0);},0);
-  var tHrs = cyc.reduce(function(a,c){return a+((c.finishMin-c.startMin)/60);},0);   // real start→finish stamps ("Productive hours" 22 = the mill's productive day, not per cycle)
-  var underMOQ = cyc.filter(function(c){return (c.finishQty||0) < V.rules.rollingMOQ;}).length;
-  var tChg = cyc.reduce(function(a,c){return a+(c.changeover||0);},0);
   var bset={}; cyc.forEach(function(c){ if(c.budgetPrdty) bset[c.budgetPrdty]=1; }); var bkeys=Object.keys(bset).map(Number).sort(function(a,b){return b-a;});
-  [['Rolling cycles',cyc.length,'this plan window','blue'],
-   ['Rolled tonnage',Math.round(tFin)+' MT','finished bar','blue'],
-   ['Mill run time',Math.round(tHrs)+' h','real start→finish · '+(tFin/tHrs).toFixed(1)+' MT/h finished','accent'],
-   ['Under-MOQ sizes',underMOQ,'< '+V.rules.rollingMOQ+' MT/size','amber'],
-   ['Changeover',tChg.toFixed(1)+' h','RC / size setting · '+Math.round(tChg/tHrs*100)+'% of run','amber'],
+  var chgH=RM.chg.mins/60, runH=R.hours-chgH;
+  [['Orders',R.orders,R.lines+' lines · every order is rolled','blue'],
+   ['Rolling plan',Math.round(R.mt)+' MT','whole order book · bar MT','blue'],
+   ['Rolled so far',Math.round(R.doneMT)+' MT',R.doneN+' runs · as of 6 Jul','green'],
+   ['Mill hours',Math.round(R.hours)+' h',Math.round(runH)+' h run + '+Math.round(chgH)+' h changeover','accent'],
+   ['Changeovers',RM.chg.Size+RM.chg.Feeder+RM.chg.BDM,RM.chg.Size+' size · '+RM.chg.Feeder+' feeder · '+RM.chg.BDM+' BDM','amber'],
    ['Budget prod/day',bkeys[0]+' MT','size-wise: '+bkeys.join(' / ')+' MT/day (input basis)','green']
-  ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend',
-    '<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
-
-  // capacity basis used by the order-level plan (vssPlan) — surfaced so the numbers behind every rolling booking are visible
-  var RM = vssPlan().roll, RS = V.rollset, bmax = bkeys[0];
-  var bySz = {}; cyc.forEach(function(c){ if(c.budgetPrdty){ (bySz[c.budgetPrdty]=bySz[c.budgetPrdty]||[]).push(c.size); } });
-  var budRows = bkeys.map(function(b){
-    var s = bySz[b].filter(function(x,i,a){return a.indexOf(x)===i;}).sort(function(x,y){return x-y;});
-    var lbl = b===bmax ? 'all other sizes' : s.join(', ')+' mm';
-    return '<div class="row"><span>'+b+' MT/day <span class="hint">· '+(b/RM.prodHours).toFixed(1)+' MT/h</span></span><b>'+lbl+'</b></div>';
-  }).join('');
-  document.getElementById('cap').innerHTML =
-    '<div class="capbox"><div class="t">Budget productivity — size-wise (MT/day input · MT/h running)</div>'+budRows+'</div>'+
-    '<div class="capbox"><div class="t">Time basis</div>'+
-      '<div class="row"><span>Productive hours / day</span><b>'+RM.prodHours+' h</b></div>'+
-      '<div class="row"><span>Non-productive / day</span><b>'+(24-RM.prodHours)+' h</b></div>'+
-      '<div class="row"><span>Yield (finish ÷ input)</span><b>'+Math.round(RM.yield*100)+'%</b></div>'+
-      '<div class="row"><span>Run time</span><b>input MT × 24 ÷ budget</b></div></div>'+
-    '<div class="capbox"><div class="t">Changeover — Roll Set</div>'+
-      '<div class="row"><span>Size to size (same feeder)</span><b>'+RM.rc.sizeMin+' min</b></div>'+
-      '<div class="row"><span>Feeder to feeder</span><b>'+RM.rc.feederHr+' h</b></div>'+
-      '<div class="row"><span>BDM / billet-section change</span><b>'+RM.rc.bdmHr+' h</b></div>'+
-      '<div class="row"><span>Applied</span><b>once per size run</b></div></div>'+
-    '<div class="capbox"><div class="t">Size-mix feeders (input billet)</div>'+
-      RS.feeders.map(function(f){ return '<div class="row"><span>F'+f.no+' · '+f.range+' mm</span><b>'+f.billet+'</b></div>'; }).join('')+
-      '<div class="row hint"><span>39.5–46.69 mm has no feeder row in the sheet → nearest feeder used</span></div></div>';
-
-  // gantt: lanes = cycle/phase, bars = size tokens
-  var phases = []; cyc.forEach(function(c){ if(phases.indexOf(c.cyclePhase)<0) phases.push(c.cyclePhase); });
-  phases.sort();
-  var bars = cyc.map(function(c,i){ return { unit:c.cyclePhase, start:c.startMin, dur:Math.max(c.finishMin-c.startMin,15), cls:vssColor(i),
-    tip:'Token '+c.token+' · '+c.sizeR+' · '+(c.finishQty||0).toFixed(0)+' MT · '+vssStamp(c.startMin)+' → '+vssStamp(c.finishMin) }; });
-  vssRenderGantt(document.getElementById('gantt'), phases, bars, { laneTitle:'Rolling cycle', startMin:cyc[0].startMin, laneW:150 });
-  document.getElementById('gmeta').textContent = cyc.length+' cycles · '+phases.length+' phases';
-
-  // table
-  var COLS = ['Seq','Token','Size','Cycle','Type-A ord','NDT ord','Input MT','Finish MT','Prod hrs','Changeover','Start','Finish','MOQ'];
-  document.getElementById('tmeta').textContent = 'MOQ '+V.rules.rollingMOQ+' MT/size';
-  document.getElementById('tbl').innerHTML = '<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
-    cyc.map(function(c,i){
-      var ok = (c.finishQty||0) >= V.rules.rollingMOQ;
-      return '<tr><td class="mono hint">'+(i+1)+'</td>'+
-        '<td class="mono strong"><span class="dot" style="background:'+vssColor(i)+'"></span>'+c.token+'</td>'+
-        '<td class="mono strong">'+c.sizeR+'</td>'+
-        '<td class="mono">'+c.cyclePhase+'</td>'+
-        '<td class="mono">'+(c.typeA!=null?c.typeA:'—')+'</td>'+
-        '<td class="mono">'+(c.ndtOrders!=null?c.ndtOrders:'—')+'</td>'+
-        '<td class="mono right-al">'+(c.inputQty||0).toFixed(1)+'</td>'+
-        '<td class="mono right-al strong">'+(c.finishQty||0).toFixed(1)+'</td>'+
-        '<td class="mono right-al">'+(c.prodHours||0)+'</td>'+
-        '<td class="mono right-al">'+(c.changeover!=null?c.changeover:'—')+'</td>'+
-        '<td class="mono">'+vssFmtDate(c.startISO)+' '+vssClock(c.startMin)+'</td>'+
-        '<td class="mono">'+vssFmtDate(c.finishISO)+' '+vssClock(c.finishMin)+'</td>'+
-        '<td>'+(ok?'<span class="badge b-green">OK</span>':'<span class="badge b-amber" title="below 100 MT">gap '+(V.rules.rollingMOQ-(c.finishQty||0)).toFixed(0)+'</span>')+'</td>'+
-        '</tr>';
-    }).join('')+'</tbody>';
+  ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
+  function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Mill',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:130}); document.getElementById('gmeta').textContent=R.bookings.length+' runs · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
+  document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
+  var BUD=bkeys[0]||968;
+  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Bar MT</th><th>Runs</th><th>Sizes</th><th>vs budget '+BUD+' MT (input ≈ bar ÷ 0.9)</th><th>Status</th></tr></thead><tbody>'+R.byDay.map(function(d){ var inp=d.mt/RM.yield, pc=Math.round(inp/BUD*100), past=d.start+1440<=VSS_ASOF_MIN;
+    return '<tr'+(past?' style="opacity:.75"':'')+'><td class="mono">'+vssDateMin(d.start)+'</td><td class="mono right-al strong">'+Math.round(d.mt)+'</td><td class="mono right-al">'+d.n+'</td><td class="mono right-al">'+d.sizeChanges+'</td><td><div class="pbar"><span class="track"><span class="fill '+(pc>105?'fill-red':pc>=80?'fill-green':'fill-amber')+'" style="width:'+Math.min(100,pc)+'%"></span></span><span class="pct">'+pc+'%</span></div></td><td>'+(pc>105?'<span class="badge b-red">over budget</span>':pc>=80?'<span class="badge b-green">'+(past?'rolled':'on budget')+'</span>':'<span class="badge b-blue">'+(past?'rolled':'light')+'</span>')+'</td></tr>'; }).join('')+'</tbody>';
+  // capacity basis card
+  var bySz={}; cyc.forEach(function(c){ if(c.budgetPrdty){ (bySz[c.budgetPrdty]=bySz[c.budgetPrdty]||[]).push(c.size); } });
+  var budRows=bkeys.map(function(b){ var s=bySz[b].filter(function(x,i,a){return a.indexOf(x)===i;}).sort(function(x,y){return x-y;}); return '<div class="row"><span>'+b+' MT/day <span class="hint">· '+(b/RM.prodHours).toFixed(1)+' MT/h</span></span><b>'+(b===bkeys[0]?'all other sizes':s.join(', ')+' mm')+'</b></div>'; }).join('');
+  document.getElementById('cap').innerHTML='<div class="capbox"><div class="t">Budget productivity — size-wise (MT/day input · MT/h running)</div>'+budRows+'<div class="row"><span>Productive hours / day</span><b>'+RM.prodHours+' h (+'+(24-RM.prodHours)+' h non-productive)</b></div><div class="row"><span>Yield (finish ÷ input)</span><b>'+Math.round(RM.yield*100)+'%</b></div><div class="row"><span>Run time</span><b>input MT × 24 ÷ budget</b></div></div>'+
+    '<div class="capbox"><div class="t">Changeover — Roll Set · applied once per size run</div><div class="row"><span>Size to size (same feeder)</span><b>'+RM.rc.sizeMin+' min</b></div><div class="row"><span>Feeder to feeder</span><b>'+RM.rc.feederHr+' h</b></div><div class="row"><span>BDM / billet-section change</span><b>'+RM.rc.bdmHr+' h</b></div>'+RS.feeders.map(function(f){ return '<div class="row hint"><span>F'+f.no+' · '+f.range+' mm</span><b>'+f.billet+'</b></div>'; }).join('')+'<div class="row hint"><span>39.5–46.69 mm has no feeder row in the sheet → nearest feeder</span></div></div>';
+  // bookings table with search
+  function renderBook(){ var q=(document.getElementById('q').value||'').toLowerCase(); var list=q?R.bookings.filter(function(b){return (b.so+' '+b.customer+' '+b.size+' '+b.grade).toLowerCase().indexOf(q)>=0;}):R.bookings; var shown=vssBookingTable(document.getElementById('book'),list,{cap:600}); document.getElementById('bc').textContent=(shown<list.length?'first '+shown+' of ':'')+list.length+' of '+R.bookings.length; document.getElementById('bmeta').textContent='bar MT · one run per order line · changeover included in the booking'; }
+  document.getElementById('q').addEventListener('input',renderBook); renderBook();
+  // reference: the sheet's actual cycles (sample), clearly separated from the plan
+  var tFin=cyc.reduce(function(a,c){return a+(c.finishQty||0);},0), tHrs=cyc.reduce(function(a,c){return a+((c.finishMin-c.startMin)/60);},0), tChg=cyc.reduce(function(a,c){return a+(c.changeover||0);},0);
+  document.getElementById('rmeta').textContent=cyc.length+' tokens · '+Math.round(tFin)+' MT · '+Math.round(tHrs)+' h run ('+(tFin/tHrs).toFixed(1)+' MT/h finished) · changeover '+tChg.toFixed(1)+' h · '+vssFmtDate(cyc[0].startISO)+' → '+vssFmtDate(cyc[cyc.length-1].finishISO);
+  var phases=[]; cyc.forEach(function(c){ if(phases.indexOf(c.cyclePhase)<0) phases.push(c.cyclePhase); }); phases.sort();
+  var rbars=cyc.map(function(c,i){ return { unit:c.cyclePhase, start:c.startMin, dur:Math.max(c.finishMin-c.startMin,15), cls:vssColor(i), tip:'Token '+c.token+' · '+c.sizeR+' · '+(c.finishQty||0).toFixed(0)+' MT · '+vssStamp(c.startMin)+' → '+vssStamp(c.finishMin) }; });
+  function drawRef(){ vssRenderGantt(document.getElementById('rgantt'), phases, rbars, { laneTitle:'Cycle / phase', startMin:cyc[0].startMin, laneW:130 }); }
+  drawRef(); window.addEventListener('resize',drawRef); window.addEventListener('vss:activated',drawRef);
+  var COLS=['Seq','Token','Size','Cycle','Type-A ord','NDT ord','Input MT','Finish MT','Bdgt/day','Changeover','Start','Finish','MOQ'];
+  document.getElementById('rtbl').innerHTML='<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+cyc.map(function(c,i){ var ok=(c.finishQty||0)>=V.rules.rollingMOQ;
+    return '<tr><td class="mono hint">'+(i+1)+'</td><td class="mono strong"><span class="dot" style="background:'+vssColor(i)+'"></span>'+c.token+'</td><td class="mono strong">'+c.sizeR+'</td><td class="mono">'+c.cyclePhase+'</td><td class="mono">'+(c.typeA!=null?c.typeA:'—')+'</td><td class="mono">'+(c.ndtOrders!=null?c.ndtOrders:'—')+'</td><td class="mono right-al">'+(c.inputQty||0).toFixed(1)+'</td><td class="mono right-al strong">'+(c.finishQty||0).toFixed(1)+'</td><td class="mono right-al">'+(c.budgetPrdty||'—')+'</td><td class="mono right-al">'+(c.changeover!=null?c.changeover:'—')+'</td><td class="mono">'+vssFmtDate(c.startISO)+' '+vssClock(c.startMin)+'</td><td class="mono">'+vssFmtDate(c.finishISO)+' '+vssClock(c.finishMin)+'</td><td>'+(ok?'<span class="badge b-green">OK</span>':'<span class="badge b-amber" title="below 100 MT">gap '+(V.rules.rollingMOQ-(c.finishQty||0)).toFixed(0)+'</span>')+'</td></tr>'; }).join('')+'</tbody>';
 </script>
 </body>
 </html>

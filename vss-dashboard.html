@@ -79,8 +79,8 @@
 
   // plant flow
   // one consistent basis: tonnage the PLAN routes through each stage, with "done so far" (as of 6 Jul) underneath
-  var PB=vssPlan().bookings, asOfMin=VSS_ASOF_MIN;
-  function stg(s){ var pl=0,dn=0,n={}; PB.forEach(function(x){ if(x.stage===s){ pl+=x.qty; n[x.so]=1; if(x.end<=asOfMin) dn+=x.qty; } }); return {pl:Math.round(pl),dn:Math.round(dn),n:Object.keys(n).length}; }
+  // the same vssStageReport() feeds every process page (Casting / Rolling / NDT / Bright Bar / Heat Treatment), so the numbers agree
+  function stg(s){ var r=vssStageReport(s); return {pl:Math.round(r.mt),dn:Math.round(r.doneMT),n:r.orders}; }
   var sC=stg('Billet'), sR=stg('Rolled'), sN=stg('NDT'), sB=stg('Bright Bar'), sH=stg('Heat Treat');
   var stages=[['Casting · SMS','fa-fire-flame-curved','#ef6c00',sC.pl+' MT',sC.n+' orders · '+sC.dn+' MT cast so far'],
     ['Rolling','fa-bars-staggered','#1478c8',sR.pl+' MT',sR.n+' orders · '+sR.dn+' MT rolled so far'],

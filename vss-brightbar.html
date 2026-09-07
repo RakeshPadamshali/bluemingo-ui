@@ -8,14 +8,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="vss-shell.css">
 <style>
-  .lines { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+  .lines { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
   .lcard { border:1px solid var(--color-border); border-radius:8px; padding:10px 12px; background:#fff; }
-  .lcard .lh { display:flex; align-items:center; gap:7px; font-weight:600; font-size:13px; margin-bottom:4px; }
-  .lcard .lh i { color:var(--color-primary); }
-  .lcard .lr { font-size:11px; color:var(--color-text-secondary); margin:2px 0; }
-  .lcard .lr b { color:var(--color-text-primary); }
-  .lcard .cap { font-size:16px; font-weight:700; }
-  .lcard .rt { font-size:10.5px; color:var(--color-text-hint); margin-top:5px; border-top:1px dashed var(--color-border-light); padding-top:5px; }
+  .lcard .lh { display:flex; align-items:center; gap:7px; font-weight:600; font-size:13px; margin-bottom:4px; } .lcard .lh i { color:var(--color-primary); }
+  .lcard .lr { font-size:11px; color:var(--color-text-secondary); margin:2px 0; } .lcard .lr b { color:var(--color-text-primary); }
+  .lcard .cap { font-size:16px; font-weight:700; } .lcard .rt { font-size:10.5px; color:var(--color-text-hint); margin-top:5px; border-top:1px dashed var(--color-border-light); padding-top:5px; }
+  .lcard .plan { margin-top:6px; padding-top:6px; border-top:1px solid var(--color-border-light); font-size:11px; }
+  .tbl-wrap { max-height:360px; overflow:auto; } .ref { border-left:3px solid #c2c8cf; } .ref .card-head { background:#f6f7f9; }
+  .win select, .filters select { font:12px 'Roboto'; padding:3px 6px; border:1px solid var(--color-border); border-radius:5px; }
 </style>
 <script src="vss-embed.js"></script>
 </head>
@@ -24,13 +24,24 @@
   <main class="bm-content">
     <div class="page-bar">
       <div><h1>Bright Bar Shop — Peeling &amp; Drawing</h1><div class="crumb">Production Plan › Bright Bar › <span id="ctx"></span></div></div>
+      <div class="actions"><a class="btn btn-outline" href="vss-load.html"><i class="fa-solid fa-scale-balanced"></i> Machine Load</a><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
     </div>
     <div class="kpis" id="kpis"></div>
-    <div class="card"><div class="card-head"><i class="fa-solid fa-ruler-horizontal"></i> Finishing lines <span class="right" id="lmeta"></span></div><div class="card-body"><div class="lines" id="lines"></div></div></div>
+    <div class="card"><div class="card-head"><i class="fa-solid fa-ruler-horizontal"></i> Finishing lines — capability and plan load <span class="right" id="lmeta"></span></div><div class="card-body"><div class="lines" id="lines"></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>Same basis as the Dashboard flow strip and the Master Gantt: every P* / D* order line is booked on a line that can run its supply condition and size (least-loaded first). PL-2 is the only line for PG* ground conditions, which is why it carries the most hours.</span></div></div></div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-list-check"></i> Line schedule — sample orders <span class="right">urgent-stacking FIFO first, then normal FIFO</span></div>
+      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Bright-bar plan — line bookings <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
+      <div class="card-body"><div class="gantt" id="gantt"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><i class="fa-solid fa-list"></i> Line bookings — order by order <span class="right" id="bmeta"></span></div>
+      <div class="card-body"><div class="filters"><span class="fl">Line</span><select id="f-line"><option value="">All</option></select><span class="fl">Search</span><input id="q" placeholder="SO / customer / size / cond" size="16"><span class="hint" id="bc" style="margin-left:auto"></span></div><div class="tbl-wrap"><table class="tbl" id="book"></table></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i> Rolled bars are stacked <b>Urgent FIFO</b> before <b>Normal FIFO</b> for the Bright Bar shop; sequence within a line follows the plan order.</div></div>
+    </div>
+    <div class="card ref">
+      <div class="card-head"><i class="fa-solid fa-file-excel"></i> Reference — sample line schedule rows from Scenario.xlsx (BRIGHT BAR PROCESS sheet) <span class="right" id="rmeta"></span></div>
       <div class="card-body"><table class="tbl" id="tbl"></table>
-      <div class="note"><i class="fa-solid fa-circle-info"></i> ≥1-week sequence per line; rolled bars stacked <b>Urgent FIFO</b> before <b>Normal FIFO</b> for the Bright Bar shop.</div></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>The workbook's worked example: one row per line with rolling date, sizes, supply condition and stacking date. It shows the row format used by the shop; the plan above covers all bright-bar orders.</span></div></div>
     </div>
   </main>
 </div>
@@ -39,43 +50,34 @@
 <script src="vss-data.js"></script>
 <script src="vss-core.js"></script>
 <script>
-  var V=window.VSS, lines=V.bbsCfg.lines;
-  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + lines.length + ' lines';
+  var V=window.VSS, lines=V.bbsCfg.lines, R=vssStageReport('Bright Bar');
+  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + lines.length + ' lines · as of ' + vssFmtDate(V.meta.asOf);
   var peel=lines.filter(function(l){return /Peel/.test(l.machine);}).length, draw=lines.length-peel;
-  var brightTons=Math.round(V.orders.reduce(function(a,o){return a+(/^[PD]/.test(o.supplyCond)?(o.qty||0):0);},0));
-  [['Finishing lines',lines.length,'peeling + drawing','blue'],
-   ['Total capacity',V.bbsCfg.totalCapMT+' MT','shop','blue'],
-   ['Peeling lines',peel,'PL-1 … PL-5','accent'],
-   ['Drawing line',draw,'16 h working','accent'],
-   ['Bright-bar demand',brightTons+' MT','P* / D* orders','green'],
-   ['Per-day cap',Math.round(lines.reduce(function(a,l){return a+(l.capDay||0);},0))+' MT','all lines','green']
+  var byM={}; R.byMachine.forEach(function(m){ byM[m.machine]=m; });
+  var utils=R.byMachine.map(function(m){return m.util;});
+  [['Orders',R.orders,'P* / D* supply conditions','blue'],
+   ['Bright-bar plan',Math.round(R.mt)+' MT','whole order book · bar MT','blue'],
+   ['Done so far',Math.round(R.doneMT)+' MT',R.doneN+' jobs · as of 6 Jul','green'],
+   ['Shop hours',Math.round(R.hours)+' h','over '+R.byMachine.length+' lines','accent'],
+   ['Line balance',Math.round(Math.min.apply(null,utils)*100)+'–'+Math.round(Math.max.apply(null,utils)*100)+'%','utilisation range in span','amber'],
+   ['Per-day cap',Math.round(lines.reduce(function(a,l){return a+(l.capDay||0);},0))+' MT','all lines · '+peel+' peeling + '+draw+' drawing','green']
   ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
-
-  document.getElementById('lmeta').textContent = lines.length+' lines';
-  document.getElementById('lines').innerHTML = lines.map(function(l){
-    return '<div class="lcard"><div class="lh"><i class="fa-solid '+(/Draw/.test(l.machine)?'fa-arrows-left-right-to-line':'fa-ruler-horizontal')+'"></i>'+l.machine.replace(' @ 16 hours working.','')+'</div>'+
-      '<div class="lr">Range <b>'+l.range+' mm</b></div>'+
-      '<div class="lr">Conditions <b>'+(l.process||'—')+'</b></div>'+
+  document.getElementById('lmeta').textContent = lines.length+' lines · plan '+Math.round(R.mt)+' MT';
+  document.getElementById('lines').innerHTML = lines.map(function(l,i){ var name=/Draw/i.test(l.machine)?'Drawing DL':'Peeling PL-'+(i+1), m=byM[name];
+    return '<div class="lcard"><div class="lh"><i class="fa-solid '+(/Draw/.test(l.machine)?'fa-arrows-left-right-to-line':'fa-ruler-horizontal')+'"></i>'+name+' <span class="hint" style="font-weight:400">· '+l.machine.replace(' @ 16 hours working.','')+'</span></div>'+
+      '<div class="lr">Range <b>'+l.range+' mm</b> · Conditions <b>'+(l.process||'—')+'</b></div>'+
       '<div class="lr"><span class="cap">'+(l.capDay!=null?Math.round(l.capDay):'—')+'</span> MT/day <span class="hint">· cap '+(l.capMT||'—')+' MT · change '+(l.changeover||'—')+' h</span></div>'+
-      '<div class="rt">'+ (l.route||'') +'</div></div>';
-  }).join('');
-
-  var rows=V.bbsRows||[];
+      (m?'<div class="plan"><b>Plan:</b> '+m.orderCount+' orders · '+Math.round(m.mt)+' MT · '+Math.round(m.hours)+' h · '+Math.round(m.util*100)+'% util<br><span class="hint">'+vssDateMin(m.first)+' → '+vssDateMin(m.last)+' · done so far '+Math.round(m.doneMT)+' MT</span></div>':'<div class="plan hint">no bookings in the plan</div>')+
+      '<div class="rt">'+(l.route||'')+'</div></div>'; }).join('');
+  function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Line',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:130}); document.getElementById('gmeta').textContent=R.bookings.length+' jobs · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
+  document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
+  var fl=document.getElementById('f-line'); R.byMachine.forEach(function(m){ fl.insertAdjacentHTML('beforeend','<option>'+m.machine+'</option>'); });
+  function renderBook(){ var q=(document.getElementById('q').value||'').toLowerCase(), ln=fl.value; var list=R.bookings.filter(function(b){ return (!ln||b.machine===ln)&&(!q||(b.so+' '+b.customer+' '+b.size+' '+b.cond+' '+b.grade).toLowerCase().indexOf(q)>=0); }); var shown=vssBookingTable(document.getElementById('book'),list,{cap:400}); document.getElementById('bc').textContent=(shown<list.length?'first '+shown+' of ':'')+list.length+' of '+R.bookings.length; document.getElementById('bmeta').textContent='bar MT · line = capability + least-loaded'; }
+  fl.addEventListener('change',renderBook); document.getElementById('q').addEventListener('input',renderBook); renderBook();
+  var rows=V.bbsRows||[]; document.getElementById('rmeta').textContent=rows.length+' sample rows';
   var COLS=['Line','Zone','Customer','Sales order','Grade · Cat','In → Fin size','Supply','Ord qty','Fin qty','Stacking date','Stk qty'];
-  document.getElementById('tbl').innerHTML='<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
-    (rows.length?rows.map(function(r){
-      return '<tr><td class="strong">'+(r.line||'—').replace(' @ 16 hours working.','')+'</td>'+
-        '<td><span class="chip">'+(r.zone||'—')+'</span></td>'+
-        '<td>'+(r.cust||'—')+'</td>'+
-        '<td class="mono">'+(r.so||'—')+'</td>'+
-        '<td class="strong">'+(r.grade||'')+'<div class="hint" style="font-weight:400">'+(r.category||'')+'</div></td>'+
-        '<td class="mono">'+(r.inSize||'—')+' → '+(r.finSize||'—')+'</td>'+
-        '<td>'+(r.supplyCond||'—')+'</td>'+
-        '<td class="mono right-al">'+(r.ordQty!=null?r.ordQty:'—')+'</td>'+
-        '<td class="mono right-al strong">'+(r.finQty!=null?r.finQty.toFixed(1):'—')+'</td>'+
-        '<td class="mono">'+(r.stkgDate||'—')+'</td>'+
-        '<td class="mono right-al">'+(r.stkgQty!=null?r.stkgQty.toFixed(1):'—')+'</td></tr>';
-    }).join(''):'<tr><td colspan="11" class="hint">No sample rows</td></tr>')+'</tbody>';
+  document.getElementById('tbl').innerHTML='<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+(rows.length?rows.map(function(r){
+      return '<tr><td class="strong">'+(r.line||'—').replace(' @ 16 hours working.','')+'</td><td><span class="chip">'+(r.zone||'—')+'</span></td><td>'+(r.cust||'—')+'</td><td class="mono">'+(r.so||'—')+'</td><td class="strong">'+(r.grade||'')+'<div class="hint" style="font-weight:400">'+(r.category||'')+'</div></td><td class="mono">'+(r.inSize||'—')+' → '+(r.finSize||'—')+'</td><td>'+(r.supplyCond||'—')+'</td><td class="mono right-al">'+(r.ordQty!=null?r.ordQty:'—')+'</td><td class="mono right-al strong">'+(r.finQty!=null?r.finQty.toFixed(1):'—')+'</td><td class="mono">'+(r.stkgDate||'—')+'</td><td class="mono right-al">'+(r.stkgQty!=null?r.stkgQty.toFixed(1):'—')+'</td></tr>'; }).join(''):'<tr><td colspan="11" class="hint">No sample rows</td></tr>')+'</tbody>';
 </script>
 </body>
 </html>

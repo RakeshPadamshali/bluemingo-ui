@@ -8,14 +8,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="vss-shell.css">
 <style>
-  .furns { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
-  .furn { border:1px solid var(--color-border); border-radius:8px; padding:10px 12px; background:#fff; }
-  .furn.alarm { border-color:#f0b4b4; background:#fff7f7; }
-  .furn .fh { display:flex; align-items:center; gap:7px; font-weight:600; }
-  .furn .fh i { color:#e34948; }
+  .furns { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+  .furn { border:1px solid var(--color-border); border-radius:8px; padding:10px 12px; background:#fff; } .furn.alarm { border-color:#f0b4b4; background:#fff7f7; }
+  .furn .fh { display:flex; align-items:center; gap:7px; font-weight:600; } .furn .fh i { color:#e34948; }
   .furn .fload { font-size:20px; font-weight:700; margin:4px 0 2px; }
   .furn .bar { height:12px; background:#eef1f4; border-radius:6px; overflow:hidden; margin:6px 0; } .furn .bar span{display:block;height:100%;border-radius:6px;}
   .furn .ft { font-size:11px; color:var(--color-text-secondary); }
+  .tbl-wrap { max-height:360px; overflow:auto; } .win select { font:12px 'Roboto'; padding:3px 6px; border:1px solid var(--color-border); border-radius:5px; }
 </style>
 <script src="vss-embed.js"></script>
 </head>
@@ -24,16 +23,21 @@
   <main class="bm-content">
     <div class="page-bar">
       <div><h1>Heat Treatment — Annealing</h1><div class="crumb">Production Plan › Heat Treatment › <span id="ctx"></span></div></div>
-      <div class="actions"><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
+      <div class="actions"><a class="btn btn-outline" href="vss-load.html"><i class="fa-solid fa-scale-balanced"></i> Machine Load</a><a class="btn btn-outline" href="vss-gantt.html"><i class="fa-solid fa-chart-gantt"></i> Master Gantt</a></div>
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid2">
-      <div class="card"><div class="card-head"><i class="fa-solid fa-temperature-high"></i> Annealing types</div><div class="card-body"><table class="tbl" id="types"></table></div></div>
-      <div class="card"><div class="card-head"><i class="fa-solid fa-fire"></i> Furnace loading <span class="right">6 × 18 MT · load &lt; 18 MT = capacity-loss alarm</span></div><div class="card-body"><div class="furns" id="furns"></div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-fire"></i> Furnace loading — as of 6 Jul <span class="right">6 × 18 MT · charge &lt; 18 MT = capacity-loss alarm</span></div><div class="card-body"><div class="furns" id="furns"></div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-temperature-high"></i> Annealing types — plan tonnage per cycle</div><div class="card-body"><table class="tbl" id="types"></table>
+        <div class="note"><i class="fa-solid fa-circle-info"></i><span>Same basis as the Dashboard flow strip and the Master Gantt: every RXA / PGS / PXS / PGA order line is split into ≤ 18 MT charges on the least-loaded furnace (a 36 MT order = 2 charges). Cycle = anneal time + 12 h cooling / changeover.</span></div></div></div>
     </div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Furnace occupancy <span class="right" id="gmeta"></span></div>
-      <div class="card-body"><div class="gantt" id="gantt"></div><div class="note"><i class="fa-solid fa-circle-info"></i> Long anneal cycles (Spherodized 85 h / Normal 40 h + 12 h cooling); a 36 MT order splits across 2 furnaces.</div></div>
+      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Furnace occupancy — plan charges <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
+      <div class="card-body"><div class="gantt" id="gantt"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><i class="fa-solid fa-list"></i> Charges — order by order <span class="right" id="bmeta"></span></div>
+      <div class="card-body"><div class="tbl-wrap"><table class="tbl" id="book"></table></div></div>
     </div>
   </main>
 </div>
@@ -42,47 +46,25 @@
 <script src="vss-data.js"></script>
 <script src="vss-core.js"></script>
 <script>
-  var V=window.VSS, HT=V.htCfg;
-  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + HT.furnaces + ' furnaces';
-  var anneal=['RXA','PGS','PXS','PGA'];
-  var annealTons=V.orders.reduce(function(a,o){return a+(anneal.indexOf(o.supplyCond)>=0?(o.qty||0):0);},0);
-
-  // pack annealed tonnage into 18 MT charges
-  var nCh=Math.max(HT.furnaces, Math.ceil(annealTons/HT.furnaceMT)), rem=annealTons, charges=[];
-  for(var i=0;i<nCh;i++){ var mt=Math.max(0,Math.min(HT.furnaceMT, rem)); rem-=mt; charges.push({mt:mt, type:HT.types[i%HT.types.length]}); }
-  // per-furnace: first assigned charge is "current", rest queued
-  var perF=[]; for(var f=0;f<HT.furnaces;f++){ var mine=charges.filter(function(c,ci){return ci%HT.furnaces===f;}); perF.push(mine); }
-  var alarms=charges.filter(function(c){return c.mt>0 && c.mt<HT.furnaceMT;}).length;
-
-  [['Furnaces',HT.furnaces,'× '+HT.furnaceMT+' MT','blue'],
-   ['Anneal demand',Math.round(annealTons)+' MT','RXA/PGS/PXS/PGA','blue'],
-   ['Charges',charges.filter(function(c){return c.mt>0;}).length,'18 MT batches','accent'],
-   ['Under-load alarms',alarms,'< 18 MT charge','red'],
-   ['Spherodized',HT.types.filter(function(t){return /Spher/.test(t.type);}).length,'85 h cycle','amber'],
-   ['Normal anneal',HT.types.filter(function(t){return /Normal/.test(t.type);}).length,'40 h cycle','amber']
+  var V=window.VSS, HT=V.htCfg, R=vssStageReport('Heat Treat'), AS=VSS_ASOF_MIN;
+  document.getElementById('ctx').textContent = V.meta.plant + ' · ' + HT.furnaces + ' furnaces · as of ' + vssFmtDate(V.meta.asOf);
+  var under=R.bookings.filter(function(b){return b.qty<HT.furnaceMT-0.05;}), utils=R.byMachine.map(function(m){return m.util;});
+  function typeOf(cond){ return HT.types.filter(function(t){return t.cond===cond;})[0]; }
+  [['Orders',R.orders,R.lines+' lines · RXA / PGS / PXS / PGA','blue'],
+   ['Anneal plan',Math.round(R.mt)+' MT','whole order book · bar MT','blue'],
+   ['Done so far',Math.round(R.doneMT)+' MT',R.doneN+' charges · as of 6 Jul','green'],
+   ['Charges',R.bookings.length,'≤ '+HT.furnaceMT+' MT each · '+R.runningN+' in furnace now','accent'],
+   ['Under-load charges',under.length,'< '+HT.furnaceMT+' MT → capacity-loss alarm · '+Math.round(under.reduce(function(a,b){return a+(HT.furnaceMT-b.qty);},0))+' MT lost','red'],
+   ['Furnace hours',Math.round(R.hours)+' h',Math.round(Math.min.apply(null,utils)*100)+'–'+Math.round(Math.max.apply(null,utils)*100)+'% utilisation','amber']
   ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
-
-  document.getElementById('types').innerHTML='<thead><tr><th>Supply cond</th><th>Type</th><th>Cycle</th><th>Cooling/change</th></tr></thead><tbody>'+
-    HT.types.map(function(t){return '<tr><td class="mono strong">'+t.cond+'</td><td>'+t.type+'</td><td class="mono right-al">'+(t.cycleHr||'—')+' h</td><td class="mono right-al">'+(t.coolHr||'—')+' h</td></tr>';}).join('')+'</tbody>';
-
-  document.getElementById('furns').innerHTML=perF.map(function(mine,f){
-    var cur=mine[0]||{mt:0,type:HT.types[0]}; var pc=Math.round(cur.mt/HT.furnaceMT*100);
-    var under=cur.mt>0 && cur.mt<HT.furnaceMT;
-    return '<div class="furn'+(under?' alarm':'')+'"><div class="fh"><i class="fa-solid fa-fire"></i> Furnace F'+(f+1)+'</div>'+
-      '<div class="fload">'+cur.mt.toFixed(1)+' <span class="hint" style="font-size:12px">/ '+HT.furnaceMT+' MT</span></div>'+
-      '<div class="bar"><span style="width:'+pc+'%;background:'+(under?'#e34948':'#2e7d32')+'"></span></div>'+
-      '<div class="ft">'+(cur.type?cur.type.type+' · '+cur.type.cycleHr+' h':'—')+'</div>'+
-      '<div class="ft" style="margin-top:3px">'+(under?'<span class="badge b-red"><i class="fa-solid fa-triangle-exclamation"></i> capacity loss</span>':'<span class="badge b-green">full charge</span>')+' <span class="hint">'+mine.length+' in queue</span></div>'+
-      '</div>';
-  }).join('');
-
-  // furnace gantt (furnace lanes from vssSchedule)
-  var sch=vssSchedule();
-  var fUnits=sch.units.filter(function(u){return /Furnace/.test(u);});
-  var fBars=sch.bars.filter(function(b){return /Furnace/.test(b.unit);});
-  var startMin=Math.max(0,Math.min.apply(null,fBars.map(function(b){return b.start;}))-120);
-  vssRenderGantt(document.getElementById('gantt'), fUnits, fBars, {laneTitle:'Furnace', startMin:startMin, laneW:120, batchTag:'BATCH'});
-  document.getElementById('gmeta').textContent=fBars.length+' charges scheduled';
+  document.getElementById('furns').innerHTML=R.byMachine.map(function(m){ var mine=R.bookings.filter(function(b){return b.machine===m.machine;}); var cur=mine.filter(function(b){return b.status==='Running';})[0], nxt=mine.filter(function(b){return b.status==='Planned';})[0], show=cur||nxt, t=show?typeOf(show.cond):null, pc=show?Math.round(show.qty/HT.furnaceMT*100):0, alarm=show&&show.qty<HT.furnaceMT-0.05;
+    return '<div class="furn'+(alarm?' alarm':'')+'"><div class="fh"><i class="fa-solid fa-fire"></i> '+m.machine+'</div><div class="fload">'+(show?show.qty.toFixed(1):'0.0')+' <span class="hint" style="font-size:12px">/ '+HT.furnaceMT+' MT</span></div><div class="bar"><span style="width:'+pc+'%;background:'+(alarm?'#e34948':'#2e7d32')+'"></span></div>'+
+      '<div class="ft">'+(show?(cur?'<b>In furnace</b>':'<b>Next</b>')+' · '+show.so+' · '+show.cond+(t?' · '+t.type+' '+t.cycleHr+' h':'')+'<br>'+vssStamp(show.start)+' → '+vssStamp(show.end):'idle')+'</div>'+
+      '<div class="ft" style="margin-top:3px">'+(show?(alarm?'<span class="badge b-red"><i class="fa-solid fa-triangle-exclamation"></i> capacity loss</span>':'<span class="badge b-green">full charge</span>'):'')+' <span class="hint">'+mine.filter(function(b){return b.status==='Planned';}).length+' queued · '+Math.round(m.util*100)+'% util</span></div></div>'; }).join('');
+  document.getElementById('types').innerHTML='<thead><tr><th>Supply cond</th><th>Type</th><th>Cycle</th><th>Cooling / change</th><th>Plan MT</th><th>Charges</th></tr></thead><tbody>'+HT.types.map(function(t){ var mine=R.bookings.filter(function(b){return b.cond===t.cond;}); return '<tr><td class="mono strong">'+t.cond+'</td><td>'+t.type+'</td><td class="mono right-al">'+(t.cycleHr||'—')+' h</td><td class="mono right-al">'+(t.coolHr||'—')+' h</td><td class="mono right-al strong">'+Math.round(mine.reduce(function(a,b){return a+b.qty;},0))+'</td><td class="mono right-al">'+mine.length+'</td></tr>'; }).join('')+'</tbody>';
+  function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Furnace',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:120,batchTag:'BATCH'}); document.getElementById('gmeta').textContent=R.bookings.length+' charges · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
+  document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
+  vssBookingTable(document.getElementById('book'),R.bookings,{cap:200}); document.getElementById('bmeta').textContent=R.bookings.length+' charges · bar MT · under-load charges shown with their MT';
 </script>
 </body>
 </html>

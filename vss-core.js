@@ -255,6 +255,48 @@
     return { units: P.machines, bars: bars, colorOf: colorOf };
   };
 
+  // ---- STAGE REPORT: the ONE basis shared by the Dashboard flow strip and every process page ----
+  // bookings of a plan stage: tonnage routed through it (whole order book), done so far (end <= as-of), running, planned;
+  // per machine and per day. Stage names: 'Billet' | 'Rolled' | 'NDT' | 'Bright Bar' | 'Heat Treat'.
+  window.vssStageReport = function (stage) {
+    var P = vssPlan(), sch = window.vssSchedule(), AS = AS_OF_MIN;
+    var bk = P.bookings.filter(function (b) { return b.stage === stage; }).slice().sort(function (a, b) { return a.start - b.start || (a.machine < b.machine ? -1 : 1); });
+    var r = { stage: stage, bookings: bk, orders: 0, lines: 0, mt: 0, doneMT: 0, runningMT: 0, plannedMT: 0, doneN: 0, runningN: 0, plannedN: 0, hours: 0, first: null, last: null, byMachine: [], byDay: [], colorOf: sch.colorOf };
+    var so = {}, oi = {}, mach = {}, days = {};
+    bk.forEach(function (b) {
+      var st = b.end <= AS ? 'Done' : b.start <= AS ? 'Running' : 'Planned'; b.status = st;
+      so[b.so] = 1; oi[b.oi] = 1; r.mt += b.qty; r.hours += (b.end - b.start) / 60;
+      if (st === 'Done') { r.doneMT += b.qty; r.doneN++; } else if (st === 'Running') { r.runningMT += b.qty; r.runningN++; } else { r.plannedMT += b.qty; r.plannedN++; }
+      r.first = r.first == null ? b.start : Math.min(r.first, b.start); r.last = r.last == null ? b.end : Math.max(r.last, b.end);
+      var m = mach[b.machine] = mach[b.machine] || { machine: b.machine, n: 0, mt: 0, hours: 0, first: b.start, last: b.end, doneMT: 0, orders: {} };
+      m.n++; m.mt += b.qty; m.hours += (b.end - b.start) / 60; m.first = Math.min(m.first, b.start); m.last = Math.max(m.last, b.end); m.orders[b.so] = 1; if (st === 'Done') m.doneMT += b.qty;
+      var d = Math.floor(b.start / 1440), dd = days[d] = days[d] || { day: d, start: d * 1440, mt: 0, n: 0, sizes: {}, orders: {} };
+      dd.mt += b.qty; dd.n++; dd.sizes[b.size] = 1; dd.orders[b.so] = 1;
+    });
+    r.orders = Object.keys(so).length; r.lines = Object.keys(oi).length;
+    r.byMachine = Object.keys(mach).sort().map(function (k) { var m = mach[k]; m.span = Math.max(m.last - m.first, 1); m.util = Math.min(1, m.hours * 60 / m.span); m.orderCount = Object.keys(m.orders).length; return m; });
+    r.byDay = Object.keys(days).map(Number).sort(function (a, b) { return a - b; }).map(function (k) { var d = days[k]; d.sizeChanges = Object.keys(d.sizes).length; d.orderCount = Object.keys(d.orders).length; return d; });
+    return r;
+  };
+  // shared renderers for the process pages: bookings table + per-machine gantt (colour per order, same as the Master Gantt)
+  window.vssBookingTable = function (el, bk, opts) {
+    opts = opts || {};
+    var cols = ['#', 'Start', 'End', 'Machine', 'Sales order', 'Customer', 'Grade · size · cond', 'MT', 'Status'], badge = { Done: 'b-green', Running: 'b-blue', Planned: 'b-grey' };
+    el.innerHTML = '<thead><tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' + bk.slice(0, opts.cap || 500).map(function (b, i) {
+      return '<tr><td class="mono hint">' + (i + 1) + '</td><td class="mono">' + vssStamp(b.start) + '</td><td class="mono">' + vssStamp(b.end) + '</td><td class="strong">' + b.machine + '</td><td class="mono">' + b.so + '</td><td>' + b.customer + '</td><td>' + b.grade + ' <span class="hint">' + b.size + ' · ' + b.cond + '</span></td><td class="mono right-al strong">' + b.qty.toFixed(1) + '</td><td><span class="badge ' + (badge[b.status] || 'b-grey') + '">' + b.status + '</span></td></tr>';
+    }).join('') + '</tbody>';
+    return Math.min(bk.length, opts.cap || 500);
+  };
+  window.vssStageGantt = function (el, rep, opts) {
+    opts = opts || {};
+    var units = rep.byMachine.map(function (m) { return m.machine; });
+    var startMin = opts.startMin != null ? opts.startMin : Math.floor(rep.first / 1440) * 1440;
+    var bars = rep.bookings.map(function (b) { return { unit: b.machine, start: b.start, dur: b.end - b.start, cls: rep.colorOf[b.so] || '#888', tip: b.so + ' · ' + b.customer + ' · ' + b.grade + ' ' + b.size + ' ' + b.cond + ' · ' + b.qty.toFixed(1) + ' MT · ' + vssStamp(b.start) + ' → ' + vssStamp(b.end) + ' · ' + b.status }; });
+    return window.vssRenderGantt(el, units, bars, { laneTitle: opts.laneTitle || 'Machine', startMin: startMin, endMin: opts.endMin != null ? opts.endMin : undefined, laneW: opts.laneW || 150, batchTag: opts.batchTag });
+  };
+  // 14-day window around the as-of date (default view on process pages) or the full plan
+  window.vssWindow = function (mode) { var d = Math.floor(AS_OF_MIN / 1440); return mode === 'full' ? { startMin: null, endMin: null } : { startMin: (d - 3) * 1440, endMin: (d + 11) * 1440 }; };
+
   window.vssBilletBuckets = function () {
     vssDerive();
     var alloc = 0, un = 0, nok = 0;
