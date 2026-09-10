@@ -12,3 +12,5 @@ Thumbs.db
 qa_sow_*.py
 apply_sow_analysis.py
 __pycache__/
+docs/qa-module/_pipeline/
+docs/qa-module/JSW-QA-*.pdf
