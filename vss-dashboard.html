@@ -71,7 +71,7 @@
 
   [['Open orders',O.length,'MTO lines','blue'],
    ['Order book',Math.round(tons)+' MT','to plan','blue'],
-   ['Production demands',O.reduce(function(a,o){return a+o.pdCount;},0),'BLB=2 · BRB=3','accent'],
+   ['Production demands',O.reduce(function(a,o){return a+o.pdCount;},0),'Black Bar 2 PDs · Bright Bar 3 PDs','accent'],
    ['Overdue',O.filter(function(o){return o.late==='Overdue';}).length,'past RDD','red'],
    ['At risk',O.filter(function(o){return o.late==='At risk';}).length,'RDD tight','amber'],
    ['Dispatched',O.filter(function(o){return o.stageNow==='Dispatched';}).length,'orders done','green']

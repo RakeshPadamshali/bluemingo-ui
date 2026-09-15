@@ -94,7 +94,7 @@
         '<td class="mono hint">'+o.planSeq+'</td>'+
         '<td class="mono">'+o.so+(o.jobWork?' <span class="chip jw">JW</span>':'')+'</td>'+
         '<td class="strong">'+o.customer+'</td>'+
-        '<td><span class="chip">'+o.matType+'</span> '+o.grade+' <span class="hint">'+o.rolledSize+' · '+o.supplyCond+'</span></td>'+
+        '<td><span class="chip" title="SAP material type '+o.matType+'">'+vssMatLabel(o.matType)+'</span> '+o.grade+' <span class="hint">'+o.rolledSize+' · '+o.supplyCond+'</span></td>'+
         '<td>'+routeMini(o)+'</td>'+
         '<td><div class="pbar"><span class="track"><span class="fill '+fill+'" style="width:'+pc+'%"></span></span><span class="pct">'+pc+'%</span></div></td>'+
         '<td><span class="badge '+(STB[o.stageNow]||'b-grey')+'">'+o.stageNow+'</span></td>'+

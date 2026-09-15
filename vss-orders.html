@@ -48,7 +48,7 @@
   var tons = O.reduce(function(a,o){return a+(o.qty||0);},0);
   [['Order lines',O.length,'EDD sequenced','blue'],
    ['Order tonnage',Math.round(tons)+' MT','IH quantity','blue'],
-   ['Production demands',O.reduce(function(a,o){return a+o.pdCount;},0),'BLB=2 · BRB=3','accent'],
+   ['Production demands',O.reduce(function(a,o){return a+o.pdCount;},0),'Black Bar 2 PDs · Bright Bar 3 PDs','accent'],
    ['From billet stock',O.filter(function(o){return (o.billetStock||0)>0;}).length,O.filter(function(o){return o.allocStatus==='Stock-allocated';}).length+' skip casting · '+O.filter(function(o){return o.allocStatus==='Stock + top-up';}).length+' need a top-up','green'],
    ['Job-work',O.filter(function(o){return o.jobWork;}).length,'external vendor','amber'],
    ['Overdue (RDD)',O.filter(function(o){return o.late==='Overdue';}).length,'past dispatch date','red']
@@ -59,7 +59,7 @@
   var F = { cat:'', supply:'', mat:'', alloc:'', type:'', q:'' };
   function sel(id,label,vals){ return '<span class="fl">'+label+'</span><select id="'+id+'"><option value="">All</option>'+vals.map(function(v){return '<option>'+v+'</option>';}).join('')+'</select>'; }
   document.getElementById('filters').innerHTML =
-    sel('f-cat','Category',uniq('category')) + sel('f-supply','Supply',uniq('supplyCond')) + sel('f-mat','Material',['ZBLB','ZBRB']) +
+    sel('f-cat','Category',uniq('category')) + sel('f-supply','Supply',uniq('supplyCond')) + '<span class="fl">Material</span><select id="f-mat"><option value="">All</option><option value="ZBLB">Black Bar (ZBLB)</option><option value="ZBRB">Bright Bar (ZBRB)</option></select>' +
     sel('f-type','Type',['Domestic','Export','Sample']) +
     '<span class="fl">Alloc</span><select id="f-alloc"><option value="">All</option><option>Stock-allocated</option><option>Stock + top-up</option><option>To-cast</option></select>' +
     '<span class="fl">Search</span><input id="f-q" placeholder="SO / customer" size="12">' +
@@ -80,7 +80,7 @@
         '<td class="mono hint">'+o.planSeq+'</td>'+
         '<td class="strong">'+o.customer+(o.jobWork?' <span class="chip jw" title="Job work">JW</span>':'')+'</td>'+
         '<td class="mono">'+o.so+' <span class="chip ot-'+o.orderType+'">'+o.orderType+'</span></td>'+
-        '<td><span class="chip pr-'+o.matType+'">'+o.matType+'</span> <span class="hint">'+o.pdCount+' PD</span></td>'+
+        '<td><span class="chip pr-'+o.matType+'" title="SAP material type '+o.matType+'">'+vssMatLabel(o.matType)+'</span> <span class="hint">'+o.matType+' · '+o.pdCount+' PD</span></td>'+
         '<td class="strong">'+o.grade+'<div class="hint" style="font-weight:400">'+o.category+'</div></td>'+
         '<td>'+o.supplyCond+(o.ndt?' <span class="chip" title="NDT inspection route">NDT</span>':'')+'</td>'+
         '<td class="mono">'+sz+'</td>'+
@@ -125,7 +125,7 @@
     var route = o.route.map(function(st,k){ return '<span class="chip" style="'+(k<o.stageIndex?'background:#e8f5e9;color:#2e7d32':k===o.stageIndex?'background:#e3f2fd;color:#1565c0':'')+'" title="'+(o.stageEnds[st]!=null?'ends '+vssStamp(o.stageEnds[st]):'')+'">'+st+'</span>'; }).join(' <i class="fa-solid fa-angle-right" style="color:#bbb;font-size:9px"></i> ');
     var det = document.createElement('tr'); det.className='sub-detail';
     det.innerHTML = '<td colspan="'+COLS.length+'"><div class="sub-wrap">'+
-      '<div class="sub-title"><i class="fa-solid fa-sitemap"></i> Production Demands — '+o.so+' · '+o.matType+' → '+o.pdCount+' PDs · planned route: '+route+(o.bbLine?' · line <b>'+o.bbLine+'</b>':'')+(o.token?' · current rolling token <b>'+o.token+'</b>':'')+'</div>'+
+      '<div class="sub-title"><i class="fa-solid fa-sitemap"></i> Production Demands — '+o.so+' · '+vssMatLabel(o.matType)+' ('+o.matType+') → '+o.pdCount+' PDs · planned route: '+route+(o.bbLine?' · line <b>'+o.bbLine+'</b>':'')+(o.token?' · current rolling token <b>'+o.token+'</b>':'')+'</div>'+
       '<table class="sub-tbl"><thead><tr><th>PD No.</th><th>Demand</th><th>Type</th><th>Qty</th><th>Status</th></tr></thead><tbody>'+pdRows+'</tbody></table>'+
       '</div></td>';
     tr.after(det); b.classList.add('open'); ic.className='fa-solid fa-chevron-down';

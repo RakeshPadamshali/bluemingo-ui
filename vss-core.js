@@ -43,6 +43,11 @@
   window.vssColor = vssColor;
   window.VSS_PAL = PAL;
 
+  // SAP material types as the plant names them: ZBLB = Black Bar (as-rolled), ZBRB = Bright Bar (peeled or drawn)
+  var MAT_LABEL = { ZBLB: 'Black Bar', ZBRB: 'Bright Bar' };
+  window.vssMatLabel = function (mt) { return MAT_LABEL[mt] || mt || '—'; };
+  window.VSS_MAT_LABEL = MAT_LABEL;
+
   var STAGES = ['Billet', 'Rolled', 'NDT', 'Stacking', 'Bright Bar', 'Heat Treat', 'Dispatch'];
   window.VSS_STAGES = STAGES;
   function isBright(sc) { return /^[PD]/.test(sc || ''); }
@@ -62,7 +67,7 @@
     V.rolling.forEach(function (c) { if (c.sizeR && !(c.sizeR in sizeMap)) sizeMap[c.sizeR] = c; });
     V.orders.forEach(function (o, i) {
       o._i = i;
-      o.pdCount = o.matType === 'ZBLB' ? 2 : 3;                              // BLB=2, BRB=3
+      o.pdCount = o.matType === 'ZBLB' ? 2 : 3;                              // Black Bar = 2 PDs, Bright Bar = 3 PDs
       // open stock first, then cast the rest: billets the order needs (input basis), what the sheet's Billet Stock covers, the rest
       var need = (o.qty || 0) / ROLL_YIELD, stk = o.billetStock || 0;
       o.billetNeed = Math.round(need * 10) / 10;
