@@ -10,7 +10,7 @@
    order's date), and each line takes the earliest-due job whose bar has arrived, filling an idle window with a later
    job only when that job is out before the due job's bar lands; furnace charges are filled to the 18 MT box from
    orders of the same anneal type ready in the same window, and only as many furnaces are lit as the annealing book
-   needs plus one, so the lit ones run back to back and the rest stay cold. */
+   needs, so the lit ones run back to back and the rest stay cold. */
 (function () {
   var V = window.VSS;
   var BASE = new Date(V.meta.baseDate + 'T00:00:00');
@@ -264,7 +264,7 @@
     charges.forEach(function (c) { cycSum += c.cyc; cycMax = Math.max(cycMax, c.cyc);
       rdyMin = rdyMin === null ? c.ready : Math.min(rdyMin, c.ready); rdyMax = rdyMax === null ? c.ready : Math.max(rdyMax, c.ready); });
     var htSpan = Math.max((rdyMax - rdyMin) + cycMax, cycMax);
-    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1)) + 1));   // the book's need plus one, so a burst of boxes is not queued behind a full furnace
+    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1))));   // exactly what the annealing book needs — the rest stay cold
     var htEnds = {}, lit = [];
     charges.forEach(function (c) {
       // Keep the lit furnaces running: a charge goes to the lit furnace that can start it soonest, and a cold furnace
