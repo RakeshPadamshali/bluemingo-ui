@@ -5,12 +5,13 @@
    the plant's planning grain (RDD week; descending size within the week = rolling-cycle
    rule), booked on real machines along their route at the sheet's capacities (rolling mill:
    size-wise Bdgt Prdty/Day, 90% yield, 2 h/day non-productive, Roll-Set changeover types),
-   open billet stock is used before casting. The peeling lines and the furnaces are then run CONTINUOUSLY inside the
-   delivery-date story: work fills one peeling line before opening another (only while that line can still make the
-   order's date), and each line takes the earliest-due job whose bar has arrived, filling an idle window with a later
-   job only when that job is out before the due job's bar lands; furnace charges are filled to the 18 MT box from
-   orders of the same anneal type ready in the same window, and only as many furnaces are lit as the annealing book
-   needs, so the lit ones run back to back and the rest stay cold. */
+   open billet stock is used before casting. Route: billet -> rolling -> NDT -> stacking yard -> heat treatment ->
+   peeling / drawing -> dispatch (the black bar is annealed first, then peeled or ground to final size and surface).
+   The furnaces and the peeling lines are loaded GAPLESSLY: once a machine starts, the next order goes on as the
+   previous one comes off with only the equipment's own setup between, and the campaign start is held back to the
+   latest moment that keeps the whole run gapless. Boxes are filled to 18 MT from orders of the same anneal type whose
+   bar is ready within eight days, only as many furnaces are lit as the book needs, and peeling work fills one line
+   before opening another while that line can still make the order's date. */
 (function () {
   var V = window.VSS;
   var BASE = new Date(V.meta.baseDate + 'T00:00:00');
@@ -48,7 +49,7 @@
   window.vssMatLabel = function (mt) { return MAT_LABEL[mt] || mt || '—'; };
   window.VSS_MAT_LABEL = MAT_LABEL;
 
-  var STAGES = ['Billet', 'Rolled', 'NDT', 'Stacking', 'Bright Bar', 'Heat Treat', 'Dispatch'];
+  var STAGES = ['Billet', 'Rolled', 'NDT', 'Stacking', 'Heat Treat', 'Bright Bar', 'Dispatch'];
   window.VSS_STAGES = STAGES;
   function isBright(sc) { return /^[PD]/.test(sc || ''); }
   function isAnneal(sc) { return ['RXA', 'PGS', 'PXS', 'PGA'].indexOf(sc || '') >= 0; }
@@ -98,7 +99,8 @@
     var bb = V.bbsCfg.lines.map(function (l, i) {
       var r = /([\d.]+)\s*-\s*([\d.]+)/.exec(l.range || ''), draw = /Draw/i.test(l.machine), hrs = draw ? 16 : 24;
       return { name: draw ? 'Drawing DL' : 'Peeling PL-' + (i + 1), min: r ? +r[1] : 0, max: r ? +r[2] : 999,
-               conds: (l.process || '').split(/[,\s]+/).filter(Boolean), rateHr: (l.capDay || 20) / hrs, draw: draw };
+               conds: (l.process || '').split(/[,\s]+/).filter(Boolean), rateHr: (l.capDay || 20) / hrs, draw: draw,
+               setupMin: Math.round((l.changeover != null ? l.changeover : 1) * 60) };
     });
     var furn = []; for (var f = 1; f <= V.htCfg.furnaces; f++) furn.push('Furnace F' + f);
     function ndtProd(sz) { return sz < 26 ? 2.43 : sz < 36 ? 4.5 : sz < 51 ? 7.91 : sz < 66 ? 11.92 : 15.32; }
@@ -160,83 +162,34 @@
       book('Stacking Yard', 'Stacking', 180, false);
     });
 
-    // ---- continuous dispatch, used by the peeling lines and the furnaces ----
-    // Earliest delivery date first. When the earliest-due job's material has not arrived yet, the machine may take a
-    // job that is already waiting ONLY if it finishes before that material lands, so a gap-filler never delays a due
-    // order; otherwise the machine waits. That is "as continuous as the order book allows" without touching the story.
+    // ---- GAPLESS LOADING, used by the furnaces and the peeling lines ----
+    // Once a machine starts it never stands still: the next order goes on as the previous one comes off, with only the
+    // equipment's own setup in between. To make that possible the campaign START is held back to the latest moment that
+    // still keeps every order on time for its own slot — schedule the run from the earliest bar first, and the start is
+    // max over the run of (bar ready - work queued ahead of it). Nothing is squeezed; the machine simply waits once, at
+    // the beginning, instead of stopping between orders.
     var cont = {};
-    function runContinuous(machine, jobs, emit) {
-      var pend = jobs.slice(), t = 0, busy = 0, idle = 0, filled = 0, firstS = null, lastE = null, prevEnd = null;
-      while (pend.length) {
-        pend.sort(function (x, y) { return x.rdd - y.rdd || x.ready - y.ready; });
-        var H = pend[0], pick = null;
-        if (H.ready <= t) pick = H;
-        else {
-          var gap = H.ready - t;
-          for (var i = 0; i < pend.length; i++) {
-            var j = pend[i];
-            if (j.ready <= t && j.dur <= gap) { pick = j; filled++; break; }   // slots entirely inside the idle window
-          }
-          if (!pick) { pick = H; t = H.ready; }                                 // nothing fits: wait for the due job
-        }
-        pend.splice(pend.indexOf(pick), 1);
-        var s = Math.max(t, pick.ready), e = s + pick.dur;
-        if (firstS === null) firstS = s; else if (prevEnd != null && s > prevEnd) idle += s - prevEnd;
-        busy += e - s; prevEnd = e; lastE = e; t = e;
-        emit(pick, s, e);
-      }
-      var span = (firstS == null) ? 0 : lastE - firstS;
-      cont[machine] = { machine: machine, jobs: jobs.length, busyMin: busy, idleMin: idle, gapsFilled: filled,
-                        util: span ? Math.round(busy / span * 100) : 0, firstMin: firstS, lastMin: lastE };
+    function runGapless(machine, jobs, setupMin, emit) {
+      if (!jobs.length) { cont[machine] = { machine: machine, jobs: 0, busyMin: 0, setupMin: 0, idleMin: 0, util: 0, firstMin: null, lastMin: null, holdMin: 0 }; return; }
+      var seq = jobs.slice().sort(function (x, y) { return x.ready - y.ready || x.rdd - y.rdd; });
+      var cum = 0, before = [], T = 0;
+      seq.forEach(function (j) { before.push(cum); T = Math.max(T, j.ready - cum); cum += j.dur + setupMin; });
+      var busy = 0, setups = 0, first = null, last = null;
+      seq.forEach(function (j, i) {
+        var st = T + before[i], en = st + j.dur;
+        if (first === null) first = st; last = en; busy += j.dur; if (i) setups += setupMin;
+        emit(j, st, en);
+      });
+      cont[machine] = { machine: machine, jobs: seq.length, busyMin: busy, setupMin: setups, idleMin: 0,
+                        util: (last - first) ? Math.round(busy / (last - first) * 100) : 0,
+                        firstMin: first, lastMin: last, holdMin: Math.max(0, T - seq[0].ready) };
     }
 
-    // ---- Pass 2: peeling / drawing lines run continuously ----
-    var bbAssigned = {}, bbJobs = {}, bbEnd = {};
-    var rdyLo = null, rdyHi = null;
-    seqOrders.forEach(function (o) { if (!isBright(o.supplyCond)) return; var r = SC[o._i].t;
-      rdyLo = rdyLo === null ? r : Math.min(rdyLo, r); rdyHi = rdyHi === null ? r : Math.max(rdyHi, r); });
-    var bbSpan = Math.max((rdyHi || 0) - (rdyLo || 0), 1440);
-    function pickLineFor(o) {
-      var sz = sizeNum(o.peelSize || o.rolledSize), c = o.supplyCond;
-      var cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0 && sz >= l.min && sz <= l.max; });
-      if (!cand.length) cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0; });
-      if (!cand.length) cand = bb.filter(function (l) { return /^D/.test(c) ? l.draw : !l.draw; });
-      if (!cand.length) cand = bb;
-      // Fill a line before opening another: take the most-loaded line that can still absorb this job inside the plan
-      // span, so the lines in use run back to back instead of five lines running half empty. Capability and size
-      // still decide which lines qualify, and a line that is already full falls back to the least loaded one.
-      var rdy = SC[o._i].t, due = o.rddMin == null ? 1e15 : o.rddMin;
-      var ok = cand.filter(function (l) {
-        var est = Math.max(rdy, bbEnd[l.name] || 0) + durOn(o, l);                       // when this line would actually finish the job
-        return (bbAssigned[l.name] || 0) + durOn(o, l) <= bbSpan && est <= due;          // room in the span AND still on its date
-      });
-      if (ok.length) { ok.sort(function (x, y) { return (bbAssigned[y.name] || 0) - (bbAssigned[x.name] || 0) || y.rateHr - x.rateHr; }); return ok[0]; }
-      cand.sort(function (x, y) { return (bbAssigned[x.name] || 0) - (bbAssigned[y.name] || 0); });
-      return cand[0];
-    }
-    function durOn(o, l) { return Math.max(Math.round((o.qty || 0) / l.rateHr * 60), 10); }
-    seqOrders.forEach(function (o) {
-      if (!isBright(o.supplyCond)) return;
-      var L = pickLineFor(o), dur = Math.max(Math.round((o.qty || 0) / L.rateHr * 60), 10);
-      bbAssigned[L.name] = (bbAssigned[L.name] || 0) + dur; o.bbLine = L.name;
-      bbEnd[L.name] = Math.max(SC[o._i].t, bbEnd[L.name] || 0) + dur;                     // projected finish of the last job on that line
-      (bbJobs[L.name] = bbJobs[L.name] || []).push({ o: o, ready: SC[o._i].t, dur: dur, rdd: o.rddMin == null ? 1e9 : o.rddMin });
-    });
-    Object.keys(bbJobs).forEach(function (name) {
-      runContinuous(name, bbJobs[name], function (j, s, e) {
-        var o = j.o, S = SC[o._i];
-        bookings.push({ machine: name, stage: 'Bright Bar', so: o.so, oi: o._i, customer: o.customer, grade: o.grade, size: o.rolledSize, cond: o.supplyCond, qty: o.qty || 0, start: s, end: e });
-        S.route.push('Bright Bar'); S.ends['Bright Bar'] = e; S.last = Math.max(S.last, e); S.t = e + buf;
-        if (S.first === null) S.first = s;
-      });
-    });
-
-    // ---- Pass 3: heat treatment — fill the box, then keep the lit furnaces running ----
-    // A charge takes orders of the SAME anneal type (same cycle) whose material is ready inside HT_WINDOW (8 days) of
-    // each other, up to the 18 MT box, so the plant stops firing an 85 h cycle for a part load. Pooling over a wider
-    // window is what switches orders between boxes: it fills them and keeps the furnace fed. Charges are then packed
-    // onto the furnace that most recently finished, so a few furnaces run back to back instead of six half empty.
-    var HT_WINDOW = 8 * 1440, HT_MAXWAIT = 1440;   // a box may draw from orders whose bar is ready within 8 days — wider pooling fills the box and steadies the furnace feed
+    // ---- Pass 2: heat treatment — anneal the black bar before it is peeled ----
+    // A charge takes orders of the SAME anneal type (same cycle) whose bar is ready inside HT_WINDOW (8 days) of each
+    // other, up to the 18 MT box, so the plant never fires an 85 h cycle for a part load. The lit furnaces then run
+    // back to back; the 12 h cooling / changeover is already inside the cycle, so there is no gap to add between boxes.
+    var HT_WINDOW = 8 * 1440;
     function htType(c) { var x = V.htCfg.types.filter(function (y) { return y.cond === c; })[0]; return x ? x.type : 'Normal Annealing'; }
     var htPool = {};
     seqOrders.forEach(function (o) {
@@ -263,47 +216,74 @@
       }
     });
     charges.sort(function (x, y) { return x.ready - y.ready || x.rdd - y.rdd; });
-    // How many furnaces the annealing book actually needs: total cycle hours over the span the charges arrive in.
-    // The plan lights that many and keeps them running; the rest stay cold. A charge may still light one more when it
-    // would otherwise wait longer than a full cycle, so a burst of ready boxes is never held hostage to the cap.
+    // How many furnaces the annealing book needs: total cycle hours over the span the boxes arrive in. The plan lights
+    // that many and runs them gaplessly; the rest stay cold. Boxes go round the lit furnaces in bar-ready order, so each
+    // furnace gets an evenly spread queue and none of them has to wait mid-campaign.
     var cycSum = 0, rdyMin = null, rdyMax = null, cycMax = 0;
     charges.forEach(function (c) { cycSum += c.cyc; cycMax = Math.max(cycMax, c.cyc);
       rdyMin = rdyMin === null ? c.ready : Math.min(rdyMin, c.ready); rdyMax = rdyMax === null ? c.ready : Math.max(rdyMax, c.ready); });
     var htSpan = Math.max((rdyMax - rdyMin) + cycMax, cycMax);
-    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1))));   // exactly what the annealing book needs — the rest stay cold
-    var htEnds = {}, lit = [];
-    charges.forEach(function (c) {
-      // Keep the lit furnaces running: a charge goes to the lit furnace that can start it soonest, and a cold furnace
-      // is only lit when every lit one would make this charge miss its delivery date.
-      var fm = null, best = null;
-      lit.forEach(function (f) { var s = Math.max(c.ready, free[f] || 0); if (best === null || s < best) { best = s; fm = f; } });
-      // stay within the furnaces the book needs; light beyond that only when a box would wait more than a whole cycle
-      if (fm === null || (best > c.ready + HT_MAXWAIT && lit.length < htNeed)) {
-        var cold = furn.filter(function (f) { return lit.indexOf(f) < 0; });
-        if (cold.length) { fm = cold[0]; lit.push(fm); }
-      }
-      var s = Math.max(c.ready, free[fm] || 0), e = s + c.cyc; free[fm] = e; c.machine = fm; c.start = s; c.end = e;
-      c.parts.forEach(function (pt) {
-        var o = pt.o;
-        bookings.push({ machine: fm, stage: 'Heat Treat', so: o.so, oi: o._i, customer: o.customer, grade: o.grade, size: o.rolledSize, cond: o.supplyCond,
-                        qty: pt.qty, start: s, end: e, chargeId: c.id, chargeQty: Math.round(c.qty * 10) / 10, chargeType: c.type, chargeOrders: c.parts.length });
-        htEnds[o._i] = Math.max(htEnds[o._i] || 0, e);
+    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1))));
+    var lit = furn.slice(0, htNeed), fJobs = {};
+    lit.forEach(function (f) { fJobs[f] = []; });
+    charges.forEach(function (c, i) { var fm = lit[i % lit.length]; c.machine = fm; fJobs[fm].push({ c: c, ready: c.ready, dur: c.cyc, rdd: c.rdd }); });
+    var htEnds = {};
+    lit.forEach(function (f) {
+      runGapless(f, fJobs[f], 0, function (j, st, en) {                       // cooling / changeover is inside the cycle
+        var c = j.c; c.start = st; c.end = en; free[f] = en;
+        c.parts.forEach(function (pt) {
+          var o = pt.o;
+          bookings.push({ machine: f, stage: 'Heat Treat', so: o.so, oi: o._i, customer: o.customer, grade: o.grade, size: o.rolledSize, cond: o.supplyCond,
+                          qty: pt.qty, start: st, end: en, chargeId: c.id, chargeQty: Math.round(c.qty * 10) / 10, chargeType: c.type, chargeOrders: c.parts.length });
+          htEnds[o._i] = Math.max(htEnds[o._i] || 0, en);
+        });
       });
+      cont[f].lit = true;
     });
+    furn.slice(htNeed).forEach(function (f) { cont[f] = { machine: f, jobs: 0, busyMin: 0, setupMin: 0, idleMin: 0, util: 0, firstMin: null, lastMin: null, holdMin: 0, lit: false }; });
     Object.keys(htEnds).forEach(function (oi) {
       var S = SC[oi]; if (!S) return;
       S.route.push('Heat Treat'); S.ends['Heat Treat'] = htEnds[oi]; S.last = Math.max(S.last, htEnds[oi]); S.t = htEnds[oi] + buf;
     });
-    furn.forEach(function (f) {
-      var bk = bookings.filter(function (b) { return b.machine === f; });
-      var seen = {}, chg = bk.filter(function (b) { return seen[b.chargeId] ? false : (seen[b.chargeId] = 1); });
-      if (!chg.length) { cont[f] = { machine: f, jobs: 0, busyMin: 0, idleMin: 0, gapsFilled: 0, util: 0, firstMin: null, lastMin: null, lit: false }; return; }
-      chg.sort(function (x, y) { return x.start - y.start; });
-      var busy = 0, idle = 0, prev = null;
-      chg.forEach(function (b) { busy += b.end - b.start; if (prev != null && b.start > prev) idle += b.start - prev; prev = b.end; });
-      var span = chg[chg.length - 1].end - chg[0].start;
-      cont[f] = { machine: f, jobs: chg.length, busyMin: busy, idleMin: idle, gapsFilled: 0, util: span ? Math.round(busy / span * 100) : 0,
-                  firstMin: chg[0].start, lastMin: chg[chg.length - 1].end, lit: true };
+
+    // ---- Pass 3: peeling / drawing — the last operation before dispatch, also loaded gaplessly ----
+    var bbAssigned = {}, bbJobs = {}, bbEnd = {};
+    var rdyLo = null, rdyHi = null;
+    seqOrders.forEach(function (o) { if (!isBright(o.supplyCond)) return; var r = SC[o._i].t;      // after annealing where it applies
+      rdyLo = rdyLo === null ? r : Math.min(rdyLo, r); rdyHi = rdyHi === null ? r : Math.max(rdyHi, r); });
+    var bbSpan = Math.max((rdyHi || 0) - (rdyLo || 0), 1440);
+    function durOn(o, l) { return Math.max(Math.round((o.qty || 0) / l.rateHr * 60), 10); }
+    function pickLineFor(o) {
+      var sz = sizeNum(o.peelSize || o.rolledSize), c = o.supplyCond;
+      var cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0 && sz >= l.min && sz <= l.max; });
+      if (!cand.length) cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0; });
+      if (!cand.length) cand = bb.filter(function (l) { return /^D/.test(c) ? l.draw : !l.draw; });
+      if (!cand.length) cand = bb;
+      // Fill a line before opening another, so the lines in use carry the book and the rest stay free — but only while
+      // that line can still finish this order by its delivery date, judged on the line's real projected finish.
+      var rdy = SC[o._i].t, due = o.rddMin == null ? 1e15 : o.rddMin;
+      var ok = cand.filter(function (l) {
+        var est = Math.max(rdy, bbEnd[l.name] || 0) + durOn(o, l) + l.setupMin;
+        return (bbAssigned[l.name] || 0) + durOn(o, l) <= bbSpan && est <= due;
+      });
+      if (ok.length) { ok.sort(function (x, y) { return (bbAssigned[y.name] || 0) - (bbAssigned[x.name] || 0) || y.rateHr - x.rateHr; }); return ok[0]; }
+      cand.sort(function (x, y) { return (bbAssigned[x.name] || 0) - (bbAssigned[y.name] || 0); });
+      return cand[0];
+    }
+    seqOrders.forEach(function (o) {
+      if (!isBright(o.supplyCond)) return;
+      var L = pickLineFor(o), dur = durOn(o, L);
+      bbAssigned[L.name] = (bbAssigned[L.name] || 0) + dur + L.setupMin; o.bbLine = L.name;
+      bbEnd[L.name] = Math.max(SC[o._i].t, bbEnd[L.name] || 0) + dur + L.setupMin;
+      (bbJobs[L.name] = bbJobs[L.name] || []).push({ o: o, ready: SC[o._i].t, dur: dur, rdd: o.rddMin == null ? 1e9 : o.rddMin });
+    });
+    bb.forEach(function (L) {
+      runGapless(L.name, bbJobs[L.name] || [], L.setupMin, function (j, st, en) {
+        var o = j.o, S = SC[o._i];
+        bookings.push({ machine: L.name, stage: 'Bright Bar', so: o.so, oi: o._i, customer: o.customer, grade: o.grade, size: o.rolledSize, cond: o.supplyCond, qty: o.qty || 0, start: st, end: en });
+        S.route.push('Bright Bar'); S.ends['Bright Bar'] = en; S.last = Math.max(S.last, en); S.t = en + buf;
+        if (S.first === null) S.first = st;
+      });
     });
 
     // ---- Pass 4: dispatch, stage position and the delivery-date verdict ----
@@ -335,15 +315,15 @@
 
   // ---- INVENTORY CONSUMPTION: every draw a stage makes on a stock / WIP pool, in time order ----
   // Pools: 'Billet stock' (EXISTING — the order book's Billet Stock column, i.e. opening yard stock), 'Cast billets' (made by
-  // the caster in this plan), then the WIP each transforming stage produces: 'Rolled bar' -> 'Tested bar' (NDT) -> 'Bright bar'
-  // -> 'Annealed bar'. A stage draws the pool its route arrives with; Dispatch draws the finished pool. Status vs the as-of
+  // the caster in this plan), then the WIP each transforming stage produces: 'Rolled bar' -> 'Tested bar' (NDT) -> 'Annealed bar'
+  // (heat treatment) -> 'Bright bar' (peeling / drawing). A stage draws the pool its route arrives with; Dispatch draws the finished pool. Status vs the as-of
   // date: Consumed (draw already happened) / On hand (material exists, next stage not yet run) / Planned (not yet produced).
   window.vssInventory = function () {
     if (V._inv) return V._inv;
     var P = vssPlan(), B = window.vssBilletBuckets(), events = [];
-    var MADE = { 'Rolled': 'Rolled bar', 'NDT': 'Tested bar', 'Bright Bar': 'Bright bar', 'Heat Treat': 'Annealed bar' };
-    var POOLS = ['Billet stock', 'Cast billets', 'Rolled bar', 'Tested bar', 'Bright bar', 'Annealed bar'];
-    var STG = ['Rolled', 'NDT', 'Bright Bar', 'Heat Treat', 'Dispatch'];
+    var MADE = { 'Rolled': 'Rolled bar', 'NDT': 'Tested bar', 'Heat Treat': 'Annealed bar', 'Bright Bar': 'Bright bar' };
+    var POOLS = ['Billet stock', 'Cast billets', 'Rolled bar', 'Tested bar', 'Annealed bar', 'Bright bar'];
+    var STG = ['Rolled', 'NDT', 'Heat Treat', 'Bright Bar', 'Dispatch'];
     var byOrder = {}; P.bookings.forEach(function (b) { (byOrder[b.oi] = byOrder[b.oi] || []).push(b); });
     function ev(o, b, pool, existing, qty, madeAt) {
       return { min: b.start, stage: b.stage, machine: b.machine, so: o.so, oi: o._i, customer: o.customer, grade: o.grade, size: o.rolledSize,
@@ -356,7 +336,7 @@
       if (o.stockUsed > 0) events.push(ev(o, rolled, 'Billet stock', true, o.stockUsed, 0));
       if (cast && cast.qty > 0) events.push(ev(o, rolled, 'Cast billets', false, cast.qty, cast.end));
       var pool = 'Rolled bar', madeAt = rolled.end;
-      ['NDT', 'Bright Bar', 'Heat Treat'].forEach(function (st) {
+      ['NDT', 'Heat Treat', 'Bright Bar'].forEach(function (st) {
         var bs = bk.filter(function (b) { return b.stage === st; }); if (!bs.length) return;
         bs.forEach(function (b) { events.push(ev(o, b, pool, false, b.qty, madeAt)); });
         pool = MADE[st]; madeAt = Math.max.apply(null, bs.map(function (b) { return b.end; }));

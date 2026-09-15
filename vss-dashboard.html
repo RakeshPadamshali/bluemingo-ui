@@ -85,8 +85,8 @@
   var stages=[['Casting · SMS','fa-fire-flame-curved','#ef6c00',sC.pl+' MT',sC.n+' orders · '+sC.dn+' MT cast so far'],
     ['Rolling','fa-bars-staggered','#1478c8',sR.pl+' MT',sR.n+' orders · '+sR.dn+' MT rolled so far'],
     ['NDT','fa-wave-square','#7e57c2',sN.pl+' MT',sN.n+' orders · '+sN.dn+' MT done so far'],
-    ['Bright Bar','fa-ruler-horizontal','#1baf7a',sB.pl+' MT',sB.n+' orders · '+sB.dn+' MT done so far'],
     ['Heat Treat','fa-temperature-high','#e34948',sH.pl+' MT',sH.n+' orders · '+sH.dn+' MT done so far'],
+    ['Bright Bar','fa-ruler-horizontal','#1baf7a',sB.pl+' MT',sB.n+' orders · '+sB.dn+' MT done so far'],
     ['Dispatch','fa-truck-fast','#2e7d32',Math.round(tons)+' MT',O.length+' orders · '+Math.round(dispTons)+' MT shipped so far']];
   document.getElementById('flow').innerHTML = stages.map(function(s,i){
     return '<div class="st"><div class="ic" style="background:'+s[2]+'"><i class="fa-solid '+s[1]+'"></i></div><div class="nm">'+s[0]+'</div><div class="tv">'+s[3]+'</div><div class="sub">'+s[4]+'</div></div>'+
@@ -105,7 +105,7 @@
   }).join('');
 
   // orders by stage
-  var order=['Billet','Rolled','NDT','Stacking','Bright Bar','Heat Treat','Dispatched'];
+  var order=['Billet','Rolled','NDT','Stacking','Heat Treat','Bright Bar','Dispatched'];
   var cnt={}; O.forEach(function(o){ cnt[o.stageNow]=(cnt[o.stageNow]||0)+1; });
   var mx=Math.max.apply(null,order.map(function(s){return cnt[s]||0;}));
   document.getElementById('stages').innerHTML = order.map(function(s){

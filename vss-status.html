@@ -30,7 +30,7 @@
       <div class="note"><i class="fa-solid fa-circle-info"></i><span><b>Service level</b> = orders whose planned end is within the customer's RDD ÷ orders (At risk = plan end after RDD; Overdue = RDD already passed, not yet dispatched). Stock-out prevention for make-to-stock SKUs — the <b>MTS buffer</b> — is on <a href="vss-forecast.html">Demand Forecast › MTS buffer</a>.</span></div></div>
     </div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-truck-fast"></i> Orders in delivery-date sequence — Billet → Rolled → NDT → Stacking → Bright Bar → Heat Treat → Dispatch <span class="right" id="meta"></span></div>
+      <div class="card-head"><i class="fa-solid fa-truck-fast"></i> Orders in delivery-date sequence — Billet → Rolled → NDT → Stacking → Heat Treat → Bright Bar → Dispatch <span class="right" id="meta"></span></div>
       <div class="card-body">
         <div class="filters" id="filters"></div>
         <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
@@ -69,7 +69,7 @@
 
   var F={stage:'',late:'',fifo:'',q:''};
   document.getElementById('filters').innerHTML=
-    '<span class="fl">Stage</span><select id="f-stage"><option value="">All</option>'+['Billet','Rolled','NDT','Stacking','Bright Bar','Heat Treat','Dispatched'].map(function(s){return '<option>'+s+'</option>';}).join('')+'</select>'+
+    '<span class="fl">Stage</span><select id="f-stage"><option value="">All</option>'+['Billet','Rolled','NDT','Stacking','Heat Treat','Bright Bar','Dispatched'].map(function(s){return '<option>'+s+'</option>';}).join('')+'</select>'+
     '<span class="fl">Delivery</span><select id="f-late"><option value="">All</option><option>On track</option><option>At risk</option><option>Overdue</option></select>'+
     '<span class="fl">Stacking</span><select id="f-fifo"><option value="">All</option><option>Urgent</option><option>Normal</option></select>'+
     '<span class="fl">Search</span><input id="f-q" placeholder="SO / customer" size="12">'+

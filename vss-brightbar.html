@@ -67,7 +67,7 @@
     return '<div class="lcard"><div class="lh"><i class="fa-solid '+(/Draw/.test(l.machine)?'fa-arrows-left-right-to-line':'fa-ruler-horizontal')+'"></i>'+name+' <span class="hint" style="font-weight:400">· '+l.machine.replace(' @ 16 hours working.','')+'</span></div>'+
       '<div class="lr">Range <b>'+l.range+' mm</b> · Conditions <b>'+(l.process||'—')+'</b></div>'+
       (function(){ var c=(vssPlan().continuity||{})[name]; if(!c||!c.jobs) return '';
-        var idle=Math.round(c.idleMin/60); return '<div class="lr">Continuity <b>'+c.util+'%</b>'+(idle?' · idle <b>'+idle+' h</b> waiting for bar from the mill':' · runs back to back')+(c.gapsFilled?' · '+c.gapsFilled+' gap'+(c.gapsFilled>1?'s':'')+' filled without delaying a due order':'')+'</div>'; })()+
+        return '<div class="lr">Continuity <b>'+c.util+'%</b> · runs back to back, no gap between orders'+(c.setupMin?' · '+Math.round(c.setupMin/60)+' h of changeovers ('+Math.round(l.changeover||1)+' h each)':'')+(c.holdMin?' · campaign starts '+Math.round(c.holdMin/1440)+' d after the first bar so the run never stops':'')+'</div>'; })()+
       '<div class="lr"><span class="cap">'+(l.capDay!=null?Math.round(l.capDay):'—')+'</span> MT/day <span class="hint">· cap '+(l.capMT||'—')+' MT · change '+(l.changeover||'—')+' h</span></div>'+
       (m?'<div class="plan"><b>Plan:</b> '+m.orderCount+' orders · '+Math.round(m.mt)+' MT · '+Math.round(m.hours)+' h · '+Math.round(m.util*100)+'% util<br><span class="hint">'+vssDateMin(m.first)+' → '+vssDateMin(m.last)+' · done so far '+Math.round(m.doneMT)+' MT</span></div>':'<div class="plan hint">no bookings in the plan</div>')+
       '<div class="rt">'+(l.route||'')+'</div></div>'; }).join('');
