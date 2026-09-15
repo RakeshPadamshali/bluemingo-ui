@@ -8,8 +8,8 @@
    parallel lines are load-balanced, open billet stock is used before casting. The peeling lines and the furnaces
    are then run CONTINUOUSLY inside the delivery-date story: a peeling line takes the earliest-due job and only fills
    an idle window with a job that is out before the due job's bar arrives; furnace charges are filled to the 18 MT box
-   from orders of the same anneal type ready in the same window, and a cold furnace is lit only when the running ones
-   would keep a charge waiting more than a day. */
+   from orders of the same anneal type ready in the same window, and only as many furnaces are lit as the annealing
+   book needs, so the lit ones run back to back and the rest stay cold. */
 (function () {
   var V = window.VSS;
   var BASE = new Date(V.meta.baseDate + 'T00:00:00');
@@ -240,15 +240,23 @@
         charges.push(c);
       }
     });
-    charges.sort(function (x, y) { return x.rdd - y.rdd || x.ready - y.ready; });
+    charges.sort(function (x, y) { return x.ready - y.ready || x.rdd - y.rdd; });
+    // How many furnaces the annealing book actually needs: total cycle hours over the span the charges arrive in.
+    // The plan lights that many and keeps them running; the rest stay cold. A charge may still light one more when it
+    // would otherwise wait longer than a full cycle, so a burst of ready boxes is never held hostage to the cap.
+    var cycSum = 0, rdyMin = null, rdyMax = null, cycMax = 0;
+    charges.forEach(function (c) { cycSum += c.cyc; cycMax = Math.max(cycMax, c.cyc);
+      rdyMin = rdyMin === null ? c.ready : Math.min(rdyMin, c.ready); rdyMax = rdyMax === null ? c.ready : Math.max(rdyMax, c.ready); });
+    var htSpan = Math.max((rdyMax - rdyMin) + cycMax, cycMax);
+    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1))));
     var htEnds = {}, lit = [];
     charges.forEach(function (c) {
       // Keep the lit furnaces running: a charge goes to the lit furnace that can start it soonest, and a cold furnace
       // is only lit when every lit one would make this charge miss its delivery date.
       var fm = null, best = null;
       lit.forEach(function (f) { var s = Math.max(c.ready, free[f] || 0); if (best === null || s < best) { best = s; fm = f; } });
-      // a charge waits up to HT_MAXWAIT for a running furnace so the lit ones stay full; beyond that a cold one is lit
-      if (fm === null || (best > c.ready + HT_MAXWAIT && lit.length < furn.length)) {
+      // stay within the furnaces the book needs; light beyond that only when a box would wait more than a whole cycle
+      if (fm === null || (best > c.ready + HT_MAXWAIT && lit.length < htNeed)) {
         var cold = furn.filter(function (f) { return lit.indexOf(f) < 0; });
         if (cold.length) { fm = cold[0]; lit.push(fm); }
       }
