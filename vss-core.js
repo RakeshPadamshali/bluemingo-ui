@@ -5,11 +5,12 @@
    the plant's planning grain (RDD week; descending size within the week = rolling-cycle
    rule), booked on real machines along their route at the sheet's capacities (rolling mill:
    size-wise Bdgt Prdty/Day, 90% yield, 2 h/day non-productive, Roll-Set changeover types),
-   parallel lines are load-balanced, open billet stock is used before casting. The peeling lines and the furnaces
-   are then run CONTINUOUSLY inside the delivery-date story: a peeling line takes the earliest-due job and only fills
-   an idle window with a job that is out before the due job's bar arrives; furnace charges are filled to the 18 MT box
-   from orders of the same anneal type ready in the same window, and only as many furnaces are lit as the annealing
-   book needs, so the lit ones run back to back and the rest stay cold. */
+   open billet stock is used before casting. The peeling lines and the furnaces are then run CONTINUOUSLY inside the
+   delivery-date story: work fills one peeling line before opening another (only while that line can still make the
+   order's date), and each line takes the earliest-due job whose bar has arrived, filling an idle window with a later
+   job only when that job is out before the due job's bar lands; furnace charges are filled to the 18 MT box from
+   orders of the same anneal type ready in the same window, and only as many furnaces are lit as the annealing book
+   needs plus one, so the lit ones run back to back and the rest stay cold. */
 (function () {
   var V = window.VSS;
   var BASE = new Date(V.meta.baseDate + 'T00:00:00');
@@ -185,20 +186,35 @@
     }
 
     // ---- Pass 2: peeling / drawing lines run continuously ----
-    var bbAssigned = {}, bbJobs = {};
+    var bbAssigned = {}, bbJobs = {}, bbEnd = {};
+    var rdyLo = null, rdyHi = null;
+    seqOrders.forEach(function (o) { if (!isBright(o.supplyCond)) return; var r = SC[o._i].t;
+      rdyLo = rdyLo === null ? r : Math.min(rdyLo, r); rdyHi = rdyHi === null ? r : Math.max(rdyHi, r); });
+    var bbSpan = Math.max((rdyHi || 0) - (rdyLo || 0), 1440);
     function pickLineFor(o) {
       var sz = sizeNum(o.peelSize || o.rolledSize), c = o.supplyCond;
       var cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0 && sz >= l.min && sz <= l.max; });
       if (!cand.length) cand = bb.filter(function (l) { return l.conds.indexOf(c) >= 0; });
       if (!cand.length) cand = bb.filter(function (l) { return /^D/.test(c) ? l.draw : !l.draw; });
       if (!cand.length) cand = bb;
-      cand.sort(function (x, y) { return (bbAssigned[x.name] || 0) - (bbAssigned[y.name] || 0); });   // balance booked minutes
+      // Fill a line before opening another: take the most-loaded line that can still absorb this job inside the plan
+      // span, so the lines in use run back to back instead of five lines running half empty. Capability and size
+      // still decide which lines qualify, and a line that is already full falls back to the least loaded one.
+      var rdy = SC[o._i].t, due = o.rddMin == null ? 1e15 : o.rddMin;
+      var ok = cand.filter(function (l) {
+        var est = Math.max(rdy, bbEnd[l.name] || 0) + durOn(o, l);                       // when this line would actually finish the job
+        return (bbAssigned[l.name] || 0) + durOn(o, l) <= bbSpan && est <= due;          // room in the span AND still on its date
+      });
+      if (ok.length) { ok.sort(function (x, y) { return (bbAssigned[y.name] || 0) - (bbAssigned[x.name] || 0) || y.rateHr - x.rateHr; }); return ok[0]; }
+      cand.sort(function (x, y) { return (bbAssigned[x.name] || 0) - (bbAssigned[y.name] || 0); });
       return cand[0];
     }
+    function durOn(o, l) { return Math.max(Math.round((o.qty || 0) / l.rateHr * 60), 10); }
     seqOrders.forEach(function (o) {
       if (!isBright(o.supplyCond)) return;
       var L = pickLineFor(o), dur = Math.max(Math.round((o.qty || 0) / L.rateHr * 60), 10);
       bbAssigned[L.name] = (bbAssigned[L.name] || 0) + dur; o.bbLine = L.name;
+      bbEnd[L.name] = Math.max(SC[o._i].t, bbEnd[L.name] || 0) + dur;                     // projected finish of the last job on that line
       (bbJobs[L.name] = bbJobs[L.name] || []).push({ o: o, ready: SC[o._i].t, dur: dur, rdd: o.rddMin == null ? 1e9 : o.rddMin });
     });
     Object.keys(bbJobs).forEach(function (name) {
@@ -248,7 +264,7 @@
     charges.forEach(function (c) { cycSum += c.cyc; cycMax = Math.max(cycMax, c.cyc);
       rdyMin = rdyMin === null ? c.ready : Math.min(rdyMin, c.ready); rdyMax = rdyMax === null ? c.ready : Math.max(rdyMax, c.ready); });
     var htSpan = Math.max((rdyMax - rdyMin) + cycMax, cycMax);
-    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1))));
+    var htNeed = Math.max(1, Math.min(furn.length, Math.ceil(cycSum / Math.max(htSpan, 1)) + 1));   // the book's need plus one, so a burst of boxes is not queued behind a full furnace
     var htEnds = {}, lit = [];
     charges.forEach(function (c) {
       // Keep the lit furnaces running: a charge goes to the lit furnace that can start it soonest, and a cold furnace
