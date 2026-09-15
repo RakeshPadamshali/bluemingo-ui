@@ -428,7 +428,13 @@
     return window.vssRenderGantt(el, units, bars, { laneTitle: opts.laneTitle || 'Machine', startMin: startMin, endMin: opts.endMin != null ? opts.endMin : undefined, laneW: opts.laneW || 150, batchTag: opts.batchTag });
   };
   // 14-day window around the as-of date (default view on process pages) or the full plan
-  window.vssWindow = function (mode) { var d = Math.floor(AS_OF_MIN / 1440); return mode === 'full' ? { startMin: null, endMin: null } : { startMin: (d - 3) * 1440, endMin: (d + 11) * 1440 }; };
+  window.vssWindow = function (mode) {
+    var d = Math.floor(AS_OF_MIN / 1440);
+    if (mode === 'full') return { startMin: null, endMin: null };
+    if (mode === 'day') return { startMin: d * 1440, endMin: (d + 1) * 1440 };          // the as-of day, midnight to midnight
+    if (mode === 'day3') return { startMin: d * 1440, endMin: (d + 3) * 1440 };
+    return { startMin: (d - 3) * 1440, endMin: (d + 11) * 1440 };
+  };
 
   window.vssBilletBuckets = function () {
     vssDerive();

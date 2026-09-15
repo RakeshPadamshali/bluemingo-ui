@@ -27,12 +27,12 @@
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="card">
-      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Rolling plan — mill bookings, order by order <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
+      <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Rolling plan — mill bookings, order by order <span class="win right"><span id="gmeta"></span> · window <select id="win"><option value="day">1 day · 6 Jul</option><option value="day3">3 days from 6 Jul</option><option value="asof" selected>14 days around 6 Jul</option><option value="full">Full plan</option></select></span></div>
       <div class="card-body"><div class="gantt" id="gantt"></div>
       <div class="note"><i class="fa-solid fa-circle-info"></i><span>Same basis as the Dashboard flow strip and the Master Gantt: all 788 order lines are rolled (22,227 MT of bar). Sequence = RDD week, descending size within the week (rolling-cycle rule); durations from the mill capacity basis below. Colour = order.</span></div></div>
     </div>
     <div class="grid2">
-      <div class="card"><div class="card-head"><i class="fa-solid fa-calendar-day"></i> Rolling plan by day — vs budget productivity <span class="right">968 MT/day budget · size runs</span></div><div class="card-body"><div class="tbl-wrap" style="max-height:300px"><table class="tbl" id="daily"></table></div></div></div>
+      <div class="card"><div class="card-head"><i class="fa-solid fa-calendar-day"></i> Rolling plan by day — vs budget productivity <span class="right">each run vs its own size budget ('+bkeys.join(' / ')+' MT/day input) · a run over midnight is split across the days it occupies</span></div><div class="card-body"><div class="tbl-wrap" style="max-height:300px"><table class="tbl" id="daily"></table></div></div></div>
       <div class="card"><div class="card-head"><i class="fa-solid fa-gauge-high"></i> Mill capacity basis — what the plan runs at <span class="right">Rolling Plan + Roll Set sheets</span></div><div class="card-body"><div class="capgrid" id="cap" style="grid-template-columns:1fr 1fr"></div></div></div>
     </div>
     <div class="card">
@@ -66,8 +66,25 @@
   ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
   function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Mill',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:130}); document.getElementById('gmeta').textContent=R.bookings.length+' runs · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
   document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
-  var BUD=bkeys[0]||968;
-  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Bar MT</th><th>Runs</th><th>Sizes</th><th>vs budget '+BUD+' MT (input ≈ bar ÷ 0.9)</th><th>Status</th></tr></thead><tbody>'+R.byDay.map(function(d){ var inp=d.mt/RM.yield, pc=Math.round(inp/BUD*100), past=d.start+1440<=VSS_ASOF_MIN;
+  // The sheet's Bdgt Prdty/Day is SIZE-WISE (968 / 605 / 550 MT of input per day) and the scheduler books every run at
+  // its own size budget, so a day has to be measured against the mix it actually ran, not against the highest budget.
+  // The figure below is the share of ONE mill-day the day's work consumes — each run's input tonnage over that size's
+  // budget — and a run that crosses midnight is split across the days it really occupies.
+  var bMap={}; cyc.forEach(function(c){ if(c.budgetPrdty) bMap[c.size]=c.budgetPrdty; });
+  function budgetFor(sz){ return bMap[sz] || (sz>=23 && sz<=29 ? 605 : 968); }
+  var DAY={};
+  R.bookings.forEach(function(b){
+    var sz=vssSizeNum(b.size), bud=budgetFor(sz), inp=b.qty/RM.yield, span=Math.max(b.end-b.start,1);
+    for(var d=Math.floor(b.start/1440); d<=Math.floor((b.end-1)/1440); d++){
+      var s0=Math.max(b.start,d*1440), e0=Math.min(b.end,(d+1)*1440), share=(e0-s0)/span;
+      if(share<=0) continue;
+      var r=DAY[d]=DAY[d]||{day:d,start:d*1440,mt:0,inp:0,days:0,n:0,sizes:{}};
+      r.mt+=b.qty*share; r.inp+=inp*share; r.days+=inp*share/bud; r.sizes[b.size]=1;
+      if(s0===b.start) r.n++;
+    }
+  });
+  var dayRows=Object.keys(DAY).map(Number).sort(function(a,b){return a-b;}).map(function(k){ var r=DAY[k]; r.sizeChanges=Object.keys(r.sizes).length; return r; });
+  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Bar MT</th><th>Runs</th><th>Sizes</th><th>Share of a mill-day</th><th>Status</th></tr></thead><tbody>'+dayRows.map(function(d){ var pc=Math.round(d.days*100), past=d.start+1440<=VSS_ASOF_MIN;
     return '<tr'+(past?' style="opacity:.75"':'')+'><td class="mono">'+vssDateMin(d.start)+'</td><td class="mono right-al strong">'+Math.round(d.mt)+'</td><td class="mono right-al">'+d.n+'</td><td class="mono right-al">'+d.sizeChanges+'</td><td><div class="pbar"><span class="track"><span class="fill '+(pc>105?'fill-red':pc>=80?'fill-green':'fill-amber')+'" style="width:'+Math.min(100,pc)+'%"></span></span><span class="pct">'+pc+'%</span></div></td><td>'+(pc>105?'<span class="badge b-red">over budget</span>':pc>=80?'<span class="badge b-green">'+(past?'rolled':'on budget')+'</span>':'<span class="badge b-blue">'+(past?'rolled':'light')+'</span>')+'</td></tr>'; }).join('')+'</tbody>';
   // capacity basis card
   var bySz={}; cyc.forEach(function(c){ if(c.budgetPrdty){ (bySz[c.budgetPrdty]=bySz[c.budgetPrdty]||[]).push(c.size); } });
