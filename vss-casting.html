@@ -66,7 +66,22 @@
   ].forEach(function(k){ document.getElementById('kpis').insertAdjacentHTML('beforeend','<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'); });
   function drawGantt(){ var w=vssWindow(document.getElementById('win').value); vssStageGantt(document.getElementById('gantt'),R,{laneTitle:'Caster',startMin:w.startMin==null?undefined:w.startMin,endMin:w.endMin==null?undefined:w.endMin,laneW:130}); document.getElementById('gmeta').textContent=R.bookings.length+' bookings · '+vssDateMin(R.first)+' → '+vssDateMin(R.last); }
   document.getElementById('win').addEventListener('change',drawGantt); window.addEventListener('resize',drawGantt); window.addEventListener('vss:activated',drawGantt); drawGantt();
-  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Billet MT</th><th>Orders</th><th>Heats</th><th>vs 22 heats / '+(HEAT*CAPH)+' MT</th><th>Status</th></tr></thead><tbody>'+R.byDay.map(function(d){ var h=Math.ceil(d.mt/HEAT), pc=Math.round(h/CAPH*100), past=d.start+1440<=VSS_ASOF_MIN;
+  // A cast that runs past midnight is split across the days it occupies, and the day is measured on tonnage against
+  // the caster's 22 heats x 40 MT. Rounding each day's tonnage UP to a whole heat used to count the same heat on both
+  // sides of midnight and read 22 heats on a day that cast 21. All three sections run 22 heats of 40 MT, so one
+  // capacity is right for any mix.
+  var CDAY={};
+  R.bookings.forEach(function(b){
+    var span=Math.max(b.end-b.start,1);
+    for(var d=Math.floor(b.start/1440); d<=Math.floor((b.end-1)/1440); d++){
+      var s0=Math.max(b.start,d*1440), e0=Math.min(b.end,(d+1)*1440), share=(e0-s0)/span;
+      if(share<=0) continue;
+      var r=CDAY[d]=CDAY[d]||{day:d,start:d*1440,mt:0,orders:{}};
+      r.mt+=b.qty*share; r.orders[b.so]=1;
+    }
+  });
+  var cdayRows=Object.keys(CDAY).map(Number).sort(function(a,b){return a-b;}).map(function(k){ var r=CDAY[k]; r.orderCount=Object.keys(r.orders).length; return r; });
+  document.getElementById('daily').innerHTML='<thead><tr><th>Day</th><th>Billet MT</th><th>Orders</th><th>Heats</th><th>vs 22 heats / '+(HEAT*CAPH)+' MT</th><th>Status</th></tr></thead><tbody>'+cdayRows.map(function(d){ var h=Math.round(d.mt/HEAT), pc=Math.round(d.mt/(HEAT*CAPH)*100), past=d.start+1440<=VSS_ASOF_MIN;
     return '<tr'+(past?' style="opacity:.75"':'')+'><td class="mono">'+vssDateMin(d.start)+'</td><td class="mono right-al strong">'+Math.round(d.mt)+'</td><td class="mono right-al">'+d.orderCount+'</td><td class="mono right-al">'+h+'</td><td><div class="pbar"><span class="track"><span class="fill '+(pc>100?'fill-red':pc>=80?'fill-green':'fill-amber')+'" style="width:'+Math.min(100,pc)+'%"></span></span><span class="pct">'+pc+'%</span></div></td><td>'+(pc>100?'<span class="badge b-red">over capacity</span>':pc>=80?'<span class="badge b-green">'+(past?'cast':'full')+'</span>':'<span class="badge b-blue">'+(past?'cast':'light')+'</span>')+'</td></tr>'; }).join('')+'</tbody>';
   document.getElementById('sections').innerHTML = V.smsCfg.sections.map(function(s){ return '<div class="mini"><span class="mk">'+s.section+'</span><span class="mv">'+s.heatMT+' MT · '+s.capHeatsDay+'/day</span><span class="hint" style="font-size:10px">change '+s.changeHr+' h</span></div>'; }).join('');
   var tb=b.allocated+b.unallocated+b.notOkay||1;

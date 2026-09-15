@@ -44,8 +44,19 @@
   function rangeOf(sz){ if(sz<26)return '18-25'; if(sz<36)return '26-35'; if(sz<51)return '36-50'; if(sz<66)return '51-65'; return '66 & Above'; }
   var byOi={}; P.orders.forEach(function(o){ byOi[o._i]=o; });
   // rule checks per day from the plan bookings
-  var days={}; R.bookings.forEach(function(b){ var d=Math.floor(b.start/1440), o=byOi[b.oi], prev=o&&o.stageEnds?o.stageEnds['Rolled']:null; /* NDT follows rolling directly; stacking comes after the test */ var wait=prev!=null?(b.start-prev)/1440:0; b.waitDays=wait;
-    var dd=days[d]=days[d]||{day:d,start:d*1440,mt:0,n:0,ranges:{},maxWait:0}; dd.mt+=b.qty; dd.n++; dd.ranges[rangeOf(vssSizeNum(b.size))]=1; dd.maxWait=Math.max(dd.maxWait,wait); });
+  // A job that runs past midnight is worked on both days, so its tonnage is split across them — counting it whole on
+  // the day it started made the >= 200 MT/day rule read the wrong verdict on some days. The job itself, and the WIP
+  // wait that precedes it, still count once, on the day it starts.
+  var days={}; R.bookings.forEach(function(b){ var d0=Math.floor(b.start/1440), o=byOi[b.oi], prev=o&&o.stageEnds?o.stageEnds['Rolled']:null; /* NDT follows rolling directly; stacking comes after the test */ var wait=prev!=null?(b.start-prev)/1440:0; b.waitDays=wait;
+    var span=Math.max(b.end-b.start,1), rg=rangeOf(vssSizeNum(b.size));
+    for(var d=d0; d<=Math.floor((b.end-1)/1440); d++){
+      var s0=Math.max(b.start,d*1440), e0=Math.min(b.end,(d+1)*1440), share=(e0-s0)/span;
+      if(share<=0) continue;
+      var dd=days[d]=days[d]||{day:d,start:d*1440,mt:0,n:0,ranges:{},maxWait:0};
+      dd.mt+=b.qty*share; dd.ranges[rg]=1;
+      if(d===d0){ dd.n++; dd.maxWait=Math.max(dd.maxWait,wait); }
+    }
+  });
   var dk=Object.keys(days).map(Number).sort(function(a,b){return a-b;});
   var below=0, over=0, wip=0; dk.forEach(function(k){ var d=days[k]; d.changes=Object.keys(d.ranges).length; if(d.mt<C.minPerDay) below++; if(d.changes>C.maxChangesDay) over++; if(d.maxWait>C.wipDays) wip++; });
   var util=Math.round(R.hours*60/Math.max(R.last-R.first,1)*100);
