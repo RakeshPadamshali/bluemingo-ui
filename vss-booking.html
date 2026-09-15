@@ -48,7 +48,7 @@
   document.getElementById('filters').innerHTML=
     '<span class="fl">Sort</span><select id="f-sort"><option value="rdd" selected>Delivery date · order · start/end</option><option value="time">Start time · equipment</option></select>'+
     '<span class="fl">Equipment</span><select id="f-eq"><option value="">All</option>'+machines.map(function(m){return '<option>'+m+'</option>';}).join('')+'</select>'+
-    '<span class="fl">Stage</span><select id="f-stage"><option value="">All</option>'+['Billet','Rolled','Stacking','NDT','Bright Bar','Heat Treat'].map(function(s){return '<option>'+s+'</option>';}).join('')+'</select>'+
+    '<span class="fl">Stage</span><select id="f-stage"><option value="">All</option>'+['Billet','Rolled','NDT','Stacking','Bright Bar','Heat Treat'].map(function(s){return '<option>'+s+'</option>';}).join('')+'</select>'+
     '<span class="fl">Window</span><select id="f-win"><option value="7">Next 7 days</option><option value="14" selected>Next 14 days</option><option value="30">Next 30 days</option><option value="0">Full plan</option></select>'+
     '<span class="fl">Search</span><input id="f-q" placeholder="order / customer" size="12">'+
     '<span class="hint" id="fc" style="margin-left:auto"></span>';

@@ -105,7 +105,7 @@
   }).join('');
 
   // orders by stage
-  var order=['Billet','Rolled','Stacking','NDT','Bright Bar','Heat Treat','Dispatched'];
+  var order=['Billet','Rolled','NDT','Stacking','Bright Bar','Heat Treat','Dispatched'];
   var cnt={}; O.forEach(function(o){ cnt[o.stageNow]=(cnt[o.stageNow]||0)+1; });
   var mx=Math.max.apply(null,order.map(function(s){return cnt[s]||0;}));
   document.getElementById('stages').innerHTML = order.map(function(s){

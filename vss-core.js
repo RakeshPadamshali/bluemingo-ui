@@ -38,7 +38,7 @@
   window.vssColor = vssColor;
   window.VSS_PAL = PAL;
 
-  var STAGES = ['Billet', 'Rolled', 'Stacking', 'NDT', 'Bright Bar', 'Heat Treat', 'Dispatch'];
+  var STAGES = ['Billet', 'Rolled', 'NDT', 'Stacking', 'Bright Bar', 'Heat Treat', 'Dispatch'];
   window.VSS_STAGES = STAGES;
   function isBright(sc) { return /^[PD]/.test(sc || ''); }
   function isAnneal(sc) { return ['RXA', 'PGS', 'PXS', 'PGA'].indexOf(sc || '') >= 0; }
@@ -150,8 +150,9 @@
       o.rollChangeover = chg; o.rollChgType = chgType; o.rollFeeder = fd.no; o.rollBudget = rollBudget(sz);
       o.rollRunMin = Math.round(rollRunMin(qty, sz));
       book('Rolling Mill', 'Rolled', chg + o.rollRunMin);
-      book('Stacking Yard', 'Stacking', 180, false);
+      // NDT before the stacking yard wherever it applies: black bar is tested straight off the mill, then stacked (CFD) for the next stage
       if (o.ndt) { var c2 = (lastKey['NDT Line'] && lastKey['NDT Line'] !== ndtRange(sz)) ? 60 : 0; lastKey['NDT Line'] = ndtRange(sz); book('NDT Line', 'NDT', c2 + qty / ndtProd(sz) * 60); }
+      book('Stacking Yard', 'Stacking', 180, false);
       if (isBright(o.supplyCond)) { var L = pickLine(o); o.bbLine = L.name; book(L.name, 'Bright Bar', qty / L.rateHr * 60); }
       if (isAnneal(o.supplyCond)) {
         var n = Math.max(1, Math.ceil(qty / V.htCfg.furnaceMT)), cyc = htMin(o.supplyCond), rem = qty, mx = 0, t0 = t;
