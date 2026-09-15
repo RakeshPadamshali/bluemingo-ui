@@ -232,10 +232,11 @@
     });
 
     // ---- Pass 3: heat treatment — fill the box, then keep the lit furnaces running ----
-    // A charge takes orders of the SAME anneal type (same cycle) whose material is ready inside HT_WINDOW of each
-    // other, up to the 18 MT box, so the plant stops firing an 85 h cycle for a part load. Charges are then packed
+    // A charge takes orders of the SAME anneal type (same cycle) whose material is ready inside HT_WINDOW (8 days) of
+    // each other, up to the 18 MT box, so the plant stops firing an 85 h cycle for a part load. Pooling over a wider
+    // window is what switches orders between boxes: it fills them and keeps the furnace fed. Charges are then packed
     // onto the furnace that most recently finished, so a few furnaces run back to back instead of six half empty.
-    var HT_WINDOW = 2 * 1440, HT_MAXWAIT = 1440;
+    var HT_WINDOW = 8 * 1440, HT_MAXWAIT = 1440;   // a box may draw from orders whose bar is ready within 8 days — wider pooling fills the box and steadies the furnace feed
     function htType(c) { var x = V.htCfg.types.filter(function (y) { return y.cond === c; })[0]; return x ? x.type : 'Normal Annealing'; }
     var htPool = {};
     seqOrders.forEach(function (o) {
