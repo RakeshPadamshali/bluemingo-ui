@@ -7,7 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="vss-shell.css">
-<style> .card-head select { font:12px 'Roboto'; padding:4px 8px; border:1px solid var(--color-border); border-radius:5px; } </style>
+<style>
+  .card-head select { font:12px 'Roboto'; padding:4px 8px; border:1px solid var(--color-border); border-radius:5px; }
+  .pgr { display:inline-flex; align-items:center; gap:3px; }
+  .pgr button { font:12px 'Roboto'; min-width:24px; padding:3px 6px; border:1px solid var(--color-border); border-radius:5px; background:var(--color-surface); color:var(--color-text-secondary); cursor:pointer; line-height:1.3; }
+  .pgr button:hover:not(:disabled) { background:var(--color-primary-light); border-color:var(--color-primary); color:var(--color-primary-dark); }
+  .pgr button:disabled { opacity:.35; cursor:default; }
+  .pgr button.now { font-weight:600; color:var(--color-primary); border-color:var(--color-primary); padding:3px 8px; }
+  .pgr .plab { font:12px 'Roboto'; color:var(--color-text-secondary); white-space:nowrap; padding:0 4px; }
+  .pgr .plab b { color:var(--color-text-primary); }
+</style>
 <script src="vss-embed.js"></script>
 </head>
 <body>
@@ -20,10 +29,12 @@
     <div class="kpis" id="kpis"></div>
     <div class="card">
       <div class="card-head"><i class="fa-solid fa-chart-gantt"></i> Every order booked on its machines — Caster → Rolling → NDT → Bright Bar → Heat Treatment
-        <span class="right"><span class="fl">Window</span> <select id="win"><option value="0" selected>Full plan</option><option value="30">30 days</option><option value="14">14 days</option><option value="7">7 days</option><option value="3">3 days</option><option value="1">1 day</option></select> <span id="gmeta"></span></span></div>
+        <span class="right"><span class="fl">Window</span> <select id="win"><option value="0" selected>Full plan</option><option value="30">30 days</option><option value="14">14 days</option><option value="7">7 days</option><option value="3">3 days</option><option value="1">1 day</option></select>
+        <span class="pgr" id="pgr" hidden><button id="pFirst" title="First window">&laquo;</button><button id="pPrev" title="Previous window">&lsaquo;</button><span class="plab" id="plab"></span><button id="pNext" title="Next window">&rsaquo;</button><button id="pLast" title="Last window">&raquo;</button><button class="now" id="pNow" title="Jump to the window containing the as-of date">Today</button></span>
+        <span id="gmeta"></span></span></div>
       <div class="card-body">
         <div class="gantt" id="gantt"></div>
-        <div class="note"><i class="fa-solid fa-circle-info"></i><span>One lane per machine; <b>each bar is one order's booking</b> (coloured per order, so an order is traceable across machines) — hover for order · customer · stage · times · MT. Orders are sequenced by delivery date (RDD week, descending size within the week — the rolling-cycle rule); the rolling mill runs at the sheet's size-wise budget productivity (968 / 605 / 550 MT/day, 90% yield) with Roll-Set changeovers (size 25 min · feeder 1.5 h · BDM 4 h); parallel lines (5 peeling + drawing, 6 furnaces) are filled least-loaded-first to balance load; orders covered by open billet stock skip the caster (short cover gets a top-up cast). Dashed lines mark day boundaries.</span></div>
+        <div class="note"><i class="fa-solid fa-circle-info"></i><span>One lane per machine; <b>each bar is one order's booking</b> (coloured per order, so an order is traceable across machines) — hover for order · customer · stage · times · MT. Orders are sequenced by delivery date (RDD week, descending size within the week — the rolling-cycle rule); the rolling mill runs at the sheet's size-wise budget productivity (968 / 605 / 550 MT/day, 90% yield) with Roll-Set changeovers (size 25 min · feeder 1.5 h · BDM 4 h); parallel lines (5 peeling + drawing, 6 furnaces) are filled least-loaded-first to balance load; orders covered by open billet stock skip the caster (short cover gets a top-up cast). Dashed lines mark day boundaries. Pick a window shorter than the full plan and the chart <b>pages through the horizon</b> &mdash; &lsaquo; &rsaquo; step one window at a time, &laquo; &raquo; jump to the ends, <b>Today</b> returns to the as-of date; the time scale is identical on every page, so a bar's width is comparable as you step.</span></div>
       </div>
     </div>
   </main>
@@ -37,22 +48,48 @@
   document.getElementById('ctx').textContent = V.meta.plant + ' · plan from ' + vssFmtDate(V.meta.baseDate);
   var busiest=null; P.machines.forEach(function(m){ var L=P.load[m]; if(L && (!busiest || L.mins>P.load[busiest].mins)) busiest=m; });
 
+  // A window shorter than the full plan is ONE PAGE of the horizon. The page always spans the full chosen number of
+  // days (even the last one, which may run past the end of the plan) so the pixels-per-hour scale never changes as
+  // you step - a bar that looks twice as long really is twice as long.
+  var WIN=document.getElementById('win'), PGR=document.getElementById('pgr'), horD=Math.ceil(P.horizonMin/1440), pg=0;
+  var asOfDay=Math.floor(VSS_ASOF_MIN/1440);
+  function winDays(){ return +WIN.value; }
+  function pageCount(days){ return days?Math.max(1,Math.ceil(horD/days)):1; }
+  function pageOfDay(d,days){ return days?Math.max(0,Math.min(pageCount(days)-1,Math.floor(d/days))):0; }
+
   function render(){
-    var days=+document.getElementById('win').value, endMin=days?days*1440:Math.ceil(P.horizonMin/1440)*1440;
-    var bars=sch.bars.filter(function(b){return b.start<endMin;});
+    var days=winDays(), full=!days, np=pageCount(days);
+    pg=Math.max(0,Math.min(np-1,pg));
+    var startMin=full?0:pg*days*1440, endMin=full?Math.ceil(P.horizonMin/1440)*1440:startMin+days*1440;
+    var bars=sch.bars.filter(function(b){return b.start<endMin && b.start+b.dur>startMin;});
     var ordersIn={}; bars.forEach(function(b){ordersIn[b.so]=1;});
-    vssRenderGantt(document.getElementById('gantt'), sch.units, bars, { laneTitle:'Machine', startMin:0, endMin:endMin, laneW:150, batchTag:'BATCH' });
+    vssRenderGantt(document.getElementById('gantt'), sch.units, bars, { laneTitle:'Machine', startMin:startMin, endMin:endMin, laneW:150, batchTag:'BATCH' });
+    PGR.hidden=full;
+    if(!full){
+      document.getElementById('plab').innerHTML='Page <b>'+(pg+1)+'</b> of '+np+' · '+vssDateMin(startMin)+(days>1?' – '+vssDateMin(endMin-1):'');
+      document.getElementById('pFirst').disabled=document.getElementById('pPrev').disabled=(pg===0);
+      document.getElementById('pLast').disabled=document.getElementById('pNext').disabled=(pg>=np-1);
+      document.getElementById('pNow').disabled=(pg===pageOfDay(asOfDay,days));
+    }
     document.getElementById('gmeta').textContent = bars.length+' bookings · '+Object.keys(ordersIn).length+' orders in view';
     document.getElementById('kpis').innerHTML = [
       ['Machines',sch.units.length,'lanes','blue'],
       ['Bookings in view',bars.length,'order × stage','blue'],
       ['Orders in view',Object.keys(ordersIn).length,'of '+P.orders.length,'accent'],
-      ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days','all 788 orders','green'],
+      ['In view',full?'Full plan':vssDateMin(startMin)+' + '+days+' d',full?horD+' days · all 788 orders':'page '+(pg+1)+' of '+np+' · '+horD+' day horizon','green'],
       ['Busiest line',busiest?busiest.replace(' (SMS)',''):'—',busiest?Math.round(P.load[busiest].mins/60)+' h booked':'','amber'],
       ['Sequencing','RDD week','delivery date first · size desc within week','accent']
     ].map(function(k){return '<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');
   }
-  document.getElementById('win').addEventListener('change', render);
+  function go(n){ pg=n; render(); }
+  document.getElementById('pFirst').addEventListener('click',function(){ go(0); });
+  document.getElementById('pPrev').addEventListener('click',function(){ go(pg-1); });
+  document.getElementById('pNext').addEventListener('click',function(){ go(pg+1); });
+  document.getElementById('pLast').addEventListener('click',function(){ go(pageCount(winDays())-1); });
+  document.getElementById('pNow').addEventListener('click',function(){ go(pageOfDay(asOfDay,winDays())); });
+  // Switching window lands on the page holding the as-of date - that is where the plan is actually being worked.
+  WIN.addEventListener('change', function(){ pg=pageOfDay(asOfDay,winDays()); render(); });
+  window.addEventListener('resize', render); window.addEventListener('vss:activated', render);
   render();
 </script>
 </body>
