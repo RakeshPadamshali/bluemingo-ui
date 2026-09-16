@@ -536,5 +536,133 @@
     });
   };
 
+  // ---- Excel export ------------------------------------------------------------------------------------------
+  // A real .xlsx written in the browser with NO library. An xlsx is a zip of XML parts, and a zip whose entries are
+  // "stored" (uncompressed) is perfectly valid — so all this needs is CRC-32 and the two header layouts. That keeps
+  // the demo dependency-free and offline, and Excel opens the file without the format warning an HTML table renamed
+  // .xls would raise. Dates are written as real date serials with a number format so they sort and filter as dates.
+  //   vssXlsx([{ name, cols:[{t,w,type}], rows:[[v,...]] }], 'file.xlsx')
+  //   col type: undefined|'text' · 'num' (1 dp) · 'int' · 'date' · 'datetime'   — pass Date objects for the last two
+  var CRCT = (function () {
+    var t = new Int32Array(256), n, c, k;
+    for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c; }
+    return t;
+  })();
+  function crc32(u8) { var c = -1, i; for (i = 0; i < u8.length; i++) c = (c >>> 8) ^ CRCT[(c ^ u8[i]) & 0xFF]; return (c ^ -1) >>> 0; }
+
+  function zipStore(files) {
+    var te = new TextEncoder(), body = [], cdir = [], off = 0, d = new Date(),
+        tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1),
+        dt = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    files.forEach(function (f) {
+      var nm = te.encode(f.name), data = f.data, crc = crc32(data);
+      var lh = new Uint8Array(30 + nm.length), v = new DataView(lh.buffer);
+      v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(10, tm, true); v.setUint16(12, dt, true);
+      v.setUint32(14, crc, true); v.setUint32(18, data.length, true); v.setUint32(22, data.length, true);
+      v.setUint16(26, nm.length, true); lh.set(nm, 30);
+      var ch = new Uint8Array(46 + nm.length), w = new DataView(ch.buffer);
+      w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true);
+      w.setUint16(12, tm, true); w.setUint16(14, dt, true); w.setUint32(16, crc, true);
+      w.setUint32(20, data.length, true); w.setUint32(24, data.length, true);
+      w.setUint16(28, nm.length, true); w.setUint32(42, off, true); ch.set(nm, 46);
+      body.push(lh, data); cdir.push(ch); off += lh.length + data.length;
+    });
+    var cdLen = cdir.reduce(function (a, x) { return a + x.length; }, 0);
+    var eo = new Uint8Array(22), e = new DataView(eo.buffer);
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+    e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+    var all = body.concat(cdir, [eo]), out = new Uint8Array(all.reduce(function (a, x) { return a + x.length; }, 0)), p = 0;
+    all.forEach(function (x) { out.set(x, p); p += x.length; });
+    return out;
+  }
+
+  function xesc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ''); }
+  function colRef(n) { var r = '', m; n++; while (n > 0) { m = (n - 1) % 26; r = String.fromCharCode(65 + m) + r; n = (n - m - 1) / 26; } return r; }
+  // Excel's epoch is 1899-12-30; 25569 is that to 1970-01-01. Built from LOCAL components so a timezone never shifts a shift.
+  function xlDate(d) {
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000 + 25569 +
+           (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400;
+  }
+  var XF = { text: 0, num: 4, int: 5, date: 2, datetime: 3 };   // cellXfs indexes in the styles part below
+
+  function sheetXml(sh) {
+    var cols = sh.cols, nr = sh.rows.length + 1;
+    var x = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<dimension ref="A1:' + colRef(cols.length - 1) + nr + '"/>' +
+      '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+      '<sheetFormatPr defaultRowHeight="15"/><cols>';
+    cols.forEach(function (c, i) { x += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + (c.w || 14) + '" customWidth="1"/>'; });
+    x += '</cols><sheetData><row r="1" ht="22" customHeight="1">';
+    cols.forEach(function (c, i) { x += '<c r="' + colRef(i) + '1" s="1" t="inlineStr"><is><t>' + xesc(c.t) + '</t></is></c>'; });
+    x += '</row>';
+    sh.rows.forEach(function (row, ri) {
+      x += '<row r="' + (ri + 2) + '">';
+      row.forEach(function (v, ci) {
+        if (v == null || v === '') return;
+        var type = cols[ci] && cols[ci].type || 'text', ref = colRef(ci) + (ri + 2), st = XF[type] || 0;
+        if (type === 'date' || type === 'datetime') { if (!(v instanceof Date) || isNaN(v)) return; x += '<c r="' + ref + '" s="' + st + '"><v>' + xlDate(v) + '</v></c>'; }
+        else if (type === 'num' || type === 'int') { if (!isFinite(v)) return; x += '<c r="' + ref + '" s="' + st + '"><v>' + v + '</v></c>'; }
+        else x += '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">' + xesc(v) + '</t></is></c>';
+      });
+      x += '</row>';
+    });
+    x += '</sheetData>';
+    if (sh.rows.length) x += '<autoFilter ref="A1:' + colRef(cols.length - 1) + nr + '"/>';
+    return x + '</worksheet>';
+  }
+
+  var STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="3"><numFmt numFmtId="164" formatCode="dd-mmm-yyyy"/><numFmt numFmtId="165" formatCode="dd-mmm-yyyy\\ hh:mm"/><numFmt numFmtId="166" formatCode="0.0"/></numFmts>' +
+    '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF12233B"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="6">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="1" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+  window.vssXlsxBytes = function (sheets) {
+    var te = new TextEncoder(), REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    var files = [];
+    function add(name, str) { files.push({ name: name, data: te.encode(str) }); }
+    add('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      sheets.map(function (sh, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') +
+      '</Types>');
+    add('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="' + REL + '/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+    add('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="' + REL + '"><sheets>' +
+      sheets.map(function (sh, i) { return '<sheet name="' + xesc((sh.name || ('Sheet' + (i + 1))).slice(0, 31).replace(/[\\\/\?\*\[\]:]/g, ' ')) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') +
+      '</sheets></workbook>');
+    add('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      sheets.map(function (sh, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="' + REL + '/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('') +
+      '<Relationship Id="rId' + (sheets.length + 1) + '" Type="' + REL + '/styles" Target="styles.xml"/></Relationships>');
+    add('xl/styles.xml', STYLES);
+    sheets.forEach(function (sh, i) { add('xl/worksheets/sheet' + (i + 1) + '.xml', sheetXml(sh)); });
+    return zipStore(files);
+  };
+
+  window.vssXlsx = function (sheets, filename) {
+    var blob = new Blob([window.vssXlsxBytes(sheets)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename || 'export.xlsx'; document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    return blob.size;
+  };
+
   vssPlan();   // run the scheduler once at load so every page sees start/end, stages and bookings
 })();

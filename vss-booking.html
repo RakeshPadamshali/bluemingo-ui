@@ -15,7 +15,7 @@
   <main class="bm-content">
     <div class="page-bar">
       <div><h1>Equipment Booking Report</h1><div class="crumb">Tracking › Equipment Booking › <span id="ctx"></span></div></div>
-      <div class="actions"><a class="btn btn-outline" href="vss-load.html"><i class="fa-solid fa-scale-balanced"></i> Machine Load</a><button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-file-export"></i> Export</button></div>
+      <div class="actions"><a class="btn btn-outline" href="vss-load.html"><i class="fa-solid fa-scale-balanced"></i> Machine Load</a><button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-primary" id="xl"><i class="fa-solid fa-file-excel"></i> Excel</button></div>
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="card">
@@ -43,8 +43,19 @@
   document.getElementById('ctx').textContent = V.meta.plant + ' · as of ' + vssFmtDate(V.meta.asOf);
   var machines=P.machines.concat([P.yard]);
   function grpOf(m){ return /Caster/.test(m)?'Melt shop':/Rolling/.test(m)?'Rolling':/NDT/.test(m)?'Inspection':/Peeling|Drawing/.test(m)?'Bright bar':/Furnace/.test(m)?'Heat treatment':'Yard'; }
+  // A heat-treatment box holds several orders and is listed once per order (so each order is traceable to its
+  // furnace), but it occupies the furnace ONCE. Anything reported as machine OCCUPANCY must therefore count a
+  // charge once; tonnage is not deduped, because the box really does carry every order's MT.
+  function slotOf(b,i){ return b.chargeId!=null ? b.machine+'|c'+b.chargeId : b.machine+'|b'+i; }
+  function occupancy(list){
+    var seen={}, min=0; list.forEach(function(b,i){ var k=slotOf(b,i); if(seen[k]) return; seen[k]=1; min+=b.end-b.start; });
+    return { min:min, slots:Object.keys(seen).length };
+  }
+  // The stacking yard is a holding area, not a single-capacity machine: many bundles dwell in it at the same time,
+  // so its hours are bundle-hours and "utilisation in span" does not apply to it.
+  function isPool(m){ return grpOf(m)==='Yard'; }
 
-  var F={eq:'',stage:'',win:'14',q:'',sort:'rdd'};
+  var F={eq:'',stage:'',win:'14',q:'',sort:'rdd'}, LAST=[];
   document.getElementById('filters').innerHTML=
     '<span class="fl">Sort</span><select id="f-sort"><option value="rdd" selected>Delivery date · order · start/end</option><option value="time">Start time · equipment</option></select>'+
     '<span class="fl">Equipment</span><select id="f-eq"><option value="">All</option>'+machines.map(function(m){return '<option>'+m+'</option>';}).join('')+'</select>'+
@@ -64,17 +75,18 @@
       if(F.q){ var q=F.q.toLowerCase(); if((b.so||'').toLowerCase().indexOf(q)<0 && (b.customer||'').toLowerCase().indexOf(q)<0) return false; }
       return true;
     });
-    var hrs=list.reduce(function(a,b){return a+(b.end-b.start);},0)/60, eqs={}, ords={};
-    list.forEach(function(b){eqs[b.machine]=(eqs[b.machine]||0)+(b.end-b.start); ords[b.so]=1;});
-    var busiest=Object.keys(eqs).sort(function(a,b){return eqs[b]-eqs[a];})[0];
+    var occ=occupancy(list), hrs=occ.min/60, eqs={}, ords={}, slot={};
+    list.forEach(function(b,i){ var k=slotOf(b,i); ords[b.so]=1; if(slot[k]) return; slot[k]=1; eqs[b.machine]=(eqs[b.machine]||0)+(b.end-b.start); });
+    var busiest=Object.keys(eqs).filter(function(m){return !isPool(m);}).sort(function(a,b){return eqs[b]-eqs[a];})[0];
     document.getElementById('kpis').innerHTML=[
       ['Bookings',list.length,'in selection','blue'],
-      ['Hours booked',Math.round(hrs)+' h','equipment time','blue'],
+      ['Hours booked',Math.round(hrs)+' h','equipment time · a shared furnace box counts once','blue'],
       ['Equipment used',Object.keys(eqs).length,'of '+machines.length,'accent'],
       ['Orders covered',Object.keys(ords).length,'of '+P.orders.length,'green'],
       ['Busiest equipment',busiest?busiest.replace(' (SMS)',''):'—',busiest?Math.round(eqs[busiest]/60)+' h':'','amber'],
       ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days','full plan','accent']
     ].map(function(k){return '<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');
+    LAST=list;                                  // the Excel download takes the whole selection, not just the capped rows
     var CAP=1500, shown=list.slice(0,CAP);
     tbl.innerHTML='<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
       shown.map(function(b,i){ var done=b.end<=VSS_ASOF_MIN, now=!done&&b.start<=VSS_ASOF_MIN, o=O[b.oi]||{};
@@ -89,6 +101,76 @@
   }
   ['f-eq','f-stage','f-win','f-sort'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ F[id.slice(2)]=this.value; if(id==='f-sort') ALL.sort(SORTS[F.sort]); apply(); }); });
   document.getElementById('f-q').addEventListener('input',function(){ F.q=this.value; apply(); });
+
+  // ---- Excel download: the WHOLE current selection, not the 1500 rows the table caps at ----
+  // Three sheets so the file stands on its own when it is mailed on: the bookings, a per-equipment roll-up, and the
+  // filters and rules that produced it. Dates go out as real dates, hours and MT as real numbers.
+  function xlName(){
+    var bits=['VSS-Equipment-Booking', V.meta.asOf];
+    if(F.eq) bits.push(F.eq.replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,''));
+    if(F.stage) bits.push(F.stage.replace(/ /g,'-'));
+    bits.push(+F.win?('next-'+F.win+'d'):'full-plan');
+    return bits.join('_')+'.xlsx';
+  }
+  document.getElementById('xl').addEventListener('click',function(){
+    var btn=this, list=LAST;
+    btn.disabled=true; var keep=btn.innerHTML; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Building…';
+    setTimeout(function(){
+      try{
+        var bookings={ name:'Bookings', cols:[
+            {t:'#',w:6,type:'int'},{t:'Order',w:18},{t:'RDD',w:13,type:'date'},{t:'Equipment',w:17},{t:'Equipment group',w:15},
+            {t:'Customer',w:12},{t:'Grade',w:13},{t:'Size',w:9},{t:'Supply cond',w:11},{t:'Stage',w:12},
+            {t:'Start',w:19,type:'datetime'},{t:'End',w:19,type:'datetime'},{t:'Hours',w:8,type:'num'},{t:'MT',w:8,type:'num'},
+            {t:'Status',w:10},{t:'Delivery',w:11}],
+          rows:list.map(function(b,i){ var o=O[b.oi]||{}, done=b.end<=VSS_ASOF_MIN, now=!done&&b.start<=VSS_ASOF_MIN;
+            return [i+1,b.so,o.rdd?new Date(o.rdd+'T00:00:00'):null,b.machine,grpOf(b.machine),b.customer,b.grade,b.size,b.cond,b.stage,
+                    vssDateAt(b.start),vssDateAt(b.end),+((b.end-b.start)/60).toFixed(1),+b.qty.toFixed(1),
+                    done?'Done':now?'Running':'Booked',o.late||'—']; }) };
+
+        var eqs={}; list.forEach(function(b,i){ var e=eqs[b.machine]=eqs[b.machine]||{n:0,min:0,mt:0,first:null,last:0,ords:{},slot:{}};
+          e.n++; e.mt+=b.qty; e.ords[b.so]=1; e.first=e.first===null?b.start:Math.min(e.first,b.start); e.last=Math.max(e.last,b.end);
+          var k=slotOf(b,i); if(!e.slot[k]){ e.slot[k]=1; e.min+=b.end-b.start; } });
+        var summary={ name:'Equipment summary', cols:[
+            {t:'Equipment',w:17},{t:'Group',w:15},{t:'Bookings',w:10,type:'int'},{t:'Machine slots',w:13,type:'int'},
+            {t:'Orders',w:9,type:'int'},{t:'Hours occupied',w:14,type:'num'},{t:'MT',w:10,type:'num'},
+            {t:'First start',w:19,type:'datetime'},{t:'Last end',w:19,type:'datetime'},{t:'Span (days)',w:12,type:'num'},
+            {t:'Utilisation in span %',w:19,type:'int'},{t:'Capacity',w:26}],
+          rows:machines.filter(function(m){return eqs[m];}).map(function(m){ var e=eqs[m], span=e.last-e.first, pool=isPool(m);
+            return [m,grpOf(m),e.n,Object.keys(e.slot).length,Object.keys(e.ords).length,+(e.min/60).toFixed(1),+e.mt.toFixed(1),
+                    vssDateAt(e.first),vssDateAt(e.last),+(span/1440).toFixed(1),
+                    pool?null:(span?Math.round(e.min/span*100):0),
+                    pool?'Holding area — concurrent, utilisation n/a':'Single capacity']; }) };
+
+        var occ=occupancy(list);
+        var info={ name:'Plan info', cols:[{t:'Item',w:26},{t:'Value',w:64}], rows:[
+            ['Plant',V.meta.plant],['Unit',V.meta.unit],['Plan base date',V.meta.baseDate],['As of',V.meta.asOf],
+            ['Source',V.meta.source],['Exported',vssStamp(VSS_ASOF_MIN)+' (demo clock)'],
+            ['',''],
+            ['Filter — equipment',F.eq||'All'],['Filter — stage',F.stage||'All'],
+            ['Filter — window',+F.win?('next '+F.win+' days from the plan start'):'Full plan'],
+            ['Filter — search',F.q||'—'],['Sort',F.sort==='rdd'?'Delivery date → order → start/end':'Start time → equipment'],
+            ['',''],
+            ['Bookings exported',list.length],['Bookings in the full plan',P.bookings.length],
+            ['Machine slots',occ.slots+' (a heat-treatment box holding several orders is one slot)'],
+            ['Hours occupied',Math.round(occ.min/60)+' h'],['Equipment in selection',Object.keys(eqs).length+' of '+machines.length],
+            ['Orders in selection',Object.keys(list.reduce(function(a,b){a[b.so]=1;return a;},{})).length+' of '+P.orders.length],
+            ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days'],
+            ['',''],
+            ['Sequencing rule','Orders are sequenced by delivery date at the planning grain — RDD week, descending size within the week (the rolling-cycle rule).'],
+            ['Route','Billet → Rolling → NDT → Stacking yard → Heat treatment → Bright bar (peel / draw) → Dispatch'],
+            ['Heat treatment','18 MT boxes filled from orders of the same anneal type ready within 8 days; only as many furnaces lit as the book needs; charges run back to back.'],
+            ['Bright bar','Work fills one line before opening another while that line can still make the order date; gap between orders = the line changeover only.'],
+            ['Note','Customer codes are anonymised. Figures are a plan, not a production record.'],
+            ['Note — furnace boxes','An 18 MT box is listed once per order on the Bookings sheet so each order is traceable to its furnace. It occupies the furnace once, so Hours occupied and Utilisation count it once.'],
+            ['Note — stacking yard','The yard is a holding area, not single-capacity equipment: many bundles dwell in it at the same time, so its hours are bundle-hours and utilisation is left blank.']] };
+
+        var size=vssXlsx([bookings,summary,info],xlName());
+        document.getElementById('fc').textContent=list.length+' bookings · downloaded '+Math.round(size/1024)+' KB';
+      } catch(e){ document.getElementById('fc').textContent='Excel export failed: '+e.message; }
+      btn.innerHTML=keep; btn.disabled=false;
+    },30);
+  });
+
   apply();
 </script>
 </body>
