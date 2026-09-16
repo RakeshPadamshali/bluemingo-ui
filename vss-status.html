@@ -45,14 +45,14 @@
 <script>
   var V=window.VSS, P=vssPlan(), O=P.orders;      // O is already in delivery-date (EDD) sequence
   document.getElementById('ctx').textContent = V.meta.plant + ' · as of ' + vssFmtDate(V.meta.asOf);
-  document.getElementById('meta').textContent = O.length+' orders · plan horizon '+(P.horizonMin/1440).toFixed(0)+' days';
+  document.getElementById('meta').textContent = O.length+' order lines · plan horizon '+vssHorizonDays()+' days';
 
   var disp=O.filter(function(o){return o.stageNow==='Dispatched';}).length;
   var wip=O.filter(function(o){return o.stageIndex>0 && o.stageNow!=='Dispatched';}).length;
   var svc=Math.round(O.filter(function(o){return o.late==='On track';}).length/O.length*100);   // orders servable by RDD
-  [['Orders',O.length,'all with start & end','blue'],
+  [['Order lines',O.length,'all with start & end','blue'],
    ['Dispatched',disp,'completed','green'],
-   ['In progress',wip,'on the floor','blue'],
+   ['In progress',wip,'cleared \u2265 1 stage · '+(O.length-wip-disp)+' not started yet','blue'],
    ['Overdue',O.filter(function(o){return o.late==='Overdue';}).length,'past RDD','red'],
    ['At risk',O.filter(function(o){return o.late==='At risk';}).length,'plan end > RDD','amber'],
    ['Serviceability',svc+'%','orders servable by RDD','green']

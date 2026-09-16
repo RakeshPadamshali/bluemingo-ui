@@ -27,6 +27,10 @@ body { margin:0; font-family:'Roboto',system-ui,-apple-system,'Segoe UI',sans-se
 .bm-sidebar .nav-label { color:#fff; font:700 10px 'Roboto'; letter-spacing:1px; text-transform:uppercase; padding:9px 15px 4px; margin-top:4px; opacity:.85; }
 .bm-sidebar a { display:flex; align-items:center; gap:9px; color:inherit; text-decoration:none; padding:6px 15px; margin:1px 7px; border-radius:6px; font-size:12px; cursor:pointer; }
 .bm-sidebar a:hover { background:rgba(255,255,255,.08); color:#fff; }
+/* Masters entries are placeholders in this demo — show them, but do not invite a click that goes nowhere. */
+.bm-sidebar a.decor { cursor:default; opacity:.45; }
+.bm-sidebar a.decor:hover { background:transparent; color:inherit; }
+.bm-sidebar a.decor::after { content:'soon'; margin-left:auto; font-size:9px; letter-spacing:.4px; text-transform:uppercase; opacity:.8; }
 .bm-sidebar a.active { background:rgba(var(--color-primary-rgb),.24); color:#e3f1fb; position:relative; }
 .bm-sidebar a.active::before { content:''; position:absolute; left:0; top:4px; bottom:4px; width:2px; background:var(--accent); border-radius:0 2px 2px 0; }
 .bm-sidebar a i { width:15px; text-align:center; opacity:.85; font-size:11px; }

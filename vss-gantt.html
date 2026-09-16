@@ -51,7 +51,9 @@
   // A window shorter than the full plan is ONE PAGE of the horizon. The page always spans the full chosen number of
   // days (even the last one, which may run past the end of the plan) so the pixels-per-hour scale never changes as
   // you step - a bar that looks twice as long really is twice as long.
-  var WIN=document.getElementById('win'), PGR=document.getElementById('pgr'), horD=Math.ceil(P.horizonMin/1440), pg=0;
+  // horD = whole days the plan must be PAGED over (can be one more than the reported horizon, which is rounded).
+  var WIN=document.getElementById('win'), PGR=document.getElementById('pgr'), horD=vssPlanDays(), pg=0;
+  var HOR=vssHorizonDays();                    // the one horizon figure every page prints
   var asOfDay=Math.floor(VSS_ASOF_MIN/1440);
   function winDays(){ return +WIN.value; }
   function pageCount(days){ return days?Math.max(1,Math.ceil(horD/days)):1; }
@@ -60,7 +62,7 @@
   function render(){
     var days=winDays(), full=!days, np=pageCount(days);
     pg=Math.max(0,Math.min(np-1,pg));
-    var startMin=full?0:pg*days*1440, endMin=full?Math.ceil(P.horizonMin/1440)*1440:startMin+days*1440;
+    var startMin=full?0:pg*days*1440, endMin=full?horD*1440:startMin+days*1440;
     var bars=sch.bars.filter(function(b){return b.start<endMin && b.start+b.dur>startMin;});
     var ordersIn={}; bars.forEach(function(b){ordersIn[b.so]=1;});
     vssRenderGantt(document.getElementById('gantt'), sch.units, bars, { laneTitle:'Machine', startMin:startMin, endMin:endMin, laneW:150, batchTag:'BATCH' });
@@ -73,10 +75,10 @@
     }
     document.getElementById('gmeta').textContent = bars.length+' bookings · '+Object.keys(ordersIn).length+' orders in view';
     document.getElementById('kpis').innerHTML = [
-      ['Machines',sch.units.length,'lanes','blue'],
-      ['Bookings in view',bars.length,'order × stage','blue'],
-      ['Orders in view',Object.keys(ordersIn).length,'of '+P.orders.length,'accent'],
-      ['In view',full?'Full plan':vssDateMin(startMin)+' + '+days+' d',full?horD+' days · all 788 orders':'page '+(pg+1)+' of '+np+' · '+horD+' day horizon','green'],
+      ['Equipment',sch.units.length,'machine lanes · the yard is not a machine','blue'],
+      ['Bookings in view',bars.length,'order × machine · of '+P.bookings.length+' incl. yard dwell','blue'],
+      ['Orders in view',Object.keys(ordersIn).length,'of '+P.orders.length+' order lines','accent'],
+      ['In view',full?'Full plan':vssDateMin(startMin)+' + '+days+' d',full?HOR+' days · all '+P.orders.length+' order lines':'page '+(pg+1)+' of '+np+' · '+HOR+' day horizon','green'],
       ['Busiest line',busiest?busiest.replace(' (SMS)',''):'—',busiest?Math.round(P.load[busiest].mins/60)+' h booked':'','amber'],
       ['Sequencing','RDD week','delivery date first · size desc within week','accent']
     ].map(function(k){return '<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');

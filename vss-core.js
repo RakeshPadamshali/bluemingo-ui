@@ -296,22 +296,45 @@
       o.late = (o.rddMin != null && o.rddMin < AS_OF_MIN && idx < S.route.length) ? 'Overdue'
              : (o.rddMin != null && o.expDispMin > o.rddMin) ? 'At risk' : 'On track';
     });
+    // ---- machine occupancy: THE one basis every page reports equipment time from --------------------------------
+    // A heat-treatment box holds several orders and is listed once per order, but it occupies the furnace once, so
+    // occupancy counts a CHARGE once (mins, slots, first, last). Tonnage and the booking count are not deduped: the
+    // box really carries every order's MT, and the Bookings list really has one row per order.
     var load = {}, horizon = 0;
-    bookings.forEach(function (b) {
-      var L = load[b.machine] = load[b.machine] || { machine: b.machine, mins: 0, mt: 0, n: 0, orders: {} };
-      L.mins += b.end - b.start; L.mt += b.qty; L.n++; L.orders[b.so] = 1; horizon = Math.max(horizon, b.end);
+    bookings.forEach(function (b, i) {
+      var L = load[b.machine] = load[b.machine] || { machine: b.machine, mins: 0, mt: 0, n: 0, orders: {}, slots: {},
+                                                     firstMin: null, lastMin: 0, pool: b.machine === 'Stacking Yard' };
+      L.mt += b.qty; L.n++; L.orders[b.so] = 1;
+      L.firstMin = L.firstMin === null ? b.start : Math.min(L.firstMin, b.start);
+      L.lastMin = Math.max(L.lastMin, b.end);
+      var k = b.chargeId != null ? 'c' + b.chargeId : 'b' + i;
+      if (!L.slots[k]) { L.slots[k] = 1; L.mins += b.end - b.start; }
+      horizon = Math.max(horizon, b.end);
     });
-    Object.keys(load).forEach(function (k) { load[k].orderCount = Object.keys(load[k].orders).length; });
+    Object.keys(load).forEach(function (k) {
+      var L = load[k];
+      L.orderCount = Object.keys(L.orders).length;
+      L.slotCount = Object.keys(L.slots).length;
+      L.spanMin = Math.max(L.lastMin - L.firstMin, 0);
+      // Utilisation is only meaningful for single-capacity equipment; a holding yard has concurrent dwell.
+      L.util = L.pool ? null : (L.spanMin ? Math.min(1, L.mins / L.spanMin) : 0);
+      L.hours = L.mins / 60;
+    });
     var machines = ['Caster (SMS)', 'Rolling Mill', 'NDT Line'].concat(bb.map(function (l) { return l.name; }))
       .concat(furn.slice().sort(function (a, b) { return a < b ? -1 : 1; }));   // F1..F6 in lane order (furn itself is kept least-loaded-sorted)
     var rchg = { Size: 0, Feeder: 0, BDM: 0, mins: 0 };
     seqOrders.forEach(function (o) { if (o.rollChgType) { rchg[o.rollChgType]++; rchg.mins += o.rollChangeover; } });
-    V._plan = { orders: seqOrders, bookings: bookings, load: load, horizonMin: horizon, machines: machines, yard: 'Stacking Yard',
+    V._plan = { orders: seqOrders, bookings: bookings, load: load, occ: load, horizonMin: horizon, machines: machines, yard: 'Stacking Yard',
                 charges: charges, continuity: cont,
                 roll: { yield: ROLL_YIELD, prodHours: ROLL_HRS, budgets: rollBdgt, rc: RC, chg: rchg } };
     return V._plan;
   }
   window.vssPlan = vssPlan;
+  // The plan horizon in whole days, rounded ONCE here. Pages used to mix toFixed(0) (63) with Math.ceil (64) and
+  // printed two different horizons for the same plan; vssHorizonDays() is now the only answer, and vssPlanDays()
+  // is the number of whole days the plan has to be paged over, which can be one more.
+  window.vssHorizonDays = function () { return Math.round(vssPlan().horizonMin / 1440); };
+  window.vssPlanDays = function () { return Math.ceil(vssPlan().horizonMin / 1440); };
 
   // ---- INVENTORY CONSUMPTION: every draw a stage makes on a stock / WIP pool, in time order ----
   // Pools: 'Billet stock' (EXISTING — the order book's Billet Stock column, i.e. opening yard stock), 'Cast billets' (made by
@@ -395,18 +418,23 @@
     var P = vssPlan(), sch = window.vssSchedule(), AS = AS_OF_MIN;
     var bk = P.bookings.filter(function (b) { return b.stage === stage; }).slice().sort(function (a, b) { return a.start - b.start || (a.machine < b.machine ? -1 : 1); });
     var r = { stage: stage, bookings: bk, orders: 0, lines: 0, mt: 0, doneMT: 0, runningMT: 0, plannedMT: 0, doneN: 0, runningN: 0, plannedN: 0, hours: 0, first: null, last: null, byMachine: [], byDay: [], colorOf: sch.colorOf };
-    var so = {}, oi = {}, mach = {}, days = {};
-    bk.forEach(function (b) {
+    var so = {}, oi = {}, mach = {}, days = {}, slot = {};
+    // Machine time is deduped by charge, exactly as P.occ does it: a heat-treatment box is listed once per order
+    // but occupies the furnace once. Tonnage and the job count are not deduped - the box carries every order's MT.
+    bk.forEach(function (b, bi) {
       var st = b.end <= AS ? 'Done' : b.start <= AS ? 'Running' : 'Planned'; b.status = st;
-      so[b.so] = 1; oi[b.oi] = 1; r.mt += b.qty; r.hours += (b.end - b.start) / 60;
+      var sk = b.machine + (b.chargeId != null ? '|c' + b.chargeId : '|b' + bi), fresh = !slot[sk];
+      if (fresh) slot[sk] = 1;
+      so[b.so] = 1; oi[b.oi] = 1; r.mt += b.qty; if (fresh) r.hours += (b.end - b.start) / 60;
       if (st === 'Done') { r.doneMT += b.qty; r.doneN++; } else if (st === 'Running') { r.runningMT += b.qty; r.runningN++; } else { r.plannedMT += b.qty; r.plannedN++; }
       r.first = r.first == null ? b.start : Math.min(r.first, b.start); r.last = r.last == null ? b.end : Math.max(r.last, b.end);
       var m = mach[b.machine] = mach[b.machine] || { machine: b.machine, n: 0, mt: 0, hours: 0, first: b.start, last: b.end, doneMT: 0, orders: {} };
-      m.n++; m.mt += b.qty; m.hours += (b.end - b.start) / 60; m.first = Math.min(m.first, b.start); m.last = Math.max(m.last, b.end); m.orders[b.so] = 1; if (st === 'Done') m.doneMT += b.qty;
+      m.n++; m.mt += b.qty; if (fresh) { m.hours += (b.end - b.start) / 60; m.slots = (m.slots || 0) + 1; }
+      m.first = Math.min(m.first, b.start); m.last = Math.max(m.last, b.end); m.orders[b.so] = 1; if (st === 'Done') m.doneMT += b.qty;
       var d = Math.floor(b.start / 1440), dd = days[d] = days[d] || { day: d, start: d * 1440, mt: 0, n: 0, sizes: {}, orders: {} };
       dd.mt += b.qty; dd.n++; dd.sizes[b.size] = 1; dd.orders[b.so] = 1;
     });
-    r.orders = Object.keys(so).length; r.lines = Object.keys(oi).length;
+    r.orders = Object.keys(so).length; r.lines = Object.keys(oi).length; r.slots = Object.keys(slot).length;
     r.byMachine = Object.keys(mach).sort().map(function (k) { var m = mach[k]; m.span = Math.max(m.last - m.first, 1); m.util = Math.min(1, m.hours * 60 / m.span); m.orderCount = Object.keys(m.orders).length; return m; });
     r.byDay = Object.keys(days).map(Number).sort(function (a, b) { return a - b; }).map(function (k) { var d = days[k]; d.sizeChanges = Object.keys(d.sizes).length; d.orderCount = Object.keys(d.orders).length; return d; });
     return r;

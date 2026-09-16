@@ -24,7 +24,7 @@
     <div class="card">
       <div class="card-head"><i class="fa-solid fa-scale-balanced"></i> Load per line — booked hours, tonnage, utilisation within its active span <span class="right" id="meta"></span></div>
       <div class="card-body"><table class="tbl" id="tbl"></table>
-      <div class="note"><i class="fa-solid fa-circle-info"></i><span>Expand a line to see its <b>order-wise allocation</b> in sequence. Utilisation = booked hours ÷ the line's active span (first booking → last booking); a high figure means the line runs continuously. Parallel lines are filled least-loaded-first — remaining imbalance is capability-driven (e.g. only one peeling line runs PG* ground conditions). Rolling-mill hours use the sheet's <b>size-wise budget productivity</b> (968 MT/day · 605 for 23–29 mm · 550 for 58 mm, on input tonnage, 90% yield, 22 productive h/day) and Roll-Set changeovers (size 25 min · feeder 1.5 h · BDM 4 h), applied once per size run — orders are sequenced by RDD week, descending size within the week.</span></div></div>
+      <div class="note"><i class="fa-solid fa-circle-info"></i><span>Expand a line to see its <b>order-wise allocation</b> in sequence. Utilisation = booked hours ÷ the line's active span (first booking → last booking); a high figure means the line runs continuously, which is the goal here — <b>green ≥ 85%</b> (continuous), amber 60–85%, grey below. Parallel lines are filled least-loaded-first — remaining imbalance is capability-driven (e.g. only one peeling line runs PG* ground conditions). Rolling-mill hours use the sheet's <b>size-wise budget productivity</b> (968 MT/day · 605 for 23–29 mm · 550 for 58 mm, on input tonnage, 90% yield, 22 productive h/day) and Roll-Set changeovers (size 25 min · feeder 1.5 h · BDM 4 h), applied once per size run — orders are sequenced by RDD week, descending size within the week.</span></div></div>
     </div>
   </main>
 </div>
@@ -34,25 +34,28 @@
 <script src="vss-core.js"></script>
 <script>
   var V=window.VSS, P=vssPlan();
-  document.getElementById('ctx').textContent = V.meta.plant + ' · plan horizon ' + (P.horizonMin/1440).toFixed(0) + ' days';
+  document.getElementById('ctx').textContent = V.meta.plant + ' · plan horizon ' + vssHorizonDays() + ' days';
   var machines = P.machines;   // equipment only — the stacking yard is a no-capacity buffer (see Equipment Booking)
   var byM={}; P.bookings.forEach(function(b){ (byM[b.machine]=byM[b.machine]||[]).push(b); });
   var rows = machines.map(function(m){
     var bk=(byM[m]||[]).slice().sort(function(a,b){return a.start-b.start;}); if(!bk.length) return null;
-    var first=bk[0].start, last=Math.max.apply(null,bk.map(function(b){return b.end;})), mins=bk.reduce(function(a,b){return a+(b.end-b.start);},0);
+    // Hours, span and utilisation come from P.occ — the single basis the dashboard, Master Gantt and Equipment
+    // Booking also report from, so a furnace box shared by several orders is counted once on every page.
+    var L=P.occ[m], first=L.firstMin, last=L.lastMin, mins=L.mins;
     var mt=bk.reduce(function(a,b){return a+b.qty;},0), orders={}; bk.forEach(function(b){orders[b.so]=1;});
-    var span=Math.max(last-first,1), util=Math.min(1,mins/span), share=mins/P.horizonMin;
+    var span=Math.max(last-first,1), util=L.util==null?null:L.util, share=mins/P.horizonMin;
     var grp=/Caster/.test(m)?'Melt shop':/Rolling/.test(m)?'Rolling':/NDT/.test(m)?'Inspection':/Peeling|Drawing/.test(m)?'Bright bar':/Furnace/.test(m)?'Heat treatment':'Yard';
-    return {m:m, grp:grp, bk:bk, first:first, last:last, hours:mins/60, mt:mt, orders:Object.keys(orders).length, span:span, util:util, share:share};
+    return {m:m, grp:grp, bk:bk, first:first, last:last, hours:mins/60, mt:mt, orders:L.orderCount, span:span, util:util, share:share, slots:L.slotCount};
   }).filter(Boolean);
 
   var totH=rows.reduce(function(a,r){return a+r.hours;},0);
   var peel=rows.filter(function(r){return /Peeling/.test(r.m);}), pu=peel.map(function(r){return r.util;});
   var busiest=rows.slice().sort(function(a,b){return b.hours-a.hours;})[0];
+  var EQ=P.machines.length;                    // equipment lanes in the plan (the stacking yard is not equipment)
   var RCH=P.roll.chg, chgH=RCH.mins/60;   // rolling changeovers by type (one per size run)
-  [['Lines / machines',rows.length,'plant equipment','blue'],
-   ['Booked hours',Math.round(totH)+' h','all orders, all stages','blue'],
-   ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days','last booking ends','accent'],
+  [['Equipment in use',rows.length+' of '+EQ,'lines with work booked · yard excluded','blue'],
+   ['Booked hours',Math.round(totH)+' h','equipment time · a shared furnace box counts once','blue'],
+   ['Plan horizon',vssHorizonDays()+' days','last booking ends','accent'],
    ['Busiest line',busiest.m.replace(' (SMS)',''),Math.round(busiest.hours)+' h · '+Math.round(busiest.util*100)+'% in span','amber'],
    ['Peeling balance',Math.round(Math.min.apply(null,pu)*100)+'–'+Math.round(Math.max.apply(null,pu)*100)+'%','util range across 5 lines','green'],
    ['Rolling changeovers',Math.round(chgH)+' h',RCH.Size+' size · '+RCH.Feeder+' feeder · '+RCH.BDM+' BDM (one per size run)','amber']
@@ -62,14 +65,14 @@
   var COLS=['','Line / machine','Orders','Bookings','Booked hrs','MT','Active span','First → last booking','Utilisation in span','Share of horizon'];
   document.getElementById('tbl').innerHTML='<thead><tr>'+COLS.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
     rows.map(function(r,i){
-      var col=r.util>=0.85?'#d84a4a':r.util>=0.6?'#f0a020':'#2e9b45';
+      var col=r.util==null?'#c2c8cf':r.util>=0.85?'#2e9b45':r.util>=0.6?'#f0a020':'#8a93a0';
       return '<tr><td><button class="exp-btn" data-exp="'+i+'"><i class="fa-solid fa-chevron-right"></i></button></td>'+
         '<td class="strong">'+r.m+'<div class="grp">'+r.grp+'</div></td>'+
         '<td class="mono">'+r.orders+'</td><td class="mono">'+r.bk.length+'</td>'+
         '<td class="mono right-al strong">'+Math.round(r.hours)+'</td><td class="mono right-al">'+Math.round(r.mt)+'</td>'+
         '<td class="mono">'+(r.span/1440).toFixed(1)+' d</td>'+
         '<td class="mono">'+vssDateMin(r.first)+' → '+vssDateMin(r.last)+'</td>'+
-        '<td><div class="ubar"><span class="track"><span class="fill" style="width:'+Math.round(r.util*100)+'%;background:'+col+'"></span></span><span class="pct">'+Math.round(r.util*100)+'%</span></div></td>'+
+        '<td>'+(r.util==null?'<span class="hint">n/a · holding area</span>':'<div class="ubar"><span class="track"><span class="fill" style="width:'+Math.round(r.util*100)+'%;background:'+col+'"></span></span><span class="pct">'+Math.round(r.util*100)+'%</span></div>')+'</td>'+
         '<td class="mono">'+Math.round(r.share*100)+'%</td></tr>';
     }).join('')+'</tbody>';
 

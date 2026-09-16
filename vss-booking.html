@@ -46,6 +46,7 @@
   // A heat-treatment box holds several orders and is listed once per order (so each order is traceable to its
   // furnace), but it occupies the furnace ONCE. Anything reported as machine OCCUPANCY must therefore count a
   // charge once; tonnage is not deduped, because the box really does carry every order's MT.
+  // Same slot identity as P.occ in vss-core.js, so this page's hours match the dashboard and Machine Load.
   function slotOf(b,i){ return b.chargeId!=null ? b.machine+'|c'+b.chargeId : b.machine+'|b'+i; }
   function occupancy(list){
     var seen={}, min=0; list.forEach(function(b,i){ var k=slotOf(b,i); if(seen[k]) return; seen[k]=1; min+=b.end-b.start; });
@@ -81,10 +82,10 @@
     document.getElementById('kpis').innerHTML=[
       ['Bookings',list.length,'in selection','blue'],
       ['Hours booked',Math.round(hrs)+' h','equipment time · a shared furnace box counts once','blue'],
-      ['Equipment used',Object.keys(eqs).length,'of '+machines.length,'accent'],
-      ['Orders covered',Object.keys(ords).length,'of '+P.orders.length,'green'],
+      ['Equipment used',Object.keys(eqs).length,'of '+machines.length+' (15 lines + the yard)','accent'],
+      ['Orders covered',Object.keys(ords).length,'of '+P.orders.length+' order lines','green'],
       ['Busiest equipment',busiest?busiest.replace(' (SMS)',''):'—',busiest?Math.round(eqs[busiest]/60)+' h':'','amber'],
-      ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days','full plan','accent']
+      ['Plan horizon',vssHorizonDays()+' days','full plan','accent']
     ].map(function(k){return '<div class="kpi '+k[3]+'"><div class="k">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');
     LAST=list;                                  // the Excel download takes the whole selection, not just the capped rows
     var CAP=1500, shown=list.slice(0,CAP);
@@ -154,7 +155,7 @@
             ['Machine slots',occ.slots+' (a heat-treatment box holding several orders is one slot)'],
             ['Hours occupied',Math.round(occ.min/60)+' h'],['Equipment in selection',Object.keys(eqs).length+' of '+machines.length],
             ['Orders in selection',Object.keys(list.reduce(function(a,b){a[b.so]=1;return a;},{})).length+' of '+P.orders.length],
-            ['Plan horizon',(P.horizonMin/1440).toFixed(0)+' days'],
+            ['Plan horizon',vssHorizonDays()+' days'],
             ['',''],
             ['Sequencing rule','Orders are sequenced by delivery date at the planning grain — RDD week, descending size within the week (the rolling-cycle rule).'],
             ['Route','Billet → Rolling → NDT → Stacking yard → Heat treatment → Bright bar (peel / draw) → Dispatch'],

@@ -57,7 +57,9 @@
   var V=window.VSS, heats=vssMOQGap(), b=vssBilletBuckets(), PL=vssPlan(), INV=vssInventory(), R=vssStageReport('Billet'), HEAT=V.smsCfg.heatMT||40, CAPH=V.smsCfg.capHeatsDay||22;
   document.getElementById('ctx').textContent = V.meta.plant + ' · ' + V.smsCfg.sections.length + ' sections · as of ' + vssFmtDate(V.meta.asOf);
   var gaps=heats.filter(function(h){return h.gap>0;}).length;
-  [['Orders to cast',R.orders,R.lines+' lines · '+INV.topUp.n+' stock top-ups','blue'],
+  var skipN=V.orders.filter(function(o){return o.allocStatus==='Stock-allocated';}).length;
+  var floorN=PL.orders.length-R.lines-skipN;  // lines whose billet need rounds to zero (40 kg orders in the book)
+  [['Orders to cast',R.orders,R.lines+' of '+PL.orders.length+' lines · '+skipN+' on stock'+(floorN?' · '+floorN+' below the 1 billet floor':''),'blue'],
    ['Billet to cast',Math.round(R.mt)+' MT','whole order book · bar ÷ 90 % yield','blue'],
    ['Cast so far',Math.round(R.doneMT)+' MT',R.doneN+' bookings · as of 6 Jul','green'],
    ['Heats',Math.ceil(R.mt/HEAT),HEAT+' MT heats · '+Math.round(R.hours)+' h on the caster','accent'],

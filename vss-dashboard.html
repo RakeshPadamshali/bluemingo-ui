@@ -89,11 +89,15 @@
   }).join('');
 
   // machine load vs budget
-  var maxBud=Math.max.apply(null,V.rolling.map(function(c){return c.budgetPrdty||0;}));
-  var PL=vssPlan(), hzH=PL.horizonMin/60;
+  var PL=vssPlan(), P=PL, hzH=PL.horizonMin/60;
   function grp(re){ var h=0,n=0; Object.keys(PL.load).forEach(function(m){ if(re.test(m)){ h+=PL.load[m].mins/60; n++; } }); return {h:Math.round(h), cap:Math.round(hzH*Math.max(n,1))}; }
+  // The label must name the same machines the denominator divides by: capacity here is horizon x the machines
+  // that actually carry work, so a furnace the plan never lights is not counted as idle capacity.
+  var nPeel=Object.keys(PL.load).filter(function(m){return /Peeling|Drawing/.test(m);}).length;
+  var nFurn=Object.keys(PL.load).filter(function(m){return /Furnace/.test(m);}).length;
   var loads=[['Caster (SMS)',grp(/Caster/),'#ef6c00'],['Rolling Mill',grp(/Rolling/),'#1478c8'],['NDT Line',grp(/NDT/),'#7e57c2'],
-    ['Bright Bar (5+1)',grp(/Peeling|Drawing/),'#1baf7a'],['Heat Treatment (6)',grp(/Furnace/),'#e34948']];
+    ['Bright Bar ('+nPeel+' lines)',grp(/Peeling|Drawing/),'#1baf7a'],
+    ['Heat Treatment ('+nFurn+' of '+V.htCfg.furnaces+' lit)',grp(/Furnace/),'#e34948']];
   document.getElementById('load').innerHTML = loads.map(function(l){
     var pc=Math.min(100,Math.round(l[1].h/l[1].cap*100));
     return '<div class="load-row"><span class="ln">'+l[0]+'</span><span class="lt"><span class="lf" style="width:'+pc+'%;background:'+l[2]+'"></span></span><span class="lv">'+l[1].h+' / '+l[1].cap+' h · '+pc+'%</span></div>';
@@ -117,12 +121,28 @@
     }).join('') + '<div class="note"><i class="fa-solid fa-circle-info"></i><span>Open stock is allocated to sales orders first; the balance goes to casting — <a href="vss-inventory.html">Inventory Consumption</a> shows the stock being drawn stage by stage.</span></div>';
 
   // budget vs plan
-  var days={}; V.rolling.forEach(function(c){ if(c.startISO){ var d=c.startISO.slice(0,10); days[d]=(days[d]||0)+(c.finishQty||0); } });
-  var dk=Object.keys(days).sort();
+  // Budget vs plan, on the SAME basis as the Rolling Mill page: the sheet's Bdgt Prdty/Day is size-wise
+  // (968 / 605 / 550 MT of input per day), so a day is measured against the mix it actually ran, and a run that
+  // crosses midnight is split across the days it occupies. Measuring every day against the single highest budget
+  // and clamping at 100% made 3 Jul read "1396 MT · 100%" against a 968 target.
+  var RY=P.roll.yield, bMap={}; V.rolling.forEach(function(c){ if(c.budgetPrdty) bMap[c.size]=c.budgetPrdty; });
+  function budgetFor(sz){ return bMap[sz] || (sz>=23 && sz<=29 ? 605 : 968); }
+  var RR=vssStageReport('Rolled'), BD={};
+  RR.bookings.forEach(function(b){
+    var bud=budgetFor(vssSizeNum(b.size)), inp=b.qty/RY, span=Math.max(b.end-b.start,1);
+    for(var d=Math.floor(b.start/1440); d<=Math.floor((b.end-1)/1440); d++){
+      var s0=Math.max(b.start,d*1440), e0=Math.min(b.end,(d+1)*1440), share=(e0-s0)/span;
+      if(share<=0) continue;
+      var r=BD[d]=BD[d]||{start:d*1440,mt:0,days:0};
+      r.mt+=b.qty*share; r.days+=inp*share/bud;
+    }
+  });
+  var bkeys=Object.keys(bMap).map(function(k){return bMap[k];}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return b-a;});
+  var bd=Object.keys(BD).map(Number).sort(function(a,b){return a-b;});
   document.getElementById('budget').innerHTML =
-    '<div class="load-row"><span class="ln">Budget / day</span><span class="lt"><span class="lf" style="width:100%;background:#c2c8cf"></span></span><span class="lv">'+maxBud+' MT target</span></div>' +
-    dk.slice(0,7).map(function(d){ var pc=Math.min(100,Math.round(days[d]/maxBud*100));
-      return '<div class="load-row"><span class="ln">'+vssFmtDate(d)+'</span><span class="lt"><span class="lf" style="width:'+pc+'%;background:'+(days[d]>=maxBud*0.8?'#2e7d32':'#f0a020')+'"></span></span><span class="lv">'+Math.round(days[d])+' MT · '+pc+'%</span></div>';
+    '<div class="load-row"><span class="ln">Budget / day</span><span class="lt"><span class="lf" style="width:100%;background:#c2c8cf"></span></span><span class="lv">'+bkeys.join(' / ')+' MT size-wise</span></div>' +
+    bd.slice(0,7).map(function(k){ var r=BD[k], pc=Math.round(r.days*100);
+      return '<div class="load-row"><span class="ln">'+vssDateMin(r.start)+'</span><span class="lt"><span class="lf" style="width:'+Math.min(100,pc)+'%;background:'+(pc>=80?'#2e7d32':'#f0a020')+'"></span></span><span class="lv">'+Math.round(r.mt)+' MT bar · '+pc+'% of a mill-day</span></div>';
     }).join('');
 
 </script>
