@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auto Inspection Line — Bluemingo MES v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
+.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
+.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
+.result-band span{color:var(--color-text-muted);}
+.result-band b{font-variant-numeric:tabular-nums;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon,.vrow .vv .btn{display:none;}
+
+/* ===== shared page chrome (chips, banner, subcard) — from shell template ===== */
+.chipstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--sp3);}
+.ichip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:5px 12px;color:var(--color-text-secondary);}
+.ichip i{color:var(--color-primary);font-size:11px;}
+.ichip b{color:var(--color-text-primary);font-weight:600;}
+.depbanner{display:flex;gap:10px;align-items:flex-start;background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:9px 14px;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-secondary);}
+.depbanner i{color:var(--color-primary-dark);margin-top:2px;}
+.srcchip{display:inline-block;margin-left:6px;padding:0 6px;border-radius:9px;font-size:9px;font-weight:700;letter-spacing:.3px;background:rgba(37,169,224,.14);color:#1E8FBF;vertical-align:middle;}
+.subcard{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);margin-top:var(--sp3);flex:none;display:flex;flex-direction:column;max-height:225px;overflow:hidden;}
+.subcard .sc-head{padding:10px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;flex:none;}
+.subcard .sc-head i{color:var(--color-primary);font-size:12px;}
+.subcard .sc-head .meta{margin-left:auto;font-weight:400;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.subcard .sc-wrap{overflow:auto;min-height:0;}
+
+/* ===== Auto Inspection Line (§26.2) page-specific — all new classes/ids use the al- prefix ===== */
+.al-lsel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;padding-top:4px;}
+.al-lchip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;border:1px solid var(--color-border);background:#fff;color:var(--color-text-secondary);font:500 var(--fs-sm) var(--font);}
+.al-lchip:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.al-lchip.al-on{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
+.al-scroll{flex:1;min-height:0;overflow:auto;padding-right:2px;}
+.al-toprow{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:var(--sp3);align-items:stretch;margin-bottom:var(--sp3);}
+@media (max-width:1150px){.al-toprow{grid-template-columns:1fr;}}
+.al-panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-width:0;overflow:hidden;margin-bottom:var(--sp3);}
+.al-toprow .al-panel{margin-bottom:0;}
+.al-p-head{padding:10px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;flex:none;}
+.al-p-head i{color:var(--color-primary);font-size:12px;}
+.al-p-head .al-meta{margin-left:auto;font-weight:400;font-size:var(--fs-sm);color:var(--color-text-muted);text-align:right;}
+.al-p-body{padding:12px 16px;}
+.al-mat{border:1px solid var(--color-border);border-radius:var(--r-md);padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.al-mat+.al-mat{margin-top:8px;}
+.al-mat .al-take{margin-left:auto;}
+.al-tag{display:inline-block;font-size:var(--fs-xs);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:2px 8px;color:var(--color-text-secondary);white-space:nowrap;}
+.al-tag b{color:var(--color-text-primary);font-weight:600;}
+.al-trwrap{overflow:auto;min-height:0;flex:1;}
+.al-tot{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px solid var(--color-border-light);}
+.al-utabs{display:flex;align-items:stretch;overflow-x:auto;border-bottom:1px solid var(--color-border);background:var(--color-bg-alt);padding:0 6px;flex:none;}
+.al-utab{display:flex;align-items:center;gap:7px;padding:10px 12px;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;user-select:none;flex:none;}
+.al-utab:hover{background:#fff;}
+.al-utab.al-on{background:#fff;color:var(--color-text-primary);font-weight:600;border-bottom-color:var(--color-primary);}
+.al-utab .al-uic{color:var(--color-primary);font-size:11px;}
+.al-utab .al-seq{width:17px;height:17px;border-radius:50%;background:#dde5ec;color:var(--color-text-muted);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none;}
+.al-utab.al-on .al-seq{background:var(--color-primary);color:#fff;}
+.al-utab .al-cnt{min-width:17px;height:17px;border-radius:9px;background:rgba(33,150,243,.14);color:#1565c0;display:grid;place-items:center;font-size:10px;font-weight:700;padding:0 5px;}
+.al-arrow{align-self:center;color:#b9c4cd;font-size:10px;flex:none;padding:0 1px;}
+.al-uq{padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
+.al-row{border:1px solid var(--color-border);border-radius:var(--r-md);padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;}
+.al-row.al-locked{background:var(--color-bg-alt);}
+.al-row.al-locked .al-tag{background:#fff;}
+.al-id{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.al-entrywrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;flex:1;min-width:300px;}
+.al-entry{display:inline-flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--color-text-secondary);}
+.al-entry input[type="number"]{width:76px;padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.al-entry input[type="text"]{padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.al-entry select{padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;background:#fff;}
+.al-entry input:focus,.al-entry select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.al-entry input:disabled,.al-entry select:disabled{background:#f2f2f2;color:#a5a5a5;}
+.al-ck{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--color-text-secondary);cursor:pointer;}
+.al-vs{color:var(--color-text-muted);}
+.al-acts{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none;}
+.al-acts .btn:disabled{opacity:.55;cursor:not-allowed;}
+.al-logchip{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-xs);border:1px solid var(--color-border);border-radius:999px;padding:3px 9px;color:var(--color-text-secondary);text-decoration:none;background:#fff;white-space:nowrap;}
+.al-logchip:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.al-logchip i{font-size:10px;color:var(--color-primary);}
+.al-note{font-size:var(--fs-xs);color:var(--color-text-muted);max-width:260px;white-space:normal;}
+.al-empty{font-size:var(--fs-sm);color:var(--color-text-hint);font-style:italic;padding:4px 2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat / batch…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html" class="active"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Auto Inspection Line</h1><div class="sub">Materials on the auto-line route — receipt, unit-by-unit results with sequential clearance, rework (MQA 8/9, §26.2)</div></div>
+      <div class="al-lsel" id="al-lsel"></div>
+    </div>
+    <div class="al-scroll">
+      <div class="depbanner"><i class="fa-solid fa-circle-info"></i><span>Materials whose <b>allocated inspection path</b> (mes_qc_material_path, §26.1) routes through the <b>AUTOLINE</b> unit group appear here. Path allocation and role-gated modification live on the Inspection worklist (MQA 7/8); the unit tabs below come from the path&#8217;s stages — data, in path sequence.</span></div>
+      <div class="al-toprow">
+        <div class="al-panel">
+          <div class="al-p-head"><i class="fa-solid fa-hand-holding-hand" title="Quality record IMSR/TS/QA-AIL/04 — handing over / taking over of material at the auto inspection line, stored in mes_qc_handover (MQA 9, §26.2)"></i> Pending receipt (taking-over) <span class="al-meta" id="al-pendMeta"></span></div>
+          <div class="al-p-body" id="al-pendList"></div>
+        </div>
+        <div class="al-panel">
+          <div class="al-p-head"><i class="fa-solid fa-chart-simple" title="Tracking of material on the auto line — per-unit status plus bundle/bar totals; reads worklist + handover + clearances (MQA 9, §26.2)"></i> Line tracking <span class="al-meta" id="al-trackMeta"></span></div>
+          <div class="al-trwrap"><table class="tbl"><thead><tr><th>Unit (path sequence)</th><th class="num">Pending</th><th class="num">Cleared</th><th class="num">Rework</th></tr></thead><tbody id="al-trackBody"></tbody></table></div>
+          <div class="al-tot" id="al-tot"></div>
+        </div>
+      </div>
+      <div class="al-panel">
+        <div class="al-p-head"><i class="fa-solid fa-list" title="Materials taken over onto the line — order, heat, batch, counts, current unit and status (MQA 9, §26.2)"></i> Materials on line <span class="al-meta" id="al-lineMeta"></span></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Line</th><th>Order</th><th>Heat No</th><th>Batch</th><th>Grade</th><th>Form / Size</th><th class="num">Bundles</th><th class="num">Bars</th><th title="First unit not yet cleared — path sequence (§26.2)">Current unit</th><th>Status</th><th class="col-actions"></th></tr></thead><tbody id="al-lineBody"></tbody></table></div>
+      </div>
+      <div class="al-panel">
+        <div class="al-p-head"><i class="fa-solid fa-diagram-next" title="Unit tabs = the allocated path&#8217;s stages with unit_group AUTOLINE (mes_qc_inspection_path_stage, §26.1) — data, in path sequence; unit-by-unit results with sequential clearance and rework (MQA 8, §26.2)"></i> Unit results — path sequence <span class="al-meta">sequential clearance per batch · rework → salvage (§26.2 / §12)</span></div>
+        <div class="al-utabs" id="al-utabs"></div>
+        <div class="al-uq" id="al-uq"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Taking-over modal -->
+<div class="overlay" id="al-toOv">
+  <div class="modal sm">
+    <div class="modal-head">Taking-over — auto inspection line <span class="x" onclick="closeTake()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="al-toCtx"></div>
+      <div class="depbanner"><i class="fa-solid fa-file-signature"></i><span>Records the <b>TAKE_OVER</b> leg in <b>mes_qc_handover</b> — quality record <b>IMSR/TS/QA-AIL/04</b> for handing over / taking over; piece counts cross-check production counts (MQA 9, §26.2).</span></div>
+      <div class="mgrid">
+        <div class="fld"><label>Bundles received</label><input id="al-toBundles" type="number" min="0"/></div>
+        <div class="fld"><label>Bars received</label><input id="al-toBars" type="number" min="0"/></div>
+        <div class="fld"><label>Received by</label><input id="al-toBy" value="S. Prasad"/></div>
+        <div class="fld"><label>Remarks</label><input id="al-toRem" placeholder="condition on receipt, shortages…"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeTake()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTake()" title="Auto-line taking-over record — mes_qc_handover (MQA 9, §26.2)"><i class="fa-solid fa-check"></i> Confirm taking-over</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   §26.2 Auto inspection line (JSW Mills QA — MQA 8, 9).
+   Materials whose allocated inspection path (mes_qc_material_path, §26.1)
+   routes through the AUTOLINE unit group appear here. Taking-over writes
+   mes_qc_handover (direction TAKE_OVER; quality record IMSR/TS/QA-AIL/04,
+   MQA 9). Unit tabs = the path's stages (mes_qc_inspection_path_stage,
+   unit_group AUTOLINE) in sequence_no order — configuration data, not
+   hardcoded. Clearance is sequential per batch; a rework decision routes
+   to salvage (§12). Auto UT / MFLT / Eddy Current results land over the
+   machine interface (capture source MACHINE, §26.9, MQA 13/14/15);
+   end-cut capture uses the End Discard master (§25.5/§25.6, MQA 16).
+   Demo-level only: seed state + toasts, no persistence.
+   ============================================================ */
+const LINES=['Line-3','Line-4'];   /* auto-line instances — configuration data, not hardcoded logic */
+const REASONS=['Pipe end','End crack','Off-size end','Lap / seam end','Test sample'];   /* End Discard master rows (§25.5) */
+const UNITS=[   /* mes_qc_inspection_path_stage rows, unit_group AUTOLINE, sequence_no order (§26.1) */
+ {code:'TRS',name:'Two-Roll Straightener',icon:'fa-grip-lines',kind:'straight',limit:1.0},
+ {code:'MRS',name:'Multi-Roll Straightener',icon:'fa-bars-staggered',kind:'straight',limit:0.5},
+ {code:'SB',name:'Shot Blasting',icon:'fa-spray-can-sparkles',kind:'shot'},
+ {code:'AUT',name:'Auto UT',icon:'fa-wave-square',kind:'machine'},
+ {code:'MFL',name:'MFLT',icon:'fa-magnet',kind:'machine'},
+ {code:'EC',name:'Eddy Current',icon:'fa-bolt',kind:'machine'},
+ {code:'ECC',name:'End Cut & Chamfer',icon:'fa-scissors',kind:'endcut'}
+];
+
+/* Handed over by the previous area — awaiting the taking-over leg at the line boundary */
+const PENDING=[
+ {line:'Line-3',order:'FPO-26-0421',heat:'2526-16783',batch:'E121717',grade:'316L',size:'RO 68 Dia',bundles:4,bars:120,from:'Bright Bar Finishing'},
+ {line:'Line-4',order:'FPO-26-0427',heat:'2526-16791',batch:'E121802',grade:'304L',size:'23 Hex',bundles:6,bars:240,from:'Bright Bar Finishing'}
+];
+
+/* Taken-over materials — per-unit state st: P pending · C cleared · R rework */
+const MATS=[
+ {line:'Line-3',order:'FPO-26-0405',heat:'2526-16482',batch:'B030841',grade:'316L',size:'RO 68 Dia',bundles:4,bars:120,
+  u:{TRS:{st:'C',act:0.6},MRS:{st:'C',act:0.4},SB:{st:'C',ok:true,rem:'Uniform matt, no residual scale'},AUT:{st:'P',insp:120,good:117,rej:3},MFL:{st:'P'},EC:{st:'P'},ECC:{st:'P'}}},
+ {line:'Line-3',order:'FPO-26-0411',heat:'2526-16493',batch:'B030072',grade:'304L',size:'RO 42 Dia',bundles:3,bars:96,
+  u:{TRS:{st:'C',act:0.8},MRS:{st:'P'},SB:{st:'P'},AUT:{st:'P'},MFL:{st:'P'},EC:{st:'P'},ECC:{st:'P'}}},
+ {line:'Line-4',order:'FPO-26-0418',heat:'2526-16512',batch:'E120644',grade:'416',size:'23 Hex',bundles:5,bars:210,
+  u:{TRS:{st:'P'},MRS:{st:'P'},SB:{st:'P'},AUT:{st:'P'},MFL:{st:'P'},EC:{st:'P'},ECC:{st:'P'}}},
+ {line:'Line-4',order:'FPO-26-0396',heat:'2526-16455',batch:'E120598',grade:'17-4PH',size:'RO 55 Dia',bundles:2,bars:60,
+  u:{TRS:{st:'C',act:0.7},MRS:{st:'C',act:0.35},SB:{st:'C',ok:true,rem:''},AUT:{st:'C',insp:60,good:60,rej:0},MFL:{st:'C',insp:60,good:59,rej:1},EC:{st:'C',insp:59,good:59,rej:0},ECC:{st:'P'}}},
+ {line:'Line-3',order:'FPO-26-0389',heat:'2526-16430',batch:'B030755',grade:'316L',size:'RO 32 Dia',bundles:3,bars:105,
+  u:{TRS:{st:'C',act:0.9},MRS:{st:'C',act:0.45},SB:{st:'C',ok:true,rem:''},AUT:{st:'C',insp:105,good:98,rej:7},MFL:{st:'R',insp:98,good:83,rej:15},EC:{st:'P'},ECC:{st:'P'}}},
+ {line:'Line-4',order:'FPO-26-0378',heat:'2526-16402',batch:'B030698',grade:'304L',size:'RO 68 Dia',bundles:4,bars:118,
+  u:{TRS:{st:'C',act:0.5},MRS:{st:'C',act:0.3},SB:{st:'C',ok:true,rem:''},AUT:{st:'C',insp:118,good:118,rej:0},MFL:{st:'C',insp:118,good:117,rej:1},EC:{st:'C',insp:117,good:117,rej:0},ECC:{st:'C',len:60,reason:'End crack',ch:true}}}
+];
+
+let curLine='',curTab=0,curTake=-1;
+
+function lineOK(o){return !curLine||o.line===curLine;}
+function uSt(m,c){return m.u[c]||(m.u[c]={st:'P'});}
+function unitBy(c){for(let i=0;i<UNITS.length;i++)if(UNITS[i].code===c)return UNITS[i];return null;}
+function curIdx(m){for(let i=0;i<UNITS.length;i++){if(uSt(m,UNITS[i].code).st!=='C')return i;}return UNITS.length;}
+function matSt(m){for(let i=0;i<UNITS.length;i++){if(uSt(m,UNITS[i].code).st==='R')return 'REWORK';}return curIdx(m)>=UNITS.length?'CLEARED':'AT_UNIT';}
+
+/* ===== Line selector (lines are data, §26.2) ===== */
+function setLine(l){curLine=l;renderAll();}
+function renderLines(){
+  const chips=[{k:'',n:'All lines'}].concat(LINES.map(function(l){return {k:l,n:l};}));
+  document.getElementById('al-lsel').innerHTML=chips.map(function(c){
+    const n=MATS.filter(function(m){return (!c.k||m.line===c.k)&&matSt(m)!=='CLEARED';}).length;
+    return '<button class="al-lchip'+(curLine===c.k?' al-on':'')+'" title="Line selector — auto-line instances are configuration data (§26.1/§26.2), not hardcoded" onclick="setLine(\''+c.k+'\')">'+c.n+' · '+n+'</button>';
+  }).join('');
+}
+
+/* ===== Pending receipt (taking-over, mes_qc_handover — MQA 9) ===== */
+function renderPending(){
+  const host=document.getElementById('al-pendList');
+  const list=PENDING.map(function(p,i){return {p:p,i:i};}).filter(function(x){return lineOK(x.p);});
+  if(!list.length){host.innerHTML='<div class="al-empty">No materials awaiting taking-over'+(curLine?' on '+curLine:'')+'.</div>';}
+  else host.innerHTML=list.map(function(x){const p=x.p;
+    return '<div class="al-mat" title="Handed over by '+p.from+' — awaiting the taking-over leg (mes_qc_handover, MQA 9, §26.2)">'+
+      '<span class="al-tag">'+p.line+'</span>'+
+      '<span class="al-tag">Order <b>'+p.order+'</b></span>'+
+      '<span class="al-tag">Heat <b>'+p.heat+'</b></span>'+
+      '<span class="al-tag">Batch <b>'+p.batch+'</b></span>'+
+      '<span class="al-tag">'+p.grade+' · '+p.size+'</span>'+
+      '<span class="al-tag"><b>'+p.bundles+'</b> bundles / <b>'+p.bars+'</b> bars</span>'+
+      '<button class="btn btn-primary btn-sm al-take" title="Auto-line taking-over record — mes_qc_handover (MQA 9, §26.2)" onclick="openTake('+x.i+')"><i class="fa-solid fa-right-to-bracket"></i> Take over</button></div>';
+  }).join('');
+  document.getElementById('al-pendMeta').textContent=list.length+' awaiting taking-over';
+}
+function openTake(i){
+  curTake=i;const p=PENDING[i];
+  document.getElementById('al-toCtx').innerHTML=
+    '<span class="chip">Order <b>'+p.order+'</b></span><span class="chip">Heat <b>'+p.heat+'</b></span>'+
+    '<span class="chip">Batch <b>'+p.batch+'</b></span><span class="chip">'+p.grade+' · '+p.size+'</span>'+
+    '<span class="chip">From <b>'+p.from+'</b></span><span class="chip">To <b>'+p.line+'</b></span>';
+  document.getElementById('al-toBundles').value=p.bundles;
+  document.getElementById('al-toBars').value=p.bars;
+  document.getElementById('al-toBy').value='S. Prasad';
+  document.getElementById('al-toRem').value='';
+  document.getElementById('al-toOv').classList.add('open');
+}
+function closeTake(){document.getElementById('al-toOv').classList.remove('open');}
+function saveTake(){
+  const p=PENDING[curTake];
+  const bu=parseInt(document.getElementById('al-toBundles').value,10);
+  const ba=parseInt(document.getElementById('al-toBars').value,10);
+  if(!bu||bu<1){mesToast('Enter the bundles count received','err');return;}
+  if(!ba||ba<1){mesToast('Enter the bars count received','err');return;}
+  PENDING.splice(curTake,1);
+  const u={};UNITS.forEach(function(x){u[x.code]={st:'P'};});
+  MATS.push({line:p.line,order:p.order,heat:p.heat,batch:p.batch,grade:p.grade,size:p.size,bundles:bu,bars:ba,
+    recvBy:document.getElementById('al-toBy').value||'—',recvRem:document.getElementById('al-toRem').value.trim(),u:u});
+  closeTake();renderAll();
+  mesToast('Taking-over recorded — mes_qc_handover','ok');
+  if(bu!==p.bundles||ba!==p.bars)mesToast('Received counts differ from production ('+p.bundles+' bundles / '+p.bars+' bars) — cross-check flagged (MQA 9)','warn');
+}
+
+/* ===== Materials on line ===== */
+function renderLine(){
+  const tb=document.getElementById('al-lineBody');
+  const list=MATS.map(function(m,i){return {m:m,i:i};}).filter(function(x){return lineOK(x.m);});
+  if(!list.length){tb.innerHTML='<tr class="empty"><td colspan="11">No materials on the line'+(curLine?' ('+curLine+')':'')+'.</td></tr>';}
+  else tb.innerHTML=list.map(function(x){
+    const m=x.m,st=matSt(m),idx=curIdx(m);
+    const cu=st==='CLEARED'?'<span class="due-hint">— line complete</span>':UNITS[idx].name+' <span class="due-hint">('+(idx+1)+'/'+UNITS.length+')</span>';
+    const b=st==='CLEARED'?'b-done':st==='REWORK'?'b-hold':'b-info';
+    const tt=st==='REWORK'?'Rework decision at '+UNITS[idx].name+' — routed to salvage (§12)':st==='CLEARED'?'All units cleared in sequence (§26.2)':'Sequential clearance in progress (§26.2)';
+    return '<tr><td>'+m.line+'</td><td>'+m.order+'</td><td class="mono">'+m.heat+'</td><td class="mono">'+m.batch+'</td><td>'+m.grade+'</td><td>'+m.size+'</td><td class="num">'+m.bundles+'</td><td class="num">'+m.bars+'</td><td>'+cu+'</td><td><span class="badge '+b+'" title="'+tt+'">'+st+'</span></td><td class="actions"><button class="btn-icon" title="View" onclick="openViewEl(this)"><i class="fa-solid fa-eye"></i></button></td></tr>';
+  }).join('');
+  const at=list.filter(function(x){return matSt(x.m)==='AT_UNIT';}).length;
+  const cl=list.filter(function(x){return matSt(x.m)==='CLEARED';}).length;
+  const rw=list.filter(function(x){return matSt(x.m)==='REWORK';}).length;
+  document.getElementById('al-lineMeta').textContent=at+' at unit · '+rw+' rework · '+cl+' cleared';
+}
+
+/* ===== Unit tabs + queues (sequential clearance, §26.2) ===== */
+function selUnit(i){curTab=i;renderUnits();}
+function renderUnits(){
+  document.getElementById('al-utabs').innerHTML=UNITS.map(function(u,i){
+    const cnt=MATS.filter(function(m){return lineOK(m)&&matSt(m)!=='CLEARED'&&curIdx(m)===i;}).length;
+    const t='<div class="al-utab'+(i===curTab?' al-on':'')+'" title="Path stage '+(i+1)+' of '+UNITS.length+' — unit_group AUTOLINE, from the allocated inspection path (§26.1/§26.2)" onclick="selUnit('+i+')"><span class="al-seq">'+(i+1)+'</span><i class="fa-solid '+u.icon+' al-uic"></i>'+u.name+(cnt?'<span class="al-cnt" title="materials currently at this unit">'+cnt+'</span>':'')+'</div>';
+    return (i?'<i class="fa-solid fa-angle-right al-arrow"></i>':'')+t;
+  }).join('');
+  renderQueue();
+}
+function pfHTML(v,limit){
+  if(v===''||v==null||isNaN(parseFloat(v)))return '<span class="badge b-draft">PENDING</span>';
+  return parseFloat(v)<=limit
+    ?'<span class="badge b-done">PASS</span>'
+    :'<span class="badge b-hold" title="Above the straightness limit — clearance blocked, use Rework (§26.2)">FAIL</span>';
+}
+function numIn(mi,c,f,v,dis,step){return '<input type="number" min="0"'+(step?' step="'+step+'"':'')+' value="'+(v==null?'':v)+'"'+dis+' oninput="uSet('+mi+',\''+c+'\',\''+f+'\',this)">';}
+function uSet(mi,c,f,el){
+  const s=uSt(MATS[mi],c);
+  s[f]=el.type==='checkbox'?el.checked:el.value;
+  if(f==='act'){const u=unitBy(c);const pc=document.getElementById('al-pf-'+mi+'-'+c);if(pc)pc.innerHTML=pfHTML(el.value,u.limit);}
+}
+function entryHTML(m,mi,u,s,dis){
+  const c=u.code;
+  if(u.kind==='straight'){
+    return '<span class="al-entry" title="Straightness — actual vs limit at the '+u.name+' (MQA 10/11, §26.2)">Straightness '+numIn(mi,c,'act',s.act,dis,'0.05')+' mm/m <span class="al-vs">limit &le; <b>'+u.limit.toFixed(2)+'</b> mm/m</span> <span id="al-pf-'+mi+'-'+c+'">'+pfHTML(s.act,u.limit)+'</span></span>'+
+      '<a class="al-logchip" href="instrument-checklist.html" title="Machine log book — the shift instrument checklist bound to this machine (mes_qc_instrument_checklist.instrument_id; numeric readings supported) — §26.4, MQA 10/11"><i class="fa-solid fa-book"></i> Machine log book</a>';
+  }
+  if(u.kind==='shot'){
+    return '<label class="al-ck" title="Scale-removal check after shot blasting (MQA 12, §26.2)"><input type="checkbox"'+(s.ok?' checked':'')+dis+' onchange="uSet('+mi+',\''+c+'\',\'ok\',this)"> Scale removal OK</label>'+
+      '<span class="al-entry">Surface condition <input type="text" style="width:210px" placeholder="e.g. uniform matt, no residual scale" value="'+(s.rem||'')+'"'+dis+' oninput="uSet('+mi+',\''+c+'\',\'rem\',this)"></span>'+
+      '<a class="al-logchip" href="instrument-checklist.html" title="Machine log book — shift checklist bound to the shot-blast machine (§26.4, MQA 12)"><i class="fa-solid fa-book"></i> Machine log book</a>';
+  }
+  if(u.kind==='machine'){
+    return '<span class="al-entry" title="Per-piece results land over the machine interface (capture source MACHINE); good / rejected become the OK / Not-OK piece counts — §26.9, MQA 13/14/15">Bars inspected '+numIn(mi,c,'insp',s.insp,dis)+' Good '+numIn(mi,c,'good',s.good,dis)+' Rejected '+numIn(mi,c,'rej',s.rej,dis)+' <span class="srcchip" title="Results land over the machine interface — capture source MACHINE (§26.9, MQA 13/14/15)">MACHINE</span></span>';
+  }
+  if(u.kind==='endcut'){
+    const opts='<option value="">— end-cut reason —</option>'+REASONS.map(function(r){return '<option'+(s.reason===r?' selected':'')+'>'+r+'</option>';}).join('');
+    return '<span class="al-entry" title="End-cut length &amp; reason from the End Discard master (§25.5/§25.6, MQA 16)">End cut '+numIn(mi,c,'len',s.len,dis)+' mm <select'+dis+' onchange="uSet('+mi+',\''+c+'\',\'reason\',this)">'+opts+'</select></span>'+
+      '<label class="al-ck" title="Chamfer check at End Cut &amp; Chamfer (MQA 16, §26.2)"><input type="checkbox"'+(s.ch?' checked':'')+dis+' onchange="uSet('+mi+',\''+c+'\',\'ch\',this)"> Chamfer OK</label>';
+  }
+  return '';
+}
+function renderQueue(){
+  const u=UNITS[curTab],host=document.getElementById('al-uq');
+  const rows=[];
+  MATS.forEach(function(m,mi){
+    if(!lineOK(m))return;
+    if(matSt(m)==='CLEARED')return;
+    const s=uSt(m,u.code);
+    if(s.st==='C')return;
+    rows.push({m:m,mi:mi,s:s});
+  });
+  if(!rows.length){host.innerHTML='<div class="al-empty">No material queued at '+u.name+(curLine?' on '+curLine:'')+'.</div>';return;}
+  host.innerHTML=rows.map(function(x){
+    const m=x.m,mi=x.mi,s=x.s,idx=curIdx(m);
+    const state=s.st==='R'?'REWORK':(idx===curTab?'HERE':'LOCKED');
+    const dis=state==='HERE'?'':' disabled';
+    const chip=state==='HERE'?'<span class="badge b-info" title="Batch is at this unit — entry &amp; clearance open (§26.2)">AT UNIT</span>'
+      :state==='REWORK'?'<span class="badge b-hold" title="Rework decision — routed to salvage (§12)">REWORK</span>'
+      :'<span class="badge b-draft" title="previous unit not cleared — sequential clearance §26.2"><i class="fa-solid fa-lock"></i> AWAITING</span>';
+    const id='<span class="al-id">'+chip+
+      '<span class="al-tag">'+m.line+'</span>'+
+      '<span class="al-tag">Batch <b>'+m.batch+'</b></span>'+
+      '<span class="al-tag">Heat <b>'+m.heat+'</b></span>'+
+      '<span class="al-tag">'+m.grade+' · '+m.size+'</span>'+
+      '<span class="al-tag">'+m.bundles+' bnd / '+m.bars+' bars</span></span>';
+    let acts;
+    if(state==='REWORK'){
+      acts='<span class="al-note">Routed to salvage (§12) — resumes on the line after the salvage disposition.</span>';
+    }else{
+      const lock=state==='LOCKED';
+      acts=(lock
+        ?'<button class="btn btn-primary btn-sm al-clear" disabled title="previous unit not cleared — sequential clearance §26.2"><i class="fa-solid fa-lock"></i> Clear unit</button>'
+        :'<button class="btn btn-primary btn-sm al-clear" title="Clear '+u.name+' for '+m.batch+' — unlocks the next unit (sequential clearance, MQA 8, §26.2)" onclick="clearUnit('+mi+','+curTab+')"><i class="fa-solid fa-check"></i> Clear unit</button>')+
+        (lock
+        ?'<button class="btn btn-ghost btn-sm" disabled title="previous unit not cleared — sequential clearance §26.2"><i class="fa-solid fa-rotate-left"></i> Rework</button>'
+        :'<button class="btn btn-ghost btn-sm" title="Rework decision — routes to the salvage workflow (§12)" onclick="reworkUnit('+mi+','+curTab+')"><i class="fa-solid fa-rotate-left"></i> Rework</button>');
+    }
+    return '<div class="al-row'+(state==='LOCKED'?' al-locked':'')+'">'+id+'<span class="al-entrywrap">'+entryHTML(m,mi,u,s,dis)+'</span><span class="al-acts">'+acts+'</span></div>';
+  }).join('');
+}
+function clearUnit(mi,ci){
+  const m=MATS[mi],u=UNITS[ci],s=uSt(m,u.code);
+  if(u.kind==='straight'){
+    if(s.act===''||s.act==null||isNaN(parseFloat(s.act))){mesToast('Enter the measured straightness (mm/m) first','err');return;}
+    if(parseFloat(s.act)>u.limit){mesToast('Straightness '+s.act+' mm/m exceeds the '+u.limit.toFixed(2)+' mm/m limit — cannot clear, use Rework','err');return;}
+  }else if(u.kind==='shot'){
+    if(!s.ok){mesToast('Tick Scale removal OK to clear, or record a Rework decision','err');return;}
+  }else if(u.kind==='machine'){
+    if(s.insp==null||s.insp===''){mesToast('Bars inspected is required (machine feed / manual)','err');return;}
+    const g=parseInt(s.good||0,10),r=parseInt(s.rej||0,10);
+    if(g+r!==parseInt(s.insp,10)){mesToast('Good + Rejected must equal bars inspected ('+s.insp+')','err');return;}
+  }else if(u.kind==='endcut'){
+    if(s.len==null||s.len===''){mesToast('Enter the end-cut length (mm) first','err');return;}
+    if(!s.reason){mesToast('Select the end-cut reason (End Discard master)','err');return;}
+    if(!s.ch){mesToast('Tick Chamfer OK to clear, or record a Rework decision','err');return;}
+  }
+  s.st='C';
+  const n=curIdx(m);
+  if(n>=UNITS.length)mesToast(u.name+' cleared — '+m.batch+' complete on the line','ok');
+  else mesToast(u.name+' cleared — '+m.batch+' → next: '+UNITS[n].name,'ok');
+  renderAll();
+}
+function reworkUnit(mi,ci){
+  uSt(MATS[mi],UNITS[ci].code).st='R';
+  mesToast('Rework decision — routed to salvage (§12)','warn');
+  renderAll();
+}
+
+/* ===== Tracking summary (MQA 9 monitoring) ===== */
+function renderTrack(){
+  document.getElementById('al-trackBody').innerHTML=UNITS.map(function(u,i){
+    let p=0,c=0,r=0;
+    MATS.forEach(function(m){if(!lineOK(m))return;const s=uSt(m,u.code);if(s.st==='C')c++;else if(s.st==='R')r++;else p++;});
+    return '<tr><td>'+(i+1)+'. '+u.name+'</td><td class="num">'+(p||'—')+'</td><td class="num">'+(c||'—')+'</td><td class="num">'+(r?'<span class="badge b-hold">'+r+'</span>':'—')+'</td></tr>';
+  }).join('');
+  const on=MATS.filter(function(m){return lineOK(m)&&matSt(m)!=='CLEARED';});
+  let bu=0,ba=0;on.forEach(function(m){bu+=m.bundles;ba+=m.bars;});
+  document.getElementById('al-tot').innerHTML=
+    '<span class="al-tag" title="Materials taken over and not yet fully cleared (MQA 9)">Materials on line <b>'+on.length+'</b></span>'+
+    '<span class="al-tag" title="Total bundles on line — from the taking-over counts (mes_qc_handover, MQA 9)">Bundles <b>'+bu+'</b></span>'+
+    '<span class="al-tag" title="Total bars on line — from the taking-over counts (mes_qc_handover, MQA 9)">Bars <b>'+ba+'</b></span>'+
+    '<span class="al-tag">Awaiting taking-over <b>'+PENDING.filter(lineOK).length+'</b></span>';
+  document.getElementById('al-trackMeta').textContent=curLine||'all lines';
+}
+
+function renderAll(){renderLines();renderPending();renderLine();renderUnits();renderTrack();}
+
+/* ===== Toast helper (standalone — this screen has no shell toast) ===== */
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+/* ===== Init ===== */
+renderAll();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[▲▼⇅]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Instrument Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
+.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
+.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
+.result-band span{color:var(--color-text-muted);}
+.result-band b{font-variant-numeric:tabular-nums;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+/* ===== Instrument Checklist (SMSQA3 / SMSQA8) page-specific ===== */
+.chipstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--sp3);}
+.ichip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:5px 12px;color:var(--color-text-secondary);}
+.ichip i{color:var(--color-primary);font-size:11px;}
+.ichip b{color:var(--color-text-primary);font-weight:600;}
+.gatebanner{display:flex;align-items:center;gap:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--r-sm);padding:9px 14px;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:#795548;}
+.gatebanner i{color:#f57c00;}
+.gatebanner .glink{margin-left:auto;color:var(--color-primary);font-weight:600;cursor:pointer;white-space:nowrap;}
+.gatebanner .glink:hover{text-decoration:underline;}
+.b-on{background:rgba(76,175,80,.12);color:#388e3c;} .b-off{background:rgba(158,158,158,.14);color:#757575;}
+.b-on i,.b-off i{font-size:9px;margin-right:3px;}
+.cntchip{display:inline-block;min-width:20px;text-align:center;background:rgba(158,158,158,.16);color:#616161;border-radius:9px;font-size:10px;font-weight:700;padding:1px 7px;}
+.okratio{font-variant-numeric:tabular-nums;font-weight:600;}
+.okratio.all{color:var(--color-success);} .okratio.part{color:#ef6c00;} .okratio.none{color:var(--color-text-hint);}
+.chk-list{list-style:none;margin:0;padding:0;}
+.chk-list li{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:10px 12px;border:1px solid var(--color-border-light);border-radius:var(--r-sm);margin-bottom:8px;align-items:center;}
+.chk-list li.bad{border-color:#f5c6c6;background:#fff8f8;}
+.chk-name{font-size:13px;}
+.chk-name .chk-ico{color:var(--color-primary);width:18px;display:inline-block;text-align:center;margin-right:4px;font-size:12px;}
+.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--r-sm);overflow:hidden;flex:none;}
+.seg button{border:none;background:#fff;padding:5px 13px;font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--color-text-hint);}
+.seg button.on-ok{background:var(--color-success);color:#fff;}
+.seg button.on-nok{background:var(--color-danger);color:#fff;}
+.chk-rem{grid-column:1/-1;}
+.chk-rem input{width:100%;padding:6px 9px;border:1px solid #e4e4e4;border-radius:var(--r-sm);font-size:12px;font-family:inherit;}
+.chk-rem input:focus{outline:none;border-color:var(--color-primary);}
+.chk-rem input.need{border-color:var(--color-danger);background:#fff5f5;}
+.ro-badge{font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:9px;white-space:nowrap;}
+.ro-ok{background:rgba(76,175,80,.12);color:#388e3c;} .ro-nok{background:rgba(244,67,54,.12);color:#c62828;}
+.ro-rem{grid-column:1/-1;font-size:12px;color:var(--color-text-muted);}
+.ro-rem i{font-size:10px;margin-right:5px;color:#bbb;}
+.locknote{display:flex;gap:12px;align-items:flex-start;background:#ffebee;border:1px solid #ffcdd2;border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:#b71c1c;margin-bottom:var(--sp3);}
+.locknote i{font-size:20px;margin-top:2px;}
+.locknote .ln-sub{margin-top:6px;font-weight:400;color:#8d3b3b;font-size:12px;}
+
+/* ===== mlog: MACHINE LOG BOOKS (§26.4, MQA 10–12 & 18) — insert-only additions ===== */
+.mlog-mc{display:inline-flex;align-items:center;gap:6px;cursor:help;}
+.mlog-mc i{color:var(--color-primary);font-size:11px;}
+.mlog-code{font-weight:600;font-variant-numeric:tabular-nums;}
+.mlog-mname{color:var(--color-text-muted);}
+.mlog-th{cursor:help;border-bottom:1px dotted #aab7c0;}
+.mlog-b-scope{background:rgba(0,137,123,.12);color:#00796b;}
+.mlog-b-scope i{font-size:9px;margin-right:3px;}
+.chk-list li.mlog-li{grid-template-columns:1fr auto auto;}
+.mlog-val{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;cursor:help;}
+.mlog-val input{width:76px;padding:5px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:12px;font-family:inherit;text-align:right;font-variant-numeric:tabular-nums;}
+.mlog-val input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.mlog-uom{font-size:11px;color:var(--color-text-muted);white-space:nowrap;font-weight:400;}
+.mlog-val-ro{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:help;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search checklist…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html" class="active"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Instrument Checklist</h1><div class="sub">Shift-wise measuring-instrument verification — completed once per shift per role; gates the inspection screens until done (SMSQA3 / SMSQA8)</div></div>
+    </div>
+    <div class="chipstrip">
+      <span class="ichip"><i class="fa-solid fa-lock"></i> Gated screens <b>Online Inspection · Final Inspection</b></span>
+      <span class="ichip"><i class="fa-solid fa-rotate"></i> Frequency <b>SHIFT</b></span>
+      <span class="ichip"><i class="fa-solid fa-user-check"></i> Role <b>QA Inspector</b></span>
+    </div>
+    <div class="gatebanner" id="gateBanner">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><b>Shift A (21-Aug-2026)</b> — the ONLINE instrument checklist is still pending. Online / Final Inspection stay locked for role QA Inspector until it is completed.</span>
+      <span class="glink" onclick="openRun(gateIdx())">Run checklist now →</span>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Checklist no / user / shift…" oninput="render()"/></div>
+      <select id="fScope" onchange="render()"><option value="">All scopes</option><option>ONLINE</option><option>OFFLINE</option><option>AUTOLINE_UNIT</option><option>MPI</option></select>
+      <select id="fStatus" onchange="render()"><option value="">All statuses</option><option>PENDING</option><option>COMPLETED</option><option>LOCKED-OUT</option></select>
+      <select id="fShift" onchange="render()"><option value="">All shifts</option><option>A</option><option>B</option><option>C</option></select>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><span id="rowCount"></span></div>
+    </div>
+  </main>
+</div>
+
+<!-- Run / View checklist modal -->
+<div class="overlay" id="runOv">
+  <div class="modal">
+    <div class="modal-head"><span id="runTitle">Run Checklist</span> <span class="x" onclick="closeRun()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="runCtx"></div>
+      <div id="runNote" style="display:none;font-size:13px;color:var(--color-text-muted);background:var(--color-bg-alt);border:1px dashed var(--color-border);border-radius:var(--r-sm);padding:14px;"></div>
+      <ul class="chk-list" id="runList"></ul>
+      <div class="result-band" id="runBand"><span>Items OK</span> <b id="runOkN">6/6</b> <span>·</span> <span id="runHint">Every NOT OK item needs a remark before the checklist can be completed</span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="runCancel" onclick="closeRun()">Cancel</button>
+      <button class="btn btn-primary" id="runDone" onclick="completeRun()"><i class="fa-solid fa-check"></i> Complete checklist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gating lock modal (auto-opens while the current shift's checklist is PENDING) -->
+<div class="overlay" id="lockOv">
+  <div class="modal sm">
+    <div class="modal-head">Screen locked — checklist pending <span class="x" onclick="closeLock()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="locknote"><i class="fa-solid fa-lock"></i>
+        <div><b>SMS QA Online Inspection is locked for Shift A until the instrument checklist is completed.</b>
+          <div class="ln-sub">Final Inspection is gated the same way (SMSQA8). Complete the Shift A measuring-instrument checklist for role QA Inspector to unlock result entry on both screens.</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--color-text-muted);">Checklist <b>ICL-2526-0141</b> · Scope <b>ONLINE</b> · Shift <b>A · 21-Aug-2026</b> · User <b>R. Sahoo</b></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeLock()">Close</button>
+      <button class="btn btn-primary" onclick="closeLock();openRun(gateIdx())"><i class="fa-solid fa-list-check"></i> Run checklist now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   GATE (SMSQA3 / SMSQA8): in the real system the gate is enforced
+   SERVER-SIDE per user + shift + role against mes_qc_instrument_check_record —
+   the Online / Final Inspection result-entry APIs refuse writes until the
+   shift's checklist row is COMPLETED for that user+role. The lock pop-up is a
+   platform session hook that fires on the first login of the shift; this
+   static demo re-creates it on page load while the seeded row is PENDING.
+   ============================================================ */
+const NOW_TXT='21-Aug 07:40';                                /* fixed demo clock: Shift A of 21-Aug-2026 (06:00-14:00) */
+const CUR={shift:'A',date:'21-Aug-2026',user:'R. Sahoo'};    /* logged-in demo user, role QA Inspector */
+
+const CHECK_ITEMS=[
+ {ico:'fa-ruler-horizontal',n:'Vernier caliper — zero error within ±0.02 mm'},
+ {ico:'fa-ruler',n:'Micrometer — calibration valid (sticker in date)'},
+ {ico:'fa-tape',n:'Measuring tape — condition OK, no kinks / worn markings'},
+ {ico:'fa-cubes',n:'Gauge block set — complete per box list'},
+ {ico:'fa-compress',n:'Hardness tester — verified on standard test block'},
+ {ico:'fa-wave-square',n:'UT probe — couplant available, probe &amp; cable OK'}
+];
+function resRow(noks,rems){return CHECK_ITEMS.map(function(_,i){return {ok:!(noks&&noks.indexOf(i)>=0),rem:(rems&&rems[i])||''};});}
+
+/* ===== mlog (§26.4, MQA 10–12 & 18): MACHINE LOG BOOKS =====
+   A checklist bound to a machine/unit (mes_qc_instrument_checklist.instrument_id FK)
+   IS that unit's shift log book. Such rows carry machine/machineName + their OWN items[];
+   items with valueNum+uom are MEASURED entries (value_num + uom on
+   mes_qc_instrument_check_record_item) beside the OK/remark. Plain role checklists
+   keep using CHECK_ITEMS above — untouched. */
+const MLOG_STR_ITEMS=[
+ {ico:'fa-gauge-high',n:'Hydraulic pressure — straightening rolls',valueNum:142,uom:'bar'},
+ {ico:'fa-arrows-left-right-to-line',n:'Roll gap check — set vs size table'},
+ {ico:'fa-ruler-horizontal',n:'Entry / exit guide alignment OK'},
+ {ico:'fa-temperature-half',n:'Roll cooling water temperature',valueNum:31,uom:'°C'},
+ {ico:'fa-oil-can',n:'Lubrication level — gearbox &amp; bearings OK'},
+ {ico:'fa-rotate',n:'Roll surface condition — no pick-up / scoring'}
+];
+const MLOG_MPI_ITEMS=[
+ {ico:'fa-flask',n:'Bath concentration — settling test',valueNum:1.2,uom:'%'},
+ {ico:'fa-lightbulb',n:'UV light intensity at inspection surface',valueNum:1250,uom:'µW/cm²'},
+ {ico:'fa-bolt',n:'Magnetising current check',valueNum:1800,uom:'A'},
+ {ico:'fa-eye-slash',n:'Darkened viewing area — ambient light OK'}
+];
+function mlogRes(items,noks,rems){return items.map(function(it,i){return {ok:!(noks&&noks.indexOf(i)>=0),rem:(rems&&rems[i])||'',valueNum:(it.valueNum!=null?it.valueNum:null),uom:it.uom||null};});}
+
+/* gate:true = the current shift+role+scope record that locks the inspection screens */
+const ROWS=[
+ {no:'ICL-2526-0141',scope:'ONLINE', shift:'A',date:'21-Aug-2026',user:'R. Sahoo',status:'PENDING',   done:'',            res:null,gate:true},
+ /* mlog: machine log books of the current shift (§26.4) — MPI process log pending, straightener log done */
+ {no:'ICL-2526-0143',scope:'MPI',machine:'MPI-01',machineName:'MPI Machine',mtip:'MPI process-control log — bath &amp; UV per format IMSR/TS/QA-RP/12 (§26.4, MQA 18)',shift:'A',date:'21-Aug-2026',user:'D. Patil',status:'PENDING',done:'',res:null,items:MLOG_MPI_ITEMS},
+ {no:'ICL-2526-0142',scope:'AUTOLINE_UNIT',machine:'STR-2R-L3',machineName:'Two-Roll Straightener Line-3',mtip:'Two-Roll Straightener shift log book — checklist bound via instrument_id (§26.4, MQA 10)',shift:'A',date:'21-Aug-2026',user:'K. Yadav',status:'COMPLETED',done:'21-Aug 06:35',items:MLOG_STR_ITEMS,res:mlogRes(MLOG_STR_ITEMS,[],{1:'Gap rechecked after first bar — 68 dia campaign'})},
+ {no:'ICL-2526-0140',scope:'OFFLINE',shift:'A',date:'21-Aug-2026',user:'M. Iyer', status:'COMPLETED', done:'21-Aug 06:22',res:resRow([],{2:'Tape T-04 replaced — old unit scrapped'})},
+ {no:'ICL-2526-0139',scope:'ONLINE', shift:'C',date:'20-Aug-2026',user:'S. Khan', status:'COMPLETED', done:'21-Aug 00:14',res:resRow([],null)},
+ {no:'ICL-2526-0138',scope:'OFFLINE',shift:'C',date:'20-Aug-2026',user:'S. Khan', status:'COMPLETED', done:'21-Aug 00:26',res:resRow([3],{3:'Gauge block 5 mm missing — reported to stores, set quarantined'})},
+ {no:'ICL-2526-0137',scope:'ONLINE', shift:'B',date:'20-Aug-2026',user:'R. Sahoo',status:'COMPLETED', done:'20-Aug 14:19',res:resRow([],{4:'Standard test block due for re-certification next week'})},
+ {no:'ICL-2526-0136',scope:'OFFLINE',shift:'B',date:'20-Aug-2026',user:'V. Naik', status:'LOCKED-OUT',done:'',            res:null},
+ {no:'ICL-2526-0134',scope:'ONLINE', shift:'A',date:'20-Aug-2026',user:'R. Sahoo',status:'COMPLETED', done:'20-Aug 06:31',res:resRow([],{0:'Zero reset done before check',5:'New couplant bottle issued'})}
+];
+function gateIdx(){for(var i=0;i<ROWS.length;i++)if(ROWS[i].gate)return i;return 0;}
+function okOf(r){return r.res?r.res.filter(function(x){return x.ok;}).length:0;}
+function remCount(r){return r.res?r.res.filter(function(x){return x.rem;}).length:0;}
+
+const STATUS_B={'PENDING':'b-pend','COMPLETED':'b-done','LOCKED-OUT':'b-hold'};
+const COLS=[
+ {k:'no',label:'Checklist No',cls:'mono'},
+ {k:'scope',label:'Scope',scope:true},
+ {k:'machine',label:'<span class="mlog-th" title="checklist bound to a machine = its shift log book — mes_qc_instrument_checklist.instrument_id (§26.4, MQA 10–12)">Machine / Unit</span>',machinecol:true},
+ {k:'shiftd',label:'Shift',calc:function(r){return r.shift+' · '+r.date.slice(0,6);}},
+ {k:'user',label:'User'},
+ {k:'ok',label:'Items OK/Total',ratio:true,cls:'num'},
+ {k:'status',label:'Status',badge:true},
+ {k:'done',label:'Completed at',calc:function(r){return r.done||'—';}},
+ {k:'rem',label:'Remarks',remchip:true},
+ {k:'actions',label:'',actions:true}
+];
+let sortKey=null,sortDir=1;
+
+function cell(c,r,i){
+  if(c.actions){
+    if(r.status==='PENDING')return '<button class="btn btn-primary btn-sm" onclick="openRun('+i+')"><i class="fa-solid fa-play"></i> Run check</button>';
+    return '<button class="btn btn-ghost btn-sm" onclick="openView('+i+')"><i class="fa-solid fa-eye"></i> View</button>';
+  }
+  /* mlog (§26.4): machine log books — bound unit cell + unit-scoped badge; plain rows fall through */
+  if(c.machinecol)return r.machine
+    ?'<span class="mlog-mc" title="'+(r.mtip||'machine log book — checklist bound via mes_qc_instrument_checklist.instrument_id (§26.4)')+'"><i class="fa-solid fa-gears"></i><span class="mlog-code">'+r.machine+'</span><span class="mlog-mname">· '+r.machineName+'</span></span>'
+    :'—';
+  if(c.scope&&r.machine)return '<span class="badge mlog-b-scope" title="unit-scoped log book — the shift gate applies per unit (§26.4)"><i class="fa-solid fa-gears"></i>'+r.scope+'</span>';
+  if(c.scope)return r.scope==='ONLINE'
+    ?'<span class="badge b-on" title="Gates SMS QA Online Inspection (SMSQA3)"><i class="fa-solid fa-wifi"></i>ONLINE</span>'
+    :'<span class="badge b-off" title="Gates Final (offline) Inspection (SMSQA8)"><i class="fa-solid fa-clipboard"></i>OFFLINE</span>';
+  if(c.ratio&&r.items){const mt=r.items.length; /* mlog: a log book counts its OWN items (§26.4) */
+    if(r.status==='PENDING')return '<span class="okratio none">0/'+mt+'</span>';
+    if(r.status==='LOCKED-OUT')return '<span class="okratio none">—/'+mt+'</span>';
+    const mn=okOf(r);return '<span class="okratio '+(mn===mt?'all':'part')+'">'+mn+'/'+mt+'</span>';}
+  if(c.ratio){const t=CHECK_ITEMS.length;
+    if(r.status==='PENDING')return '<span class="okratio none">0/'+t+'</span>';
+    if(r.status==='LOCKED-OUT')return '<span class="okratio none">—/'+t+'</span>';
+    const n=okOf(r);return '<span class="okratio '+(n===t?'all':'part')+'">'+n+'/'+t+'</span>';}
+  if(c.badge){return '<span class="badge '+(STATUS_B[r.status]||'b-draft')+'">'+r.status+'</span>';}
+  if(c.remchip){const n=remCount(r);return n?'<span class="cntchip" title="'+n+' item remark(s) recorded">'+n+'</span>':'—';}
+  if(c.calc)return c.calc(r);
+  let v=r[c.k];if(v===''||v==null)v='—';return v;
+}
+function cmp(a,b){return (''+(a==null?'':a)).localeCompare(''+(b==null?'':b),undefined,{numeric:true,sensitivity:'base'});}
+function sortVal(r,k){
+  if(k==='ok')return okOf(r);if(k==='rem')return remCount(r);
+  if(k==='shiftd')return r.date+' '+r.shift;
+  return r[k];
+}
+function passes(r){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const fs=document.getElementById('fScope').value,ft=document.getElementById('fStatus').value,fh=document.getElementById('fShift').value;
+  if(q&&!(r.no+' '+r.user+' '+r.scope+' '+r.shift+' '+r.date+' '+r.status).toLowerCase().includes(q))return false;
+  if(fs&&r.scope!==fs)return false;if(ft&&r.status!==ft)return false;if(fh&&r.shift!==fh)return false;
+  return true;
+}
+function buildHead(){
+  document.getElementById('thead').innerHTML='<tr>'+COLS.map(function(c){
+    if(c.actions)return '<th class="col-actions"></th>';
+    const car=sortKey===c.k?'<span class="car on">'+(sortDir>0?'▲':'▼')+'</span>':'<span class="car">⇅</span>';
+    return '<th class="'+(c.cls==='num'?'num':'')+'" onclick="sortBy(\''+c.k+'\')">'+c.label+' '+car+'</th>';
+  }).join('')+'</tr>';
+}
+function sortBy(k){if(sortKey===k){if(sortDir>0)sortDir=-1;else{sortKey=null;sortDir=1;}}else{sortKey=k;sortDir=1;}buildHead();render();}
+function render(){
+  let rows=ROWS.map(function(r,i){return {r:r,i:i};}).filter(function(x){return passes(x.r);});
+  if(sortKey)rows.sort(function(a,b){return cmp(sortVal(a.r,sortKey),sortVal(b.r,sortKey))*sortDir;});
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML='<tr class="empty"><td colspan="'+COLS.length+'">No checklists match the filters.</td></tr>';}
+  else tb.innerHTML=rows.map(function(x){return '<tr>'+COLS.map(function(c){return '<td class="'+(c.cls||'')+(c.actions?' actions':'')+'">'+cell(c,x.r,x.i)+'</td>';}).join('')+'</tr>';}).join('');
+  document.getElementById('rowCount').textContent=rows.length+' of '+ROWS.length+' checklists';
+  const pend=ROWS.filter(function(r){return r.status==='PENDING';}).length;
+  const lo=ROWS.filter(function(r){return r.status==='LOCKED-OUT';}).length;
+  document.getElementById('meta').textContent=pend+' pending · '+lo+' locked-out';
+  document.getElementById('gateBanner').style.display=ROWS[gateIdx()].status==='PENDING'?'':'none';
+}
+
+/* ===== Run / View modal ===== */
+let curRun=-1,runState=[];
+let mlogRunItems=null; /* mlog: item set of the machine log book open in the run dialog (§26.4) */
+function ctxChips(r,extra){
+  let c=[['Checklist',r.no],['Scope',r.scope],['Shift',r.shift+' · '+r.date],['User',r.user]];
+  if(extra)c=c.concat(extra);
+  return c.map(function(p){return '<span class="chip">'+p[0]+' <b>'+p[1]+'</b></span>';}).join('');
+}
+function openRun(i){
+  curRun=i;const r=ROWS[i];
+  runState=CHECK_ITEMS.map(function(){return {ok:true,rem:''};});
+  document.getElementById('runTitle').textContent='Run Checklist — Shift '+r.shift+' ('+r.date.slice(0,6)+') · '+r.user;
+  document.getElementById('runCtx').innerHTML=ctxChips(r,[['Time',NOW_TXT]]);
+  document.getElementById('runNote').style.display='none';
+  document.getElementById('runList').innerHTML=CHECK_ITEMS.map(function(it,idx){
+    return '<li data-i="'+idx+'">'+
+      '<span class="chk-name"><i class="fa-solid '+it.ico+' chk-ico"></i>'+it.n+'</span>'+
+      '<span class="seg">'+
+        '<button type="button" class="t-ok on-ok" onclick="setTog('+idx+',true)">OK</button>'+
+        '<button type="button" class="t-nok" onclick="setTog('+idx+',false)">NOT OK</button>'+
+      '</span>'+
+      '<span class="chk-rem"><input placeholder="Remark (optional)" oninput="setRem('+idx+',this)"/></span>'+
+    '</li>';
+  }).join('');
+  /* mlog (§26.4, MQA 10–12 & 18): a machine log book runs its OWN item set — numeric value
+     items get an input + UoM (value_num + uom on the check-record item) beside the OK toggle. */
+  mlogRunItems=r.items||null;
+  if(mlogRunItems){
+    document.getElementById('runTitle').textContent='Machine log book — '+r.machine+' · Shift '+r.shift+' ('+r.date.slice(0,6)+')';
+    document.getElementById('runCtx').innerHTML=ctxChips(r,[['Machine',r.machine+' · '+r.machineName],['Time',NOW_TXT]]);
+    runState=mlogRunItems.map(function(it){return {ok:true,rem:'',valueNum:(it.valueNum!=null?it.valueNum:null),uom:it.uom||null};});
+    document.getElementById('runList').innerHTML=mlogRunItems.map(function(it,idx){
+      return '<li data-i="'+idx+'" class="'+(it.uom?'mlog-li':'')+'">'+
+        '<span class="chk-name"><i class="fa-solid '+it.ico+' chk-ico"></i>'+it.n+'</span>'+
+        (it.uom?'<span class="mlog-val" title="measured entries — value_num + uom on the check-record item (§26.4)"><input type="number" step="any" value="'+(it.valueNum!=null?it.valueNum:'')+'" oninput="mlogSetVal('+idx+',this)"/><span class="mlog-uom">'+it.uom+'</span></span>':'')+
+        '<span class="seg">'+
+          '<button type="button" class="t-ok on-ok" onclick="setTog('+idx+',true)">OK</button>'+
+          '<button type="button" class="t-nok" onclick="setTog('+idx+',false)">NOT OK</button>'+
+        '</span>'+
+        '<span class="chk-rem"><input placeholder="Remark (optional)" oninput="setRem('+idx+',this)"/></span>'+
+      '</li>';
+    }).join('');
+  }
+  document.getElementById('runBand').style.display='';
+  document.getElementById('runHint').textContent='Every NOT OK item needs a remark before the checklist can be completed';
+  updateOkN();
+  document.getElementById('runCancel').textContent='Cancel';
+  document.getElementById('runDone').style.display='';
+  document.getElementById('runOv').classList.add('open');
+}
+function setTog(idx,ok){
+  runState[idx].ok=ok;
+  const li=document.querySelector('#runList li[data-i="'+idx+'"]');if(!li)return;
+  li.querySelector('.t-ok').classList.toggle('on-ok',ok);
+  li.querySelector('.t-nok').classList.toggle('on-nok',!ok);
+  li.classList.toggle('bad',!ok);
+  const inp=li.querySelector('.chk-rem input');
+  inp.placeholder=ok?'Remark (optional)':'Remark required for NOT OK (SOW remark column)';
+  if(ok)inp.classList.remove('need');
+  updateOkN();
+}
+function setRem(idx,el){runState[idx].rem=el.value;el.classList.remove('need');}
+function mlogSetVal(idx,el){var v=parseFloat(el.value);runState[idx].valueNum=isNaN(v)?null:v;} /* mlog: measured entry — value_num (§26.4) */
+function updateOkN(){
+  if(mlogRunItems){document.getElementById('runOkN').textContent=runState.filter(function(s){return s.ok;}).length+'/'+mlogRunItems.length;return;} /* mlog: log book's own denominator (§26.4) */
+  const n=runState.filter(function(s){return s.ok;}).length;
+  document.getElementById('runOkN').textContent=n+'/'+CHECK_ITEMS.length;
+}
+function completeRun(){
+  /* NOT OK requires a remark — the SOW-requested per-item remark column */
+  let firstBad=null;
+  runState.forEach(function(st,idx){
+    if(!st.ok&&!st.rem.trim()){
+      const li=document.querySelector('#runList li[data-i="'+idx+'"]');
+      if(li){const inp=li.querySelector('.chk-rem input');inp.classList.add('need');if(!firstBad)firstBad=inp;}
+    }
+  });
+  if(firstBad){firstBad.focus();mesToast('Remark is required for every NOT OK item','err');return;}
+  const r=ROWS[curRun];
+  r.res=runState.map(function(st){return {ok:st.ok,rem:st.rem.trim()};});
+  r.status='COMPLETED';r.done=NOW_TXT;
+  /* mlog (§26.4): persist value_num + uom on the record items; toast with the log book's own item count */
+  if(mlogRunItems){
+    r.res=runState.map(function(st){return {ok:st.ok,rem:st.rem.trim(),valueNum:(st.valueNum!=null?st.valueNum:null),uom:st.uom||null};});
+    mlogRunItems=null;closeRun();render();
+    mesToast('Checklist '+r.no+' completed — '+okOf(r)+'/'+r.res.length+' OK','ok');
+    return;
+  }
+  closeRun();render();
+  mesToast('Checklist '+r.no+' completed — '+okOf(r)+'/'+CHECK_ITEMS.length+' OK','ok');
+  if(r.gate){mesToast('Inspection screens unlocked for this shift','ok');}
+}
+function openView(i){
+  curRun=i;const r=ROWS[i];
+  document.getElementById('runTitle').textContent='Checklist — '+r.no;
+  document.getElementById('runCtx').innerHTML=ctxChips(r,r.done?[['Completed at',r.done]]:[]);
+  const note=document.getElementById('runNote'),list=document.getElementById('runList'),band=document.getElementById('runBand');
+  /* mlog (§26.4): a completed machine log book renders its OWN items — measured value beside OK.
+     Early return so the plain CHECK_ITEMS mapping below never runs against a shorter res array. */
+  if(r.items&&r.res){
+    document.getElementById('runTitle').textContent='Machine log book — '+r.no+' · '+r.machine;
+    document.getElementById('runCtx').innerHTML=ctxChips(r,[['Machine',r.machine+' · '+r.machineName]].concat(r.done?[['Completed at',r.done]]:[]));
+    note.style.display='none';band.style.display='';
+    list.innerHTML=r.items.map(function(it,idx){
+      const st=r.res[idx]||{ok:true,rem:''};
+      return '<li class="'+(it.uom?'mlog-li ':'')+(st.ok?'':'bad')+'">'+
+        '<span class="chk-name"><i class="fa-solid '+it.ico+' chk-ico"></i>'+it.n+'</span>'+
+        (it.uom?'<span class="mlog-val-ro" title="measured entries — value_num + uom on the check-record item (§26.4)">'+(st.valueNum!=null?st.valueNum:'—')+' <span class="mlog-uom">'+(st.uom||it.uom)+'</span></span>':'')+
+        '<span class="ro-badge '+(st.ok?'ro-ok':'ro-nok')+'">'+(st.ok?'OK':'NOT OK')+'</span>'+
+        (st.rem?'<span class="ro-rem"><i class="fa-solid fa-comment-dots"></i>'+st.rem+'</span>':'')+
+      '</li>';
+    }).join('');
+    document.getElementById('runOkN').textContent=okOf(r)+'/'+r.items.length;
+    document.getElementById('runHint').textContent='Completed '+(r.done||'—')+' by '+r.user;
+    document.getElementById('runCancel').textContent='Close';
+    document.getElementById('runDone').style.display='none';
+    document.getElementById('runOv').classList.add('open');
+    return;
+  }
+  if(!r.res){ /* LOCKED-OUT: shift ended without completion — screens stayed locked; kept for compliance reporting */
+    note.style.display='';list.innerHTML='';band.style.display='none';
+    note.innerHTML='<i class="fa-solid fa-ban" style="color:var(--color-danger);margin-right:8px;"></i>Not performed — the checklist window elapsed without completion. Online / Final Inspection remained <b>locked</b> for '+r.user+' through Shift '+r.shift+' ('+r.date.slice(0,6)+'). Recorded for compliance reporting.';
+  }else{
+    note.style.display='none';band.style.display='';
+    list.innerHTML=CHECK_ITEMS.map(function(it,idx){
+      const st=r.res[idx];
+      return '<li class="'+(st.ok?'':'bad')+'">'+
+        '<span class="chk-name"><i class="fa-solid '+it.ico+' chk-ico"></i>'+it.n+'</span>'+
+        '<span class="ro-badge '+(st.ok?'ro-ok':'ro-nok')+'">'+(st.ok?'OK':'NOT OK')+'</span>'+
+        (st.rem?'<span class="ro-rem"><i class="fa-solid fa-comment-dots"></i>'+st.rem+'</span>':'')+
+      '</li>';
+    }).join('');
+    document.getElementById('runOkN').textContent=okOf(r)+'/'+CHECK_ITEMS.length;
+    document.getElementById('runHint').textContent='Completed '+(r.done||'—')+' by '+r.user;
+  }
+  document.getElementById('runCancel').textContent='Close';
+  document.getElementById('runDone').style.display='none';
+  document.getElementById('runOv').classList.add('open');
+}
+function closeRun(){document.getElementById('runOv').classList.remove('open');}
+function closeLock(){document.getElementById('lockOv').classList.remove('open');}
+
+/* ===== Toast helper (standalone — this screen has no shell toast) ===== */
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+/* ===== Init ===== */
+buildHead();render();
+/* Gating demo: the current shift's checklist (ONLINE · Shift A · R. Sahoo) is seeded PENDING,
+   so the session-hook lock pop-up opens straight away. Completing the checklist unlocks. */
+if(ROWS[gateIdx()].status==='PENDING'){document.getElementById('lockOv').classList.add('open');}
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agency Allocation — Bluemingo MES v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
+.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
+.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
+.result-band span{color:var(--color-text-muted);}
+.result-band b{font-variant-numeric:tabular-nums;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon,.vrow .vv .btn{display:none;}
+
+/* ===== shared page components (chips / banner / subcard — from shell) ===== */
+.chipstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--sp3);}
+.ichip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:5px 12px;color:var(--color-text-secondary);}
+.ichip i{color:var(--color-primary);font-size:11px;}
+.ichip b{color:var(--color-text-primary);font-weight:600;}
+.depbanner{display:flex;gap:10px;align-items:flex-start;background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:9px 14px;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-secondary);}
+.depbanner i{color:var(--color-primary-dark);margin-top:2px;}
+.srcchip{display:inline-block;margin-left:6px;padding:0 6px;border-radius:9px;font-size:9px;font-weight:700;letter-spacing:.3px;background:rgba(37,169,224,.14);color:#1E8FBF;vertical-align:middle;}
+.subcard{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);margin-top:var(--sp3);flex:none;display:flex;flex-direction:column;max-height:225px;overflow:hidden;}
+.subcard .sc-head{padding:10px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;flex:none;}
+.subcard .sc-head i{color:var(--color-primary);font-size:12px;}
+.subcard .sc-head .meta{margin-left:auto;font-weight:400;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.subcard .sc-wrap{overflow:auto;min-height:0;}
+
+/* ===== Agency Allocation (MQA 17, §26.3) page-specific — aga- prefix ===== */
+.content.aga-scroll{overflow-y:auto;}
+.subcard.aga-pendcard{margin-top:0;max-height:240px;}
+.subcard.aga-alloccard{max-height:360px;}
+.subcard.aga-scancard{max-height:none;}
+.aga-viewwrap{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.aga-viewwrap select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.aga-seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--r-sm);overflow:hidden;background:#fff;}
+.aga-seg button{border:none;background:transparent;padding:7px 14px;font-size:var(--fs-sm);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:6px;}
+.aga-seg button:hover{background:rgba(var(--color-primary-rgb),.08);}
+.aga-seg button.aga-on{background:var(--color-primary);color:#fff;}
+.aga-route{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
+.aga-route.aga-post{background:rgba(37,169,224,.14);color:#1E8FBF;}
+.aga-route.aga-direct{background:rgba(158,158,158,.18);color:#616161;}
+.aga-late{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;background:rgba(244,67,54,.15);color:#c62828;vertical-align:middle;}
+.aga-scanbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px 6px;}
+.aga-scanbar .aga-lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.aga-scanbar select,.aga-scanbar input{padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.aga-scanbar input{width:260px;}
+.aga-scanbar input:focus,.aga-scanbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.aga-scanres{padding:6px 16px 2px;min-height:36px;}
+.aga-chip-ok,.aga-chip-bad{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 13px;font-size:var(--fs-sm);font-weight:600;}
+.aga-chip-ok{background:rgba(76,175,80,.12);color:#2e7d32;border:1px solid rgba(76,175,80,.45);}
+.aga-chip-bad{background:rgba(244,67,54,.1);color:#c62828;border:1px solid rgba(244,67,54,.4);}
+.aga-hint{font-size:var(--fs-xs);color:var(--color-text-hint);padding:4px 16px 0;}
+.aga-note{display:flex;gap:8px;align-items:flex-start;font-size:var(--fs-xs);color:var(--color-text-muted);padding:8px 16px 14px;}
+.aga-note i{color:var(--color-primary);margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat / batch…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html" class="active"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content aga-scroll">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Agency Allocation</h1><div class="sub">Allocate pending material to inspection agencies — plan vs actual, station interlock (MQA 17, §26.3)</div></div>
+    </div>
+    <div class="depbanner" id="agaBanner" style="display:none"><i class="fa-solid fa-user-lock"></i><span><b>Agency view</b> — Agency users see only material allocated to them (allocation + role-screen access). Unallocated pending material and other agencies&#39; allocations are hidden; result entry is additionally gated by the server-side station interlock (§26.3).</span></div>
+    <div class="chipstrip">
+      <span class="ichip" title="Agencies are mes_qc_agency master rows — nothing hard-coded (MQA 17, §26.3)"><i class="fa-solid fa-building"></i> Agency master <b>MET Labs · SGS-Insp · TUV-Q</b></span>
+      <span class="ichip" title="Stations and per-station agency users are role data (§26.3)"><i class="fa-solid fa-location-dot"></i> Stations <b>Bed-1 · Bed-2 · Bed-3</b></span>
+      <span class="ichip"><i class="fa-solid fa-clock"></i> Demo clock <b>21-Aug 09:15</b></span>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="agaSearch" placeholder="Heat / batch / allocation…" oninput="agaRender()"/></div>
+      <select id="agaFAgency" onchange="agaRender()" title="Agency master values — mes_qc_agency (§26.3)"><option value="">All agencies</option></select>
+      <select id="agaFStatus" onchange="agaRender()" title="mes_qc_agency_allocation.status — PLANNED / IN_PROGRESS / DONE / CANCELLED (§26.3)"><option value="">All statuses</option><option>PLANNED</option><option>IN_PROGRESS</option><option>DONE</option><option>CANCELLED</option></select>
+      <div class="aga-viewwrap">
+        <span class="lbl" title="Agency isolation = allocation + role-screen access (MQA 17, §26.3)">View as</span>
+        <div class="aga-seg">
+          <button id="agaSegQa" class="aga-on" onclick="agaSetView('qa')" title="Full QA view — all pending material and all allocations"><i class="fa-solid fa-user-shield"></i> QA</button>
+          <button id="agaSegAg" onclick="agaSetView('agency')" title="Agency users see only material allocated to them (allocation + role-screen access, MQA 17, §26.3)"><i class="fa-solid fa-building-user"></i> Agency</button>
+        </div>
+        <select id="agaViewAgency" style="display:none" onchange="agaRender()" title="Simulated signed-in agency user (role-screen access, §26.3)"></select>
+      </div>
+    </div>
+
+    <div class="subcard aga-pendcard">
+      <div class="sc-head" title="Material lands here after auto-line completion, or directly when the allocated inspection path has no auto-line (§26.1); allocate it to an inspection agency — mes_qc_agency_allocation (MQA 17, §26.3)"><i class="fa-solid fa-boxes-stacked"></i> Pending material — awaiting agency allocation <span class="meta" id="agaPendMeta"></span></div>
+      <div class="sc-wrap"><table class="tbl">
+        <thead><tr><th>Heat No</th><th>Batch</th><th>Grade</th><th>Form / Size</th><th class="num">Bars</th><th class="num">Wt (t)</th><th title="Material arrives here after auto-line completion, or directly when the path has no auto-line (§26.1)">From route</th><th class="col-actions"></th></tr></thead>
+        <tbody id="agaPendBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="subcard aga-alloccard">
+      <div class="sc-head" title="plan vs actual tracked from the allocation dates (MQA 17)"><i class="fa-solid fa-building-circle-check"></i> Allocations — plan vs actual <span class="meta" id="agaAllocMeta"></span></div>
+      <div class="sc-wrap"><table class="tbl">
+        <thead><tr><th>Allocation No</th><th>Batch</th><th>Heat No</th><th title="mes_qc_agency master row (§26.3)">Agency</th><th title="Station on the allocation — per-station users are role data (§26.3)">Station</th><th title="plan vs actual tracked from the allocation dates (MQA 17)">Planned date</th><th title="plan vs actual tracked from the allocation dates (MQA 17)">Actual start</th><th title="plan vs actual tracked from the allocation dates (MQA 17)">Actual complete</th><th title="PLANNED / IN_PROGRESS / DONE / CANCELLED — mes_qc_agency_allocation.status (MQA 17, §26.3)">Status</th><th>Remarks</th><th class="col-actions"></th></tr></thead>
+        <tbody id="agaAllocBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="subcard aga-scancard">
+      <div class="sc-head" title="Server-side interlock: result entry is accepted only when an active allocation links the material to the entering user's agency and the scanned physical barcode matches the batch — scan_verified / scanned_code captured on the inspection/test record (MQA 17, §26.3)"><i class="fa-solid fa-barcode"></i> Station interlock — result entry gate: scan to enter <span class="meta">mes_qc_agency_allocation ⋈ signed-in agency</span></div>
+      <div class="aga-scanbar">
+        <span class="aga-lbl">Signed-in as</span>
+        <select id="agaScanUser" title="Per-station agency users are role data — the interlock checks the entering user's agency (§26.3)"></select>
+        <span class="aga-lbl">Barcode</span>
+        <input id="agaScanCode" placeholder="Scan / type batch barcode… e.g. E120636" onkeydown="if(event.key==='Enter')agaVerify()"/>
+        <button class="btn btn-primary btn-sm" onclick="agaVerify()" title="Server-side interlock — active allocation to the entering user's agency + barcode must match the batch (MQA 17, §26.3)"><i class="fa-solid fa-qrcode"></i> Verify scan</button>
+      </div>
+      <div class="aga-scanres" id="agaScanRes"></div>
+      <div class="aga-hint">Demo codes: <b>E120636</b> — active allocation to MET Labs @ Bed-1 · <b>E122319</b> — belongs to SGS-Insp · any other code has no active allocation.</div>
+      <div class="aga-note"><i class="fa-solid fa-circle-info"></i><span>On a verified scan the result record stores <b>scan_verified</b> + <b>scanned_code</b>; test-wise <b>actual date stamps</b> land on the record and <b>image capture</b> is available on each station (evidence capture, §25 test-entry extension).</span></div>
+    </div>
+  </main>
+</div>
+
+<!-- Allocate modal -->
+<div class="overlay" id="agaOv">
+  <div class="modal sm">
+    <div class="modal-head">Allocate to inspection agency <span class="x" onclick="agaCloseAlloc()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="agaCtx"></div>
+      <div class="mgrid">
+        <div class="fld"><label>Agency *</label><select id="agaMAgency" title="mes_qc_agency master rows — MET Labs / SGS-Insp / TUV-Q (§26.3)"><option value="">— select agency —</option></select></div>
+        <div class="fld"><label>Station</label><select id="agaMStation" title="Station on the allocation — per-station users are role data (§26.3)"></select></div>
+        <div class="fld"><label>Planned inspection date *</label><input id="agaMDate" type="date" value="2026-08-22"/></div>
+        <div class="fld"><label>Remarks</label><input id="agaMRem" placeholder="e.g. customer witness required…"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="agaCloseAlloc()">Cancel</button>
+      <button class="btn btn-primary" onclick="agaSaveAlloc()" title="Material-to-agency allocation with planned date — mes_qc_agency_allocation (MQA 17, §26.3)"><i class="fa-solid fa-building-circle-check"></i> Allocate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   §26.3 — Agency material allocation & station interlock (JSW Mills QA, MQA 17).
+   Pending material lands here after auto-line completion, or directly when the
+   allocated inspection path (§26.1) has no auto-line. "Allocate" writes
+   mes_qc_agency_allocation (batch → agency + station + planned_date); the
+   actual_start / actual_complete stamps give plan vs actual from the dates.
+   Result entry is gated by a SERVER-SIDE interlock: an active allocation must
+   link the material to the entering user's agency AND the scanned physical
+   barcode must match the batch — scan_verified / scanned_code are captured on
+   the inspection/test record. Agencies (MET Labs / SGS-Insp / TUV-Q) are
+   mes_qc_agency master rows; stations & per-station users are role data —
+   nothing hard-coded (product-agnostic per D0).
+   ============================================================ */
+const NOW='2026-08-21T09:15';                 /* fixed demo clock so stamps render deterministically */
+const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function p2(n){return String(n).padStart(2,'0');}
+function dOf(v){return v instanceof Date?v:new Date(v);}
+function fmtD(v){const x=dOf(v);return p2(x.getDate())+'-'+MONS[x.getMonth()];}
+function fmtDT(v){const x=dOf(v);return p2(x.getDate())+'-'+MONS[x.getMonth()]+' '+p2(x.getHours())+':'+p2(x.getMinutes());}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+const AGENCIES=['MET Labs','SGS-Insp','TUV-Q'];   /* seeded mes_qc_agency master values */
+const STATIONS=['Bed-1','Bed-2','Bed-3'];
+
+/* Pending material — landed post auto-line (§26.1 AUTOLINE unit group) or direct */
+let PENDING=[
+ {heat:'2526-16496',batch:'B030268',grade:'17-4PH', form:'RO 68 Dia',  pcs:42, wt:12.4,route:'post'},
+ {heat:'2526-16482',batch:'B030840',grade:'304L',   form:'RO 32 Dia',  pcs:180,wt:8.6, route:'direct'},
+ {heat:'2526-16493',batch:'B030068',grade:'316L',   form:'Hex 23',     pcs:260,wt:6.9, route:'post'},
+ {heat:'2526-16426',batch:'E120808',grade:'X46Cr13',form:'RO 41 Dia',  pcs:96, wt:9.8, route:'direct'},
+ {heat:'2526-16776',batch:'E121717',grade:'416',    form:'Flat 100 x 6',pcs:120,wt:7.2,route:'post'}
+];
+
+/* Seeded allocations — plan vs actual from the dates; E120636 is the green-scan demo row */
+let ALLOC=[
+ {no:'AGA-2526-041',batch:'E120636',heat:'2526-16495',agency:'MET Labs',station:'Bed-1',planned:'2026-08-20',start:'2026-08-20T08:10',done:null,               status:'IN_PROGRESS',rem:''},
+ {no:'AGA-2526-040',batch:'E122319',heat:'2526-16798',agency:'SGS-Insp',station:'Bed-2',planned:'2026-08-18',start:'2026-08-20T10:05',done:'2026-08-20T17:40', status:'DONE',       rem:'Agency crew unavailable 18–19 Aug'},
+ {no:'AGA-2526-039',batch:'E121724',heat:'2526-16866',agency:'TUV-Q',   station:'Bed-3',planned:'2026-08-22',start:null,               done:null,               status:'PLANNED',    rem:'Customer witness — third-party UT'},
+ {no:'AGA-2526-038',batch:'E122956',heat:'2526-16030',agency:'MET Labs',station:'Bed-2',planned:'2026-08-19',start:'2026-08-19T08:05',done:'2026-08-19T15:20', status:'DONE',       rem:''},
+ {no:'AGA-2526-036',batch:'B030112',heat:'2526-16311',agency:'SGS-Insp',station:'Bed-1',planned:'2026-08-17',start:null,               done:null,               status:'CANCELLED',  rem:'Batch rerouted to salvage — allocation cancelled'}
+];
+let nextNo=42,curPend=-1,viewMode='qa';
+const SB={PLANNED:'b-info',IN_PROGRESS:'b-pend',DONE:'b-done',CANCELLED:'b-hold'};
+
+function agaVAg(){return document.getElementById('agaViewAgency').value;}
+/* delay in whole days: latest actual date vs planned date (plan vs actual, MQA 17) */
+function agaLate(a){
+  const ref=a.done||a.start;if(!ref)return 0;
+  const d1=dOf(ref),d0=new Date(a.planned+'T00:00:00');
+  const days=Math.round((Date.UTC(d1.getFullYear(),d1.getMonth(),d1.getDate())-Date.UTC(d0.getFullYear(),d0.getMonth(),d0.getDate()))/864e5);
+  return days>0?days:0;
+}
+
+/* ===== render ===== */
+function agaRenderPending(){
+  const q=(document.getElementById('agaSearch').value||'').toLowerCase();
+  const tb=document.getElementById('agaPendBody');
+  let rows=[];
+  if(viewMode!=='agency'){ /* agency view: pending (unallocated) material is not allocated to the agency → hidden */
+    rows=PENDING.map(function(r,i){return {r:r,i:i};}).filter(function(x){
+      return !q||(x.r.heat+' '+x.r.batch+' '+x.r.grade+' '+x.r.form).toLowerCase().indexOf(q)>=0;});
+  }
+  if(!rows.length){
+    tb.innerHTML='<tr class="empty"><td colspan="8">'+(viewMode==='agency'
+      ?'Agency view ('+esc(agaVAg())+') — unallocated pending material is hidden: agency users see only material allocated to them (allocation + role-screen access, §26.3).'
+      :'No pending material matches the filters.')+'</td></tr>';
+  }else{
+    tb.innerHTML=rows.map(function(x){const r=x.r;
+      const route=r.route==='post'
+        ?'<span class="aga-route aga-post" title="Material arrives here after auto-line completion — the allocated inspection path routes through the AUTOLINE unit group (§26.1)">post Auto-line</span>'
+        :'<span class="aga-route aga-direct" title="Material arrives here directly — the allocated inspection path has no auto-line (§26.1)">direct</span>';
+      return '<tr><td class="mono">'+r.heat+'</td><td class="mono">'+r.batch+'</td><td>'+r.grade+'</td><td>'+r.form+'</td>'+
+        '<td class="num">'+r.pcs+'</td><td class="num">'+r.wt.toFixed(1)+'</td><td>'+route+'</td>'+
+        '<td class="actions"><button class="btn btn-primary btn-sm" onclick="agaOpenAlloc('+x.i+')" title="Material-to-agency allocation with planned date — mes_qc_agency_allocation (MQA 17, §26.3)"><i class="fa-solid fa-building-circle-arrow-right"></i> Allocate</button></td></tr>';
+    }).join('');
+  }
+  document.getElementById('agaPendMeta').textContent=(viewMode==='agency'?0:rows.length)+' of '+PENDING.length+' pending';
+}
+function agaRenderAlloc(){
+  const q=(document.getElementById('agaSearch').value||'').toLowerCase();
+  const fa=viewMode==='agency'?agaVAg():document.getElementById('agaFAgency').value;
+  const fs=document.getElementById('agaFStatus').value;
+  const rows=ALLOC.map(function(a,i){return {a:a,i:i};}).filter(function(x){const a=x.a;
+    if(q&&(a.no+' '+a.batch+' '+a.heat+' '+a.agency+' '+a.station).toLowerCase().indexOf(q)<0)return false;
+    if(fa&&a.agency!==fa)return false;
+    if(fs&&a.status!==fs)return false;
+    return true;});
+  const tb=document.getElementById('agaAllocBody');
+  if(!rows.length){tb.innerHTML='<tr class="empty"><td colspan="11">No allocations match the filters.</td></tr>';}
+  else tb.innerHTML=rows.map(function(x){const a=x.a;
+    const ld=agaLate(a);
+    const late=ld>0?'<span class="aga-late" title="Actual ran '+ld+' day(s) past the planned inspection date — plan vs actual from the allocation dates (MQA 17)">+'+ld+'d</span>':'';
+    let act='<button class="btn-icon" title="View" onclick="openViewEl(this)"><i class="fa-solid fa-eye"></i></button>';
+    if(a.status==='PLANNED')act+=' <button class="btn-icon" title="Stamp actual_start — plan vs actual from the allocation dates (MQA 17, §26.3)" onclick="agaStart('+x.i+')"><i class="fa-solid fa-play"></i></button>';
+    else if(a.status==='IN_PROGRESS')act+=' <button class="btn-icon" title="Stamp actual_complete — plan vs actual from the allocation dates (MQA 17, §26.3)" onclick="agaComplete('+x.i+')"><i class="fa-solid fa-flag-checkered"></i></button>';
+    return '<tr><td class="mono">'+a.no+'</td><td class="mono">'+a.batch+'</td><td class="mono">'+a.heat+'</td><td>'+a.agency+'</td><td>'+a.station+'</td>'+
+      '<td>'+fmtD(a.planned+'T00:00:00')+'</td><td>'+(a.start?fmtDT(a.start):'—')+'</td><td>'+(a.done?fmtDT(a.done):'—')+'</td>'+
+      '<td><span class="badge '+(SB[a.status]||'b-draft')+'">'+a.status+'</span>'+late+'</td>'+
+      '<td>'+(a.rem?esc(a.rem):'—')+'</td><td class="actions">'+act+'</td></tr>';
+  }).join('');
+  const nLate=rows.filter(function(x){return agaLate(x.a)>0;}).length;
+  document.getElementById('agaAllocMeta').textContent=rows.length+' of '+ALLOC.length+' allocations · '+nLate+' delayed';
+}
+function agaRender(){agaRenderPending();agaRenderAlloc();}
+
+/* ===== View as: QA / Agency (agency isolation = allocation + role-screen access) ===== */
+function agaSetView(m){
+  viewMode=m;
+  document.getElementById('agaSegQa').classList.toggle('aga-on',m==='qa');
+  document.getElementById('agaSegAg').classList.toggle('aga-on',m==='agency');
+  document.getElementById('agaViewAgency').style.display=m==='agency'?'':'none';
+  document.getElementById('agaBanner').style.display=m==='agency'?'flex':'none';
+  document.getElementById('agaFAgency').disabled=(m==='agency');
+  agaRender();
+}
+
+/* ===== allocate modal ===== */
+function agaOpenAlloc(i){
+  curPend=i;const r=PENDING[i];
+  document.getElementById('agaCtx').innerHTML=
+    '<span class="chip">Heat <b>'+r.heat+'</b></span><span class="chip">Batch <b>'+r.batch+'</b></span>'+
+    '<span class="chip">Grade <b>'+r.grade+'</b></span><span class="chip">'+r.form+'</span>'+
+    '<span class="chip">'+r.pcs+' bars · '+r.wt.toFixed(1)+' t</span>';
+  document.getElementById('agaMAgency').value='';
+  document.getElementById('agaMStation').value='Bed-1';
+  document.getElementById('agaMDate').value='2026-08-22';
+  document.getElementById('agaMRem').value='';
+  document.getElementById('agaOv').classList.add('open');
+}
+function agaCloseAlloc(){document.getElementById('agaOv').classList.remove('open');}
+function agaSaveAlloc(){
+  const ag=document.getElementById('agaMAgency').value;
+  const dt=document.getElementById('agaMDate').value;
+  if(!ag){mesToast('Select the inspection agency','err');return;}
+  if(!dt||isNaN(new Date(dt+'T00:00:00').getTime())){mesToast('Set the planned inspection date','err');return;}
+  const r=PENDING[curPend];
+  ALLOC.unshift({no:'AGA-2526-'+String(nextNo++).padStart(3,'0'),batch:r.batch,heat:r.heat,agency:ag,
+    station:document.getElementById('agaMStation').value,planned:dt,start:null,done:null,status:'PLANNED',
+    rem:(document.getElementById('agaMRem').value||'').trim()});
+  PENDING.splice(curPend,1);curPend=-1;
+  agaCloseAlloc();agaRender();
+  mesToast('Allocated — mes_qc_agency_allocation','ok');
+}
+
+/* ===== plan vs actual stamps ===== */
+function agaStart(i){const a=ALLOC[i];a.start=NOW;a.status='IN_PROGRESS';agaRender();mesToast('Actual start stamped '+fmtDT(NOW)+' — plan vs actual (MQA 17)','ok');}
+function agaComplete(i){const a=ALLOC[i];a.done=NOW;a.status='DONE';agaRender();mesToast('Actual complete stamped — allocation '+a.no+' DONE','ok');}
+
+/* ===== station interlock: scan to enter (server-side rule demoed client-side) ===== */
+function agaVerify(){
+  const code=(document.getElementById('agaScanCode').value||'').trim();
+  const parts=document.getElementById('agaScanUser').value.split('|');
+  const ag=parts[0];
+  const res=document.getElementById('agaScanRes');
+  if(!code){res.innerHTML='';mesToast('Scan or type a batch barcode first','warn');return;}
+  const active=ALLOC.filter(function(a){return a.status==='PLANNED'||a.status==='IN_PROGRESS';});
+  let mine=null,other=null;
+  active.forEach(function(a){
+    if(a.batch.toUpperCase()!==code.toUpperCase())return;
+    if(a.agency===ag)mine=a;else other=a;
+  });
+  if(mine){
+    res.innerHTML='<span class="aga-chip-ok" title="scan_verified=true · scanned_code='+esc(code)+' captured on the inspection/test record (MQA 17, §26.3)"><i class="fa-solid fa-lock-open"></i> scan_verified — entry unlocked for '+esc(ag)+' @ '+esc(mine.station)+'</span>';
+    mesToast('Scan verified — result entry unlocked','ok');
+  }else{
+    const msg=other
+      ?'not allocated to this agency — entry blocked (server-side interlock §26.3)'
+      :'no active allocation for '+esc(code)+' — entry blocked (server-side interlock §26.3)';
+    res.innerHTML='<span class="aga-chip-bad" title="Result entry is accepted only when an active allocation links the material to the entering user&#39;s agency and the scanned barcode matches the batch (MQA 17, §26.3)"><i class="fa-solid fa-lock"></i> '+msg+'</span>';
+    mesToast('Entry blocked by station interlock','err');
+  }
+}
+
+/* ===== Toast helper (standalone — this screen has no shell toast) ===== */
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+/* ===== Init ===== */
+(function(){
+  const opts=AGENCIES.map(function(a){return '<option>'+a+'</option>';}).join('');
+  document.getElementById('agaFAgency').insertAdjacentHTML('beforeend',opts);
+  document.getElementById('agaMAgency').insertAdjacentHTML('beforeend',opts);
+  document.getElementById('agaViewAgency').innerHTML=opts;
+  document.getElementById('agaMStation').innerHTML=STATIONS.map(function(s){return '<option>'+s+'</option>';}).join('');
+  document.getElementById('agaScanUser').innerHTML=AGENCIES.map(function(a,i){const st=STATIONS[i%STATIONS.length];return '<option value="'+a+'|'+st+'">'+a+' @ '+st+'</option>';}).join('');
+})();
+agaRender();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[▲▼⇅]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

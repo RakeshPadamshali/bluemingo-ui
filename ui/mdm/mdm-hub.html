@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Master catalogue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.crumb{font-size:var(--fs-sm);color:var(--color-text-muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.crumb a{color:var(--color-primary-dark);text-decoration:none;}
+.crumb a:hover{text-decoration:underline;}
+.crumb b{color:var(--color-text-primary);}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;display:flex;align-items:center;gap:10px;}
+.page-head h1 i{color:var(--color-primary);font-size:20px;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.ph-actions{display:flex;align-items:center;gap:var(--sp2);}
+.jump{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;background:#fff;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.btn-icon.danger{background:rgba(244,67,54,.1);color:#d32f2f;} .btn-icon.danger:hover{background:#d32f2f;color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:280px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fsearch input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);}
+.tbl thead th.num{text-align:right;}
+.tbl tbody td{padding:6px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:640px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.chkfld{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--color-text-secondary);}
+.chkfld input{width:auto;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+.tiles{overflow:auto;flex:1;min-height:0;padding-right:4px;}
+.tile-group{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-muted);font-weight:700;margin:var(--sp4) 0 var(--sp2);}
+.tile-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--sp3);}
+.tile{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--color-border);border-radius:var(--r-md);padding:14px 16px;text-decoration:none;color:inherit;transition:all .15s;}
+.tile:hover{border-color:var(--color-primary);box-shadow:0 2px 10px rgba(var(--color-primary-rgb),.12);}
+.tile .ic{width:38px;height:38px;border-radius:var(--r-md);background:var(--color-primary-light);color:var(--color-primary-dark);display:grid;place-items:center;font-size:16px;flex:none;}
+.tile .tx b{display:block;font-size:13.5px;font-weight:600;}
+.tile .tx span{font-size:var(--fs-xs);color:var(--color-text-muted);}
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+.owner{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:.4px;margin-left:6px;vertical-align:middle;}
+.o-qa{background:#e3f2fd;color:#1565c0;} .o-pf{background:#fff3e0;color:#e65100;} .o-al{background:#ede7f6;color:#4527a0;}
+.note{background:#fffbe6;border:1px solid #ffe58f;border-radius:var(--r-md);padding:8px 12px;font-size:var(--fs-sm);color:#7a5c00;margin-bottom:var(--sp3);}
+.kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--sp3);margin-bottom:var(--sp3);}
+.kpi .k{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-md);padding:10px 14px;}
+.kpi .k b{display:block;font-size:20px;font-weight:600;} .kpi .k span{font-size:var(--fs-xs);color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.4px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Master Data</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search master data..." /></div>
+    <div class="avatar">MD</div>
+  </header>
+<nav class="sidebar"><div class="s-label">Master Data</div>
+<a href="mdm-hub.html" class="active"><i class="fa-solid fa-sliders"></i> Master catalogue</a>
+<div class="navgrp" data-g="Product & Grade"><div class="s-group" onclick="grpToggle(this)">Product & Grade<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items">
+<a href="master-grade-profile.html"><i class="fa-solid fa-layer-group"></i> Grade Profile</a>
+<a href="master-form-conversion-rule.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> Form Conversion Rules</a>
+<a href="master-psn-product-type.html"><i class="fa-solid fa-table-cells"></i> PSN Product Type Matrix</a>
+<a href="master-department.html"><i class="fa-solid fa-sitemap"></i> Departments</a>
+<a href="master-privileged-action.html"><i class="fa-solid fa-user-shield"></i> Privileged Actions</a>
+</div></div>
+<div class="navgrp" data-g="Process & Planning"><div class="s-group" onclick="grpToggle(this)">Process & Planning<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items">
+<a href="master-length-master.html"><i class="fa-solid fa-ruler-horizontal"></i> Length Master</a>
+<a href="master-yield-master.html"><i class="fa-solid fa-percent"></i> Yield Master</a>
+<a href="master-product-family.html"><i class="fa-solid fa-object-group"></i> Product Family &amp; Section Load</a>
+<a href="master-moq-rule.html"><i class="fa-solid fa-weight-hanging"></i> MoQ Validation Rules</a>
+<a href="master-ferro-alloy-norm.html"><i class="fa-solid fa-flask"></i> Ferro Alloy Norms</a>
+<a href="master-process-parameter.html"><i class="fa-solid fa-sliders"></i> Process Parameter Master</a>
+<a href="master-grinding-rule.html"><i class="fa-solid fa-compact-disc"></i> Grinding Rules (ABGM)</a>
+<a href="master-equipment-section-limit.html"><i class="fa-solid fa-ruler-combined"></i> Equipment Section Limits</a>
+<a href="master-swap-rule.html"><i class="fa-solid fa-right-left"></i> Swap Rules</a>
+<a href="master-order-book-rule.html"><i class="fa-solid fa-book"></i> Order Book Rules &amp; Customer Priority</a>
+<a href="master-pit-cooling-rule.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling Rules &amp; Pits</a>
+<a href="master-pit.html"><i class="fa-solid fa-warehouse"></i> Pits</a>
+</div></div>
+<div class="navgrp" data-g="Quality & Testing"><div class="s-group" onclick="grpToggle(this)">Quality & Testing<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items">
+<a href="master-colour-code-map.html"><i class="fa-solid fa-palette"></i> Colour Code Map</a>
+<a href="master-inspector.html"><i class="fa-solid fa-id-badge"></i> Inspectors</a>
+<a href="master-distribution-list.html"><i class="fa-solid fa-envelopes-bulk"></i> Distribution Lists</a>
+<a href="master-annealing-load-rule.html"><i class="fa-solid fa-fire"></i> Annealing Load Rules</a>
+<a href="master-ht-cycle.html"><i class="fa-solid fa-temperature-high"></i> HT Cycles (Annealing PSN)</a>
+<a href="master-psn-segment.html"><i class="fa-solid fa-list-ol"></i> PSN Segments</a>
+<a href="master-psn-attribute.html"><i class="fa-solid fa-table-list"></i> PSN Attributes</a>
+<a href="master-psn-number-format.html"><i class="fa-solid fa-hashtag"></i> PSN Number Formats</a>
+<a href="master-defect-reference.html"><i class="fa-solid fa-images"></i> Defect Reference Images</a>
+</div></div>
+<div class="navgrp" data-g="Platform"><div class="s-group" onclick="grpToggle(this)">Platform<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items">
+<a href="master-batch-derivation-rule.html"><i class="fa-solid fa-code-branch"></i> Batch Derivation Rules</a>
+<a href="master-downtime-reason.html"><i class="fa-solid fa-triangle-exclamation"></i> Downtime Reasons</a>
+<a href="master-maintenance-plan.html"><i class="fa-solid fa-screwdriver-wrench"></i> Equipment Maintenance Plans</a>
+<a href="master-external-code-map.html"><i class="fa-solid fa-plug"></i> External Code Map</a>
+</div></div>
+<div class="navgrp" data-g="QA masters"><div class="s-group" onclick="grpToggle(this)">Quality masters (existing)<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items">
+<a href="../qa/masters.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> QA Masters hub</a>
+<a href="../qa/tdc.html"><i class="fa-solid fa-file-contract"></i> TDC / PSN</a>
+<a href="../qa/master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+<a href="../qa/master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+<a href="../qa/master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+</div></div></nav>  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="crumb"><b>Master catalogue</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-sliders"></i> Master Data — catalogue</h1><div class="sub">Every master of the JSW MES with its owner, book-of-record system, state and screen. The catalogue is the content of the deferred governance console (the governance catalogue); masters below are the Phase 2 additions, existing QA and platform masters open in their own module.</div></div>
+      <div class="ph-actions"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-arrow-down"></i> Download all templates</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Where used</button></div></div>
+    <div class="kpi"><div class="k"><b>30</b><span>new master screens</span></div><div class="k"><b>13</b><span>QA-owned</span></div><div class="k"><b>17</b><span>platform (request items)</span></div><div class="k"><b>29</b><span>catalogue entries</span></div><div class="k"><b>42</b><span>upload sheets</span></div></div>
+    <div class="note"><i class="fa-solid fa-circle-info"></i> Owner tags: <span class="owner o-qa">QA</span> Quality module tables · <span class="owner o-pf">PLATFORM</span> Production Confirmation application tables (change requests) · effective dating, bulk upload for every master and approvals are platform foundations (deferred); each master carries its content for them.</div>
+    <div class="tiles"><div class="tile-group">Product & Grade</div><div class="tile-row"><a class="tile" href="master-grade-profile.html"><div class="ic"><i class="fa-solid fa-layer-group"></i></div><div class="tx"><b>Grade Profile <span class="owner o-qa">QA</span></b><span>4 records · v_mdm_grade_profile</span></div></a><a class="tile" href="master-form-conversion-rule.html"><div class="ic"><i class="fa-solid fa-arrow-right-arrow-left"></i></div><div class="tx"><b>Form Conversion Rules <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_form_conversion_rule</span></div></a><a class="tile" href="master-psn-product-type.html"><div class="ic"><i class="fa-solid fa-table-cells"></i></div><div class="tx"><b>PSN Product Type Matrix <span class="owner o-qa">QA</span></b><span>7 records · mes_qc_psn_product_type</span></div></a><a class="tile" href="master-department.html"><div class="ic"><i class="fa-solid fa-sitemap"></i></div><div class="tx"><b>Departments <span class="owner o-pf">PLATFORM</span></b><span>6 records · mes_department</span></div></a><a class="tile" href="master-privileged-action.html"><div class="ic"><i class="fa-solid fa-user-shield"></i></div><div class="tx"><b>Privileged Actions <span class="owner o-pf">PLATFORM</span></b><span>8 records · mes_privileged_action</span></div></a></div><div class="tile-group">Process & Planning</div><div class="tile-row"><a class="tile" href="master-length-master.html"><div class="ic"><i class="fa-solid fa-ruler-horizontal"></i></div><div class="tx"><b>Length Master <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_length_master</span></div></a><a class="tile" href="master-yield-master.html"><div class="ic"><i class="fa-solid fa-percent"></i></div><div class="tx"><b>Yield Master <span class="owner o-pf">PLATFORM</span></b><span>5 records · mes_yield_master</span></div></a><a class="tile" href="master-product-family.html"><div class="ic"><i class="fa-solid fa-object-group"></i></div><div class="tx"><b>Product Family &amp; Section Load <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_product_family</span></div></a><a class="tile" href="master-moq-rule.html"><div class="ic"><i class="fa-solid fa-weight-hanging"></i></div><div class="tx"><b>MoQ Validation Rules <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_moq_rule</span></div></a><a class="tile" href="master-ferro-alloy-norm.html"><div class="ic"><i class="fa-solid fa-flask"></i></div><div class="tx"><b>Ferro Alloy Norms <span class="owner o-pf">PLATFORM</span></b><span>5 records · mes_ferro_alloy_norm</span></div></a><a class="tile" href="master-process-parameter.html"><div class="ic"><i class="fa-solid fa-sliders"></i></div><div class="tx"><b>Process Parameter Master <span class="owner o-pf">PLATFORM</span></b><span>5 records · mes_process_attributes</span></div></a><a class="tile" href="master-grinding-rule.html"><div class="ic"><i class="fa-solid fa-compact-disc"></i></div><div class="tx"><b>Grinding Rules (ABGM) <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_grinding_rule</span></div></a><a class="tile" href="master-equipment-section-limit.html"><div class="ic"><i class="fa-solid fa-ruler-combined"></i></div><div class="tx"><b>Equipment Section Limits <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_equipment_section_limit</span></div></a><a class="tile" href="master-swap-rule.html"><div class="ic"><i class="fa-solid fa-right-left"></i></div><div class="tx"><b>Swap Rules <span class="owner o-pf">PLATFORM</span></b><span>6 records · mes_swap_rule</span></div></a><a class="tile" href="master-order-book-rule.html"><div class="ic"><i class="fa-solid fa-book"></i></div><div class="tx"><b>Order Book Rules &amp; Customer Priority <span class="owner o-pf">PLATFORM</span></b><span>6 records · mes_order_book_rule</span></div></a><a class="tile" href="master-pit-cooling-rule.html"><div class="ic"><i class="fa-solid fa-temperature-arrow-down"></i></div><div class="tx"><b>Pit Cooling Rules &amp; Pits <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_pit_cooling_rule</span></div></a><a class="tile" href="master-pit.html"><div class="ic"><i class="fa-solid fa-warehouse"></i></div><div class="tx"><b>Pits <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_pit</span></div></a></div><div class="tile-group">Quality & Testing</div><div class="tile-row"><a class="tile" href="master-colour-code-map.html"><div class="ic"><i class="fa-solid fa-palette"></i></div><div class="tx"><b>Colour Code Map <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_colour_code_map</span></div></a><a class="tile" href="master-inspector.html"><div class="ic"><i class="fa-solid fa-id-badge"></i></div><div class="tx"><b>Inspectors <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_inspector</span></div></a><a class="tile" href="master-distribution-list.html"><div class="ic"><i class="fa-solid fa-envelopes-bulk"></i></div><div class="tx"><b>Distribution Lists <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_distribution_list</span></div></a><a class="tile" href="master-annealing-load-rule.html"><div class="ic"><i class="fa-solid fa-fire"></i></div><div class="tx"><b>Annealing Load Rules <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_annealing_load_rule</span></div></a><a class="tile" href="master-ht-cycle.html"><div class="ic"><i class="fa-solid fa-temperature-high"></i></div><div class="tx"><b>HT Cycles (Annealing PSN) <span class="owner o-qa">QA</span></b><span>3 records · mes_qc_ht_cycle</span></div></a><a class="tile" href="master-psn-segment.html"><div class="ic"><i class="fa-solid fa-list-ol"></i></div><div class="tx"><b>PSN Segments <span class="owner o-qa">QA</span></b><span>10 records · mes_qc_psn_segment</span></div></a><a class="tile" href="master-psn-attribute.html"><div class="ic"><i class="fa-solid fa-table-list"></i></div><div class="tx"><b>PSN Attributes <span class="owner o-qa">QA</span></b><span>9 records · mes_qc_psn_attribute</span></div></a><a class="tile" href="master-psn-number-format.html"><div class="ic"><i class="fa-solid fa-hashtag"></i></div><div class="tx"><b>PSN Number Formats <span class="owner o-qa">QA</span></b><span>5 records · mes_qc_psn_number_format</span></div></a><a class="tile" href="master-defect-reference.html"><div class="ic"><i class="fa-solid fa-images"></i></div><div class="tx"><b>Defect Reference Images <span class="owner o-qa">QA</span></b><span>4 records · mes_qc_defect_reference</span></div></a></div><div class="tile-group">Platform</div><div class="tile-row"><a class="tile" href="master-batch-derivation-rule.html"><div class="ic"><i class="fa-solid fa-code-branch"></i></div><div class="tx"><b>Batch Derivation Rules <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_batch_derivation_rule</span></div></a><a class="tile" href="master-downtime-reason.html"><div class="ic"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="tx"><b>Downtime Reasons <span class="owner o-pf">PLATFORM</span></b><span>11 records · mes_delay_reasons</span></div></a><a class="tile" href="master-maintenance-plan.html"><div class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></div><div class="tx"><b>Equipment Maintenance Plans <span class="owner o-pf">PLATFORM</span></b><span>4 records · mes_equipment_maintenance_plan</span></div></a><a class="tile" href="master-external-code-map.html"><div class="ic"><i class="fa-solid fa-plug"></i></div><div class="tx"><b>External Code Map <span class="owner o-pf">PLATFORM</span></b><span>6 records · mes_external_code_map</span></div></a></div>
+<div class="tile-group">Catalogue (governance content)</div>
+<div class="card" style="flex:none"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Master</th><th>Owner department (proposed)</th><th>Book of record</th><th>State</th><th>Screen</th><th>Upload sheet</th></tr></thead><tbody><tr><td>Grade (+ chemistry, standards, limits)</td><td>Customer Quality</td><td>Quality / Production Confirmation</td><td><span class="badge b-done">BUILT +ext</span></td><td><a href="master-grade-profile.html">open</a></td><td>Yes</td></tr><tr><td>Product (SKU), category, routing</td><td>PPC</td><td>Production Confirmation (SAP source)</td><td><span class="badge b-done">BUILT</span></td><td><span style="color:#888">existing screen</span></td><td>Yes</td></tr><tr><td>Form conversion rules</td><td>PPC + Customer Quality</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-form-conversion-rule.html">open</a></td><td>Yes</td></tr><tr><td>Plant / unit / equipment</td><td>Operations</td><td>Production Confirmation app</td><td><span class="badge b-done">BUILT</span></td><td><span style="color:#888">existing screen</span></td><td>Yes</td></tr><tr><td>PSN product type matrix</td><td>Customer Quality</td><td>QA</td><td><span class="badge b-info">NEW</span></td><td><a href="master-psn-product-type.html">open</a></td><td>Yes</td></tr><tr><td>Departments · privileged actions</td><td>IT</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-department.html">open</a></td><td>Yes</td></tr><tr><td>Length master</td><td>PPC (Mills upload)</td><td>Production Confirmation → Allocation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-length-master.html">open</a></td><td>Yes</td></tr><tr><td>Yield master</td><td>PPC</td><td>Production Confirmation → Allocation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-yield-master.html">open</a></td><td>Yes</td></tr><tr><td>Inspection path + rule</td><td>Mills QA</td><td>QA</td><td><span class="badge b-pend">DESIGNED +ext</span></td><td><span style="color:#888">existing screen</span></td><td>Yes</td></tr><tr><td>Product family · section load</td><td>PPC</td><td>Production Confirmation → Allocation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-product-family.html">open</a></td><td>Yes</td></tr><tr><td>MoQ rules</td><td>PPC</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-moq-rule.html">open</a></td><td>Yes</td></tr><tr><td>Ferro-alloy norms · prices · cost category</td><td>PPC + SMS</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-ferro-alloy-norm.html">open</a></td><td>Yes</td></tr><tr><td>Process parameters (extended)</td><td>Process Control</td><td>Production Confirmation app</td><td><span class="badge b-done">BUILT +ext</span></td><td><a href="master-process-parameter.html">open</a></td><td>Yes</td></tr><tr><td>Grinding rules · equipment section limits</td><td>Customer Quality / Operations</td><td>Quality / Production Confirmation</td><td><span class="badge b-info">NEW</span></td><td><a href="master-grinding-rule.html">open</a></td><td>Yes</td></tr><tr><td>Swap rules</td><td>PPC</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-swap-rule.html">open</a></td><td>Yes</td></tr><tr><td>Order-book rules · customer priority</td><td>PPC</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-order-book-rule.html">open</a></td><td>Yes</td></tr><tr><td>Pit cooling rules · pits</td><td>SMS QA</td><td>QA</td><td><span class="badge b-info">NEW</span></td><td><a href="master-pit-cooling-rule.html">open</a></td><td>Yes</td></tr><tr><td>Colour code (+ map), end discard, dim tolerance, length vocabulary, barcode type (+ scope)</td><td>SMS QA / Mills QA</td><td>QA</td><td><span class="badge b-pend">DESIGNED +ext</span></td><td><a href="master-colour-code-map.html">open</a></td><td>Yes</td></tr><tr><td>Sampling rules (+ positions), sample types, size basis</td><td>SMS QA / Mills QA / M&amp;M</td><td>QA</td><td><span class="badge b-done">BUILT +ext</span></td><td><span style="color:#888">existing screen</span></td><td>Yes</td></tr><tr><td>Instruments · calibration · instrument types</td><td>M&amp;M / Mills QA</td><td>QA</td><td><span class="badge b-done">BUILT +ext</span></td><td><span style="color:#888">existing screen</span></td><td>Yes</td></tr><tr><td>Agencies · inspectors</td><td>Mills QA</td><td>QA</td><td><span class="badge b-done">BUILT / NEW</span></td><td><a href="master-inspector.html">open</a></td><td>Yes</td></tr><tr><td>Distribution lists · notification rules</td><td>Customer Quality / IT</td><td>QA</td><td><span class="badge b-info">NEW / DESIGNED</span></td><td><a href="master-distribution-list.html">open</a></td><td>Yes</td></tr><tr><td>Annealing load rules · HT cycles</td><td>PPC / Customer Quality</td><td>Production Confirmation / Quality</td><td><span class="badge b-info">NEW</span></td><td><a href="master-annealing-load-rule.html">open</a></td><td>Yes</td></tr><tr><td>PSN segments · attributes · number formats</td><td>Customer Quality</td><td>QA</td><td><span class="badge b-info">NEW</span></td><td><a href="master-psn-attribute.html">open</a></td><td>Yes</td></tr><tr><td>Batch derivation rules</td><td>Operations + PPC</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-batch-derivation-rule.html">open</a></td><td>Yes</td></tr><tr><td>Defect catalogue (+ reference images), UD vocabulary, test catalogue, suppliers</td><td>QA</td><td>QA</td><td><span class="badge b-done">BUILT +ext</span></td><td><a href="master-defect-reference.html">open</a></td><td>Yes</td></tr><tr><td>Downtime reasons · maintenance plans</td><td>Operations</td><td>Production Confirmation → Allocation app</td><td><span class="badge b-done">BUILT +ext / NEW</span></td><td><a href="master-downtime-reason.html">open</a></td><td>Yes</td></tr><tr><td>External code map</td><td>IT</td><td>Production Confirmation app</td><td><span class="badge b-info">NEW</span></td><td><a href="master-external-code-map.html">open</a></td><td>Yes</td></tr><tr><td>LOVs (attributes, possible values, custom masters)</td><td>per owner</td><td>Production Confirmation app</td><td><span class="badge b-done">BUILT (config)</span></td><td><span style="color:#888">existing screen</span></td><td>n/a</td></tr></tbody></table></div></div>
+</div>
+  </main>
+</div>
+
+<div class="tabmenu" id="tabmenu"></div>
+<script>(function(){var REG={"mdm-hub.html": {"t": "Master catalogue", "i": "fa-sliders"}, "master-grade-profile.html": {"t": "Grade Profile", "i": "fa-layer-group"}, "master-form-conversion-rule.html": {"t": "Form Conversion Rules", "i": "fa-arrow-right-arrow-left"}, "master-psn-product-type.html": {"t": "PSN Product Type Matrix", "i": "fa-table-cells"}, "master-department.html": {"t": "Departments", "i": "fa-sitemap"}, "master-privileged-action.html": {"t": "Privileged Actions", "i": "fa-user-shield"}, "master-length-master.html": {"t": "Length Master", "i": "fa-ruler-horizontal"}, "master-yield-master.html": {"t": "Yield Master", "i": "fa-percent"}, "master-product-family.html": {"t": "Product Family & Section Load", "i": "fa-object-group"}, "master-moq-rule.html": {"t": "MoQ Validation Rules", "i": "fa-weight-hanging"}, "master-ferro-alloy-norm.html": {"t": "Ferro Alloy Norms", "i": "fa-flask"}, "master-process-parameter.html": {"t": "Process Parameter Master", "i": "fa-sliders"}, "master-grinding-rule.html": {"t": "Grinding Rules (ABGM)", "i": "fa-compact-disc"}, "master-equipment-section-limit.html": {"t": "Equipment Section Limits", "i": "fa-ruler-combined"}, "master-swap-rule.html": {"t": "Swap Rules", "i": "fa-right-left"}, "master-order-book-rule.html": {"t": "Order Book Rules & Customer Priority", "i": "fa-book"}, "master-pit-cooling-rule.html": {"t": "Pit Cooling Rules & Pits", "i": "fa-temperature-arrow-down"}, "master-pit.html": {"t": "Pits", "i": "fa-warehouse"}, "master-colour-code-map.html": {"t": "Colour Code Map", "i": "fa-palette"}, "master-inspector.html": {"t": "Inspectors", "i": "fa-id-badge"}, "master-distribution-list.html": {"t": "Distribution Lists", "i": "fa-envelopes-bulk"}, "master-annealing-load-rule.html": {"t": "Annealing Load Rules", "i": "fa-fire"}, "master-ht-cycle.html": {"t": "HT Cycles (Annealing PSN)", "i": "fa-temperature-high"}, "master-psn-segment.html": {"t": "PSN Segments", "i": "fa-list-ol"}, "master-psn-attribute.html": {"t": "PSN Attributes", "i": "fa-table-list"}, "master-psn-number-format.html": {"t": "PSN Number Formats", "i": "fa-hashtag"}, "master-defect-reference.html": {"t": "Defect Reference Images", "i": "fa-images"}, "master-batch-derivation-rule.html": {"t": "Batch Derivation Rules", "i": "fa-code-branch"}, "master-downtime-reason.html": {"t": "Downtime Reasons", "i": "fa-triangle-exclamation"}, "master-maintenance-plan.html": {"t": "Equipment Maintenance Plans", "i": "fa-screwdriver-wrench"}, "master-external-code-map.html": {"t": "External Code Map", "i": "fa-plug"}};var KEY='mdmOpenTabs';
+var here=(location.pathname.split('/').pop()||'mdm-hub.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+window.tabClose=function(e,h){e.stopPropagation();tabs=tabs.filter(function(x){return x!==h;});sv(tabs);if(h===here){location.href=tabs.length?tabs[tabs.length-1]:'mdm-hub.html';}else{render();}};
+render();})();
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mdmNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mdmNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}})();
+</script>
+</body>
+</html>

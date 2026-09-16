@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Usage Decision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-primary:disabled{background:#87D3F0;cursor:not-allowed;}
+.btn-success{background:var(--color-success);color:#fff;}.btn-success:hover{background:#2e7d32;}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.b-pass{background:rgba(76,175,80,.12);color:#388e3c;} .b-fail{background:rgba(244,67,54,.12);color:#d32f2f;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-hold{background:rgba(244,67,54,.12);color:#c62828;}
+.b-clr{background:rgba(103,58,183,.12);color:#673ab7;} .b-info{background:rgba(33,150,243,.12);color:#1976d2;}
+.b-warn{background:rgba(245,124,0,.14);color:#ef6c00;}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:var(--sp3);flex:1;min-height:0;}
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.lhead{padding:var(--sp3);border-bottom:1px solid var(--color-border-light);}
+.lhead .lh-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;margin-bottom:6px;}
+.lsearch{position:relative;}
+.lsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.lsearch input{width:100%;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.litems{overflow-y:auto;flex:1;}
+.litem{padding:9px 12px;border-bottom:1px solid #f3f3f3;cursor:pointer;border-left:3px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:var(--sp2);}
+.litem:hover{background:#eef7fc;} .litem.sel{background:var(--color-primary-light);border-left-color:var(--color-primary);}
+.litem .lh{font-weight:600;font-size:var(--fs-sm);font-variant-numeric:tabular-nums;}
+.litem .lg{font-size:var(--fs-xs);color:var(--color-text-muted);}
+.detail{min-width:0;}
+.dhead{padding:var(--sp3) var(--sp4);border-bottom:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp3);flex-wrap:wrap;}
+.dh-title{font-size:var(--fs-md);font-weight:600;display:flex;align-items:center;gap:var(--sp2);}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.chips .chip{font-size:var(--fs-sm);color:var(--color-text-secondary);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.chips .chip b{color:var(--color-text-primary);font-weight:600;margin-left:3px;}
+.dbody{flex:1;min-height:0;overflow:auto;padding:var(--sp4);display:flex;flex-direction:column;gap:var(--sp4);}
+.sec-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;margin-bottom:var(--sp2);}
+.agg-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);border:1px solid var(--color-border-light);border-radius:var(--r-sm);overflow:hidden;}
+.agg-table th{background:#f0f4f7;text-align:left;font-size:var(--fs-xs);text-transform:uppercase;color:var(--color-text-muted);font-weight:600;padding:8px 10px;}
+.agg-table td{padding:8px 10px;border-top:1px solid #f3f3f3;}
+.agg-row{cursor:pointer;} .agg-row:hover td{background:#eef7fc;} .agg-row .dim{font-weight:600;}
+.agg-detail td{background:#fafbfc;}
+.rec{display:inline-flex;gap:6px;align-items:center;margin-right:14px;font-variant-numeric:tabular-nums;}
+.defects{display:flex;flex-direction:column;gap:6px;}
+.evi-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.evi-tbl th{text-align:left;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;padding:5px 8px;border-bottom:1px solid var(--color-border);}
+.evi-tbl td{padding:5px 8px;border-bottom:1px solid #f3f3f3;}
+.evi-tbl td.mono{font-family:monospace;font-size:12px;}
+.evi-read{color:var(--color-text-secondary);font-variant-numeric:tabular-nums;}
+.evi-empty{color:#888;font-style:italic;text-align:center;padding:10px;}
+.wf-wrap{margin-top:10px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-md);padding:10px 12px;}
+.wf-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;margin-bottom:8px;}
+.wf-label b{color:var(--color-primary-dark);text-transform:none;letter-spacing:0;}
+.wf{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.wf-step{font-size:12px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--color-border);color:var(--color-text-muted);white-space:nowrap;}
+.wf-step.done{background:rgba(56,142,60,.12);border-color:rgba(56,142,60,.3);color:#388e3c;}
+.wf-step.cur{background:var(--color-primary);border-color:var(--color-primary);color:#fff;font-weight:600;}
+.wf-arr{color:#bbb;font-size:11px;}
+.def{display:flex;align-items:center;gap:var(--sp2);font-size:var(--fs-sm);padding:7px 10px;background:#ffebee;border:1px solid #ef9a9a;border-radius:var(--r-sm);}
+.def i{color:var(--color-danger);}
+.dec-seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--r-sm);overflow:hidden;margin-bottom:var(--sp3);}
+.dec-seg button{padding:9px 18px;border:none;background:#fff;font:500 var(--fs-sm) var(--font);color:var(--color-text-secondary);border-right:1px solid var(--color-border);}
+.dec-seg button:last-child{border-right:none;}
+.dec-seg button:hover{background:var(--color-bg-alt);}
+.dec-seg button.on.d-ACCEPT{background:var(--color-success);color:#fff;}
+.dec-seg button.on.d-CONDITIONAL{background:var(--color-info);color:#fff;}
+.dec-seg button.on.d-REJECT{background:var(--color-danger);color:#fff;}
+.dec-seg button.on.d-REWORK{background:var(--color-warning);color:#fff;}
+.dec-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld textarea{resize:vertical;min-height:54px;}
+.fld.full{grid-column:1/-1;}
+.ud-sum{background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-md);padding:var(--sp3) var(--sp4);}
+.ud-sum .row{display:flex;gap:var(--sp4);flex-wrap:wrap;margin-bottom:6px;font-size:var(--fs-sm);}
+.ud-sum .k{color:var(--color-text-muted);} .ud-sum .v{font-weight:500;}
+.dfoot{padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:center;gap:var(--sp3);flex-wrap:wrap;}
+.appr{font-size:var(--fs-sm);color:var(--color-text-muted);} .appr.warn{color:#ef6c00;}
+.foot-actions{display:flex;gap:var(--sp2);}
+.auto-tag{font-size:var(--fs-xs);color:var(--color-primary-dark);background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:2px 8px;font-weight:600;}
+
+/* ── Enhancement: detail-header actions, release-check source tags, downgrade segment, AUD modal ── */
+.dh-actions{display:flex;gap:var(--sp2);flex-wrap:wrap;align-items:flex-start;}
+.src{display:inline-block;font-size:var(--fs-xs);padding:2px 7px;border-radius:var(--r-sm);font-weight:600;letter-spacing:.3px;}
+.src-auto{color:var(--color-primary-dark);background:var(--color-primary-light);border:1px solid #b3e5fc;}
+.src-lab{color:#5e35b1;background:rgba(103,58,183,.1);border:1px solid rgba(103,58,183,.25);}
+.src-online{color:#00796b;background:rgba(0,150,136,.1);border:1px solid rgba(0,150,136,.25);}
+.dec-seg button.on.d-DOWNGRADE{background:#795548;color:#fff;}
+.mes-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:5000;padding:20px;}
+.mes-modal{background:#fff;border-radius:var(--r-lg);width:min(560px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.mm-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp3);padding:14px 18px;border-bottom:1px solid var(--color-border-light);}
+.mm-title{font-size:var(--fs-md);font-weight:600;display:flex;align-items:center;gap:var(--sp2);}
+.mm-title i{color:var(--color-primary);}
+.mm-x{border:none;background:none;color:var(--color-text-hint);font-size:16px;padding:4px 8px;border-radius:var(--r-sm);}
+.mm-x:hover{background:var(--color-bg);color:var(--color-danger);}
+.mm-body{padding:var(--sp4) 18px;overflow:auto;display:flex;flex-direction:column;gap:10px;}
+.mm-hint{font-size:var(--fs-sm);color:var(--color-text-muted);line-height:1.5;}
+.mm-audit{font-size:var(--fs-xs);color:var(--color-text-muted);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:8px 10px;display:flex;align-items:center;gap:var(--sp2);}
+.mm-audit i{color:var(--color-primary-dark);}
+.mm-foot{padding:var(--sp3) 18px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp2);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+/* ── Enhancement: Bulk UD (mass_ud_ref), Re-UD supersession chain, decision history ── */
+.mes-modal.bud-wide{width:min(680px,100%);}
+.bud-filters{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;}
+.bud-check{display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--color-text-secondary);padding:9px 0;white-space:nowrap;cursor:pointer;}
+.bud-check input{accent-color:var(--color-primary);}
+.bud-list{border:1px solid var(--color-border);border-radius:var(--r-md);max-height:190px;overflow-y:auto;}
+.bud-all{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f0f4f7;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-xs);font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;cursor:pointer;}
+.bud-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #f3f3f3;font-size:var(--fs-sm);cursor:pointer;}
+.bud-row:last-child{border-bottom:none;}
+.bud-row:hover{background:#eef7fc;}
+.bud-row input,.bud-all input{accent-color:var(--color-primary);}
+.bud-row .bud-heat{font-weight:600;font-variant-numeric:tabular-nums;}
+.bud-row .bud-roll{color:var(--color-text-muted);font-size:var(--fs-xs);margin-left:auto;white-space:nowrap;}
+.bud-empty{padding:14px;text-align:center;color:#888;font-style:italic;font-size:var(--fs-sm);}
+.bud-count{font-size:var(--fs-sm);font-weight:600;color:var(--color-primary-dark);}
+.bud-note{font-size:var(--fs-xs);color:#ef6c00;background:rgba(245,124,0,.08);border:1px solid rgba(245,124,0,.3);border-radius:var(--r-sm);padding:6px 9px;display:flex;gap:6px;align-items:center;}
+.bud-tag{display:inline-block;font-size:var(--fs-xs);color:#5e35b1;background:rgba(103,58,183,.1);border:1px solid rgba(103,58,183,.25);border-radius:var(--r-sm);padding:2px 8px;font-weight:600;white-space:nowrap;}
+.fld input[type="text"]{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input[type="text"]:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld input[type="text"]:disabled{background:var(--color-bg-alt);color:var(--color-text-muted);}
+.reud-ban{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);background:rgba(245,124,0,.08);border:1px solid rgba(245,124,0,.35);color:#b25000;border-radius:var(--r-md);padding:9px 12px;margin-bottom:var(--sp3);}
+.udh-list{border:1px solid var(--color-border-light);border-radius:var(--r-md);padding:6px 10px;background:var(--color-bg-alt);}
+.udh-row{display:flex;align-items:center;gap:10px;padding:6px 2px;font-size:var(--fs-sm);flex-wrap:wrap;}
+.udh-no{font-family:ui-monospace,Consolas,monospace;font-weight:600;font-size:12px;color:var(--color-text-primary);}
+.udh-act{color:var(--color-text-secondary);}
+.udh-date{color:var(--color-text-hint);font-size:var(--fs-xs);}
+.udh-tag{font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 7px;border-radius:999px;margin-left:auto;white-space:nowrap;}
+.udh-cur{background:rgba(56,142,60,.12);color:#388e3c;border:1px solid rgba(56,142,60,.3);}
+.udh-sup{background:#eee;color:#888;border:1px solid #ddd;}
+.udh-chain{font-size:11px;color:#999;display:flex;align-items:center;gap:6px;padding:0 2px 4px 14px;}
+
+/* ── Enhancement: batch barcode stickers after final clearance (SOW SMSQA9-83) — 62×29 mm label per piece/batch ── */
+.bstk-act{margin-top:10px;}
+.bstk-note{color:#2e7d32;display:inline-flex;align-items:center;gap:5px;}
+.bstk-sheet{display:flex;flex-wrap:wrap;gap:10px;}
+.bstk-card{flex:none;width:62mm;height:29mm;background:#fff;border:1px solid #9e9e9e;border-radius:2mm;padding:1.5mm 2.5mm;display:flex;flex-direction:column;overflow:hidden;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+.bstk-no{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:11.5px;letter-spacing:.4px;font-variant-numeric:tabular-nums;}
+.bstk-clr{font-size:8px;font-weight:700;letter-spacing:.6px;border:1px solid #000;border-radius:2px;padding:0 4px;}
+.bstk-bars{height:6.5mm;margin:1mm 0 .5mm;background:repeating-linear-gradient(90deg,#000 0,#000 1.5px,#fff 1.5px,#fff 3px,#000 3px,#000 6px,#fff 6px,#fff 7.5px,#000 7.5px,#000 8.5px,#fff 8.5px,#fff 11px);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.bstk-code{font-family:ui-monospace,Consolas,monospace;font-size:9px;letter-spacing:2.5px;text-align:center;}
+.bstk-meta{margin-top:auto;font-size:8.5px;white-space:nowrap;display:flex;flex-direction:column;gap:1px;}
+.bstk-meta .bm-row{display:flex;justify-content:space-between;gap:2mm;}
+.bstk-meta b{font-size:9px;}
+/* Sticker print scope — its own class (body.bstk-print, set only while the batch-sticker modal is open)
+   so certificate-style printing elsewhere is unaffected; prints ONLY the sticker cards, no app chrome. */
+@media print{
+  body.bstk-print{height:auto;background:#fff;}
+  body.bstk-print>*:not(#bstkOv){display:none!important;}
+  body.bstk-print #bstkOv{position:static;inset:auto;display:block;background:#fff;padding:0;}
+  body.bstk-print #bstkOv .mes-modal{width:auto;max-height:none;display:block;box-shadow:none;border-radius:0;overflow:visible;}
+  body.bstk-print #bstkOv .mm-head,body.bstk-print #bstkOv .mm-foot,body.bstk-print #bstkOv .mm-hint{display:none!important;}
+  body.bstk-print #bstkOv .mm-body{padding:0;overflow:visible;display:block;}
+  body.bstk-print .bstk-sheet{display:block;}
+  body.bstk-print .bstk-card{box-shadow:none;border:1px solid #000;border-radius:0;margin:0 0 4mm;page-break-inside:avoid;break-inside:avoid;}
+}
+
+/* ── Enhancement: Process validation — casting parameters interfaced from SMS MES (SOW SMSQA9-76/77).
+   QA reads the platform capture table (mes_process_parameters_captured, D5) for the casting operation;
+   the SMS MES interface populates it — no QA-side table (Data-Model §25.8). Read-only evidence panel. ── */
+.psv-chip{display:inline-block;font-size:var(--fs-xs);font-weight:600;text-transform:none;letter-spacing:0;color:#37474f;background:rgba(69,90,100,.08);border:1px solid rgba(69,90,100,.28);border-radius:var(--r-sm);padding:2px 8px;margin-left:6px;vertical-align:middle;}
+.psv-chip i{margin-right:4px;color:#546e7a;}
+.src-sms{color:#37474f;background:rgba(69,90,100,.09);border:1px solid rgba(69,90,100,.3);white-space:nowrap;}
+.psv-note{display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:#b25000;background:rgba(245,124,0,.08);border:1px solid rgba(245,124,0,.35);border-radius:var(--r-sm);padding:7px 10px;margin-top:8px;}
+.psv-note i{color:#ef6c00;}
+.psv-empty{color:#888;font-style:italic;font-size:var(--fs-sm);padding:9px 10px;background:var(--color-bg-alt);border:1px dashed var(--color-border);border-radius:var(--r-sm);}
+.psv-empty i{margin-right:6px;color:#aaa;}
+.psv-rem td{background:#fafbfc;}
+.psv-free{font-style:italic;color:var(--color-text-secondary);}
+
+/* ── wgh- (§26.9, MQA 25): final weight captured from the weighing machine at final clearance ── */
+.chips .wgh-chip b{font-variant-numeric:tabular-nums;}
+.chips .wgh-btn{padding:2px 9px;font-size:var(--fs-xs);border-radius:var(--r-sm);align-self:center;}
+
+/* ── bstx- (§26.7, MQA 24): barcode-type select + heat-filtered bulk sticker print ── */
+.bstx-controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:8px 10px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-md);}
+.bstx-fld label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+.bstx-fld select,.bstx-fld input{padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;background:#fff;}
+.bstx-fld input{width:120px;}
+.bstx-count{margin-left:auto;font-size:var(--fs-sm);font-weight:600;color:var(--color-primary-dark);background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:999px;padding:3px 10px;white-space:nowrap;}
+.bstk-card.bstx-extra{outline:2px dashed rgba(37,169,224,.55);outline-offset:1px;}
+/* bulk-print additions ride the EXISTING body.bstk-print scope: controls never print, extra cards print clean */
+@media print{
+  body.bstk-print .bstx-controls{display:none!important;}
+  body.bstk-print .bstk-card.bstx-extra{outline:none;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat, order…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html" class="active"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Usage Decision</h1><div class="sub">Aggregate all clearances for a heat/lot → accept / reject / conditional, with reason &amp; action</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="massUD()"><i class="fa-solid fa-layer-group"></i> Mass UD</button>
+    </div>
+    <div class="wrap">
+      <div class="card">
+        <div class="lhead"><div class="lh-title">Lots — awaiting / recent UD</div>
+          <div class="lsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Heat / order / UID…" /></div></div>
+        <div class="litems" id="list"></div>
+      </div>
+      <div class="card detail" id="detail"></div>
+    </div>
+  </main>
+</div>
+<script>
+const UD_TYPES=['Standard','Deviation','Concession','Downgrade'];
+const UD_REASONS=['All parameters within TDC','Minor deviation accepted under concession','Chemistry out of TDC specification','Mechanical properties below spec','Reworkable non-conformance','Pending customer approval','Critical defect'];
+const UD_ACTIONS=['Release to next operation','Release / Dispatch','Release under concession','Re-heat-treat / Rework','Reroute to alternate order','Downgrade & re-allocate','Hold','Scrap / Reject'];
+const MAT_STATUS=['OK','HOLD','REWORK','DOWNGRADED','REJECTED','QUARANTINE'];
+const DEC_DEFAULT={
+ ACCEPT:{type:'Standard',reason:'All parameters within TDC',action:'Release to next operation',status:'OK'},
+ CONDITIONAL:{type:'Concession',reason:'Minor deviation accepted under concession',action:'Release under concession',status:'OK'},
+ REJECT:{type:'Standard',reason:'Chemistry out of TDC specification',action:'Scrap / Reject',status:'REJECTED'},
+ REWORK:{type:'Standard',reason:'Reworkable non-conformance',action:'Re-heat-treat / Rework',status:'REWORK'},
+ DOWNGRADE:{type:'Downgrade',reason:'Surface / dimension deviation — re-grade',action:'Downgrade & re-allocate',status:'DOWNGRADED'}
+};
+const LOTS=[
+ {kind:'Heat',heat:'2526-16496',grade:'17-4PH',tdc:'TDC-004275',order:'POA-MN-FR-2627-0014',uid:'B030268',qty:'1.85 MT',
+  clr:{Chemistry:{r:'CLEARED',op:'Casting',recs:[['CHM-2526-0188','PASS']]},Mechanical:{r:'CLEARED',op:'Heat Treatment',recs:[['TST-2526-0034','PASS']]},Physical:{r:'CLEARED',op:'Grinding',recs:[['INS-2526-0012','PASS']]},UT:{r:'CLEARED',op:'Peeling',recs:[['UT-2526-0071','PASS']]}},
+  defects:[],smsProc:true,mstatus:'OK',ud:null},
+ {kind:'Heat',heat:'2526-16776',grade:'304L',tdc:'TDC-004810',order:'POA-MN-FR-2627-0009',uid:'E121717',qty:'2.10 MT',
+  clr:{Chemistry:{r:'FAIL',op:'Casting',recs:[['CHM-2526-0189','FAIL']]},Mechanical:{r:'CLEARED',op:'Heat Treatment',recs:[['TST-2526-0035','PASS']]},Physical:{r:'CLEARED',op:'Rolling',recs:[['INS-2526-0018','PASS']]},UT:{r:'CLEARED',op:'Rolling',recs:[['UT-2526-0072','COND']]}},
+  defects:[['Chemistry out of spec','S content high','MAJOR']],smsProc:true,mstatus:'HOLD',ud:null},
+ {kind:'Heat',heat:'2526-16482',grade:'416',tdc:'TDC-003922',order:'OA-SBD-D-2627-0041',uid:'B030840',qty:'0.95 MT',
+  clr:{Chemistry:{r:'CLEARED',op:'Casting',recs:[['CHM-2526-0191','PASS']]},Mechanical:{r:'FAIL',op:'Heat Treatment',recs:[['TST-2526-0036','FAIL']]},Physical:{r:'CLEARED',op:'Straightening',recs:[['INS-2526-0016','PASS']]},UT:{r:'CLEARED',op:'Peeling',recs:[['UT-2526-0073','PASS']]}},
+  defects:[['Low hardness','Below spec after Q&T','MAJOR']],smsProc:true,mstatus:'HOLD',ud:null},
+ {kind:'Heat',heat:'2526-16783',grade:'316L',tdc:'TDC-006132',order:'POA-MN-FR-2627-0011',uid:'A002668',qty:'1.40 MT',
+  clr:{Chemistry:{r:'CLEARED',op:'Casting',recs:[['CHM-2526-0193','PASS']]},Mechanical:{r:'CLEARED',op:'Heat Treatment',recs:[['TST-2526-0038','PASS']]},Physical:{r:'CLEARED',op:'Pickling',recs:[['INS-2526-0017','PASS']]},UT:{r:'PENDING',op:'Peeling',recs:[]}},
+  defects:[],smsProc:false,mstatus:'OK',ud:null},
+ {kind:'Heat',heat:'2526-16798',grade:'304L',tdc:'TDC-004810',order:'POA-MN-FR-2627-0010',uid:'E122319',qty:'1.65 MT',
+  clr:{Chemistry:{r:'CLEARED',op:'Casting',recs:[['CHM-2526-0190','PASS']]},Mechanical:{r:'CLEARED',op:'Heat Treatment',recs:[['TST-2526-0039','PASS']]},Physical:{r:'CLEARED',op:'Drawing',recs:[['INS-2526-0014','PASS']]},UT:{r:'CLEARED',op:'Rolling',recs:[['UT-2526-0072','PASS']]}},
+  defects:[['Minor surface mark','Within concession limit','MINOR']],smsProc:true,mstatus:'OK',ud:null},
+ {kind:'Heat',heat:'2526-16426',grade:'416',tdc:'TDC-003922',order:'POA-MN-FR-2627-0012',uid:'E120808',qty:'1.20 MT',
+  clr:{Chemistry:{r:'CLEARED',op:'Casting',recs:[['CHM-2526-0187','PASS']]},Mechanical:{r:'CLEARED',op:'Heat Treatment',recs:[['TST-2526-0040','PASS']]},Physical:{r:'CLEARED',op:'Grinding',recs:[['INS-2526-0019','PASS']]},UT:{r:'CLEARED',op:'Peeling',recs:[['UT-2526-0073','PASS']]}},
+  defects:[],smsProc:false,mstatus:'OK',ud:null}
+];
+/* Seed: heat 2526-16482 already carries a supersession chain (usage_decision.supersedes_ud_id) —
+   an initial REJECT that was re-decided (Re-UD) to REWORK. Latest row in the chain is current. */
+(function(){
+  var rej={no:'UD-2526-0114',decision:'REJECT',type:'Standard',reason:'Mechanical properties below spec',action:'Scrap / Reject',status:'REJECTED',remarks:'Hardness below TDC minimum after Q&T — initial MRB disposition.',approval:'APPROVED',auto:false,date:'12-Jul-2026',supersedes:null,massRef:''};
+  var rwk={no:'UD-2526-0121',decision:'REWORK',type:'Standard',reason:'Reworkable non-conformance',action:'Re-heat-treat / Rework',status:'REWORK',remarks:'MRB re-review: lot is reworkable — re-quench & temper per HT-23, then re-test.',salvageRemarks:'Re-HT at Heat Treatment (HT-23); expected loss ~2%.',approval:'APPROVED',auto:false,date:'14-Jul-2026',supersedes:'UD-2526-0114',massRef:''};
+  var l=LOTS[2];l.udHistory=[rwk,rej];l.ud=rwk;l.mstatus='REWORK';
+})();
+const M={READY:'b-pass',REVIEW:'b-warn',INCOMPLETE:'b-pend',ACCEPT:'b-pass',CONDITIONAL:'b-info',REJECT:'b-fail',REWORK:'b-warn',DOWNGRADE:'b-warn',
+  OK:'b-pass',HOLD:'b-hold',DOWNGRADED:'b-warn',REJECTED:'b-fail',QUARANTINE:'b-hold',
+  CLEARED:'b-pass',FAIL:'b-fail',PENDING:'b-pend',PASS:'b-pass',COND:'b-info'};
+function bdg(s){return `<span class="badge ${M[s]||'b-pend'}">${s}</span>`;}
+function cap(d){return d[0]+d.slice(1).toLowerCase();}
+function opts(list,sel){return list.map(o=>`<option ${o===sel?'selected':''}>${o}</option>`).join('');}
+/* evidence: inspections (Physical/UT recs) + test results (Chemistry/Mechanical recs), derived from the lot's clearances */
+const READINGS={
+ 'TST-2526-0034':'YS 865 · UTS 1010 · Elong 16% · 33 HRC','TST-2526-0035':'YS 295 · UTS 610 · Elong 55% · 82 HRB',
+ 'TST-2526-0036':'YS 405 · UTS 585 · Elong 14% · 38 HRC ✗','TST-2526-0038':'YS 285 · UTS 595 · Elong 52% · 84 HRB',
+ 'TST-2526-0039':'YS 300 · UTS 610 · Elong 55% · 82 HRB','TST-2526-0040':'YS 415 · UTS 760 · Elong 22% · 28 HRC',
+ 'CHM-2526-0188':'C .045 · Cr 15.8 · Ni 4.3 · Cu 3.4 · Nb .28','CHM-2526-0189':'C .021 · Cr 18.4 · Ni 8.6 · S .042 ✗',
+ 'CHM-2526-0190':'C .019 · Cr 18.4 · Ni 8.6 · Mo .31','CHM-2526-0191':'C .12 · Cr 12.8 · S .27 · Mn .92',
+ 'CHM-2526-0193':'C .022 · Cr 16.8 · Ni 10.4 · Mo 2.1','CHM-2526-0187':'C .11 · Cr 13.1 · S .24 · Mn .88'};
+function inspectionsOf(lot){const out=[];Object.entries(lot.clr).forEach(([dim,c])=>{if(dim==='Physical'||dim==='UT')c.recs.forEach(r=>out.push({no:r[0],type:dim==='UT'?'Ultrasonic (NDT)':'Dimensional / Visual',stage:c.op,result:r[1]}));});return out;}
+function testsOf(lot){const out=[];Object.entries(lot.clr).forEach(([dim,c])=>{if(dim==='Chemistry'||dim==='Mechanical')c.recs.forEach(r=>out.push({no:r[0],test:dim==='Chemistry'?'Chemical (Spectro)':'Mechanical (Tensile/Hardness)',readings:READINGS[r[0]]||'—',result:r[1]}));});return out;}
+/* Release check — the Spec column is resolved from the lot's applied TDC (customer spec overlaid on the
+   grade standard), NOT a hard-coded global threshold. TDC_SPEC is keyed by TDC number; each characteristic
+   is evaluated by parsing the lot's own test readings and comparing to the TDC min/max. */
+const TDC_SPEC={
+ 'TDC-004275':{grade:'17-4PH',mech:{YS:{min:725,unit:'MPa',label:'Yield strength (YS)'},UTS:{min:930,unit:'MPa',label:'Tensile strength (UTS)'},Elong:{min:10,unit:'%',label:'Elongation'},HRC:{max:38,unit:'HRC',label:'Hardness'}},chem:{C:{max:0.07},Cr:{min:15,max:17.5},Ni:{min:3,max:5},Cu:{min:3,max:5}}},
+ 'TDC-004810':{grade:'304L',mech:{YS:{min:170,unit:'MPa',label:'Yield strength (YS)'},UTS:{min:485,unit:'MPa',label:'Tensile strength (UTS)'},Elong:{min:40,unit:'%',label:'Elongation'},HRB:{max:92,unit:'HRB',label:'Hardness'}},chem:{C:{max:0.030},Cr:{min:18,max:20},Ni:{min:8,max:12},S:{max:0.030}}},
+ 'TDC-003922':{grade:'416',mech:{YS:{min:400,unit:'MPa',label:'Yield strength (YS)'},UTS:{min:600,unit:'MPa',label:'Tensile strength (UTS)'},Elong:{min:12,unit:'%',label:'Elongation'},HRC:{min:26,unit:'HRC',label:'Hardness'}},chem:{C:{min:0.09,max:0.15},Cr:{min:12,max:14},S:{min:0.15}}},
+ 'TDC-006132':{grade:'316L',mech:{YS:{min:170,unit:'MPa',label:'Yield strength (YS)'},UTS:{min:485,unit:'MPa',label:'Tensile strength (UTS)'},Elong:{min:40,unit:'%',label:'Elongation'},HRB:{max:95,unit:'HRB',label:'Hardness'}},chem:{C:{max:0.030},Cr:{min:16,max:18},Ni:{min:10,max:14},Mo:{min:2,max:3}}}
+};
+function parseReadings(str){const out={};(str||'').split('·').forEach(function(tok){tok=tok.replace('✗','').trim();if(!tok)return;var m;if(m=tok.match(/^([A-Za-z]+)\s+\.?\d/)){var key=m[1];out[key]=parseFloat(tok.slice(key.length).replace('%','').trim());}else if(m=tok.match(/^([\d.]+)\s*(HRC|HRB|HB|HV)$/i)){out[m[2].toUpperCase()]=parseFloat(m[1]);}});return out;}
+function specText(s){var u=s.unit?(' '+s.unit):'';if(s.min!=null&&s.max!=null)return s.min+'–'+s.max+u;if(s.min!=null)return '≥ '+s.min+u;if(s.max!=null)return '≤ '+s.max+u;return '—';}
+function evalSpec(v,s){if(v==null)return null;if(s.min!=null&&v<s.min)return false;if(s.max!=null&&v>s.max)return false;return true;}
+function firstRec(c){return c&&c.recs&&c.recs.length?c.recs[0]:null;}
+function releaseCheck(lot){
+ var spec=TDC_SPEC[lot.tdc],rows=[];
+ var mr=firstRec(lot.clr.Mechanical),mv=parseReadings(mr?READINGS[mr[0]]:'');
+ if(spec&&spec.mech)Object.keys(spec.mech).forEach(function(k){var s=spec.mech[k],v=mv[k];if(v==null)return;var p=evalSpec(v,s);rows.push({prop:s.label||k,meas:v+(s.unit?(' '+s.unit):''),spec:specText(s),src:'lab',res:p?'PASS':'FAIL'});});
+ var cr=firstRec(lot.clr.Chemistry),cv=parseReadings(cr?READINGS[cr[0]]:'');
+ if(spec&&spec.chem)Object.keys(spec.chem).forEach(function(el){var s=spec.chem[el],v=cv[el];if(v==null)return;var p=evalSpec(v,s);rows.push({prop:el+' (chemistry)',meas:v+'%',spec:specText(Object.assign({unit:'%'},s)),src:'lab',res:p?'PASS':'FAIL'});});
+ var ph=firstRec(lot.clr.Physical);
+ if(ph)rows.push({prop:'Dimensional / surface',meas:ph[1]==='PASS'?'Within tolerance':ph[1]==='FAIL'?'Out of tolerance':ph[1],spec:'Per TDC dim / surface',src:'online',res:ph[1]});
+ var ut=lot.clr.UT,utr=firstRec(ut);
+ if(ut){if(utr)rows.push({prop:'Internal soundness (UT)',meas:utr[1]==='PASS'?'No recordable indication':utr[1]==='COND'?'Minor indication (acceptable)':'Indication found',spec:'No critical / Class ≤ 2',src:'AUTO',res:utr[1]});else rows.push({prop:'Internal soundness (UT)',meas:'Awaiting online scan',spec:'No critical / Class ≤ 2',src:'AUTO',res:'PENDING'});}
+ return rows;
+}
+function srcTag(src){var m={AUTO:'AUTO',lab:'Lab',online:'Online'},c={AUTO:'src-auto',lab:'src-lab',online:'src-online'};return '<span class="src '+(c[src]||'')+'">'+(m[src]||src)+'</span>';}
+/* ===== Process validation — casting parameters (SOW SMSQA9-76/77) =====
+   QA reads the platform capture table for the casting operation — mes_process_parameters_captured
+   (platform, D5); the SMS MES interface populates it; there is NO QA-side table for these values
+   (Data-Model §25.8). Read-only in QA: the captured parameters participate as evidence in the
+   usage decision (validation option) but NEVER block it — the decision logic stays as-is.
+   lot.smsProc (per-lot boolean) drives whether captured data exists for the lot yet;
+   rows: [parameter, captured value, spec/window, in-window?] + free-text process remarks. */
+const SMS_PROC={
+ '2526-16496':{params:[['Lance open','5.2 min','4–8 min',true],['Super heat','28 °C','20–35 °C',true],['Casting speed','2.6 m/min','2.2–3.0 m/min',true],['Casting powder','STS-M4 · 0.42 kg/t','Approved grade · 0.35–0.55 kg/t',true]],
+  remarks:'Sequence cast 2/4 — mould level stable, no SEN clogging observed.'},
+ '2526-16776':{params:[['Lance open','4.6 min','4–8 min',true],['Super heat','31 °C','20–35 °C',true],['Casting speed','2.4 m/min','2.2–3.0 m/min',true],['Casting powder','STS-M4 · 0.47 kg/t','Approved grade · 0.35–0.55 kg/t',true]],
+  remarks:'First heat of sequence — open-stream start, shroud fitted from strand 2.'},
+ '2526-16482':{params:[['Lance open','5.8 min','4–8 min',true],['Super heat','24 °C','20–35 °C',true],['Casting speed','2.8 m/min','2.2–3.0 m/min',true],['Casting powder','STS-F2 · 0.38 kg/t','Approved grade · 0.35–0.55 kg/t',true]],
+  remarks:'Normal cast — no deviations logged by SMS MES.'},
+ '2526-16798':{params:[['Lance open','4.9 min','4–8 min',true],['Super heat','41 °C','20–35 °C',false],['Casting speed','2.2 m/min','2.2–3.0 m/min',true],['Casting powder','STS-M4 · 0.51 kg/t','Approved grade · 0.35–0.55 kg/t',true]],
+  remarks:'Tundish super heat above window 10:42–10:58; casting speed held at lower bound to compensate.'}
+};
+function smsProcOf(lot){return lot.smsProc?(SMS_PROC[lot.heat]||null):null;}
+function procSecHtml(lot){
+  const chip='<span class="psv-chip" title="Captured by the SMS MES interface into the platform table; QA reads it — no QA-side table (Data-Model §25.8)"><i class="fa-solid fa-plug"></i>Interfaced from SMS MES → mes_process_parameters_captured (platform, D5) — read-only</span>';
+  const head='<div class="sec-title">Process validation — casting parameters (SMS MES)'+chip+'</div>';
+  const d=smsProcOf(lot);
+  if(!d)return '<section>'+head+'<div class="psv-empty"><i class="fa-solid fa-satellite-dish"></i>No casting parameters received yet (SMS MES interface).</div></section>';
+  const src='<span class="src src-sms">SMS MES</span>';
+  const rows=d.params.map(p=>`<tr><td>${p[0]}</td><td class="evi-read">${p[1]}</td><td class="evi-read">${p[2]}</td><td>${bdg(p[3]?'PASS':'FAIL')}</td><td>${src}</td></tr>`).join('')
+    +`<tr class="psv-rem"><td>Process remarks</td><td colspan="2"><span class="psv-free">${d.remarks}</span></td><td>—</td><td>${src}</td></tr>`;
+  const dev=d.params.some(p=>!p[3]);
+  return `<section>${head}
+    <table class="evi-tbl"><thead><tr><th>Parameter</th><th>Value</th><th>Spec / window</th><th>Result</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table>
+    ${dev?'<div class="psv-note"><i class="fa-solid fa-triangle-exclamation"></i> <b>Process deviation</b>&nbsp;— consider in decision (informative only; the usage decision is not blocked).</div>':''}</section>`;
+}
+/* workflow triggered by the chosen UD action */
+const WORKFLOW={
+ 'Release to next operation':['Record UD','Quality approval','Plant-Head approval','Release → next op'],
+ 'Release / Dispatch':['Record UD','Quality approval','Plant-Head approval','Release → dispatch'],
+ 'Release under concession':['Record UD','Concession review','Customer approval','Release (concession)'],
+ 'Re-heat-treat / Rework':['Record UD','Raise salvage order','Re-HT / rework','Re-inspect & re-UD'],
+ 'Reroute to alternate order':['Record UD','Reroute approval','Re-allocate order','Re-inspect'],
+ 'Downgrade & re-allocate':['Record UD','Re-grade material','Re-allocate order','Re-inspect'],
+ 'Hold':['Record UD','Material on hold','Await review'],
+ 'Scrap / Reject':['Record UD','Raise NCR','Quarantine','Scrap']};
+function isSalvage(a){return a==='Re-heat-treat / Rework'||a==='Reroute to alternate order'||a==='Downgrade & re-allocate';}
+function wfSteps(action,done){const steps=WORKFLOW[action]||['Record UD'];return '<div class="wf">'+steps.map((s,i)=>`<span class="wf-step ${i<done?'done':i===done?'cur':''}">${i+1}. ${s}</span>`).join('<i class="fa-solid fa-angle-right wf-arr"></i>')+'</div>';}
+
+let curIdx=0, form={}, reUdMode=false, UD_SEQ=121, MUD_SEQ=6;
+const TODAY='16-Jul-2026';
+function nextUdNo(){return 'UD-2526-'+String(++UD_SEQ).padStart(4,'0');}
+function nextMassRef(){return 'MUD-2526-'+String(++MUD_SEQ).padStart(4,'0');}
+/* Single write-path for every UD (manual, AUD, bulk, Re-UD): assigns the UD no, stamps the date,
+   links supersedes to the previous current UD (usage_decision.supersedes_ud_id), prepends to the
+   lot's history (newest first = current) and syncs the lot's effective material status. */
+function pushUD(lot,entry){
+  if(!lot.udHistory)lot.udHistory=[];
+  entry.no=nextUdNo();entry.date=TODAY;
+  entry.supersedes=lot.ud?lot.ud.no:null;
+  lot.udHistory.unshift(entry);lot.ud=entry;lot.mstatus=entry.status;
+  return entry;}
+const cur=()=>LOTS[curIdx];
+const dims=lot=>Object.entries(lot.clr);
+function pendingCount(lot){return Object.values(lot.clr).filter(c=>c.r==='PENDING').length;}
+function canDecide(lot){return pendingCount(lot)===0;}
+function suggest(lot){const vs=Object.values(lot.clr).map(c=>c.r);return vs.includes('FAIL')?'REJECT':'ACCEPT';}
+function readiness(lot){if(lot.ud)return lot.ud.decision;const vs=Object.values(lot.clr).map(c=>c.r);if(vs.includes('FAIL'))return'REVIEW';if(vs.includes('PENDING'))return'INCOMPLETE';return'READY';}
+function initForm(){const d=suggest(cur());form=Object.assign({decision:d,remarks:'',salvageRemarks:''},DEC_DEFAULT[d]);}
+
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  document.getElementById('list').innerHTML=LOTS.map((l,i)=>{
+    if(q&&!(l.heat+' '+l.order+' '+l.uid+' '+l.grade).toLowerCase().includes(q))return'';
+    const rd=readiness(l);
+    return `<div class="litem ${i===curIdx?'sel':''}" onclick="sel(${i})">
+      <div><div class="lh">${l.heat}</div><div class="lg">${l.grade} · ${l.uid}</div></div>
+      <span class="badge ${M[rd]}">${rd}</span></div>`;
+  }).join('');
+}
+function sel(i){curIdx=i;reUdMode=false;initForm();renderList();renderDetail();}
+function toggleDet(i){const e=document.getElementById('det-'+i);if(!e)return;e.hidden=!e.hidden;const c=document.getElementById('chev-'+i);if(c)c.style.transform=e.hidden?'':'rotate(180deg)';}
+
+function renderDetail(){
+  const lot=cur();
+  const chips=[['Type',lot.kind],['Grade',lot.grade],['TDC',lot.tdc],['Order',lot.order],['UID',lot.uid],['Qty',lot.qty]]
+    .map(p=>`<span class="chip">${p[0]}<b>${p[1]}</b></span>`).join('')+`<span class="chip">Material status<b> ${lot.mstatus}</b></span>`+wghChipHtml(lot)+wghBtnHtml(); /* wgh- §26.9: final-weight chip + scale capture appended, existing chips untouched */
+  const acts=[];
+  if(!lot.ud)acts.push(`<button class="btn btn-ghost btn-sm" onclick="raiseAUD()"><i class="fa-solid fa-file-signature"></i> Acceptance Under Deviation</button>`);
+  acts.push(`<button class="btn btn-ghost btn-sm" onclick="raiseSalvageNCR()"><i class="fa-solid fa-screwdriver-wrench"></i> Raise Salvage / NCR</button>`);
+  const actionsHtml=acts.join('');
+  const aggRows=dims(lot).map(([name,c],i)=>`
+    <tr class="agg-row" onclick="toggleDet(${i})"><td class="dim">${name}</td><td>${c.op}</td><td>${c.recs.length} record(s)</td><td>${bdg(c.r)}</td><td style="text-align:right"><i class="fa-solid fa-chevron-down" id="chev-${i}" style="font-size:10px;color:#999;transition:.15s"></i></td></tr>
+    <tr class="agg-detail" id="det-${i}" hidden><td colspan="5">${c.recs.length?c.recs.map(r=>`<span class="rec"><b>${r[0]}</b> ${bdg(r[1])}</span>`).join(''):'<span style="color:#888;font-style:italic">No record yet — clearance pending.</span>'}</td></tr>`).join('');
+  const defSec=lot.defects.length?`<section><div class="sec-title">Open defects (feed UD)</div><div class="defects">${lot.defects.map(d=>`<div class="def"><i class="fa-solid fa-triangle-exclamation"></i> <b>${d[0]}</b> — ${d[1]} <span class="badge ${d[2]==='MINOR'?'b-warn':'b-fail'}" style="margin-left:auto">${d[2]}</span></div>`).join('')}</div></section>`:'';
+
+  const insp=inspectionsOf(lot), tests=testsOf(lot);
+  const inspSec=`<section><div class="sec-title">Inspection details</div>
+    <table class="evi-tbl"><thead><tr><th>QC No</th><th>Type</th><th>Stage</th><th>Result</th></tr></thead><tbody>${insp.length?insp.map(x=>`<tr><td class="mono">${x.no}</td><td>${x.type}</td><td>${x.stage}</td><td>${bdg(x.result)}</td></tr>`).join(''):'<tr><td colspan="4" class="evi-empty">No inspections recorded yet.</td></tr>'}</tbody></table></section>`;
+  const testSec=`<section><div class="sec-title">Test results</div>
+    <table class="evi-tbl"><thead><tr><th>Test No</th><th>Test</th><th>Readings</th><th>Result</th></tr></thead><tbody>${tests.length?tests.map(x=>`<tr><td class="mono">${x.no}</td><td>${x.test}</td><td class="evi-read">${x.readings}</td><td>${bdg(x.result)}</td></tr>`).join(''):'<tr><td colspan="4" class="evi-empty">No tests recorded yet.</td></tr>'}</tbody></table></section>`;
+  const relRows=releaseCheck(lot);
+  const relSec=relRows.length?`<section><div class="sec-title">Release check — measured vs TDC spec <span class="auto-tag" style="margin-left:6px">${lot.tdc}</span></div>
+    <table class="evi-tbl"><thead><tr><th>Property</th><th>Measured</th><th>Spec (TDC)</th><th>Source</th><th>Result</th></tr></thead><tbody>${relRows.map(r=>`<tr><td>${r.prop}</td><td class="evi-read">${r.meas}</td><td class="evi-read">${r.spec}</td><td>${srcTag(r.src)}</td><td>${bdg(r.res)}</td></tr>`).join('')}</tbody></table></section>`:'';
+  const procSec=procSecHtml(lot); /* Process validation (SMS MES) — read-only evidence, SOW SMSQA9-76/77 */
+  const hist=lot.udHistory||[];
+  const histSec=hist.length?`<section><div class="sec-title">Decision history <span style="font-weight:400;text-transform:none;letter-spacing:0">— supersession chain, newest first</span></div>
+    <div class="udh-list">${hist.map((h,i)=>`
+      <div class="udh-row"><span class="udh-no">${h.no}</span> ${bdg(h.decision)} <span class="udh-act">${h.action}</span> <span class="udh-date">${h.date||''}</span>${h.massRef?` <span class="bud-tag">BULK · ${h.massRef}</span>`:''}<span class="udh-tag ${i===0?'udh-cur':'udh-sup'}">${i===0?'CURRENT':'SUPERSEDED'}</span></div>
+      ${h.supersedes?`<div class="udh-chain"><i class="fa-solid fa-arrow-turn-down"></i> supersedes ${h.supersedes}</div>`:''}`).join('')}</div></section>`:'';
+  let decSec, foot;
+  if(lot.ud&&!reUdMode){
+    const u=lot.ud;
+    decSec=`<section><div class="sec-title">Usage Decision — recorded</div>
+      <div class="ud-sum">
+        <div class="row"><span class="udh-no" style="font-size:13px">${u.no}</span> <span class="v">${bdg(u.decision)}</span> <span class="auto-tag">${u.auto?'AUTO-UD':u.aud?'AUD · CONCESSION':'MANUAL'}</span>${u.massRef?` <span class="bud-tag">BULK · ${u.massRef}</span>`:''}</div>
+        <div class="row"><span><span class="k">Type:</span> <span class="v">${u.type}</span></span><span><span class="k">Action:</span> <span class="v">${u.action}</span></span><span><span class="k">Material status:</span> ${bdg(u.status)}</span></div>
+        <div class="row"><span class="k">Reason:</span> <span class="v">${u.reason}</span></div>
+        ${u.remarks?`<div class="row"><span class="k">${u.aud?'Justification:':'Remarks:'}</span> <span class="v">${u.remarks}</span></div>`:''}
+        ${u.salvageRemarks?`<div class="row"><span class="k">${u.decision==='DOWNGRADE'?'Re-grade / reroute:':'Salvage remarks:'}</span> <span class="v">${u.salvageRemarks}</span></div>`:''}
+        ${u.devRef?`<div class="row"><span class="k">Deviation ref:</span> <span class="v">${u.devRef}</span></div>`:''}
+        ${u.supersedes?`<div class="row"><span class="k">Supersedes:</span> <span class="v">${u.supersedes} — superseded decision retained in the history below</span></div>`:''}
+        ${u.chain?`<div class="row"><span class="k">Approval chain:</span> <span class="v">${u.chain}</span></div>`:''}
+        <div class="row"><span class="k">Decided by:</span> <span class="v">QA · ${u.date||TODAY}</span> <span class="k">Approval:</span> ${bdg(u.approval)}</div>
+        ${u.stickerPrintedAt?`<div class="row"><span class="k">Stickers:</span> <span class="v bstk-note"><i class="fa-solid fa-barcode"></i> Stickers printed ${u.stickerPrintedAt} — barcode recorded on the UD</span></div>`:''}
+      </div>
+      ${u.decision==='ACCEPT'?`<div class="bstk-act"><button class="btn btn-ghost btn-sm" onclick="openBatchStickers()" title="One 62×29 mm barcode sticker per piece/batch — pasted on each batch after final clearance (SMSQA9-83)"><i class="fa-solid fa-barcode"></i> Generate batch stickers</button></div>`:''}
+      <div class="wf-wrap"><div class="wf-label"><i class="fa-solid fa-diagram-project"></i> Workflow — <b>${u.action}</b></div>${wfSteps(u.action,u.approval==='APPROVED'?(WORKFLOW[u.action]||[]).length-1:1)}</div>
+      </section>`;
+    foot=`<div class="appr">${u.approval==='PENDING'?'Recorded — awaiting Plant-Head approval.':'Approved — material released per action.'}</div>
+      <div class="foot-actions"><button class="btn btn-ghost" onclick="reUD()" title="Record a new UD that supersedes ${u.no}"><i class="fa-solid fa-rotate"></i> Re-UD</button>
+      ${u.approval==='PENDING'?'<button class="btn btn-success" onclick="approve()"><i class="fa-solid fa-check-double"></i> Approve</button>':''}</div>`;
+  } else {
+    decSec=`<section><div class="sec-title">Usage Decision${reUdMode&&lot.ud?' — Re-UD':''} ${suggest(lot)?`<span class="auto-tag" style="margin-left:6px">Suggested: ${cap(suggest(lot))}</span>`:''}</div>
+      ${reUdMode&&lot.ud?`<div class="reud-ban"><i class="fa-solid fa-rotate"></i> Re-deciding — recording creates a new UD that supersedes <b>${lot.ud.no}</b>; the superseded decision is retained in the history below.</div>`:''}
+      <div class="dec-seg">${['ACCEPT','CONDITIONAL','REJECT','REWORK','DOWNGRADE'].map(d=>`<button class="d-${d} ${form.decision===d?'on':''}" onclick="setDecision('${d}')">${cap(d)}</button>`).join('')}</div>
+      <div class="dec-grid">
+        <div class="fld"><label>UD Type</label><select onchange="setF('type',this.value)">${opts(UD_TYPES,form.type)}</select></div>
+        <div class="fld"><label>Action</label><select onchange="setF('action',this.value)">${opts(UD_ACTIONS,form.action)}</select></div>
+        <div class="fld"><label>Reason</label><select onchange="setF('reason',this.value)">${opts(UD_REASONS,form.reason)}</select></div>
+        <div class="fld"><label>Resulting material status</label><select onchange="setF('status',this.value)">${opts(MAT_STATUS,form.status)}</select></div>
+        ${isSalvage(form.action)?(form.action==='Downgrade & re-allocate'?`<div class="fld full"><label>Re-grade / reroute remarks <span style="color:#888;font-weight:400;font-size:11px">(downgrade grade · alternate order · loss est.)</span></label><textarea oninput="form.salvageRemarks=this.value" placeholder="Downgrade grade, alternate order, expected loss…">${form.salvageRemarks||''}</textarea></div>`:`<div class="fld full"><label>Salvage remarks <span style="color:#888;font-weight:400;font-size:11px">(rework / reroute · re-HT code · loss est.)</span></label><textarea oninput="form.salvageRemarks=this.value" placeholder="Salvage type, rework operation, re-HT code, expected loss…">${form.salvageRemarks||''}</textarea></div>`):''}
+        <div class="fld full"><label>UD Remarks</label><textarea oninput="form.remarks=this.value" placeholder="Decision rationale, concession ref, customer note…">${form.remarks}</textarea></div>
+      </div>
+      <div class="wf-wrap"><div class="wf-label"><i class="fa-solid fa-diagram-project"></i> Workflow on action — <b>${form.action}</b></div>${wfSteps(form.action,0)}</div>
+      </section>`;
+    const ok=canDecide(lot);
+    foot=`<div class="appr ${ok?'':'warn'}">${ok?(reUdMode&&lot.ud?`Recording creates a <b>new UD</b> superseding ${lot.ud.no} and re-routes approval (Quality → Plant Head).`:'Recording captures the decision and routes for approval (Quality → Plant Head).'):`Awaiting ${pendingCount(lot)} clearance(s) — complete before UD.`}</div>
+      <div class="foot-actions">${reUdMode?'<button class="btn btn-ghost" onclick="cancelReUD()">Cancel Re-UD</button>':''}<button class="btn btn-primary" onclick="recordUD()" ${ok?'':'disabled'}><i class="fa-solid fa-gavel"></i> ${reUdMode?'Record Re-UD':'Record Usage Decision'}</button></div>`;
+  }
+
+  document.getElementById('detail').innerHTML=`
+    <div class="dhead">
+      <div><div class="dh-title">${lot.kind} ${lot.heat} <span class="badge ${M[readiness(lot)]||'b-pend'}">${readiness(lot)}</span></div>
+      <div class="chips">${chips}</div></div>
+      <div class="dh-actions">${actionsHtml}</div>
+    </div>
+    <div class="dbody">
+      <section><div class="sec-title">Clearance summary — by dimension</div>
+        <table class="agg-table"><thead><tr><th>Dimension</th><th>Stage</th><th>Records</th><th>Result</th><th></th></tr></thead><tbody>${aggRows}</tbody></table>
+      </section>
+      ${relSec}
+      ${inspSec}
+      ${testSec}
+      ${procSec}
+      ${defSec}
+      ${decSec}
+      ${histSec}
+    </div>
+    <div class="dfoot">${foot}</div>`;
+}
+function setDecision(d){form.decision=d;Object.assign(form,DEC_DEFAULT[d]);renderDetail();}
+function setF(k,v){form[k]=v;if(k==='action')renderDetail();}
+function recordUD(){const lot=cur();const auto=form.decision==='ACCEPT'&&suggest(lot)==='ACCEPT';
+  const prev=reUdMode&&lot.ud?lot.ud.no:null;
+  const e=pushUD(lot,Object.assign({},form,{approval:'PENDING',auto}));
+  reUdMode=false;renderList();renderDetail();
+  mesToast(prev?('Re-UD '+e.no+' recorded — supersedes '+prev+' (retained in history) — routed for approval (Quality → Plant Head)')
+              :('Usage decision '+e.no+' recorded for '+lot.kind+' '+lot.heat+' — routed for approval (Quality → Plant Head)'),'ok');}
+function approve(){cur().ud.approval='APPROVED';renderList();renderDetail();
+  mesToast('Usage decision approved — '+cur().kind+' '+cur().heat,'ok');}
+/* Re-UD — proper supersession (usage_decision.supersedes_ud_id): opens the decision form pre-filled
+   with the current UD; recording creates a NEW UD that supersedes it. Nothing is deleted. */
+function reUD(){const lot=cur(),u=lot.ud;if(!u)return;
+  form={decision:u.decision,type:u.type,reason:u.reason,action:u.action,status:u.status,remarks:u.remarks||'',salvageRemarks:u.salvageRemarks||''};
+  reUdMode=true;renderDetail();
+  mesToast('Re-deciding '+lot.kind+' '+lot.heat+' — recording will supersede '+u.no,'warn');}
+function cancelReUD(){reUdMode=false;initForm();renderDetail();}
+/* Bulk UD (Mass UD) — filter undecided lots, preview & select, apply ONE shared decision to all.
+   Every UD recorded in the run is stamped with a shared massRef (usage_decision.mass_ud_ref). */
+function massUD(){
+  const grades=Array.from(new Set(LOTS.map(l=>l.grade))).sort();
+  const stages=Array.from(new Set(LOTS.reduce((a,l)=>{Object.values(l.clr).forEach(c=>a.push(c.op));return a;},[]))).sort();
+  const st={grade:'All',stage:'All',readyOnly:true,decision:'ACCEPT',type:DEC_DEFAULT.ACCEPT.type,reason:DEC_DEFAULT.ACCEPT.reason,action:DEC_DEFAULT.ACCEPT.action,remarks:'',devRef:'',sel:new Set()};
+  const ov=document.createElement('div');ov.className='mes-modal-ov';
+  ov.innerHTML=`<div class="mes-modal bud-wide" role="dialog" aria-modal="true" aria-label="Bulk Usage Decision">
+    <div class="mm-head"><div class="mm-title"><i class="fa-solid fa-layer-group"></i> Bulk Usage Decision (Mass UD)</div>
+      <button class="mm-x" id="budX" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mm-body">
+      <div class="mm-hint">Filter undecided lots, review the preview and record <b>one shared decision</b> on every selected lot. The whole run is stamped with a shared mass-UD ref (<span class="udh-no">MUD-…</span>). Lots that already carry a UD are excluded — use <b>Re-UD</b> on the lot itself.</div>
+      <div class="bud-filters">
+        <div class="fld"><label>Grade</label><select id="budGrade"><option>All</option>${grades.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="fld"><label>Stage / Operation</label><select id="budStage"><option>All</option>${stages.map(s=>`<option>${s}</option>`).join('')}</select></div>
+        <label class="bud-check"><input type="checkbox" id="budReady" checked /> READY only</label>
+      </div>
+      <div id="budNote"></div>
+      <div class="bud-list" id="budList"></div>
+      <div class="bud-count" id="budCount">0 lots selected</div>
+      <div id="budDec"></div>
+    </div>
+    <div class="mm-foot"><button class="btn btn-ghost" id="budCancel">Cancel</button>
+      <button class="btn btn-primary" id="budApply"><i class="fa-solid fa-layer-group"></i> Record Bulk UD</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const $b=id=>document.getElementById(id);
+  function close(){ov.remove();}
+  ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  $b('budX').onclick=close;$b('budCancel').onclick=close;
+  function cands(){return LOTS.map((l,i)=>({l,i})).filter(x=>{
+    if(x.l.ud)return false;
+    if(st.grade!=='All'&&x.l.grade!==st.grade)return false;
+    if(st.stage!=='All'&&!Object.values(x.l.clr).some(c=>c.op===st.stage))return false;
+    if(st.readyOnly&&readiness(x.l)!=='READY')return false;
+    return true;});}
+  function roll(l){const vs=Object.values(l.clr).map(c=>c.r),n=vs.length,c=vs.filter(r=>r==='CLEARED').length,f=vs.filter(r=>r==='FAIL').length,p=n-c-f;
+    return c+'/'+n+' cleared'+(f?' · '+f+' fail':'')+(p?' · '+p+' pending':'');}
+  function syncCount(){const n=st.sel.size;$b('budCount').textContent=n+' lot'+(n===1?'':'s')+' selected';
+    const cs=cands(),all=$b('budAll');if(all)all.checked=cs.length>0&&cs.every(x=>st.sel.has(x.i));
+    $b('budApply').disabled=n===0;}
+  function renderL(){const cs=cands();
+    st.sel=new Set(Array.from(st.sel).filter(i=>cs.some(x=>x.i===i)));
+    const rows=cs.map(x=>`<label class="bud-row"><input type="checkbox" data-i="${x.i}" ${st.sel.has(x.i)?'checked':''} /> <span class="bud-heat">${x.l.heat}</span> <span>${x.l.grade}</span> ${bdg(readiness(x.l))} <span class="bud-roll">${roll(x.l)}</span></label>`).join('');
+    $b('budList').innerHTML=cs.length?`<label class="bud-all"><input type="checkbox" id="budAll" /> Select all (${cs.length} matching)</label>${rows}`:'<div class="bud-empty">No undecided lots match the current filters.</div>';
+    $b('budNote').innerHTML=(!st.readyOnly&&cs.some(x=>readiness(x.l)!=='READY'))?'<div class="bud-note"><i class="fa-solid fa-triangle-exclamation"></i> READY filter is off — the preview includes REVIEW / INCOMPLETE lots. Review each before applying a bulk decision.</div>':'';
+    syncCount();}
+  $b('budList').addEventListener('change',e=>{const t=e.target;
+    if(t.id==='budAll'){const cs=cands();st.sel=t.checked?new Set(cs.map(x=>x.i)):new Set();renderL();return;}
+    const i=+t.getAttribute('data-i');if(t.checked)st.sel.add(i);else st.sel.delete(i);syncCount();});
+  $b('budGrade').onchange=e=>{st.grade=e.target.value;renderL();};
+  $b('budStage').onchange=e=>{st.stage=e.target.value;renderL();};
+  $b('budReady').onchange=e=>{st.readyOnly=e.target.checked;renderL();};
+  function renderDec(){$b('budDec').innerHTML=`
+    <div class="sec-title" style="margin-top:2px">Shared decision — applied to every selected lot</div>
+    <div class="dec-seg" style="margin-bottom:10px">${['ACCEPT','CONDITIONAL','REJECT'].map(d=>`<button type="button" class="d-${d} ${st.decision===d?'on':''}" data-d="${d}">${cap(d)}</button>`).join('')}</div>
+    <div class="dec-grid">
+      <div class="fld"><label>UD Type</label><select id="budType">${opts(UD_TYPES,st.type)}</select></div>
+      <div class="fld"><label>Action</label><select id="budAction">${opts(UD_ACTIONS,st.action)}</select></div>
+      <div class="fld"><label>Reason</label><select id="budReason">${opts(UD_REASONS,st.reason)}</select></div>
+      <div class="fld"><label>Resulting material status</label><input type="text" value="${DEC_DEFAULT[st.decision].status}" disabled /></div>
+      ${st.decision==='CONDITIONAL'?`<div class="fld full"><label>Deviation / concession ref <span style="color:var(--color-danger)">*</span> <span style="color:#888;font-weight:400;font-size:11px">(one ref applied to all selected lots)</span></label><input type="text" id="budDevRef" value="${st.devRef}" placeholder="e.g. DEV-2526-0031 / customer concession ref" /></div>`:''}
+      <div class="fld full"><label>Remarks</label><textarea id="budRemarks" placeholder="Shared rationale stamped on every lot in this bulk run…">${st.remarks}</textarea></div>
+    </div>`;
+    $b('budDec').querySelectorAll('.dec-seg button').forEach(b=>{b.onclick=()=>{const d=b.getAttribute('data-d');
+      st.decision=d;st.type=DEC_DEFAULT[d].type;st.reason=DEC_DEFAULT[d].reason;st.action=DEC_DEFAULT[d].action;renderDec();};});
+    $b('budType').onchange=e=>st.type=e.target.value;
+    $b('budAction').onchange=e=>st.action=e.target.value;
+    $b('budReason').onchange=e=>st.reason=e.target.value;
+    const dr=$b('budDevRef');if(dr)dr.oninput=e=>st.devRef=e.target.value;
+    $b('budRemarks').oninput=e=>st.remarks=e.target.value;}
+  $b('budApply').onclick=()=>{
+    if(!st.sel.size){mesToast('Select at least one lot for the bulk UD','warn');return;}
+    if(st.decision==='CONDITIONAL'&&!st.devRef.trim()){mesToast('CONDITIONAL bulk UD needs a deviation / concession ref (applied to all lots)','warn');const dr=$b('budDevRef');if(dr)dr.focus();return;}
+    const ref=nextMassRef();let n=0;
+    st.sel.forEach(i=>{const lot=LOTS[i];if(lot.ud)return;
+      pushUD(lot,{decision:st.decision,type:st.type,reason:st.reason,action:st.action,status:DEC_DEFAULT[st.decision].status,remarks:st.remarks,devRef:st.decision==='CONDITIONAL'?st.devRef.trim():'',approval:'PENDING',auto:false,massRef:ref});n++;});
+    close();renderList();renderDetail();
+    mesToast('Bulk UD '+ref+' recorded on '+n+' lot'+(n===1?'':'s')+' — each routed for approval (Quality → Plant Head)','ok');};
+  renderL();renderDec();}
+
+/* Deep-link to the Salvage & NCR screen with the selected lot's context (separate page, not an SPA). */
+function stageOf(lot){var f=Object.values(lot.clr).find(function(c){return c.r==='FAIL';});return f?f.op:(lot.clr.Mechanical?lot.clr.Mechanical.op:'Final QC');}
+function raiseSalvageNCR(){const lot=cur();
+  try{sessionStorage.setItem('mes_raise_ncr',JSON.stringify({uid:lot.uid,heat:lot.heat,grade:lot.grade,stage:stageOf(lot),ref:lot.ref||lot.heat,src:'Usage Decision'}));}catch(e){}
+  window.location.href='salvage-ncr.html';}
+
+/* Acceptance Under Deviation (concession): required justification + multi-level approval chain
+   (Planner → Quality → Plant Head), first open defect shown inline, retained in the audit trail. */
+function raiseAUD(){
+  const lot=cur();
+  const defHtml=lot.defects.length?`<div class="def"><i class="fa-solid fa-triangle-exclamation"></i> <b>${lot.defects[0][0]}</b> — ${lot.defects[0][1]}</div>`:'';
+  const chainHtml=`<div class="wf"><span class="wf-step cur">1. Planner</span><i class="fa-solid fa-angle-right wf-arr"></i><span class="wf-step">2. Quality</span><i class="fa-solid fa-angle-right wf-arr"></i><span class="wf-step">3. Plant Head</span></div>`;
+  const ov=document.createElement('div');ov.className='mes-modal-ov';
+  ov.innerHTML=`<div class="mes-modal" role="dialog" aria-modal="true" aria-label="Acceptance Under Deviation">
+    <div class="mm-head"><div class="mm-title"><i class="fa-solid fa-file-signature"></i> Acceptance Under Deviation — ${lot.kind} ${lot.heat} (${lot.grade})</div>
+      <button class="mm-x" id="audX" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mm-body">
+      <div class="mm-hint">Record a concession to accept material that deviates from the ${lot.tdc} / ${lot.grade} specification. The concession is routed for multi-level approval and retained in the audit trail.</div>
+      ${defHtml}
+      <div class="fld"><label>Deviation justification <span style="color:var(--color-danger)">*</span></label>
+        <textarea id="audJust" rows="4" placeholder="Describe the deviation and the technical justification for acceptance (fitness-for-use, customer concession ref, inspection evidence)…"></textarea></div>
+      <div class="wf-wrap"><div class="wf-label"><i class="fa-solid fa-diagram-project"></i> Approval chain</div>${chainHtml}</div>
+      <div class="mm-audit"><i class="fa-solid fa-clipboard-list"></i> Audit trail maintained — every AUD action is logged with user, timestamp and justification.</div>
+    </div>
+    <div class="mm-foot"><button class="btn btn-ghost" id="audCancel">Cancel</button>
+      <button class="btn btn-primary" id="audSubmit"><i class="fa-solid fa-file-signature"></i> Submit AUD</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  function close(){ov.remove();}
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.getElementById('audX').onclick=close;
+  document.getElementById('audCancel').onclick=close;
+  document.getElementById('audSubmit').onclick=function(){
+    const j=(document.getElementById('audJust').value||'').trim();
+    if(!j){mesToast('Enter a deviation justification before submitting the AUD','warn');return;}
+    pushUD(lot,{decision:'CONDITIONAL',type:'Concession',reason:'Minor deviation accepted under concession',action:'Release under concession',status:'OK',remarks:j,approval:'PENDING',auto:false,aud:true,chain:'Planner → Quality → Plant Head'});
+    close();renderList();renderDetail();
+    mesToast('AUD created; approval workflow triggered; audit trail maintained','ok');};
+  setTimeout(function(){var t=document.getElementById('audJust');if(t)t.focus();},30);}
+
+/* ===== Batch barcode stickers after final clearance (SOW SMSQA9-83) =====
+   One 62×29 mm barcode sticker per piece/batch of the lot, pasted on each batch after final clearance.
+   Sticker barcode + printed_at persist on the usage decision
+   (mes_qc_usage_decision.sticker_barcode / mes_qc_usage_decision.sticker_printed_at).
+   Print scope: body.bstk-print (own class) so certificate-style printing coexists untouched. */
+function batchUnits(lot){return String(lot.uid||lot.heat).split(/[,/]+/).map(function(s){return s.trim();}).filter(Boolean);}
+function bstkCard(lot,u,unit){
+  return `<div class="bstk-card"><div class="bstk-no"><span>${unit}</span><span class="bstk-clr">CLEARED</span></div><div class="bstk-bars"></div><div class="bstk-code">${unit}</div><div class="bstk-meta"><div class="bm-row"><span>Heat <b>${lot.heat}</b></span><span>${lot.grade}</span></div><div class="bm-row"><span>${u.no}</span><span>${u.date||TODAY}</span></div></div></div>`;
+}
+function openBatchStickers(){
+  const lot=cur(),u=lot.ud;
+  if(!u||u.decision!=='ACCEPT'){mesToast('Batch stickers are generated after an ACCEPT (cleared) usage decision','warn');return;}
+  const units=batchUnits(lot); /* one card per piece/batch UID of the lot — a single UID yields one card */
+  const ov=document.createElement('div');ov.className='mes-modal-ov';ov.id='bstkOv';
+  ov.innerHTML=`<div class="mes-modal" role="dialog" aria-modal="true" aria-label="Batch sticker preview">
+    <div class="mm-head"><div class="mm-title"><i class="fa-solid fa-barcode"></i> Batch stickers — ${lot.kind} ${lot.heat} · ${units.length} label${units.length>1?'s':''} (62×29 mm)</div>
+      <button class="mm-x" id="bstkX" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="mm-body">
+      <div class="mm-hint">One barcode sticker per piece/batch — pasted on each batch after final clearance. UD <b>${u.no}</b> · ${lot.grade} · ${lot.qty}.</div>
+      <div class="bstx-controls">
+        <div class="bstx-fld"><label>Barcode type</label><select id="bstxType" title="mes_qc_barcode_type master (§26.7)"></select></div>
+        <div class="bstx-fld"><label>Heat no</label><input type="text" id="bstxHeat" placeholder="${lot.heat}" /></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="bstxLoad" title="Load every batch of this heat as sticker cards — multi-batch bulk print (§26.7, MQA 24)"><i class="fa-solid fa-layer-group"></i> Load heat's batches</button>
+        <span class="bstx-count" id="bstxCount"></span>
+      </div>
+      <div class="bstk-sheet">${units.map(function(x){return bstkCard(lot,u,x);}).join('')}</div>
+    </div>
+    <div class="mm-foot"><button class="btn btn-ghost" id="bstkCancel">Close</button>
+      <button class="btn btn-primary" id="bstkPrint"><i class="fa-solid fa-print"></i> Print</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.body.classList.add('bstk-print');
+  bstxInit(lot,u); /* bstx- §26.7: seed barcode-type select + wire the heat bulk-load controls */
+  function close(){ov.remove();document.body.classList.remove('bstk-print');}
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.getElementById('bstkX').onclick=close;
+  document.getElementById('bstkCancel').onclick=close;
+  document.getElementById('bstkPrint').onclick=function(){
+    window.print();
+    /* persisted on the UD row: mes_qc_usage_decision.sticker_barcode / .sticker_printed_at */
+    u.stickerBarcode=units.join(', ');
+    u.stickerPrintedAt=TODAY+' 14:32';
+    close();renderDetail();
+    mesToast('Stickers generated · barcode recorded','ok');
+  };
+}
+
+/* ===== wgh- Weighing interface (§26.9, from MQA 25) =====
+   Batch weight at final clearance, captured from the weighing machine:
+   mes_qc_usage_decision.final_weight_kg + weight_source (SCALE / MANUAL). Header chip + capture
+   button only — release check, decision workflow and Mass UD untouched. */
+function wghOf(lot){
+  if(lot.wghWeight==null){var q=parseFloat(lot.qty);lot.wghWeight=+(isNaN(q)?1.0:q-0.008).toFixed(3);} /* seed: scale reading just under plan qty → 1.842 MT for heat 2526-16496 */
+  if(!lot.wghSource)lot.wghSource='SCALE';
+  return lot;
+}
+function wghChipHtml(lot){
+  wghOf(lot);
+  return '<span class="chip wgh-chip" id="wghChip" title="captured from the weighing machine at final clearance — mes_qc_usage_decision.final_weight_kg / weight_source (§26.9, MQA 25)">Final weight<b>'+lot.wghWeight.toFixed(3)+' MT · '+lot.wghSource+'</b></span>';
+}
+function wghBtnHtml(){
+  return '<button type="button" class="btn btn-ghost btn-sm wgh-btn" onclick="wghCapture()" title="Read the connected weighing machine — sets final_weight_kg, weight_source=SCALE (§26.9, MQA 25)">⚖ Capture from scale</button>';
+}
+function wghCapture(){
+  var lot=cur();wghOf(lot);
+  lot.wghTick=(lot.wghTick||0)+1;
+  lot.wghWeight=+(lot.wghWeight+(lot.wghTick%2?0.004:-0.003)).toFixed(3); /* fresh scale read differs slightly */
+  lot.wghSource='SCALE';
+  var wEl=document.getElementById('wghChip'),wB=wEl?wEl.querySelector('b'):null;
+  if(wB)wB.textContent=lot.wghWeight.toFixed(3)+' MT · '+lot.wghSource;
+  mesToast('Weight captured from scale — SCALE','ok');
+}
+
+/* ===== bstx- Barcode type & heat-filtered bulk sticker print (§26.7, MQA 24) =====
+   mes_qc_barcode_type master (code · name · symbology · label size); batch-sticker generation gains a
+   barcode-type selection and a heat-number filter that loads ALL the heat's batches for one bulk print
+   run; mes_qc_usage_decision gains barcode_type_id FK. The single-batch bstk flow is untouched — extra
+   cards are appended INTO the same .bstk-sheet so the unchanged Print handler includes them. */
+const BSTX_TYPES=[
+ {code:'BT-6229',name:'Batch label 62×29',symbology:'CODE128',def:true},
+ {code:'BT-100',name:'FG label 100×50',symbology:'CODE128'},
+ {code:'BT-QR40',name:'QR piece tag',symbology:'QR'}
+];
+const BSTX_HEAT_BATCHES={ /* seeded batch UIDs per heat — the bulk-print source (MQA 24) */
+ '2526-16496':['B030268','B030269','B030270','B030271','B030272'],
+ '2526-16426':['E120808','E120809','E120810'],
+ '2526-16798':['E122319','E122320']
+};
+function bstxSyncCount(){
+  var el=document.getElementById('bstxCount');if(!el)return;
+  var sh=document.querySelector('#bstkOv .bstk-sheet'),n=sh?sh.querySelectorAll('.bstk-card').length:0;
+  el.textContent=n+' label'+(n===1?'':'s')+' selected — bulk print';
+}
+function bstxInit(lot,u){
+  var sel=document.getElementById('bstxType');
+  if(sel)sel.innerHTML=BSTX_TYPES.map(function(t){return '<option value="'+t.code+'"'+(t.def?' selected':'')+'>'+t.code+' · '+t.name+' · '+t.symbology+'</option>';}).join('');
+  var heatIn=document.getElementById('bstxHeat');if(heatIn)heatIn.value=lot.heat;
+  var btn=document.getElementById('bstxLoad');
+  if(btn)btn.onclick=function(){
+    var h=(heatIn&&heatIn.value||'').trim(),all=BSTX_HEAT_BATCHES[h]||[];
+    if(!all.length){mesToast('No seeded batches found for heat '+(h||'—'),'warn');return;}
+    var sheet=document.querySelector('#bstkOv .bstk-sheet');if(!sheet)return;
+    var have={};sheet.querySelectorAll('.bstk-card .bstk-code').forEach(function(c){have[c.textContent.trim()]=1;});
+    all.forEach(function(uid){
+      if(have[uid])return;
+      var w=document.createElement('div');w.innerHTML=bstkCard(lot,u,uid);
+      var card=w.firstChild;card.classList.add('bstx-extra');sheet.appendChild(card); /* same sheet → same print run */
+    });
+    bstxSyncCount();
+    mesToast('All batches of heat '+h+' loaded — bulk print (MQA 24)','ok');
+  };
+  bstxSyncCount();
+}
+
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+document.getElementById('search').oninput=renderList;
+initForm(); renderList(); renderDetail();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lab Worklist — Bluemingo MES v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);user-select:none;}
+.tbl thead th.num{text-align:right;}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+/* ===== Lab Worklist (§27.1) page-specific — all classes/ids prefixed lw- ===== */
+.lw-cards{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:var(--sp3);margin-bottom:var(--sp3);}
+.lw-card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-md);padding:10px 14px;display:flex;flex-direction:column;gap:2px;}
+.lw-card .lw-klbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;display:flex;align-items:center;gap:6px;}
+.lw-card .lw-klbl i{color:var(--color-primary);font-size:11px;}
+.lw-card .lw-knum{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+.lw-card.lw-red .lw-knum{color:var(--color-danger);}
+.lw-card.lw-red .lw-klbl i{color:var(--color-danger);}
+.lw-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-muted);}
+.lw-lchip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:3px 10px;font-size:var(--fs-xs);font-weight:600;letter-spacing:.3px;color:var(--color-text-secondary);}
+.lw-lchip .lw-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.lw-dot-on{background:#43a047;} .lw-dot-due{background:#f9a825;} .lw-dot-over{background:#d32f2f;}
+.lw-band{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:700;letter-spacing:.3px;white-space:nowrap;}
+.lw-band-on{background:rgba(67,160,71,.13);color:#2e7d32;}
+.lw-band-due{background:rgba(249,168,37,.16);color:#b26a00;}
+.lw-band-over{background:rgba(211,47,47,.13);color:#c62828;}
+.lw-tests{display:flex;flex-wrap:wrap;gap:3px;max-width:340px;}
+.lw-tchip{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;border:1px solid transparent;cursor:default;}
+.lw-t-pass{background:rgba(76,175,80,.13);color:#2e7d32;border-color:rgba(76,175,80,.3);}
+.lw-t-prog{background:rgba(33,150,243,.12);color:#1565c0;border-color:rgba(33,150,243,.3);}
+.lw-t-pend{background:rgba(158,158,158,.13);color:#757575;border-color:rgba(158,158,158,.3);}
+.lw-t-fail{background:rgba(244,67,54,.13);color:#c62828;border-color:rgba(244,67,54,.35);}
+.lw-clr{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.3px;background:rgba(103,58,183,.12);color:#673ab7;border:1px solid rgba(103,58,183,.3);cursor:pointer;}
+.lw-clr:hover{background:rgba(103,58,183,.2);}
+.lw-pcr{margin-left:6px;vertical-align:middle;}
+.lw-plan-old{color:var(--color-text-hint);text-decoration:line-through;font-size:var(--fs-xs);margin-right:5px;}
+.lw-note{display:flex;gap:10px;align-items:flex-start;background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:9px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-secondary);flex:none;}
+.lw-note i{color:var(--color-primary-dark);margin-top:2px;}
+.lw-note code{background:rgba(37,169,224,.12);border-radius:3px;padding:0 4px;font-size:11px;color:#1E8FBF;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat / batch…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html" class="active"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>MM Lab Worklist</h1><div class="sub">Everything the M&amp;M lab owes — test status per lot, plan dates from Mills QA, aging bands, plan-change requests (MM 3/MM 4, §27.1)</div></div>
+    </div>
+    <div class="lw-cards">
+      <div class="lw-card" title="Lots whose Mills-QA plan date is today (SOW 16, §27.1)"><span class="lw-klbl"><i class="fa-solid fa-calendar-day"></i> Due today</span><span class="lw-knum" id="lwCDue">0</span></div>
+      <div class="lw-card lw-red" title="Lots past the Mills-QA plan date — backlog, sorted on top (SOW 16, §27.1)"><span class="lw-klbl"><i class="fa-solid fa-triangle-exclamation"></i> Overdue</span><span class="lw-knum" id="lwCOver">0</span></div>
+      <div class="lw-card" title="Required tests not yet completed across the worklist — per-lot test-status matrix (SOW 14, §27.1)"><span class="lw-klbl"><i class="fa-solid fa-flask"></i> Pending tests</span><span class="lw-knum" id="lwCPend">0</span></div>
+      <div class="lw-card" title="Plan-change requests awaiting a Mills-QA response — mes_qc_plan_change_request, status REQUESTED (SOW 17, §27.1/§27.7)"><span class="lw-klbl"><i class="fa-solid fa-calendar-pen"></i> Plan-change requests open</span><span class="lw-knum" id="lwCPcr">0</span></div>
+    </div>
+    <div class="filterbar" title="Total production reaching the lab, filterable by order / grade / customer / heat / product / supply condition (SOW 13, §27.1)">
+      <span class="lbl">Filters</span>
+      <div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="lwSearch" placeholder="Heat / batch / order…" oninput="lwRender()"/></div>
+      <select id="lwFGrade" onchange="lwRender()"><option value="">All grades</option></select>
+      <select id="lwFCust" onchange="lwRender()"><option value="">All customers</option></select>
+      <select id="lwFForm" onchange="lwRender()"><option value="">All product forms</option></select>
+      <select id="lwFCond" onchange="lwRender()"><option value="">All supply conditions</option></select>
+      <select id="lwFBand" onchange="lwRender()" title="Aging band computed against the Mills-QA plan date (SOW 16, §27.1)"><option value="">All aging bands</option><option>ON-PLAN</option><option>DUE-TODAY</option><option>OVERDUE</option></select>
+      <span class="meta" id="lwMeta"></span>
+    </div>
+    <div class="lw-legend" title="Aging computed against the Mills-QA plan date (SOW 16, §27.1)">
+      <span class="lbl" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;font-weight:600;">Aging</span>
+      <span class="lw-lchip"><span class="lw-dot lw-dot-on"></span> ON-PLAN</span>
+      <span class="lw-lchip"><span class="lw-dot lw-dot-due"></span> DUE-TODAY</span>
+      <span class="lw-lchip"><span class="lw-dot lw-dot-over"></span> OVERDUE</span>
+      <span style="font-size:var(--fs-xs);color:var(--color-text-hint);">· demo clock 04-Sep-2026</span>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap"><table class="tbl"><thead><tr>
+        <th class="mono">Heat</th>
+        <th class="mono">Batch</th>
+        <th>Grade</th>
+        <th>Product</th>
+        <th>Customer</th>
+        <th>Supply cond.</th>
+        <th title="Plan date set by Mills QA — mes_qc_sample.plan_date (SOW 15, §27.1)">Plan date</th>
+        <th title="Aging band vs the Mills-QA plan date; rows sort backlog-first — OVERDUE on top (SOW 16, §27.1)">Aging</th>
+        <th title="Per-test status matrix — each required test with state and actual completion date (SOW 14, §27.1)">Tests</th>
+        <th class="num" title="Completed tests / required tests (v_qc_lab_worklist, §27.6)">Done</th>
+        <th class="col-actions"></th>
+      </tr></thead><tbody id="lwTbody"></tbody></table></div>
+      <div class="pager"><span id="lwRowCount"></span></div>
+    </div>
+    <div class="lw-note"><i class="fa-solid fa-circle-info"></i><span>This view is the M&amp;M production report — <code>v_qc_lab_worklist</code> (§27.6); actual completion dates update automatically from test clearances (SOW 14/28).</span></div>
+  </main>
+</div>
+<!-- Plan-change request modal (mes_qc_plan_change_request, SOW 17, §27.1) -->
+<div class="overlay" id="lwPcOv">
+  <div class="modal sm">
+    <div class="modal-head">Plan-change request → Mills QA <span class="x" onclick="lwClosePc()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="lwPcCtx"></div>
+      <div class="mgrid">
+        <div class="fld"><label>Current plan date</label><input id="lwPcCur" readonly title="Plan date set by Mills QA — mes_qc_sample.plan_date (SOW 15, §27.1)"/></div>
+        <div class="fld"><label>Tentative completion date <span style="color:var(--color-danger)">*</span></label><input id="lwPcDate" type="date" title="mes_qc_plan_change_request.tentative_date (SOW 17, §27.1)"/></div>
+        <div class="fld full"><label>Reason <span style="color:var(--color-danger)">*</span></label><textarea id="lwPcReason" rows="3" placeholder="Why the plan date cannot be met — e.g. UTM breakdown, specimen re-machining, furnace queue…" title="mes_qc_plan_change_request.reason — mandatory (SOW 17, §27.1)"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="lwClosePc()">Cancel</button>
+      <button class="btn btn-primary" onclick="lwSendPc()" title="Raises QA_LAB_PLAN_CHANGE to Mills QA; acceptance re-stamps the plan date (§27.1/§27.7)"><i class="fa-solid fa-paper-plane"></i> Send request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Additional-sample request dialog (lab-side resample without a failed test, SOW 18, §27.1) -->
+<div class="overlay" id="lwAsOv">
+  <div class="modal sm">
+    <div class="modal-head">Additional-sample request <span class="x" onclick="lwCloseAs()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="prep-ctx" id="lwAsCtx"></div>
+      <div class="mgrid">
+        <div class="fld full"><label>Reason <span style="color:var(--color-danger)">*</span></label>
+          <select id="lwAsReason" title="Distinct lab-side reason vocabulary — not the failed-test resample loop (SOW 18, §27.1)">
+            <option value="">— select —</option>
+            <option>Quality reject (prep / specimen)</option>
+            <option>Extra test</option>
+            <option>Customer requirement</option>
+          </select>
+        </div>
+        <div class="fld full"><label>Note (optional)</label><input id="lwAsNote" placeholder="e.g. burnt edge on specimen — re-draw from same billet end"/></div>
+      </div>
+      <div style="font-size:var(--fs-xs);color:var(--color-text-hint);margin-top:8px;">The re-drawn sample re-links to this plan line; QA_SAMPLE_ID_CREATED notifies the Sample Cutter &amp; Collector (§27.7).</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="lwCloseAs()">Cancel</button>
+      <button class="btn btn-primary" onclick="lwSendAs()"><i class="fa-solid fa-vial"></i> Raise request</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   §27.1 — MM Lab worklist & planning (JSW MM Lab SOW 13–18, 27–28, 45–46).
+   One row per lot / sample group: per-test status matrix (SOW 14),
+   Mills-QA plan date (mes_qc_sample.plan_date, SOW 15), aging bands
+   vs plan date, backlog-first (SOW 16), plan-change requests to
+   Mills QA (mes_qc_plan_change_request + QA_LAB_PLAN_CHANGE, SOW 17,
+   §27.7), additional-sample requests (SOW 18), and the testing-
+   clearance hook once all tests complete (§27.4/§10; SOW 27–28, 45–46).
+   Backed by report view v_qc_lab_worklist (§27.6).
+   ============================================================ */
+var LW_TODAY='2026-09-04';           /* fixed demo clock so aging renders deterministically */
+var LW_MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function lwFmtD(iso){var p=iso.split('-');return p[2]+'-'+LW_MONS[+p[1]-1];}
+function lwDays(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function lwBand(r){var d=lwDays(LW_TODAY,r.plan);if(d<0)return 'OVERDUE';if(d===0)return 'DUE-TODAY';return 'ON-PLAN';}
+
+/* Test states: PASS / INPROG / PENDING / FAIL (SOW 14). d = actual completion date from the test clearance. */
+var LW_ROWS=[
+ {heat:'2526-16482',batch:'B030840',order:'FPO-26-0412',grade:'304L',form:'Bar',cust:'Ambica Steels',cond:'Annealed',plan:'2026-09-02',pcr:null,
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PASS',d:'2026-09-01'},{c:'HRD',n:'Hardness (HBW)',s:'PASS',d:'2026-09-01'},{c:'IMP',n:'Impact (Charpy)',s:'INPROG'},{c:'INCL',n:'Inclusion rating (ASTM E45 A/B/C/D)',s:'PENDING'},{c:'JOM',n:'Jominy hardenability (J1.5–J50)',s:'PENDING'}]},
+ {heat:'2526-16493',batch:'B030068',order:'FPO-26-0418',grade:'316L',form:'RCS',cust:'JSW Salem',cond:'As Rolled',plan:'2026-09-03',pcr:null,
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PASS',d:'2026-09-02'},{c:'HRD',n:'Hardness (HBW)',s:'FAIL',d:'2026-09-03'},{c:'MIC',n:'Micro-structure (qualitative)',s:'INPROG'}]},
+ {heat:'2526-16495',batch:'E120636',order:'FPO-26-0421',grade:'416',form:'Coil',cust:'Viraj Profiles',cond:'Spheroidize Annealed',plan:'2026-09-04',pcr:null,
+  tests:[{c:'TEN',n:'Coil tensile (3–12/heat rule)',s:'INPROG'},{c:'HRD',n:'Hardness (HRBW)',s:'PASS',d:'2026-09-03'},{c:'DEC',n:'Decarburization depth (total/partial, mm)',s:'PENDING'}]},
+ {heat:'2526-16426',batch:'E120808',order:'FPO-26-0399',grade:'17-4PH',form:'Bar',cust:'Sunflag Iron',cond:'Solution Annealed (HT-16)',plan:'2026-09-04',pcr:null,
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PASS',d:'2026-09-02'},{c:'HRD',n:'Hardness (HRC)',s:'PASS',d:'2026-09-02'},{c:'IMP',n:'Impact (Charpy)',s:'PASS',d:'2026-09-03'},{c:'INCL',n:'Inclusion rating (ASTM E45)',s:'INPROG'}]},
+ {heat:'2526-16776',batch:'E121717',order:'FPO-26-0433',grade:'X46Cr13',form:'Flat',cust:'Mukand Ltd',cond:'Hardened & Tempered',plan:'2026-09-06',
+  pcr:{status:'REQUESTED',to:'2026-09-09',why:'Jominy furnace under maintenance'},
+  tests:[{c:'JOM',n:'Jominy hardenability (J1.5–J50)',s:'PENDING'},{c:'HRD',n:'Hardness (HV)',s:'PENDING'},{c:'GS',n:'Grain size (ASTM No.)',s:'PENDING'}]},
+ {heat:'2526-16798',batch:'E122319',order:'FPO-26-0436',grade:'304L',form:'Bar',cust:'Ambica Steels',cond:'Bright (Cold Drawn)',plan:'2026-09-05',
+  pcr:{status:'ACCEPTED',from:'2026-09-03',to:'2026-09-05',why:'UTM calibration day'},
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PASS',d:'2026-09-03'},{c:'HRD',n:'Hardness (HBW)',s:'INPROG'}]},
+ {heat:'2526-16866',batch:'E121724',order:'FPO-26-0440',grade:'316L',form:'RCS',cust:'JSW Salem',cond:'As Rolled',plan:'2026-09-08',pcr:null,
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PENDING'},{c:'INCL',n:'Inclusion rating (ASTM E45)',s:'PENDING'},{c:'MIC',n:'Micro-structure (qualitative)',s:'PENDING'},{c:'DEC',n:'Decarburization depth (mm)',s:'PENDING'}]},
+ {heat:'2526-16030',batch:'E122956',order:'FPO-26-0407',grade:'416',form:'Bar',cust:'Viraj Profiles',cond:'Annealed',plan:'2026-09-04',pcr:null,
+  tests:[{c:'TEN',n:'Tensile (YS/UTS/Elong)',s:'PASS',d:'2026-09-03'},{c:'HRD',n:'Hardness (HRBW)',s:'PASS',d:'2026-09-03'},{c:'IMP',n:'Impact (Charpy)',s:'PASS',d:'2026-09-04'}]}
+];
+
+var LW_ST={PASS:{cls:'lw-t-pass',g:'✓',lbl:'PASS'},INPROG:{cls:'lw-t-prog',g:'⏳',lbl:'IN PROG'},PENDING:{cls:'lw-t-pend',g:'○',lbl:'PENDING'},FAIL:{cls:'lw-t-fail',g:'✗',lbl:'FAIL'}};
+var LW_BANDCLS={'ON-PLAN':'lw-band-on','DUE-TODAY':'lw-band-due','OVERDUE':'lw-band-over'};
+var lwCurPc=-1,lwCurAs=-1;
+
+function lwFill(id,vals){document.getElementById(id).insertAdjacentHTML('beforeend',vals.map(function(v){return '<option>'+v+'</option>';}).join(''));}
+function lwDone(r){return r.tests.filter(function(t){return t.s==='PASS';}).length;}
+function lwTestChip(t){
+  var st=LW_ST[t.s];
+  var tip=t.n+' — '+st.lbl+(t.s==='PASS'?', completed '+lwFmtD(t.d):(t.s==='FAIL'?' on '+lwFmtD(t.d)+' — per-test decision on the test record (§27.4)':''))+' (actual state/date from the test clearance, SOW 14, §27.1)';
+  return '<span class="lw-tchip '+st.cls+'" title="'+tip+'" onclick="lwDrill(\''+t.c+'\')">'+t.c+' '+st.g+'</span>';
+}
+function lwPlanCell(r){
+  var h='';
+  if(r.pcr&&r.pcr.status==='ACCEPTED')h+='<span class="lw-plan-old" title="Original Mills-QA plan date before the accepted re-stamp (mes_qc_plan_change_request, SOW 17, §27.1)">'+lwFmtD(r.pcr.from)+'</span>';
+  h+='<span title="Plan date set by Mills QA — mes_qc_sample.plan_date (SOW 15, §27.1)">'+lwFmtD(r.plan)+'</span>';
+  if(r.pcr&&r.pcr.status==='REQUESTED')h+='<span class="badge b-pend lw-pcr" title="Plan-change requested → Mills QA: '+r.pcr.why+' · tentative '+lwFmtD(r.pcr.to)+' — mes_qc_plan_change_request, status REQUESTED (SOW 17, §27.1/§27.7)">REQUESTED</span>';
+  if(r.pcr&&r.pcr.status==='ACCEPTED')h+='<span class="badge b-done lw-pcr" title="Plan change accepted by Mills QA — plan date re-stamped '+lwFmtD(r.pcr.from)+' → '+lwFmtD(r.pcr.to)+' ('+r.pcr.why+') — mes_qc_plan_change_request, SOW 17, §27.1">ACCEPTED</span>';
+  return h;
+}
+function lwAgingCell(r){
+  var b=lwBand(r),extra='';
+  if(b==='OVERDUE')extra=' +'+(-lwDays(LW_TODAY,r.plan))+'d';
+  return '<span class="lw-band '+LW_BANDCLS[b]+'" title="Aging computed against the Mills-QA plan date '+lwFmtD(r.plan)+' (SOW 16, §27.1)">'+b+extra+'</span>';
+}
+function lwDoneCell(r){
+  var n=lwDone(r),m=r.tests.length;
+  var h='<span class="mono">'+n+'/'+m+'</span>';
+  if(n===m)h+=' <span class="lw-clr" onclick="lwClr(\''+r.batch+'\')" title="All required tests complete — testing clearance reachable; the stage clears only when all gates clear (§27.4/§10; SOW 28/45)"><i class="fa-solid fa-circle-check"></i> Clearance ready</span>';
+  return h;
+}
+function lwPasses(r){
+  var q=(document.getElementById('lwSearch').value||'').toLowerCase();
+  if(q&&!(r.heat+' '+r.batch+' '+r.order).toLowerCase().includes(q))return false;
+  if(document.getElementById('lwFGrade').value&&r.grade!==document.getElementById('lwFGrade').value)return false;
+  if(document.getElementById('lwFCust').value&&r.cust!==document.getElementById('lwFCust').value)return false;
+  if(document.getElementById('lwFForm').value&&r.form!==document.getElementById('lwFForm').value)return false;
+  if(document.getElementById('lwFCond').value&&r.cond!==document.getElementById('lwFCond').value)return false;
+  if(document.getElementById('lwFBand').value&&lwBand(r)!==document.getElementById('lwFBand').value)return false;
+  return true;
+}
+var LW_BANDRANK={'OVERDUE':0,'DUE-TODAY':1,'ON-PLAN':2};
+function lwRender(){
+  var rows=LW_ROWS.map(function(r,i){return {r:r,i:i};}).filter(function(x){return lwPasses(x.r);});
+  /* backlog-first: OVERDUE on top, then DUE-TODAY, then ON-PLAN; earliest plan date first (SOW 16) */
+  rows.sort(function(a,b){
+    var d=LW_BANDRANK[lwBand(a.r)]-LW_BANDRANK[lwBand(b.r)];
+    if(d)return d;
+    return a.r.plan<b.r.plan?-1:(a.r.plan>b.r.plan?1:0);
+  });
+  var tb=document.getElementById('lwTbody');
+  if(!rows.length){tb.innerHTML='<tr class="empty"><td colspan="11">No lots match the filters.</td></tr>';}
+  else tb.innerHTML=rows.map(function(x){
+    var r=x.r,i=x.i;
+    return '<tr>'+
+      '<td class="mono">'+r.heat+'</td>'+
+      '<td class="mono" title="Order '+r.order+'">'+r.batch+'</td>'+
+      '<td>'+r.grade+'</td>'+
+      '<td>'+r.form+'</td>'+
+      '<td>'+r.cust+'</td>'+
+      '<td>'+r.cond+'</td>'+
+      '<td>'+lwPlanCell(r)+'</td>'+
+      '<td>'+lwAgingCell(r)+'</td>'+
+      '<td><div class="lw-tests">'+r.tests.map(lwTestChip).join('')+'</div></td>'+
+      '<td class="num">'+lwDoneCell(r)+'</td>'+
+      '<td class="actions">'+
+        '<button class="btn btn-primary btn-sm" onclick="lwOpenPc('+i+')" title="Ask Mills QA to move the plan date — mes_qc_plan_change_request (SOW 17, §27.1)"><i class="fa-solid fa-calendar-pen"></i> Plan change</button> '+
+        '<button class="btn btn-ghost btn-sm" style="margin-left:4px" onclick="lwOpenAs('+i+')" title="Lab-side additional-sample request without a failed test — re-links to this plan line (SOW 18, §27.1)"><i class="fa-solid fa-vial"></i> Add. sample</button>'+
+      '</td></tr>';
+  }).join('');
+  document.getElementById('lwRowCount').textContent=rows.length+' of '+LW_ROWS.length+' lots · sorted backlog-first (OVERDUE on top, SOW 16)';
+  var due=0,over=0,pend=0,pcr=0;
+  LW_ROWS.forEach(function(r){
+    var b=lwBand(r);
+    if(b==='DUE-TODAY')due++; if(b==='OVERDUE')over++;
+    pend+=r.tests.filter(function(t){return t.s!=='PASS';}).length;
+    if(r.pcr&&r.pcr.status==='REQUESTED')pcr++;
+  });
+  document.getElementById('lwCDue').textContent=due;
+  document.getElementById('lwCOver').textContent=over;
+  document.getElementById('lwCPend').textContent=pend;
+  document.getElementById('lwCPcr').textContent=pcr;
+  document.getElementById('lwMeta').textContent=over+' overdue · '+due+' due today · '+pend+' tests pending';
+}
+function lwDrill(code){mesToast('Per-test drill-down → test record '+code+' on the Testing screen (§27.1)','ok');}
+function lwClr(batch){mesToast('Testing clearance for '+batch+' — opens on the Clearance screen once all gates clear (§27.4/§10; SOW 28/45)','ok');}
+
+/* ===== Plan-change request (SOW 17) ===== */
+function lwCtxChips(r){
+  return '<span class="chip">Heat <b>'+r.heat+'</b></span><span class="chip">Batch <b>'+r.batch+'</b></span>'+
+    '<span class="chip">Grade <b>'+r.grade+'</b></span><span class="chip">'+r.form+' · '+r.cond+'</span>'+
+    '<span class="chip">Customer <b>'+r.cust+'</b></span>';
+}
+function lwOpenPc(i){
+  lwCurPc=i;var r=LW_ROWS[i];
+  document.getElementById('lwPcCtx').innerHTML=lwCtxChips(r);
+  document.getElementById('lwPcCur').value=lwFmtD(r.plan)+'-2026';
+  document.getElementById('lwPcDate').value='';
+  document.getElementById('lwPcReason').value='';
+  document.getElementById('lwPcOv').classList.add('open');
+}
+function lwClosePc(){document.getElementById('lwPcOv').classList.remove('open');}
+function lwSendPc(){
+  var r=LW_ROWS[lwCurPc];
+  var why=document.getElementById('lwPcReason').value.trim();
+  var to=document.getElementById('lwPcDate').value;
+  if(!why){mesToast('Reason is mandatory — mes_qc_plan_change_request.reason (SOW 17)','err');return;}
+  if(!to){mesToast('Enter the tentative completion date','err');return;}
+  r.pcr={status:'REQUESTED',to:to,why:why};
+  lwClosePc();lwRender();
+  mesToast('Plan-change request sent to Mills QA — QA_LAB_PLAN_CHANGE (§27.7)','ok');
+}
+
+/* ===== Additional-sample request (SOW 18) ===== */
+function lwOpenAs(i){
+  lwCurAs=i;var r=LW_ROWS[i];
+  document.getElementById('lwAsCtx').innerHTML=lwCtxChips(r);
+  document.getElementById('lwAsReason').value='';
+  document.getElementById('lwAsNote').value='';
+  document.getElementById('lwAsOv').classList.add('open');
+}
+function lwCloseAs(){document.getElementById('lwAsOv').classList.remove('open');}
+function lwSendAs(){
+  if(!document.getElementById('lwAsReason').value){mesToast('Pick a reason for the additional sample (SOW 18)','err');return;}
+  lwCloseAs();
+  mesToast('Additional-sample request raised — re-links to this plan line (SOW 18)','ok');
+}
+
+/* ===== Toast helper (standalone — this screen has no shell toast) ===== */
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+/* ===== Init ===== */
+lwFill('lwFGrade',[...new Set(LW_ROWS.map(function(r){return r.grade;}))].sort());
+lwFill('lwFCust',[...new Set(LW_ROWS.map(function(r){return r.cust;}))].sort());
+lwFill('lwFForm',[...new Set(LW_ROWS.map(function(r){return r.form;}))].sort());
+lwFill('lwFCond',[...new Set(LW_ROWS.map(function(r){return r.cond;}))].sort());
+lwRender();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+</body>
+</html>
