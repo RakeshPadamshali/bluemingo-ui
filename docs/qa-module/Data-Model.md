@@ -1131,6 +1131,7 @@ erDiagram
 | **JSW Process Control touchpoints (§31)** | `notification_rule_recipient` (new); `notification_rule` + severity / condition / escalation / shift-aware, `ncr` + `process_deviation_id`; worklist item kinds PROCESS_DEVIATION and SUSPECT chip; screen policy PSN_REJECTION_BLOCK; reads the platform views `v_pc_parameter_trace` and writes `mes_process_deviation` dispositions and `mes_batches` suspect verification (source: `docs/modules/pc/PC-Data-Model.md`) |
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
+| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `storage_location`, `location_move`, `hot_out_clearance` (new); `inspection` + `raise_condition`, `stage_qc_map` + `raise_condition`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
 
@@ -1179,7 +1180,7 @@ A measuring-instrument checklist completed **once per shift per role**; until co
 - **`mes_qc_instrument_check_record_item`** — `id` PK · `check_record_id` FK · `item_id` FK · `is_ok boolean` · `remark varchar(255)` (**the SOW-requested remark column**; required when not OK) · **+ audit tail**.
 
 ### 25.2 Pit cooling *(SOW 24–28; screen `pit-cooling.html`)*
-- **`mes_qc_pit_cooling`** — `pit_cooling_id` PK · `batch_id` FK→`mes_batches` (Y) · `heat_number varchar(100)` · `pit_location varchar(50)` · `entry_time timestamptz` · `spec_hours numeric(9,2)` (from the governing spec — a TDC/PSN characteristic "pit cooling hours") · `due_out_time timestamptz` (= entry + spec) · `actual_out_time timestamptz` (Y) · `status varchar(20)` (IN_PIT / OUT / OVERDUE) · `remarks varchar(255)` · **+ audit tail**.
+- **`mes_qc_pit_cooling`** — `pit_cooling_id` PK · `batch_id` FK→`mes_batches` (Y) · `heat_number varchar(100)` · `pit_location varchar(50)` · `entry_time timestamptz` (Y — empty while AWAITING_ENTRY) · `expected_from timestamptz` (Y — casting confirmation time) · `rule_id` FK→`mes_qc_pit_cooling_rule` (Y — the rule applied) · `spec_hours numeric(9,2)` (from the governing spec — a TDC/PSN characteristic "pit cooling hours", else the Pit Cooling Rules master) · `due_out_time timestamptz` (= entry + spec) · `actual_out_time timestamptz` (Y) · `status varchar(20)` (AWAITING_ENTRY / IN_PIT / OUT / OVERDUE) · `remarks varchar(255)` · **+ audit tail**.
 - Entry time & pit location are captured at the consolidated-inspection step (**PPC-owned route data — dependency**); QA reads them. The out-time reminder is a notification rule (§25.4) on `due_out_time`. Report = `v_qc_pit_cooling`.
 
 ### 25.3 Chemistry modification history + SMS MES write-back *(SOW 45, 46; extends §7.4)*
@@ -2140,3 +2141,153 @@ QA_COMPLAINT_RECEIVED · QA_COMPLAINT_DISCREPANCY · QA_COMPLAINT_REGISTERED · 
 - RCA methods: FIVE_WHY · FISHBONE. Root-cause categories: MAN · MACHINE · MATERIAL · METHOD · MEASUREMENT · ENVIRONMENT. Flows-to: PROCESS_PARAMETER_MASTER · SOP_LIBRARY · PSN · SAMPLING_RULE · INSPECTION_PATH · TRAINING · NONE.
 - Policies: RCA mandatory for MAJOR and CRITICAL; verification window MINOR next lot, MAJOR next 3 lots, CRITICAL next 5 lots; suggestions from the last 24 months; ageing buckets 0–7 / 8–15 / 16–30 / > 30 days.
 - Sync message types: COMPLAINT_NEW · COMPLAINT_UPDATE · COMPLAINT_STATUS · DOCUMENT (in); CAPA_STATUS · EFFECTIVENESS · CLOSURE (out).
+
+---
+
+## 34. Submodule — JSW SMS QA review v3 — gap closure (2026-09-21)
+
+Designed from the SMS QA SOW-versus-design review v3 (43 rows not OK, decisions of 21-Sep-2026). The report rows (SOW 33, 40, 107–116) are unchanged by decision. Every subsection names the SOW rows it closes; the platform touchpoints are raised as change requests in §34.11 — nothing in the production-confirmation or Allocation applications is changed directly. Screens: new `heat-plan.html`, `hot-out-clearance.html`, `location-tracking.html`, `master-storage-location.html`; extended `qc-worklist.html`, `clearance.html`, `usage-decision.html`, `pit-cooling.html`, `master-stage-qc-map.html`.
+
+### 34.1 `mes_qc_inspection_feedback` — online inspection feedback to the caster (SOW 15, 16)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `feedback_id` | bigint | PK | N | |
+| `inspection_id` | bigint | FK → `mes_qc_inspection` | N | The ONLINE inspection whose finding is fed back |
+| `heat_number` | varchar(100) | | N | |
+| `batch_id` | bigint | FK → `mes_batches` | Y | |
+| `pulpit_code` | varchar(50) | | N | Caster pulpit receiving the note |
+| `note_id` | bigint | | Y | Platform pulpit note (Operations design `mes_pulpit_note`, type QA_FEEDBACK) |
+| `feedback_text` | varchar(500) | | N | Heat, strand or batch, and the finding (value with limit, or defect with severity) |
+| `sent_at` | timestamptz | | N | |
+| `resend_count` | int | | N | Default 0 |
+| `ack_status` | varchar(20) | | N | SENT / ACKNOWLEDGED / ESCALATED / CANCELLED |
+| `ack_by` | bigint | | Y | Caster user, read back from the pulpit acknowledgement |
+| `ack_at` | timestamptz | | Y | |
+| `ack_remark` | varchar(500) | | Y | Corrective action taken |
+| `escalated_at` | timestamptz | | Y | Time notification rule NTF-FB-01 escalated the note |
+
+The acknowledgement blocks nothing (decision of 21-Sep-2026); escalation is a notification rule (`QA_ONLINE_FEEDBACK_ACK_OVERDUE`, default 30 minutes).
+
+### 34.2 `mes_qc_production_tally` — production tally per heat at SMS final inspection (SOW 66)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `tally_id` | bigint | PK | N | |
+| `heat_number` | varchar(100) | UQ | N | One tally per heat and operation |
+| `operation_id` | bigint | FK → `mes_operations` | N | SMS final inspection stage |
+| `planned_pieces` | int | | Y | Casting indent (Planning design) |
+| `produced_pieces` | int | | N | Production confirmation |
+| `produced_weight_t` | numeric(12,3) | | Y | |
+| `received_pieces` | int | | N | Receipt count (BR-RMI-03) |
+| `inspected_pieces` | int | | N | |
+| `cleared_pieces` | int | | N | |
+| `held_pieces` | int | | N | |
+| `rejected_pieces` | int | | N | |
+| `end_cut_pieces` | int | | N | |
+| `hot_out_pieces` | int | | N | |
+| `pending_pieces` | int | | N | |
+| `variance_pieces` | int | | N | produced − (cleared + held + rejected + end cut + hot-out + pending) |
+| `mismatch_reason` | varchar(30) | | Y | COUNT_ERROR / PIECES_IN_TRANSIT / SCRAP_NOT_BOOKED / SAMPLE_CUT / OTHER — required when the variance is not zero at sign-off |
+| `remarks` | varchar(500) | | Y | Required for OTHER |
+| `status` | varchar(20) | | N | OPEN / SIGNED_OFF / REOPENED |
+| `signed_by` | bigint | | Y | |
+| `signed_at` | timestamptz | | Y | |
+
+### 34.3 `mes_qc_storage_location` — storage location master (SOW 65, 90, 100)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `storage_location_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | e.g. MILL-Y2-B03 |
+| `name` | varchar(255) | | N | |
+| `area` | varchar(20) | | N | SMS_YARD / MILL_YARD / ABGM_BAY / PIT / OTHER |
+| `location_type` | varchar(20) | | N | YARD / BAY / STACK / PIT |
+| `parent_location_id` | bigint | FK → `mes_qc_storage_location` | Y | Location of a higher type in the same area |
+| `barcode` | varchar(100) | UQ | Y | Printed on the location board |
+| `yms_code` | varchar(50) | | Y | Code in the yard management system (future interface) |
+
+### 34.4 `mes_qc_location_move` — batch location moves (SOW 65, 90, 100, 101, 104)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `move_id` | bigint | PK | N | |
+| `batch_id` | bigint | FK → `mes_batches` | N | |
+| `heat_number` | varchar(100) | | N | |
+| `from_location_id` | bigint | FK → `mes_qc_storage_location` | Y | The previous current location |
+| `to_location_id` | bigint | FK → `mes_qc_storage_location` | N | |
+| `event` | varchar(20) | | N | HANDOVER / RECEIPT / MODIFY / FINAL_INSPECTION / ABGM / YMS |
+| `source` | varchar(10) | | N | SCAN / MANUAL / YMS |
+| `device_id` | bigint | | Y | Scanner (Operations design device register) |
+| `handed_to` | varchar(100) | | Y | Department or person receiving |
+| `reason` | varchar(255) | | Y | Required for MODIFY |
+| `remarks` | varchar(255) | | Y | |
+| `moved_by` | bigint | | N | |
+| `moved_at` | timestamptz | | N | |
+
+The current location stays on the platform inventory row (`mes_inventory.location_code`, Planning and Operations designs), written through change request QA-SMS-R-02. Location pre-assignment (SOW 102) and receiving acknowledgement (SOW 103) are out of scope as agreed with JSW.
+
+### 34.5 `mes_qc_hot_out_clearance` — hot-out clearance item (SOW 91–97)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `hot_out_clearance_id` | bigint | PK | N | |
+| `hot_out_event_id` | bigint | | N | Platform hot-out event (Operations design `mes_hot_out_event`) |
+| `hot_out_piece_id` | bigint | | Y | Indirect hot-out piece (`mes_hot_out_piece`) |
+| `hot_out_type` | varchar(20) | | N | DIRECT / INDIRECT / OVERSTAY |
+| `batch_id` | bigint | FK → `mes_batches` | N | |
+| `heat_number` | varchar(100) | | N | |
+| `received_at` | timestamptz | | N | |
+| `path_id` | bigint | FK → `mes_qc_inspection_path` | Y | |
+| `path_override_reason` | varchar(255) | | Y | |
+| `sample_id` | bigint | FK → `mes_qc_sample` | Y | Chemistry sample for the spectro lab |
+| `chemistry_result` | varchar(10) | | Y | PENDING / PASS / FAIL against the PSN band |
+| `inspection_id` | bigint | FK → `mes_qc_inspection` | Y | The visual inspection |
+| `visual_result` | varchar(10) | | Y | OK / DEFECT |
+| `colour_code_id` | bigint | FK → `mes_qc_colour_code` | Y | |
+| `sticker_applied` | boolean | | N | |
+| `marking_done` | boolean | | N | |
+| `marking_text` | varchar(100) | | Y | |
+| `decision` | varchar(20) | | Y | RE_ROLL_OK / ABGM / SCRAP / DIVERT / HOLD |
+| `next_operation_id` | bigint | FK → `mes_operations` | Y | |
+| `decision_reason` | varchar(255) | | Y | Required for SCRAP, DIVERT and HOLD |
+| `keep_code` | boolean | | N | True for ABGM decisions — the grinding confirmation skips the form conversion |
+| `status` | varchar(20) | | N | RECEIVED / PATH_ASSIGNED / SAMPLED / INSPECTED / DECIDED / CLOSED / HOLD |
+| `decided_by` | bigint | | Y | |
+| `decided_at` | timestamptz | | Y | |
+
+Widens §30.1: the Quality decision now covers every hot-out type, not only overstay; the write-back vocabulary becomes RE_ROLL_OK / ABGM / SCRAP / DIVERT / HOLD with the next operation and the keep-code flag (QA-SMS-R-03).
+
+### 34.6 `mes_qc_inspection` — additions (SMS review v3) (SOW 68)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `raise_condition` | varchar(30) | | Y | ALWAYS / GRADE_TRANSITION / MIX_UP_SUSPECT / ON_DEMAND — why a conditional item was generated |
+
+### 34.7 `mes_qc_stage_qc_map` — additions (SMS review v3) (SOW 68)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `raise_condition` | varchar(30) | | N | ALWAYS (default) / GRADE_TRANSITION / MIX_UP_SUSPECT / ON_DEMAND; a value other than ALWAYS only when `is_mandatory` is false |
+
+### 34.8 `mes_qc_usage_decision` — additions (SMS review v3) (SOW 96)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `next_operation_id` | bigint | FK → `mes_operations` | Y | Chosen next operation on Release to next operation |
+| `route_next_operation_id` | bigint | FK → `mes_operations` | Y | The route's next operation at decision time (snapshot) |
+| `divert_reason` | varchar(255) | | Y | Required when the chosen operation differs from the route's next |
+
+### 34.9 Pit cooling awaiting entry (SOW 24; folded into §25.2)
+`mes_qc_pit_cooling` gains `expected_from timestamptz` (casting confirmation time) and `rule_id` (→ `mes_qc_pit_cooling_rule`, §28); `entry_time` stays empty while the status is AWAITING_ENTRY, the new first value of the status vocabulary. The casting confirmation creates the row when the pit-cooling hours resolve (PSN characteristic, else the Pit Cooling Rules master); the pit entry at consolidated inspection completes it (QA-SMS-R-05).
+
+### 34.10 Views and common behaviour (SOW 1, 15, 78)
+- `v_qc_material_feedback_history` — one row per earlier inspection of a lot and of its parent batches (batch relations: split, hot-out cut, grinding, code conversion): stage, time, inspector, result, defects, remarks, caster feedback status and acknowledgement, deviation reference. Read by the Earlier feedback panel of every inspection and clearance screen (FDD CL-11) — SOW 78, 15.
+- `v_qc_heat_plan` — read-only projection of the Planning design's casting indent lines and rolling slot with the QA readiness flags (pit-cooling hours from §28 `pit_cooling_rule` or the PSN, ABGM from §28 `grinding_rule`, special tests from the PSN, open chemistry hold from `clearance`) — SOW 1.
+- `v_qc_location_history` — the moves of §34.4 joined with the location master for the consolidated tracking view — SOW 104.
+- Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) and QA clearance after ABGM grinding (SOW 84) are open items for JSW; the split would follow the Batch Derivation Rules of §28.
+- Code conversion and batch identity after the decision (SOW 81, 82, 88, 89) and the grinding route (SOW 85, 86) are answered by the Master Data design (Form Conversion Rules, Batch Derivation Rules, Grinding Rules) and the ABGM screen of the Operations design (SOW 87); no QA table.
+
+### 34.11 Platform change requests (raised, not built here)
+| Request | Subject | SOW |
+|---|---|---|
+| QA-SMS-R-01 | Caster pulpit stations (CASTER_CCM1, CASTER_CCM2) so the caster crew works on the MES pulpit screen; pulpit note type QA_FEEDBACK with pop-up acknowledgement that never blocks a confirmation; the acknowledgement (user, time, remark) readable by the Quality module. Designed in the Operations design and raised there as OPS-R-15 | 15, 16 |
+| QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from YMS | 65, 90, 100–104 |
+| QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; decision, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, ABGM (no form conversion when keep-code) and scrap | 91–97 |
+| QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
+| QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
+| QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
+
+The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.

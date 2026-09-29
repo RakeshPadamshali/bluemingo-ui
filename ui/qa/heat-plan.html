@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bluemingo MES v2 — Heat Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --color-primary:#25A9E0; --color-primary-dark:#1E8FBF; --color-primary-light:#E1F5FE; --color-primary-rgb:37,169,224;
+  --color-success:#388e3c; --color-warning:#f57c00; --color-danger:#d32f2f; --color-info:#2196f3;
+  --color-bg:#f5f5f5; --color-bg-alt:#fafafa; --color-surface:#fff; --color-border:#e0e0e0; --color-border-light:#eee;
+  --color-text-primary:#333; --color-text-secondary:#555; --color-text-muted:#666; --color-text-hint:#888;
+  --nav-header:#1a1a2e; --nav-header-end:#12121f;
+  --font:'Roboto',system-ui,-apple-system,sans-serif;
+  --fs-xs:11px; --fs-sm:12px; --fs-base:14px; --fs-md:16px; --fs-xl:24px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --header-h:52px; --sidebar-w:240px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;height:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--color-text-primary);background:var(--color-bg);}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:5px;}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;height:100vh;grid-template-areas:"header header" "sidebar content";}
+.header{grid-area:header;background:linear-gradient(90deg,var(--nav-header),var(--nav-header-end));display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp4);color:#fff;}
+.header .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:700;font-size:var(--fs-md);}
+.header .logo .dot{width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center;font-size:12px;}
+.header .module{color:rgba(255,255,255,.55);font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:1px;border-left:1px solid rgba(255,255,255,.15);padding-left:var(--sp4);}
+.header .spacer{flex:1;}
+.header .h-search{position:relative;}
+.header .h-search input{width:240px;padding:7px 12px 7px 32px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:var(--fs-sm);}
+.header .h-search i{position:absolute;left:11px;top:9px;color:rgba(255,255,255,.5);font-size:12px;}
+.header .avatar{width:30px;height:30px;border-radius:50%;background:var(--color-primary);display:grid;place-items:center;font-size:var(--fs-sm);font-weight:600;}
+.sidebar{grid-area:sidebar;background:linear-gradient(180deg,#1e1e32 0%,#16213e 100%);overflow-y:auto;padding:var(--sp3) 0;}
+.sidebar .s-label{color:#fff;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:var(--sp2) var(--sp5) var(--sp3);}
+.sidebar a{display:flex;align-items:center;gap:var(--sp3);padding:10px 20px;margin:1px 8px;border-radius:var(--r-md);color:rgba(255,255,255,.65);font-size:13.5px;text-decoration:none;border-left:3px solid transparent;}
+.sidebar a i{width:16px;text-align:center;font-size:14px;}
+.sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
+.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
+.btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
+.btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
+.btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary);}
+.btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
+.btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
+.btn-icon:hover{background:var(--color-primary);color:#fff;}
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
+.b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
+.b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
+/* filter bar */
+.filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
+.filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
+.fsearch{position:relative;}
+.fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
+.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* card + table */
+.card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
+.tbl-wrap{overflow:auto;flex:1;min-height:0;}
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
+.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
+.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
+.tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
+.tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
+.tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
+.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
+.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
+.empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
+.pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.modal.sm{width:500px;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{color:var(--color-text-hint);cursor:pointer;}
+.modal-body{padding:20px;overflow:auto;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
+.fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
+.fld.full{grid-column:1/-1;}
+.fld.hide{display:none;}
+.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
+.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
+.prep-ctx .chip b{color:var(--color-text-primary);}
+.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
+.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
+.result-band span{color:var(--color-text-muted);}
+.result-band b{font-variant-numeric:tabular-nums;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+
+.sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
+.sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
+.sidebar .ms-group.open .ms-chev{transform:rotate(90deg);}
+.sidebar .ms-parent.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
+.sidebar .submenu{display:none;margin:0 8px 6px;border-left:2px solid rgba(255,255,255,.08);}
+.sidebar .ms-group.open .submenu{display:block;}
+.sidebar .submenu a{display:block;padding:6px 10px 6px 16px;margin:1px 0;font-size:12.5px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;border-left:0;gap:0;}
+.sidebar .submenu a:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar .submenu a.active{background:rgba(37,169,224,.18);color:var(--color-primary-light);}
+.sidebar .submenu .sg{color:rgba(255,255,255,.3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 2px;}
+
+.tabbar{display:flex;align-items:stretch;gap:3px;background:#e7edf2;border-bottom:1px solid var(--color-border);margin:-12px -16px 12px;padding:6px 8px 0;overflow-x:auto;flex:none;min-height:39px;}
+.tabbar::-webkit-scrollbar{height:6px;}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;background:#f4f7fa;border:1px solid var(--color-border);border-bottom:none;border-radius:7px 7px 0 0;font-size:12.5px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;max-width:210px;position:relative;top:1px;flex:none;user-select:none;}
+.tab:hover{background:#fff;}
+.tab.active{background:#fff;color:var(--color-text-primary);font-weight:500;box-shadow:inset 0 -2px 0 var(--color-primary);}
+.tab i.ti{font-size:11px;color:var(--color-primary);}
+.tab .tt{overflow:hidden;text-overflow:ellipsis;}
+.tab .tc{display:grid;place-items:center;width:17px;height:17px;border-radius:3px;color:var(--color-text-hint);font-size:10px;}
+.tab .tc:hover{background:rgba(0,0,0,.1);color:var(--color-danger);}
+.tabmenu{position:fixed;z-index:3000;background:#fff;border:1px solid var(--color-border);border-radius:7px;box-shadow:0 6px 22px rgba(0,0,0,.18);padding:4px;min-width:170px;display:none;}
+.tabmenu.open{display:block;}
+.tabmenu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;padding:8px 12px;font-size:12.5px;text-align:left;border-radius:5px;color:var(--color-text-secondary);font-family:inherit;cursor:pointer;}
+.tabmenu button:hover{background:var(--color-bg);color:var(--color-text-primary);}
+.tabmenu button i{width:14px;font-size:11px;color:var(--color-text-hint);}
+.tabmenu .sep{height:1px;background:var(--color-border-light);margin:4px 6px;}
+
+.sidebar .navgrp>.s-group{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.sidebar .navgrp>.s-group:hover{color:rgba(255,255,255,.55);}
+.sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
+.sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
+.sidebar .navgrp.collapsed .grp-items{display:none;}
+
+.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
+.vrow:last-child{border-bottom:none;}
+.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
+.vrow .vv{text-align:right;color:var(--color-text-primary);}
+.vrow .vv .btn-icon,.vrow .vv .btn{display:none;}
+
+/* ===== Heat Plan (SMS QA 1) page-specific ===== */
+.chipstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--sp3);flex:none;}
+.ichip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:5px 12px;color:var(--color-text-secondary);}
+.ichip i{color:var(--color-primary);font-size:11px;}
+.ichip b{color:var(--color-text-primary);font-weight:600;}
+.depbanner{display:flex;gap:10px;align-items:flex-start;background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:9px 14px;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-secondary);flex:none;}
+.depbanner i{color:var(--color-primary-dark);margin-top:2px;}
+.rchip{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;margin-right:4px;white-space:nowrap;}
+.r-pit{background:rgba(33,150,243,.13);color:#1565c0;} .r-abgm{background:rgba(103,58,183,.13);color:#673ab7;}
+.r-test{background:rgba(0,150,136,.13);color:#00796b;} .r-hold{background:rgba(244,67,54,.13);color:#c62828;}
+.flbl{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.flbl input{padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-family:inherit;font-size:var(--fs-sm);}
+tr.sel td{background:#e1f5fe!important;}
+.tbl tbody tr{cursor:pointer;}
+.sidepanel{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.sidepanel .sp-head{padding:11px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex:none;}
+.sidepanel .sp-head i{color:var(--color-primary);}
+.sidepanel .sp-head .meta{margin-left:auto;font-weight:400;font-size:var(--fs-xs);color:var(--color-text-muted);}
+.sidepanel .sp-body{padding:10px 16px 14px;overflow:auto;min-height:0;flex:1;}
+.ro-note{font-size:var(--fs-xs);color:var(--color-text-hint);margin-top:10px;display:flex;gap:6px;align-items:flex-start;}
+
+.kpis{display:grid;gap:var(--sp3);margin-bottom:var(--sp3);flex:none;}
+.kpi{position:relative;background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);padding:10px 16px 12px;overflow:hidden;}
+.kpi .k-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-muted);font-weight:600;}
+.kpi .k-value{font-size:22px;font-weight:600;line-height:1.15;margin-top:4px;color:var(--color-text-primary);font-variant-numeric:tabular-nums;}
+.kpi .k-sub{font-size:var(--fs-sm);color:var(--color-text-muted);margin-top:2px;}
+.kpi .k-accent{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--color-primary);}
+.kpi.alert .k-value{color:var(--color-danger);} .kpi.alert .k-accent{background:var(--color-danger);}
+.kpi.warn .k-accent{background:var(--color-warning);} .kpi.ok .k-accent{background:var(--color-success);}
+
+.kpis{grid-template-columns:repeat(4,1fr);}
+.hp-wrap{display:grid;grid-template-columns:1fr 300px;gap:var(--sp3);flex:1;min-height:0;}
+.hp-wrap .tbl thead th{white-space:normal;vertical-align:bottom;line-height:1.25;}
+.hp-wrap .tbl tbody td{padding:5px 8px;}
+.hp-wrap td.rdcell{white-space:normal;max-width:130px;}
+.lockchip{color:#ef6c00;font-size:12px;}
+.tlist{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--color-text-primary);}
+.tlist li{margin:2px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
+    <div class="module">Quality</div><div class="spacer"></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat / PSN…" /></div>
+    <div class="avatar">QA</div>
+  </header>
+      <nav class="sidebar">
+    <div class="s-label">Quality</div>
+    <a href="dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <div class="navgrp" data-g="Material Flow">
+      <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="heat-plan.html" class="active"><i class="fa-solid fa-calendar-days"></i> Heat Plan</a>
+        <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
+        <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
+        <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
+        <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
+        <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
+        <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="hot-out-clearance.html"><i class="fa-solid fa-fire-flame-curved"></i> Hot-out Clearance</a>
+        <a href="location-tracking.html"><i class="fa-solid fa-location-dot"></i> Location Tracking</a>
+        <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
+        <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
+        <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
+        <a href="defect-mapping.html"><i class="fa-solid fa-triangle-exclamation"></i> Defects</a>
+        <a href="clearance.html"><i class="fa-solid fa-circle-check"></i> Clearance</a>
+        <a href="usage-decision.html"><i class="fa-solid fa-gavel"></i> Usage Decision</a>
+        <a href="salvage-ncr.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage &amp; NCR</a>
+        <a href="certificate.html"><i class="fa-solid fa-certificate"></i> Certificates</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Customer Quality">
+      <div class="s-group" onclick="grpToggle(this)">Customer Quality<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a>
+        <a href="psn-search.html"><i class="fa-solid fa-magnifying-glass-chart"></i> PSN Search</a>
+        <a href="psn-review.html"><i class="fa-solid fa-user-check"></i> PSN Review &amp; Approval</a>
+        <a href="psn-compare.html"><i class="fa-solid fa-code-compare"></i> PSN Revision Compare</a>
+        <a href="psn-validation.html"><i class="fa-solid fa-clipboard-check"></i> PSN Validation</a>
+        <a href="psn-dashboard.html"><i class="fa-solid fa-chart-pie"></i> PSN Dashboard</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Equipment">
+      <div class="s-group" onclick="grpToggle(this)">Equipment<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="instruments.html"><i class="fa-solid fa-ruler-combined"></i> Instruments</a>
+        <a href="instrument-checklist.html"><i class="fa-solid fa-list-check"></i> Instrument Checklist</a>
+        <a href="layout-audit.html"><i class="fa-solid fa-vector-square"></i> Layout Audit</a>
+      </div>
+    </div>
+    <div class="navgrp" data-g="Masters">
+      <div class="s-group" onclick="grpToggle(this)">Masters<i class="fa-solid fa-chevron-down gchev"></i></div>
+      <div class="grp-items">
+        <a href="tdc.html"><i class="fa-solid fa-file-contract"></i> TDC</a>
+        <a href="master-inspection-type.html"><i class="fa-solid fa-clipboard-check"></i> Inspection Type</a>
+        <a href="master-test-type.html"><i class="fa-solid fa-flask"></i> Test Type</a>
+        <a href="master-chemistry-type.html"><i class="fa-solid fa-vial"></i> Chemistry Type</a>
+        <a href="master-test.html"><i class="fa-solid fa-flask"></i> Quality Test</a>
+        <a href="master-defect-type.html"><i class="fa-solid fa-layer-group"></i> Defect Type</a>
+        <a href="master-defect-reason.html"><i class="fa-solid fa-magnifying-glass"></i> Defect Reason</a>
+        <a href="master-defect.html"><i class="fa-solid fa-triangle-exclamation"></i> Defect Catalogue</a>
+        <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
+        <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
+        <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
+        <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
+        <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
+        <a href="master-size-basis.html"><i class="fa-solid fa-ruler-combined"></i> Size Basis</a>
+        <a href="master-prep-checklist.html"><i class="fa-solid fa-list-check"></i> Prep Checklist</a>
+        <a href="master-sample-status.html"><i class="fa-solid fa-vials"></i> Sample Status</a>
+        <a href="master-material-status.html"><i class="fa-solid fa-flag"></i> Material Status</a>
+        <a href="master-ud-type.html"><i class="fa-solid fa-gavel"></i> UD Type</a>
+        <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
+        <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
+        <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
+        <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
+        <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
+        <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
+        <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
+        <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
+        <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
+        <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
+        <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
+        <a href="master-document-type.html"><i class="fa-solid fa-file-lines"></i> Document Type</a>
+        <a href="master-psn-unit-matrix.html"><i class="fa-solid fa-table-cells-large"></i> PSN Unit Matrix</a>
+        <a href="master-certificate-template.html"><i class="fa-solid fa-file-certificate"></i> Certificate Template</a>
+      </div>
+    </div>
+  </nav>
+  <main class="content">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="page-head">
+      <div><h1>Heat Plan</h1><div class="sub">SMS casting plan with the QA readiness of every heat — read-only view of the Planning casting indent (SOW: SMS QA 1)</div></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="refreshPlan()"><i class="fa-solid fa-rotate"></i> Refresh</button><button class="btn btn-ghost btn-sm" onclick="exportPlan()"><i class="fa-solid fa-file-excel"></i> Export (Excel)</button></div>
+    </div>
+    <div class="chipstrip">
+      <span class="ichip" title="HPV-F03 · Plan source · SOW: SMS QA 1"><i class="fa-solid fa-lock"></i> Source <b>Planning — casting indent (read-only)</b></span>
+      <span class="ichip"><i class="fa-solid fa-circle-info"></i> Readiness from the Pit Cooling Rules, the Grinding Rules (ABGM), the PSN special tests and open chemistry holds</span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="filterbar">
+      <span class="lbl">Filters</span>
+      <label class="flbl" title="HPV-F01 · Plan date · SOW: SMS QA 1">Plan date <input type="date" id="fDate" value="2026-09-21" onchange="render()"/></label>
+      <select id="fCaster" title="HPV-F02 · Caster · SOW: SMS QA 1" onchange="render()"><option value="">All casters</option><option>CCM-1</option><option>CCM-2</option></select>
+      <select id="fStatus" title="HPV-F04 · Indent status · SOW: SMS QA 1" onchange="render()"><option value="">All indent statuses</option><option>PLANNED</option><option>SENT</option><option>ACKNOWLEDGED</option><option>IN_PRODUCTION</option><option>CAST</option></select>
+      <select id="fReady" title="HPV-F05 · Readiness filter · SOW: SMS QA 1" onchange="render()"><option value="">All readiness</option><option value="PIT">Pit cooling</option><option value="ABGM">ABGM route</option><option value="TEST">Special test</option><option value="HOLD">Chemistry hold</option></select>
+      <span class="meta" id="meta"></span>
+    </div>
+    <div class="hp-wrap">
+      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><div class="pager"><span id="rowCount"></span></div></div>
+      <div class="sidepanel" id="drawer"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   SMS QA 1 — Heat Plan (read-only). Rows = the Planning casting indent lines for the plan date
+   (casting indent + lines, Planning design); QA readiness per heat: pit-cooling hours (Pit Cooling Rules or the
+   PSN characteristic), grinding route (Grinding Rules — ABGM), special tests from the PSN, open chemistry hold.
+   Projection v_qc_heat_plan. No edit actions: the plan is maintained in Planning.
+   ============================================================ */
+const PLAN=[
+ {seq:1, heat:'2526-16898',caster:'CCM-1',grade:'304L',  psn:'TDC-004810',sec:'160 × 160',start:'21-Sep 00:40',pcs:40,t:60.2,st:'CAST',         lock:false,rd:['MACRO'],       slot:'BRM 22-Sep A',tests:['Macro etch — 1 per heat','Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
+ {seq:2, heat:'2526-16899',caster:'CCM-2',grade:'316L',  psn:'TDC-006132',sec:'160 × 160',start:'21-Sep 01:10',pcs:38,t:57.1,st:'CAST',         lock:false,rd:['HOLD'],        slot:'BRM 22-Sep A',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)',hold:'Chemistry hold — Mo 2.62 above max 2.50 (awaiting disposition)'},
+ {seq:3, heat:'2526-16900',caster:'CCM-1',grade:'17-4PH',psn:'TDC-004275',sec:'125 × 125',start:'21-Sep 02:20',pcs:52,t:50.3,st:'CAST',         lock:true, rd:['UT'],          slot:'BRM 22-Sep B',tests:['Ultrasonic — 100 % billets','Macro etch — 1 per heat'],pit:'— (no pit-cooling hours resolve)',grd:'CONDITIONAL — GRD-012 (17-4PH ≤ 125, surface-defect grade ≥ 2)'},
+ {seq:4, heat:'2526-16901',caster:'CCM-2',grade:'416',   psn:'TDC-003922',sec:'160 × 160',start:'21-Sep 03:05',pcs:36,t:54.3,st:'IN_PRODUCTION',lock:true, rd:['PIT36'],       slot:'BRM 23-Sep A',tests:['Spectro (OES) — heat chemistry','Hardness after pit cooling — 3 billets'],pit:'PCR-012 · 36 h (416, 160 × 160)',grd:'NO — GRD-007 (martensitic 416)'},
+ {seq:5, heat:'2526-16902',caster:'CCM-1',grade:'304L',  psn:'TDC-004810',sec:'125 × 125',start:'21-Sep 04:30',pcs:52,t:50.4,st:'IN_PRODUCTION',lock:false,rd:[],            slot:'BRM 22-Sep B',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
+ {seq:6, heat:'2526-16903',caster:'CCM-2',grade:'17-4PH',psn:'TDC-004275',sec:'160 × 160',start:'21-Sep 05:15',pcs:40,t:60.0,st:'ACKNOWLEDGED', lock:false,rd:['ABGM','MACRO'],slot:'ABGM → BRM 24-Sep',   tests:['Macro etch — 1 per heat','Ultrasonic after grinding — 100 %'],pit:'— (no pit-cooling hours resolve)',grd:'YES — GRD-011 (17-4PH billets 160 × 160, full grind 1.5 mm)'},
+ {seq:7, heat:'2526-16904',caster:'CCM-1',grade:'316L',  psn:'TDC-006132',sec:'125 × 125',start:'21-Sep 06:40',pcs:52,t:50.1,st:'ACKNOWLEDGED', lock:false,rd:['UT'],          slot:'BRM 23-Sep A',tests:['Ultrasonic — 100 % billets'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
+ {seq:8, heat:'2526-16905',caster:'CCM-2',grade:'416',   psn:'TDC-003922',sec:'160 × 160',start:'21-Sep 07:30',pcs:36,t:54.0,st:'SENT',         lock:true, rd:['PIT24'],       slot:'BRM 23-Sep B',tests:['Spectro (OES) — heat chemistry'],pit:'PSN characteristic · 24 h',grd:'NO — GRD-007 (martensitic 416)'},
+ {seq:9, heat:'2526-16906',caster:'CCM-1',grade:'17-4PH',psn:'TDC-004275',sec:'160 × 160',start:'21-Sep 08:50',pcs:40,t:60.1,st:'SENT',         lock:false,rd:['ABGM'],        slot:'ABGM → BRM 24-Sep',   tests:['Ultrasonic after grinding — 100 %'],pit:'— (no pit-cooling hours resolve)',grd:'YES — GRD-011 (17-4PH billets 160 × 160, full grind 1.5 mm)'},
+ {seq:10,heat:'2526-16907',caster:'CCM-2',grade:'304L',  psn:'TDC-004810',sec:'160 × 160',start:'21-Sep 09:40',pcs:38,t:57.0,st:'PLANNED',      lock:false,rd:[],            slot:'BRM 24-Sep A',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'}
+];
+const RCHIP={PIT36:['r-pit','PIT 36H','PIT'],PIT24:['r-pit','PIT 24H','PIT'],ABGM:['r-abgm','ABGM','ABGM'],MACRO:['r-test','MACRO','TEST'],UT:['r-test','UT','TEST'],HOLD:['r-hold','CHEM HOLD','HOLD']};
+const ST_B={PLANNED:'b-draft',SENT:'b-info',ACKNOWLEDGED:'b-clr',IN_PRODUCTION:'b-pend',CAST:'b-done'};
+const COLS=[
+ {k:'seq',label:'Seq',cls:'num',tip:'HPV-F10 · Sequence in the casting indent'},
+ {k:'heat',label:'Heat no',cls:'mono',tip:'HPV-F11 · Planned heat number'},
+ {k:'caster',label:'Caster',tip:'HPV-F12 · Caster'},
+ {k:'grade',label:'Grade',tip:'HPV-F13 · Grade'},
+ {k:'psn',label:'PSN',cls:'mono',tip:'HPV-F14 · PSN (extended TDC) of the order'},
+ {k:'sec',label:'Section',tip:'HPV-F15 · Cast section'},
+ {k:'start',label:'Planned cast start',tip:'HPV-F16 · Planned cast start'},
+ {k:'qty',label:'Billets / t',cls:'num',tip:'HPV-F17 · Billets and tonnes planned'},
+ {k:'st',label:'Indent status',tip:'HPV-F18 · Indent status (PLANNED / SENT / ACKNOWLEDGED / IN_PRODUCTION / CAST)'},
+ {k:'lock',label:'Priority lock',tip:'HPV-F19 · Priority lock set by Planning'},
+ {k:'rd',label:'Readiness',cls:'rdcell',tip:'HPV-F20 · QA readiness flags'},
+ {k:'slot',label:'Rolling slot',tip:'HPV-F21 · Planned rolling date / block'}
+];
+let cur=3;
+function kpiTile(label,val,sub,cls,tip){return '<div class="kpi '+(cls||'')+'" title="'+tip+'"><div class="k-label">'+label+'</div><div class="k-value">'+val+'</div><div class="k-sub">'+sub+'</div><div class="k-accent"></div></div>';}
+function renderKpis(rows){
+  const pit=rows.filter(function(r){return r.rd.some(function(x){return x.indexOf('PIT')===0;});});
+  const abgm=rows.filter(function(r){return r.rd.indexOf('ABGM')>=0;});
+  const hold=rows.filter(function(r){return r.rd.indexOf('HOLD')>=0;});
+  const c1=rows.filter(function(r){return r.caster==='CCM-1';}).length;
+  document.getElementById('kpis').innerHTML=
+    kpiTile('Heats planned',rows.length,'CCM-1 '+c1+' · CCM-2 '+(rows.length-c1),'','HPV-F06 · Heats planned for the plan date · SOW: SMS QA 1')+
+    kpiTile('Pit-cooling heats',pit.length,pit.map(function(r){return r.heat;}).join(' · ')||'—','','HPV-F07 · Heats whose pit-cooling hours resolve')+
+    kpiTile('ABGM-route heats',abgm.length,abgm.map(function(r){return r.heat;}).join(' · ')||'—','warn','HPV-F08 · Heats routed to ABGM by the grinding rule')+
+    kpiTile('Open chemistry holds',hold.length,hold.map(function(r){return r.heat;}).join(' · ')||'none','alert','HPV-F09 · Heats with an open chemistry hold');
+}
+function cell(c,r){
+  if(c.k==='qty')return r.pcs+' / '+r.t.toFixed(1);
+  if(c.k==='st')return '<span class="badge '+(ST_B[r.st]||'b-draft')+'">'+r.st+'</span>';
+  if(c.k==='lock')return r.lock?'<i class="fa-solid fa-lock lockchip" title="Priority lock — Planning"></i>':'—';
+  if(c.k==='rd')return r.rd.length?r.rd.map(function(x){return '<span class="rchip '+RCHIP[x][0]+'">'+RCHIP[x][1]+'</span>';}).join(''):'—';
+  return r[c.k];
+}
+function passes(r){
+  const fc=document.getElementById('fCaster').value,fs=document.getElementById('fStatus').value,fr=document.getElementById('fReady').value;
+  if(fc&&r.caster!==fc)return false;
+  if(fs&&r.st!==fs)return false;
+  if(fr&&!r.rd.some(function(x){return RCHIP[x][2]===fr;}))return false;
+  return true;
+}
+function render(){
+  document.getElementById('thead').innerHTML='<tr>'+COLS.map(function(c){return '<th class="'+(c.cls==='num'?'num':'')+'" title="'+c.tip+' · SOW: SMS QA 1">'+c.label+'</th>';}).join('')+'</tr>';
+  const rows=PLAN.map(function(r,i){return {r:r,i:i};}).filter(function(x){return passes(x.r);});
+  document.getElementById('tbody').innerHTML=rows.length?rows.map(function(x){return '<tr class="'+(x.i===cur?'sel':'')+'" onclick="pick('+x.i+')">'+COLS.map(function(c){return '<td class="'+(c.cls||'')+'">'+cell(c,x.r)+'</td>';}).join('')+'</tr>';}).join('')
+    :'<tr class="empty"><td colspan="'+COLS.length+'">No casting-indent lines match the filters.</td></tr>';
+  document.getElementById('rowCount').textContent=rows.length+' of '+PLAN.length+' heats · plan date 21-Sep-2026';
+  document.getElementById('meta').textContent='Read-only — maintained in Planning';
+  renderKpis(PLAN);
+  renderDrawer();
+}
+function pick(i){cur=i;render();}
+function vrow(k,v,tip){return '<div class="vrow"'+(tip?' title="'+tip+'"':'')+'><span class="vk">'+k+'</span><span class="vv">'+v+'</span></div>';}
+function renderDrawer(){
+  const r=PLAN[cur];
+  document.getElementById('drawer').innerHTML='<div class="sp-head" style="white-space:nowrap"><i class="fa-solid fa-fire-burner"></i> '+r.heat+' <span class="badge '+(ST_B[r.st]||'b-draft')+'">'+r.st+'</span></div>'+
+   '<div class="sp-body">'+
+   vrow('Caster',r.caster)+vrow('Grade / PSN',r.grade+' · '+r.psn)+vrow('Section',r.sec)+vrow('Planned cast start',r.start)+vrow('Billets / t',r.pcs+' / '+r.t.toFixed(1))+
+   vrow('Priority lock',r.lock?'<i class="fa-solid fa-lock lockchip"></i> locked by Planning':'—')+vrow('Rolling slot',r.slot)+
+   '<div class="sec-label">QA readiness</div>'+
+   '<div class="vrow" title="HPV-F22 · Special tests from the PSN · SOW: SMS QA 1" style="display:block"><span class="vk">Special tests from the PSN</span><ul class="tlist">'+r.tests.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'+
+   vrow('Pit-cooling rule applied',r.pit,'HPV-F23 · Pit-cooling rule applied (rule code + hours, or the PSN characteristic) · SOW: SMS QA 1')+
+   vrow('Grinding rule applied',r.grd,'HPV-F24 · Grinding rule applied (YES / NO / CONDITIONAL + rule code) · SOW: SMS QA 1')+
+   (r.hold?vrow('Chemistry hold','<span class="badge b-hold">HOLD</span> '+r.hold):'')+
+   '<div class="ro-note"><i class="fa-solid fa-lock"></i><span>Read-only. The casting indent is maintained in Planning; readiness is resolved from the Quality masters for the heat’s PSN, grade and section.</span></div>'+
+   '</div>';
+}
+function refreshPlan(){mesToast('Casting indent refreshed from Planning · 21-Sep-2026','ok');}
+function exportPlan(){mesToast('Heat plan exported (Excel) · 10 heats','ok');}
+
+function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
+
+render();
+</script>
+<script>
+function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
+(function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
+</script>
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}};var KEY='mesOpenTabs';
+var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
+function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
+function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+var tabs=ld().filter(function(h){return REG[h];});
+if(REG[here]&&tabs.indexOf(here)<0)tabs.push(here);
+sv(tabs);
+function render(){var bar=document.getElementById('tabbar');if(!bar)return;
+ bar.innerHTML=tabs.map(function(h){var m=REG[h]||{t:h,i:'fa-file'};var a=h===here?' active':'';
+  return '<div class="tab'+a+'" oncontextmenu="tabMenu(event,\''+h+'\')" onclick="tabGo(\''+h+'\')"><i class="fa-solid '+m.i+' ti"></i><span class="tt">'+m.t+'</span><span class="tc" title="Close" onclick="tabClose(event,\''+h+'\')"><i class="fa-solid fa-xmark"></i></span></div>';
+ }).join('');}
+window.tabGo=function(h){if(h!==here)location.href=h;};
+function closeAndGo(n,closed){tabs=n;sv(tabs);if(closed===here){location.href=tabs.length?tabs[tabs.length-1]:'dashboard.html';}else{render();}}
+window.tabClose=function(e,h){e.stopPropagation();closeAndGo(tabs.filter(function(x){return x!==h;}),h);};
+window.tabMenu=function(e,h){e.preventDefault();var m=document.getElementById('tabmenu');m.setAttribute('data-h',h);m.style.left=Math.min(e.clientX,window.innerWidth-185)+'px';m.style.top=e.clientY+'px';m.classList.add('open');};
+window.tabAct=function(act){var m=document.getElementById('tabmenu');var h=m.getAttribute('data-h');m.classList.remove('open');
+ if(act==='close'){closeAndGo(tabs.filter(function(x){return x!==h;}),h);}
+ else if(act==='others'){tabs=[h];sv(tabs);if(h!==here){location.href=h;}else{render();}}
+ else if(act==='right'){var i=tabs.indexOf(h);tabs=tabs.slice(0,i+1);sv(tabs);render();}
+ else if(act==='all'){tabs=[];sv(tabs);location.href='dashboard.html';}};
+document.addEventListener('click',function(){var m=document.getElementById('tabmenu');if(m)m.classList.remove('open');});
+render();})();</script>
+<script>
+function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
+(function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
+</script>
+<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
+function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[▲▼⇅]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
+</script>
+</body>
+</html>

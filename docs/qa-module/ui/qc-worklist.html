@@ -299,6 +299,48 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 .sup-help{font-size:10.5px;color:var(--color-text-hint);margin-top:6px;line-height:1.5;}
 .sup-help i{color:var(--color-primary-dark);margin-right:4px;}
 .sup-chip{display:inline-block;margin-left:5px;padding:0 6px;border-radius:9px;font-size:9.5px;font-weight:700;letter-spacing:.3px;line-height:15px;background:rgba(156,39,176,.14);color:#7b1fa2;vertical-align:middle;white-space:nowrap;}
+
+/* ===== Earlier feedback panel (CL-11 — shared pattern) ===== */
+.efb{border:1px solid var(--color-border);border-radius:var(--r-md);background:#fff;margin-top:var(--sp3);flex:none;}
+.efb>summary{list-style:none;cursor:pointer;padding:9px 12px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;}
+.efb>summary::-webkit-details-marker{display:none;}
+.efb>summary i{color:var(--color-primary);font-size:12px;}
+.efb>summary .meta{margin-left:auto;font-weight:400;font-size:var(--fs-xs);color:var(--color-text-muted);}
+.efb table{width:100%;border-collapse:collapse;font-size:12px;}
+.efb th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:6px 10px;background:#f6f8fa;border-top:1px solid var(--color-border-light);white-space:nowrap;}
+.efb td{padding:6px 10px;border-top:1px solid #f3f3f3;vertical-align:top;}
+.efb td.mono{font-variant-numeric:tabular-nums;white-space:nowrap;}
+.efb .efb-foot{padding:7px 12px;font-size:11px;color:var(--color-text-hint);border-top:1px solid var(--color-border-light);}
+.efb .efb-foot i{margin-right:5px;}
+.fbchip{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
+.fb-sent{background:rgba(255,152,0,.14);color:#ef6c00;} .fb-ack{background:rgba(76,175,80,.14);color:#2e7d32;} .fb-esc{background:rgba(244,67,54,.14);color:#c62828;}
+.audchip{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;background:rgba(103,58,183,.12);color:#673ab7;white-space:nowrap;}
+.efb .badge.efb-ok{background:rgba(76,175,80,.12);color:#388e3c;} .efb .badge.efb-bad{background:rgba(244,67,54,.12);color:#c62828;}
+.efb .badge.efb-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .efb .badge.efb-info{background:rgba(33,150,243,.12);color:#1976d2;}
+
+/* ===== SMS QA review v3 — caster feedback, storage location, production tally, conditional items ===== */
+.fb-none{color:#bbb;}
+.cond-chip{display:inline-block;margin-left:5px;padding:0 6px;border-radius:9px;font-size:10px;font-weight:700;line-height:15px;background:rgba(0,150,136,.13);color:#00796b;vertical-align:middle;white-space:nowrap;}
+.cfb-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--sp2) var(--sp3);}
+.cfb-note,.cfb-ack{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:6px 8px;min-height:32px;}
+.cfb-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:var(--fs-xs);color:var(--color-text-muted);}
+.sloc-row{display:flex;gap:6px;align-items:center;}
+.sloc-row select{flex:1;}
+.sloc-cur{font-size:var(--fs-sm);padding:5px 0;}
+.efb-host{padding:0 var(--sp5) var(--sp2);}
+.subcard{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);margin-top:var(--sp3);flex:none;display:flex;flex-direction:column;max-height:196px;overflow:hidden;}
+.subcard .sc-head{padding:9px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;flex:none;}
+.subcard .sc-head i{color:var(--color-primary);font-size:12px;}
+.subcard .sc-head .meta{margin-left:auto;font-weight:400;font-size:var(--fs-sm);color:var(--color-text-muted);}
+.subcard .sc-wrap{overflow:auto;min-height:0;}
+.subcard table.tbl td.var-bad{color:var(--color-danger);font-weight:700;}
+.subcard table.tbl td.var-ok{color:var(--color-success);font-weight:700;}
+.subcard table.tbl select{padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;font-family:inherit;}
+.subcard table.tbl input{padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;font-family:inherit;width:120px;}
+#tallyCard table.tbl thead th{white-space:normal;vertical-align:bottom;line-height:1.2;padding:7px 8px;}
+#tallyCard table.tbl tbody td{padding:4px 8px;}
+#tallyCard .tby{display:block;font-size:10.5px;color:#888;line-height:1.2;}
+.tbl tbody td.k-type{max-width:360px;}   /* room for the SUPPLEMENTARY / CONDITIONAL chips */
 </style>
 </head>
 <body>
@@ -321,12 +363,15 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
     <div class="navgrp" data-g="Material Flow">
       <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
       <div class="grp-items">
+        <a href="heat-plan.html"><i class="fa-solid fa-calendar-days"></i> Heat Plan</a>
         <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
         <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
         <a href="qc-worklist.html" class="active"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
         <a href="auto-line.html"><i class="fa-solid fa-timeline"></i> Auto Line</a>
         <a href="agency-allocation.html"><i class="fa-solid fa-building-user"></i> Agency Allocation</a>
         <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
+        <a href="hot-out-clearance.html"><i class="fa-solid fa-fire-flame-curved"></i> Hot-out Clearance</a>
+        <a href="location-tracking.html"><i class="fa-solid fa-location-dot"></i> Location Tracking</a>
         <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
         <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
         <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
@@ -387,6 +432,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
         <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
         <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
+        <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
@@ -454,6 +500,12 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <select id="pgSize"><option>50</option><option>100</option><option>250</option><option>500</option></select>
       </div>
     </div>
+    <!-- SMSQA8-66 — Production tally per heat at SMS final inspection (mes_qc_production_tally):
+         variance = produced − (cleared + held + rejected + end cut + hot-out + pending); a non-zero variance needs a reason; QA signs off -->
+    <div class="subcard" id="tallyCard">
+      <div class="sc-head"><i class="fa-solid fa-scale-balanced"></i> Production tally — SMS final inspection (per heat) <span class="meta" id="tallyMeta"></span></div>
+      <div class="sc-wrap"><table class="tbl"><thead id="tallyHead"></thead><tbody id="tallyBody"></tbody></table></div>
+    </div>
   </main>
 </div>
 
@@ -496,6 +548,31 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <div class="sup-help"><i class="fa-solid fa-circle-info"></i>Ticking auto-raises a SUPPLEMENTARY inspection for this batch at the stage — allowed where the stage-QC map sets allow_supplementary (§26.5, MQA 5)</div>
       </fieldset>
     </div>
+    <!-- SMSQA2-15/16 — caster feedback (ONLINE inspection at the SMS stage with a defect / out-of-spec value): note to the caster
+         pulpit (Operations pulpit notes, POPUP_ACK), acknowledgement read back; unacknowledged feedback escalates (NTF-FB-01). No block. -->
+    <div class="rmx-wrap" id="cfbWrap" style="display:none;grid-template-columns:1fr">
+      <fieldset class="rmx-fs">
+        <legend>Caster feedback</legend>
+        <div class="cfb-grid">
+          <div class="rmx-fld" title="WKL-F71 · Feedback note — auto-composed: heat, strand, finding · SOW: SMSQA2-15"><label>Feedback note</label><div class="cfb-note" id="cfbNote"></div></div>
+          <div class="rmx-fld" title="WKL-F72 · Caster acknowledgement — by · at · remark · SOW: SMSQA2-16"><label>Caster acknowledgement</label><div class="cfb-ack" id="cfbAck"></div></div>
+        </div>
+        <div class="cfb-foot"><span id="cfbMeta"></span><button class="btn btn-ghost btn-sm" id="cfbResend" onclick="resendFb()"><i class="fa-solid fa-paper-plane"></i> Resend feedback</button></div>
+      </fieldset>
+    </div>
+    <!-- SMSQA8-65 — storage location at SMS final inspection (OP_CASTING items): Storage Location master, select or scan;
+         recorded as a location move (event FINAL_INSPECTION) and mirrored to the batch's current location -->
+    <div class="rmx-wrap" id="slocWrap" style="display:none;grid-template-columns:1fr">
+      <fieldset class="rmx-fs">
+        <legend>Storage location</legend>
+        <div class="rmx-grid">
+          <div class="rmx-fld" title="WKL-F73 · Storage location — select or scan (Storage Location master) · SOW: SMSQA8-65"><label for="slocSel">Storage location</label><div class="sloc-row"><select id="slocSel"></select><button class="btn-icon" type="button" title="Scan the location barcode" onclick="scanLoc()"><i class="fa-solid fa-barcode"></i></button></div></div>
+          <div class="rmx-fld"><label>Current location</label><div class="sloc-cur" id="slocCur"></div></div>
+        </div>
+      </fieldset>
+    </div>
+    <!-- SMSQA9-78 / CL-11 — earlier feedback of the lot and of its parent batches -->
+    <div class="efb-host" id="rmEfb"></div>
     <div class="rm-foot-bar"><div>Overall:&nbsp;<span id="rmOverall" class="badge b-pend">PENDING</span></div><input id="rmRemark" placeholder="Remarks…" /></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="modalCancel">Cancel</button>
@@ -589,7 +666,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 <script>
 /* ===== Columns ===== */
 const COLS=[
-  {key:'no',label:'QC No'},{key:'pc',label:'Confirmation'},{key:'kind',label:'Kind'},{key:'type',label:'Type'},{key:'mode',label:'Mode'},{key:'seq',label:'Seq'},{key:'path',label:'Path'},{key:'stage',label:'Stage'},
+  {key:'no',label:'QC No'},{key:'pc',label:'Confirmation'},{key:'kind',label:'Kind'},{key:'type',label:'Type'},{key:'mode',label:'Mode'},{key:'fb',label:'Caster feedback',tip:'WKL-F70 · Caster feedback on ONLINE inspections (SENT / ACK / ESCALATED) · SOW: SMSQA2-15, 16'},{key:'seq',label:'Seq'},{key:'path',label:'Path'},{key:'stage',label:'Stage'},
   {key:'heat',label:'Heat No'},{key:'uid',label:'Material / UID'},{key:'grade',label:'Grade'},{key:'form',label:'Form'},
   {key:'result',label:'Result'},{key:'status',label:'Status'},{key:'date',label:'Date'},{key:'by',label:'Inspector'},
   {key:'actions',label:'',noFilter:true}
@@ -603,9 +680,13 @@ const RAW=[
  ['INS-2526-0012','Inspection','Dimensional','OP_ROLLING','2526-16496','B030268','17-4PH','Round Bar','PASS','COMPLETED','24-Jun 09:14','R. Sahoo','OFFLINE'],
  ['TST-2526-0034','Test','Mechanical','OP_HEAT TREATMENT','2526-16496','B030268','17-4PH','Round Bar','PENDING','IN PROGRESS','24-Jun 09:40','Lab-A','OFFLINE'],
  ['CHM-2526-0188','Test','Chemical','OP_CASTING','2526-16783','A002668','316L','Hex','PASS','CLEARED','24-Jun 06:02','L2 / OES','ONLINE'],
+ ['INS-2526-0023','Inspection','Dimensional','OP_CASTING','2526-16783','A002668','316L','Hex','FAIL','REJECTED','24-Jun 06:40','L2 / Gauge','ONLINE'],
+ ['INS-2526-0025','Inspection','Dimensional','OP_CASTING','2526-16783','A002668','316L','Hex','FAIL','HOLD','24-Jun 06:48','L2 / Gauge','ONLINE'],
  ['INS-2526-0013','Inspection','Visual','OP_CENTERLESS GRINDING','2526-16794','A002669','316L','Hex','FAIL','REJECTED','24-Jun 10:21','M. Iyer','OFFLINE'],
  ['UT-2526-0071','Inspection','UT','OP_PEELING','2526-16828','E120381','316L','Hex','PASS','COMPLETED','24-Jun 08:55','S. Khan','ONLINE'],
  ['CHM-2526-0189','Test','Chemical','OP_CASTING','2526-16776','E121717','304L','Hex','FAIL','HOLD','24-Jun 06:18','L2 / OES','ONLINE'],
+ ['INS-2526-0024','Inspection','Visual','OP_CASTING','2526-16776','E121717','304L','Hex','COND','COMPLETED','24-Jun 06:25','A. Das','ONLINE'],
+ ['TST-2526-0044','Test','Spark test','OP_CASTING','2526-16776','E121717','304L','Hex','PENDING','DRAFT','—','—','OFFLINE'],
  ['TST-2526-0035','Test','Mechanical','OP_HEAT TREATMENT','2526-16781','E121718','304L','Hex','PASS','CLEARED','23-Jun 17:30','Lab-B','OFFLINE'],
  ['INS-2526-0014','Inspection','Dimensional','OP_DRAWING2','2526-16798','E122319','304L','Round Bar','PENDING','DRAFT','24-Jun 11:02','—','OFFLINE'],
  ['UT-2526-0072','Inspection','UT','OP_ROLLING','2526-16837','E122644','304L','Round Bar','COND','COMPLETED','24-Jun 07:46','S. Khan','ONLINE'],
@@ -683,7 +764,7 @@ function syncDefects(){document.querySelectorAll('#rmDefects [data-di]').forEach
 function onDefSev(i){if(rmDefects[i])rmDefects[i].sev=DEF_SEV[rmDefects[i].defect]||'MINOR';renderDefects();evalRm();}
 function addDefect(){syncDefects();rmDefects.push({defect:DEFECT_CAT[0],sev:DEF_SEV[DEFECT_CAT[0]]||'MINOR',qty:1,loc:'NONE',pos:'',dispo:'—'});renderDefects();evalRm();}
 function delDefect(i){syncDefects();rmDefects.splice(i,1);renderDefects();evalRm();}
-function saveResult(){syncDefects();saveRmExtras();saveSup();const ov=document.getElementById('rmOverall').textContent;rmRow.result=ov;rmRow.status=ov==='FAIL'?'REJECTED':(ov==='PASS'?'COMPLETED':'IN PROGRESS');rmRow.defects=rmDefects.slice();document.getElementById('overlay').classList.remove('open');renderBody();mesToast('Result saved — '+ov, ov==='FAIL'?'err':(ov==='PASS'?'ok':'warn'));}
+function saveResult(){syncDefects();saveRmExtras();saveSup();saveSloc();const ov=document.getElementById('rmOverall').textContent;rmRow.result=ov;rmRow.status=ov==='FAIL'?'REJECTED':(ov==='PASS'?'COMPLETED':'IN PROGRESS');rmRow.defects=rmDefects.slice();document.getElementById('overlay').classList.remove('open');renderBody();mesToast('Result saved — '+ov, ov==='FAIL'?'err':(ov==='PASS'?'ok':'warn'));}
 
 /* === End cut & salvage + Colour coding & marking (SMSQA8-67 / SMSQA11-95) ===
    Persists to mes_qc_inspection: end_cut_length, end_cut_reason_id, salvage_note, colour_code_id, marking_text (+ sticker flag).
@@ -746,7 +827,8 @@ function cell(c,row){
   const v=row[c.key];
   if(c.key==='kind') return `<span class="badge ${v==='Test'?'b-test':'b-insp'}">${v}</span>`;
   if(c.key==='path') return pthCellHtml(row);   /* §26.1 MQA 7: allocated inspection path chip + role-gated change */
-  if(c.key==='type') return `${v??''}${row.supFlag?' <span class="sup-chip" title="auto-raised from the online result — mes_qc_inspection.supplementary_required (§26.5)">SUPPLEMENTARY</span>':''}`;   /* §26.5 MQA 5: supplementary flag */
+  if(c.key==='fb'){if(!row.fbInfo)return '<span class="fb-none">—</span>';const fc={SENT:'fb-sent',ACK:'fb-ack',ESCALATED:'fb-esc'}[row.fb];return `<span class="fbchip ${fc}" title="WKL-F70 · ${row.fbInfo.note} · SOW: SMSQA2-15, 16">${row.fb}</span>`;}   /* SMSQA2-15/16: caster feedback chip */
+  if(c.key==='type') return `${v??''}${row.cond?` <span class="cond-chip" title="WKL-F90 · Conditional item raised by the stage-QC map raise condition · SOW: SMSQA8-68">${row.cond}</span>`:''}${row.supFlag?' <span class="sup-chip" title="auto-raised from the online result — mes_qc_inspection.supplementary_required (§26.5)">SUPPLEMENTARY</span>':''}`;   /* §26.5 MQA 5: supplementary flag */
   if(c.key==='uid') return `${v??''}${rowMarkHtml(row)}`;   /* SMSQA8-67/11-95: colour dot + end-cut chip when set */
   if(c.key==='mode') return v==='ONLINE'
     ?`<span class="badge b-mode-on" title="In-line during production — auto capture via L2 / gauge"><i class="fa-solid fa-wifi"></i>ONLINE</span>`
@@ -778,7 +860,7 @@ function buildSortRow(){
   document.getElementById('hRow').innerHTML=cols.map(c=>{
     if(c.noFilter) return '<th class="col-actions"></th>';
     const car=sortKey===c.key?`<span class="caret on">${sortDir>0?'▲':'▼'}</span>`:'<span class="caret">⇅</span>';
-    return `<th class="sortable" data-sk="${c.key}">${c.label} ${car}</th>`;
+    return `<th class="sortable" data-sk="${c.key}"${c.tip?` title="${c.tip}"`:''}>${c.label} ${car}</th>`;
   }).join('');
   document.querySelectorAll('#hRow .sortable').forEach(th=>th.onclick=()=>{
     const k=th.dataset.sk;
@@ -800,7 +882,7 @@ function renderBody(){
   const slice=rows.slice((page-1)*pageSize,page*pageSize);
   const tb=document.getElementById('tbody');
   if(!slice.length){tb.innerHTML=`<tr class="empty-row"><td colspan="${cols.length}">No records match the current filters.</td></tr>`;}
-  else{tb.innerHTML=slice.map(r=>`<tr>${cols.map(c=>`<td class="${c.key==='actions'?'actions':''}">${cell(c,r)}</td>`).join('')}</tr>`).join('');}
+  else{tb.innerHTML=slice.map(r=>`<tr>${cols.map(c=>`<td class="${c.key==='actions'?'actions':'k-'+c.key}">${cell(c,r)}</td>`).join('')}</tr>`).join('');}
   const onlineN=rows.filter(r=>r.mode==='ONLINE').length;
   document.getElementById('rowMeta').textContent=`${rows.length} of ${DATA.length} records · ${onlineN} online · ${rows.length-onlineN} offline`;
   document.getElementById('pgInfo').textContent=`Page ${page} / ${pages}`;
@@ -878,6 +960,7 @@ const TYPE_ATTRS={
   Visual:[],
   UT:[{n:'UT soundness',u:'',min:null,max:null,text:true},{n:'Max indication',u:'mm',min:null,max:1.5}],
   Chemical:[{n:'C',u:'%',min:null,max:0.07},{n:'Mn',u:'%',min:null,max:1.00},{n:'Si',u:'%',min:null,max:1.00},{n:'S',u:'%',min:null,max:0.030},{n:'P',u:'%',min:null,max:0.040},{n:'Cr',u:'%',min:15.0,max:17.5},{n:'Ni',u:'%',min:3.0,max:5.0}],
+  'Spark test':[{n:'Grade match vs heat chemistry',u:'',min:null,max:null,text:true},{n:'Cr — spark vs heat (± 0.5)',u:'%',min:null,max:null}],   /* SMSQA8-68: conditional spark test at SMS final inspection */
   Mechanical:[{n:'YS 0.2%',u:'MPa',min:520,max:null},{n:'UTS',u:'MPa',min:690,max:null},{n:'Elongation',u:'%',min:16,max:null},{n:'R.A.',u:'%',min:45,max:null},{n:'Hardness',u:'HRC',min:28,max:36}]
 };
 /* TYPE_ATTRS = grade-agnostic DEFAULT range (attribute-master / test default). The TDC overrides per
@@ -921,6 +1004,7 @@ function openRecord(no,mode){
   rmRO=ro; rmDefects=seedDefects(rmRow); renderDefects();
   loadRmExtras(rmRow,ro);   /* SMSQA8-67/11-95: end cut & salvage + colour coding & marking */
   loadSup(rmRow,ro);        /* §26.5 MQA 5: supplementary inspection trigger (Inspection-kind + ONLINE mode only) */
+  loadCfb(rmRow,ro); loadSloc(rmRow,ro); renderRmEfb(rmRow);   /* SMSQA2-15/16 caster feedback · SMSQA8-65 storage location · CL-11 earlier feedback */
   const rem=document.getElementById('rmRemark'); rem.value=''; rem.disabled=ro;
   modalSave.style.display=ro?'none':''; modalCancel.textContent=ro?'Close':'Cancel';
   evalRm();
@@ -1054,12 +1138,88 @@ function saveSup(){
 
 /* ===== Init ===== */
 buildHead();buildPicker();buildFilterBar();rmxFillSelects();renderBody();
+
+/* ===== Earlier feedback panel (CL-11): earlier inspections of the lot and of its parent batches, newest first
+   (v_qc_material_feedback_history). Read-only on every inspection / clearance screen. ===== */
+function efbHtml(lines,tip){
+  const B={PASS:'efb-ok',OK:'efb-ok',CLEARED:'efb-ok',ACK:'efb-ok',FAIL:'efb-bad',REJECTED:'efb-bad',DEFECT:'efb-bad',HOLD:'efb-bad',COND:'efb-pend',PENDING:'efb-pend',DECIDED:'efb-info'};
+  const FB={SENT:'fb-sent',ACK:'fb-ack',ESCALATED:'fb-esc'};
+  const rows=lines.length?lines.map(function(l){return '<tr><td>'+l.stage+'</td><td class="mono">'+l.when+'</td><td>'+l.by+'</td><td><span class="badge '+(B[l.res]||'efb-info')+'">'+l.res+'</span></td><td>'+(l.defects||'—')+'</td><td>'+(l.rem||'—')+'</td><td>'+(l.fb?'<span class="fbchip '+FB[l.fb]+'">'+(l.fb==='ACK'?'ACK · caster':l.fb)+'</span>':'—')+'</td><td>'+(l.aud?'<span class="audchip">AUD · '+l.aud+'</span>':'—')+'</td></tr>';}).join('')
+    :'<tr><td colspan="8" style="color:#888;font-style:italic">No earlier inspections for this lot.</td></tr>';
+  return '<details class="efb" open><summary title="'+tip+'"><i class="fa-solid fa-clock-rotate-left"></i> Earlier feedback <span class="meta">'+lines.length+' earlier inspection(s) · newest first</span></summary>'+
+    '<table><thead><tr><th>Stage</th><th>Date / time</th><th>Inspector</th><th>Result</th><th>Defects</th><th>Remarks</th><th>Caster feedback</th><th>Deviation</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="efb-foot"><i class="fa-solid fa-sitemap"></i>Includes parent batches (split / hot-out cut / grinding)</div></details>';
+}
+
+/* ===== SMSQA2-15/16 — caster feedback on ONLINE inspections at the SMS stage (mes_qc_inspection_feedback) ===== */
+const FB_SEED={
+ 'INS-2526-0023':{st:'ACK',note:'Heat 2526-16783 · strand 3 — rhomboidity 7.2 mm above the 6.0 mm limit on 3 billets',sent:'24-Jun 06:41',by:'CCM-2 caster in-charge (S. Pillai)',at:'24-Jun 06:52',rem:'Mould taper checked and corrected on strand 3'},
+ 'INS-2526-0024':{st:'SENT',note:'Heat 2526-16776 · strand 2 — deep oscillation marks on 4 billets',sent:'24-Jun 06:26',by:'',at:'',rem:''},
+ 'INS-2526-0025':{st:'ESCALATED',note:'Heat 2526-16783 · strand 1 — section 162 × 158 outside 160 ± 2',sent:'24-Jun 06:49',by:'',at:'',rem:'',esc:'24-Jun 07:19 — escalated to the SMS shift in-charge (NTF-FB-01)'}
+};
+DATA.forEach(r=>{const f=FB_SEED[r.no]; if(f){r.fbInfo=f; r.fb=f.st;} else r.fb='—';});
+/* SMSQA8-68 — conditional spark test generated by the stage-QC map raise condition GRADE_TRANSITION */
+Object.assign(DATA.find(r=>r.no==='TST-2526-0044')||{},{cond:'CONDITIONAL · grade transition'});
+function loadCfb(row,ro){
+  const w=document.getElementById('cfbWrap'),f=row.fbInfo; w.style.display=f?'':'none'; if(!f)return;
+  document.getElementById('cfbNote').textContent=f.note;
+  const cls={SENT:'fb-sent',ACK:'fb-ack',ESCALATED:'fb-esc'}[f.st];
+  document.getElementById('cfbAck').innerHTML=f.st==='ACK'?`<span class="fbchip fb-ack">ACK</span> ${f.by} · ${f.at}<br><i>${f.rem}</i>`:`<span class="fbchip ${cls}">${f.st}</span> Awaiting acknowledgement at the caster pulpit${f.esc?'<br><i>'+f.esc+'</i>':''}`;
+  document.getElementById('cfbMeta').textContent='Sent to the caster pulpit '+f.sent+' · pop-up acknowledgement · no block on clearance';
+  document.getElementById('cfbResend').style.display=(f.st==='ACK'||ro)?'none':'';
+}
+function resendFb(){if(!rmRow||!rmRow.fbInfo)return;mesToast('Feedback re-sent to the caster pulpit — '+rmRow.heat,'ok');}
+/* ===== SMSQA8-65 — storage location at SMS final inspection ===== */
+const SLOCS=['SMS-Y1','SMS-Y1-B03','SMS-Y1-B03-S2','SMS-QHOLD','MILL-Y2','MILL-Y2-B01','ABGM-B1','PIT-P03'];
+const SLOC_CUR={'A002668':'SMS-Y1-B03-S2','E121717':'SMS-Y1-B03','B030227':'SMS-Y1-B03-S2'};
+function loadSloc(row,ro){
+  const w=document.getElementById('slocWrap'),on=row.stage==='OP_CASTING'; w.style.display=on?'':'none'; if(!on)return;
+  const cur=SLOC_CUR[row.uid]||'';
+  const sel=document.getElementById('slocSel'); sel.innerHTML='<option value="">— select or scan —</option>'+SLOCS.map(c=>`<option ${c===cur?'selected':''}>${c}</option>`).join(''); sel.disabled=ro;
+  document.getElementById('slocCur').innerHTML=cur?`<b>${cur}</b> <span class="due-hint" style="font-size:11px;color:#888">— last move FINAL_INSPECTION</span>`:'<span style="color:#888">not set</span>';
+}
+function scanLoc(){const s=document.getElementById('slocSel');s.value='SMS-Y1-B03-S2';mesToast('Location barcode LOC-SMS-Y1-B03-S2 scanned','ok');}
+function saveSloc(){if(!rmRow||rmRow.stage!=='OP_CASTING')return;const v=document.getElementById('slocSel').value;if(v&&v!==SLOC_CUR[rmRow.uid]){SLOC_CUR[rmRow.uid]=v;mesToast('Storage location '+v+' recorded for '+rmRow.uid,'ok');}}
+/* ===== SMSQA9-78 / CL-11 — earlier feedback of the lot (same heat, earlier inspections + extra history) ===== */
+const EFB_EXTRA={
+ '2526-16783':[{stage:'Macro etch (lab)',when:'24-Jun 09:30',by:'Lab-A',res:'PASS',defects:'—',rem:'Centre segregation C1.0, no pipe'}],
+ '2526-16798':[{stage:'OP_CASTING — chemistry (OES)',when:'23-Jun 22:10',by:'L2 / OES',res:'FAIL',defects:'—',rem:'S 0.034 above 0.030 — accepted under deviation',aud:'DEV-118'}],
+ '2526-16426':[{stage:'Macro etch (lab)',when:'23-Jun 23:40',by:'Lab-B',res:'PASS',defects:'—',rem:'—'}]
+};
+function renderRmEfb(row){
+  const own=DATA.filter(r=>r.heat===row.heat&&r.no!==row.no).map(r=>({stage:r.stage+' — '+r.type.toLowerCase()+(r.mode==='ONLINE'?' (online)':''),when:r.date,by:r.by,res:r.result,defects:r.fbInfo?r.fbInfo.note.split('— ')[1]:'—',rem:r.status,fb:r.fbInfo?r.fbInfo.st:'',aud:''}));
+  const lines=own.concat(EFB_EXTRA[row.heat]||[]).sort((a,b)=>(''+b.when).localeCompare(''+a.when,undefined,{numeric:true}));
+  document.getElementById('rmEfb').innerHTML=efbHtml(lines,'WKL-F74 · Earlier feedback (CL-11) · SOW: SMSQA9-78');
+}
+/* ===== SMSQA8-66 — production tally per heat (mes_qc_production_tally) ===== */
+const TALLY=[
+ {heat:'2526-16798',plan:40,prod:40,t:7.9,rec:40,insp:38,clr:34,held:2,rej:1,ec:1,ho:0,pend:2,reason:'',rem:'',st:'SIGNED_OFF',by:'R. Sahoo',at:'21-Sep 11:20'},
+ {heat:'2526-16866',plan:36,prod:36,t:7.1,rec:36,insp:34,clr:30,held:1,rej:1,ec:1,ho:0,pend:1,reason:'PIECES_IN_TRANSIT',rem:'2 billets on the transfer table to the SMS yard',st:'OPEN',by:'',at:''},
+ {heat:'2526-16783',plan:38,prod:38,t:7.5,rec:38,insp:30,clr:28,held:0,rej:0,ec:0,ho:0,pend:10,reason:'',rem:'',st:'OPEN',by:'',at:''}
+];
+const MISMATCH=['','COUNT_ERROR','PIECES_IN_TRANSIT','SCRAP_NOT_BOOKED','SAMPLE_CUT','OTHER'];
+function tVar(r){return r.prod-(r.clr+r.held+r.rej+r.ec+r.ho+r.pend);}
+function renderTally(){
+  const H=[['Heat','WKL-F75 · Heat'],['Planned','WKL-F76 · Planned pieces (casting indent)'],['Produced pcs / t','WKL-F77 · Produced pieces / tonnes (production confirmation)'],['Received','WKL-F78 · Received at QA'],['Inspected','WKL-F79 · Inspected'],['Cleared','WKL-F80 · Cleared'],['Held','WKL-F81 · Held'],['Rejected','WKL-F82 · Rejected'],['End cut','WKL-F83 · End cut'],['Hot-out','WKL-F84 · Hot-out'],['Pending','WKL-F85 · Pending'],['Variance','WKL-F86 · Variance = produced − (cleared + held + rejected + end cut + hot-out + pending)'],['Mismatch reason','WKL-F87 · Mismatch reason — required when the variance is not zero'],['Remarks','WKL-F88 · Remarks'],['Tally status','WKL-F89 · Tally status (OPEN / SIGNED_OFF / REOPENED) with signed by / at']];
+  document.getElementById('tallyHead').innerHTML='<tr>'+H.map(h=>`<th title="${h[1]} · SOW: SMSQA8-66">${h[0]}</th>`).join('')+'<th class="col-actions"></th></tr>';
+  document.getElementById('tallyBody').innerHTML=TALLY.map((r,i)=>{const v=tVar(r),open=r.st!=='SIGNED_OFF',dz=opsView?' disabled':'';
+    const stB={OPEN:'b-pend',SIGNED_OFF:'b-done',REOPENED:'b-prog'}[r.st]||'b-draft';
+    const reason=open?`<select onchange="TALLY[${i}].reason=this.value;renderTally()"${dz}>${MISMATCH.map(o=>`<option ${o===r.reason?'selected':''} value="${o}">${o||'—'}</option>`).join('')}</select>`:(r.reason||'—');
+    const rem=open?`<input value="${r.rem}" placeholder="remarks" onchange="TALLY[${i}].rem=this.value"${dz}/>`:(r.rem||'—');
+    const act=open?`<button class="btn btn-primary btn-sm"${dz} ${(v!==0&&!r.reason)?'disabled title="Select the mismatch reason first"':''} onclick="tallySign(${i})"><i class="fa-solid fa-signature"></i> Sign off tally</button>`:`<button class="btn btn-ghost btn-sm"${dz} onclick="tallyReopen(${i})"><i class="fa-solid fa-rotate-left"></i> Reopen tally</button>`;
+    return `<tr><td class="mono">${r.heat}</td><td class="num">${r.plan}</td><td class="num">${r.prod} / ${r.t.toFixed(1)}</td><td class="num">${r.rec}</td><td class="num">${r.insp}</td><td class="num">${r.clr}</td><td class="num">${r.held}</td><td class="num">${r.rej}</td><td class="num">${r.ec}</td><td class="num">${r.ho}</td><td class="num">${r.pend}</td><td class="num ${v===0?'var-ok':'var-bad'}">${v}</td><td>${reason}</td><td>${rem}</td><td><span class="badge ${stB}">${r.st}</span>${r.by?`<span class="tby">${r.by} · ${r.at}</span>`:''}</td><td class="actions">${act}</td></tr>`;}).join('');
+  const bad=TALLY.filter(r=>tVar(r)!==0).length, so=TALLY.filter(r=>r.st==='SIGNED_OFF').length;
+  document.getElementById('tallyMeta').textContent=TALLY.length+' heats · '+so+' signed off · '+bad+' with variance';
+}
+function tallySign(i){const r=TALLY[i];if(tVar(r)!==0&&!r.reason){mesToast('Select the mismatch reason — variance '+tVar(r),'err');return;}r.st='SIGNED_OFF';r.by='QA user';r.at='21-Sep 12:05';renderTally();mesToast('Tally signed off — heat '+r.heat+(tVar(r)?' (variance '+tVar(r)+', '+r.reason+')':''),'ok');}
+function tallyReopen(i){const r=TALLY[i];r.st='REOPENED';r.by='';r.at='';renderTally();mesToast('Tally reopened — heat '+r.heat,'warn');}
+renderBody();renderTally();   /* re-render with the feedback chips and conditional items seeded above */
 </script>
 <script>
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
