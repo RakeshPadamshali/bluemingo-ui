@@ -13,7 +13,7 @@ This note is the design source for the item. It is cross-module: Planning and Ma
 
 ## 2. What exists today (the starting point)
 
-- **Process route (platform, running):** `mes_process_routings` + `mes_operation_routings` (131 rows), attribute-scoped through `mes_routing_attr_value` on Shape, Execution, Grade group, HTC Code, HT Condition, Customer FG Size and Customer Length; equipment routing `mes_operation_equipment_routing` + `mes_oer_rule`; equipment linkage `mes_equipment_linkage`. The route is keyed by **size and grade, not by PSN**.
+- **Process route (platform, running, with its own screens):** maintained today on **Standard Routing** (the operation chain), **Production Routing** (read-only: routing, process, chain and one column per routing attribute) and **Double Routing Attribute** (equipment rows and their input-to-output rules); axis values are set by the wide-attribute Excel import or the API. `mes_process_routings` + `mes_operation_routings` (131 rows), attribute-scoped through `mes_routing_attr_value` on Shape, Execution, Grade group, HTC Code, HT Condition, Customer FG Size and Customer Length; equipment routing `mes_operation_equipment_routing` + `mes_oer_rule`; equipment linkage `mes_equipment_linkage`. The route is keyed by **size and grade, not by PSN**.
 - **Runtime pointer (platform, running):** `mes_inventory.prev_operation` / `next_operation` / `routing_complete`, with `mes_route_deviation` (Operations design) recording a runtime choice that differs from the scheduled route.
 - **Inspection route (Quality, designed):** `mes_qc_inspection_path` + `mes_qc_inspection_path_stage` (ordered stages keyed by the same operation codes) + `mes_qc_path_rule` (priority matrix on SO characteristic, PSN, customer, grade, product form, supply condition) allocating one path per lot into `mes_qc_material_path`.
 - **Quality content per operation (Quality, designed):** `mes_qc_stage_qc_map` (what is inspected or tested at an operation, product-scoped, with the raise condition added in the SMS review), `mes_qc_sampling_rule` (already carrying `path_id`), the clearance gates of `mes_qc_clearance`.
@@ -111,7 +111,7 @@ Each stage therefore carries: material-bound checks owed, sampling obligations, 
 
 | Document | Change |
 |---|---|
-| Master Data | Routing master becomes a designed screen with the new attribute axes; the note that routing is data-loading only is withdrawn |
+| Master Data | The three routing screens that run today gain the new attribute axes, maintainable axis values, the specificity tie-break and the deactivation guard; the note that routing is data-loading only is withdrawn |
 | Planning | Route resolution at order-line release; the Material Route screen; the route reference on the schedule and on WIP visibility |
 | Operations | The pulpit next-operation choice compares against the route stage; deviations carry the stage; hot-out and ABGM become conditional stages of the route |
 | Quality | The inspection path allocation feeds the route rather than standing alone; the worklist path chip names the route stage; the quality content of each stage is pinned at release |
