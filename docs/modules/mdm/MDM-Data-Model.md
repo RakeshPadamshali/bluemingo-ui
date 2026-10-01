@@ -83,7 +83,15 @@ Running today: `mes_grades` (185), `mes_qc_grade_chemistry` (works chemistry per
 - Precedence stays **TDC > Grade > report-only** (QA §5.9). No new table.
 
 ### 2.2 Product master with production-line mapping *(row 3; F12.2-01)* — PLATFORM, covered
-`mes_skus` (13,406) + `mes_sku_attributes` + `mes_product_category_input` + `mes_process_routings` / `mes_operation_routings` and four Masters screens. **Data loading only** — JSW product catalogue and routing per line. No design change.
+`mes_skus` (13,406) + `mes_sku_attributes` + `mes_product_category_input` and four Masters screens. **Data loading only** for the product catalogue — JSW SKUs, categories and their attributes. No design change there.
+
+### 2.2a Routing master and its attribute axes *(row 3; F12.2-01; composite material route)* — PLATFORM (owner PPC with Master Data)
+The routing is no longer data-loading only: the composite material route (cross-module design note, decision D-RTE-1) makes the PSN and the order attributes axes of it, so it becomes a maintained master with a screen (`master-routing.html`, change request MDM-R-18). The running structures are kept exactly as they are and only the axes are added.
+
+- `mes_process_routings` (`routing_id`, `routing_desc`, `process_id`) with **`mes_operation_routings`** (`routing_id` FK · `operation_id` FK · `operation_seq` · `status`) is the ordered operation list; `mes_operation_equipment_routing` (+ `mes_oer_rule` input → output attribute rules) and `mes_equipment_linkage` say which equipment may run and follow each operation. 131 operation-routing rows today.
+- `mes_routing_attr_value` (discrete slots `va_n`) and `mes_routing_attr_range` (range slots `ra_n_min` / `ra_n_max`) hold a routing's match conditions in the **same positional slots** the order line (`mes_order_attr_value` / `_range`) and the material (`mes_inventory_attr_value`) use; the slot an attribute occupies is `mes_global_attributes.column_reference`, and an attribute is an axis when **`use_for_routing`** is set. Matching is therefore a column comparison: a discrete slot must equal, a range slot must contain, an empty slot is a wildcard; the most specific active routing wins and is stamped on `mes_order_line_items.routing_id`.
+- `mes_global_attributes` gains routing-flagged rows for **PSN** (`tdc_id`, with `psn_no` for display), **product type**, **supply condition**, **rolling route**, **annealing type**, **market**, **order type** and **BOM level**; the existing axes (shape, execution, grade group, HTC code, HT condition, customer FG size, customer length) are unchanged. Adding an axis is dictionary configuration plus values on the routings — no code change (MDM-R-18).
+- Consumers: the composite route resolution at order-line release (Planning design, PPC-R-17 / PPC-R-18) reads this master for the process stages; the pulpit's runtime next-operation choice is checked against the equipment routing and linkage rows (Operations design). A routing referenced by an open order line or a pinned material route cannot be deactivated.
 
 ### 2.3 Product Form Conversion Rules *(row 4; F12.2-02; BRD 8.12, 10.9)* — PLATFORM (owner PPC / Operations)
 Which form-code transition happens, on which event, and what the product code becomes. Modelled on `Mst_Allocation_Matrix` (from-form → to-form, priority).

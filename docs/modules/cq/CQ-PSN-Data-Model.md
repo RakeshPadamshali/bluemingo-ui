@@ -293,6 +293,16 @@ All 53 E1 stories and 46 rows map; §4.6 LAB rows are the M&M Lab scope already 
 6. **OPEN-CQ-6** Review roles per stage (Shift In-charge, Head PDQC, Head TE & PDQC, Head TS / R&D) — confirm the pools per product type.
 7. **OPEN-CQ-7** Emergency / off-hours approval via shared mailbox (WFL-002) — designed as a distribution-list entry plus the super-user action; confirm.
 
+## 16. The PSN as a routing axis — composite material route (2026-10-01)
+
+Decision folded in from the composite-route design note: the PSN joins the attribute set the process routing is resolved from, so one composite route — process stages plus the quality work each stage owes — is resolved from the PSN and the order attributes at order-line release. Planning owns the route tables and their resolution; this section records only what the PSN side contributes.
+
+- **M-CQ-14 — The PSN is a routing attribute.** `mes_global_attributes` carries a routing row for the PSN (`attribute_code PSN`, `use_for_routing = true`, its own `column_reference` slot, matching criteria discrete); a routing's condition row then holds the PSN in `mes_routing_attr_value` exactly as it holds shape or grade group today. Nothing in the matching mechanism changes — most specific active routing wins, blank axes are wildcards. The axes added beside it (product type, supply condition, rolling route, annealing type, market, order type, BOM level) are PSN header columns already designed here.
+- **M-CQ-15 — The revision is pinned on the route.** The route records `tdc_id` and the `psn_revision_no` in force at release (tables in the Planning design); a later revision governs lines released afterwards, and material already released is re-resolved only on an audited Quality decision. This is the route-side companion of the order-line pin (CQ-R-02).
+- **M-CQ-16 — Requirement hosting is checkable.** Every row of `mes_qc_tdc_test_standard` with `is_required` must have, in the resolved route, a stage that draws its sample and a stage whose gate consumes the result; material-bound checks need the stage that performs them. Unhostable requirements refuse the order-line release and are shown in advance on the PSN validation view.
+- `mes_qc_psn_validation` gains: **`requirement_hosting varchar(15)`** (Y — HOSTED / UNPLACEABLE / UNKNOWN, refreshed when the view is opened) · **`unplaceable_tests varchar(500)`** (Y — the required tests no resolved route can host, with the routes that cannot host them).
+- Request: **CQ-R-05** (`Requests-CQ.md`) carries the PSN axis to the platform routing attribute set; the route tables themselves are requested by Planning (PPC-R-17, PPC-R-18).
+
 ---
 
 ## Annex A — Segment attribute seeds (data; JSW owners complete them)

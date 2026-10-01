@@ -1132,6 +1132,7 @@ erDiagram
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
 | **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `storage_location`, `location_move`, `hot_out_clearance` (new); `inspection` + `raise_condition`, `stage_qc_map` + `raise_condition`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
+| **Composite material route (§35)** | no new Quality tables — `inspection` + `route_stage_id` / `content_level`, `sample` + `route_stage_id` / `gate_route_stage_id`, view `v_qc_route_quality`; the route and its stages are platform objects of the Planning design |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
 
@@ -2291,3 +2292,33 @@ Widens §30.1: the Quality decision now covers every hot-out type, not only over
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
 
 The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.
+
+---
+
+## 35. Submodule — composite material route, Quality side (2026-10-01)
+
+The composite material route joins the process route and the inspection route into one resolved, pinned object per order line; the route and its stages are platform objects designed in the Planning design (`mes_material_route`, `mes_material_route_stage`). This section is the Quality side: which content each stage carries, where the resolution level is recorded, and how inspections and samples point back at the stage they belong to.
+
+### 35.1 Content resolution and where the level is recorded (SOW: design item, PSN-driven routing)
+The quality content of a stage is resolved at order-line release and pinned into `qc_content_json` on the platform stage row (`mes_material_route_stage`, Planning design). It holds, per stage: the material-bound checks (kind, type, characteristic, limit source and snapshot, mandatory flag, capture source, default mode, raise condition), the sampling obligations with their rule and draw positions, the clearance gates the stage must satisfy with the draw that feeds each, the hold behaviour on failure, and the **level** the content came from — PSN / MAP / OP_FLOOR / NONE. The ladder, the late-resolution cases and the floor are the module's common rule (FDD CL-12); the floor itself is a catch-all `mes_qc_stage_qc_map` row scoped to the operation with a blank product scope, so the master that decides what to inspect stays the only source.
+
+### 35.2 `mes_qc_inspection` — additions (composite route)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `route_stage_id` | bigint | | Y | The route stage this item belongs to (platform `mes_material_route_stage`); empty for material with no route |
+| `content_level` | varchar(20) | | Y | PSN / MAP / OP_FLOOR / NONE — the ladder level that produced the item (CL-12) |
+
+### 35.3 `mes_qc_sample` — additions (draw and gate)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `route_stage_id` | bigint | | Y | The stage that drew the sample |
+| `gate_route_stage_id` | bigint | | Y | The stage whose clearance gate consumes the result — often later than the draw |
+
+### 35.4 Unchanged masters
+`mes_qc_stage_qc_map` needs nothing beyond `raise_condition` from the SMS review: it keeps saying what an operation owes, and the route pins the answer per material. `mes_qc_inspection_path` and `mes_qc_path_rule` keep their shape; the rule gains the product-type and order-type axes so the matrix reads the same attribute set as the process routing, and the allocated path feeds the merge instead of standing alone. `mes_qc_sampling_rule` keeps `path_id`.
+
+### 35.5 Reporting
+- **View `v_qc_route_quality`** — one row per route stage: order line, batch, stage sequence and operation, content owed by kind, content given with its result, the gates with their state and the draw that feeds each, the resolution level, and the waiting reason where a gate stands on a laboratory result. Drives the quality columns of the Material Route screen and the review list of stages that resolved at the floor or at nothing.
+
+### 35.6 Dependencies
+The route instance, its stages and the routing axes are platform work raised in the Planning design (PPC-R-17, PPC-R-18); the Quality module resolves and pins the content of each stage and reads the stage status back. No Quality screen is added: the worklist chip names the stage (BR-WKL-16, BR-WKL-25), the path master feeds the merge (BR-MIPT-04), and the sampling draw is paired with its gate (BR-SMP-14).

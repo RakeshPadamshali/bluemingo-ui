@@ -29,3 +29,6 @@
 **Ask:** the Allocator's TDC mirror (`TDC_Input` / `Customer_TDC` / `TDC_Order`) and the MES order book treat `status` INACTIVE / OBSOLETE / BLOCKED / STOPPED as not attachable to new orders (material in process continues); the sync carries `status`, `psn_no`, `revision_no`, `is_current`, `psn_kind`.
 **Why:** PSN-018 / F1.5-01 — an inactive PSN must not be planned against until QA reactivates it.
 **Affects:** MES → Allocator TDC sync; order acceptance.
+
+### CQ-R-05 — The PSN as an axis of the routing attribute set
+`mes_global_attributes` gains a routing attribute for the PSN (`use_for_routing`, its own `column_reference` slot, discrete matching), so a process routing may carry the PSN in `mes_routing_attr_value` beside shape, execution, grade group, heat-treatment condition and the customer size and length axes, and the composite route of an order line resolves from the PSN together with the order attributes. The route tables, their resolution at release and the route pointers are requested by Planning as PPC-R-17 and PPC-R-18; this request covers only the attribute axis and the PSN revision being pinned on the resolved route.

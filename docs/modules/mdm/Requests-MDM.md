@@ -116,6 +116,12 @@
 
 ## Allocator items
 
+### MDM-R-18 — Routing attribute axes and the routing maintenance screen
+**Date:** 2026-10-01 · **From:** §2.2a · **Status:** DRAFT
+**Ask:** register PSN, product type, supply condition, rolling route, annealing type, market, order type and BOM level in `mes_global_attributes` as routing attributes (`use_for_routing`, each with its `column_reference` slot) so they can be filled on `mes_routing_attr_value` / `mes_routing_attr_range`; add the maintenance screen for `mes_process_routings` / `mes_operation_routings` with its equipment routing, linkage and axes, a resolution test and a where-used guard on deactivation. Resolution semantics are unchanged — most specific active routing wins, blank axes are wildcards.
+**Why:** the composite material route (cross-module design note, D-RTE-1) resolves the process stages from the PSN and the order attributes; today the routing is keyed by size and grade and has no screen.
+**Affects:** route resolution at order-line release (Planning design, PPC-R-17 and PPC-R-18); the pulpit next-operation check (Operations design).
+
 ### ALC-R-01 — Migrate finished-length vocabulary
 **Date:** 2026-09-12 · **From:** §3.1 · **Status:** DRAFT
 **Ask:** export the 7,835 ranged rows of `Mst_Length_Master` with unit normalisation (values < 1,000 are metres → mm) for loading into QA `mes_qc_length_master` / `mes_length_master.finished_length_mm`; confirm with JSW whether this set is authoritative (open point 1).

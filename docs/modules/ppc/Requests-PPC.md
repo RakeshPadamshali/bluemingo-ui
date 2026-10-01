@@ -93,6 +93,12 @@
 
 ## Allocator items
 
+### PPC-R-17 — Composite material route
+`mes_material_route` and `mes_material_route_stage` as designed: resolved at order-line release from the routing attribute set (PSN among its axes) and the inspection-path matrix, merged on the operation code, with the quality content of each stage pinned and the conditional stages placed. The resolution stores the attribute values that decided it. A PSN-required test without both a draw stage and a gate stage blocks the release.
+
+### PPC-R-18 — Route pointers and the routing axes
+`mes_inventory` gains `route_id` and `route_stage_id`, and the next-operation pointer is set from the route stage; `mes_schedule_material_childs` gains `route_stage_id`; `mes_routing_attr_value` / `_range` gain the PSN, product type, supply condition, rolling route, annealing type, market, order type and BOM-level axes, defined in `mes_global_attributes` as routing attributes.
+
 ### ALC-R-05 — Read swap effects
 **Date:** 2026-09-15 · **From:** §3.3 · **Status:** DRAFT
 **Ask:** the Allocation application treats `mes_batch_order_allocation` rows with `source = SWAP` as the allocation of record for swapped batches (its own release state must not re-point them on the next run).

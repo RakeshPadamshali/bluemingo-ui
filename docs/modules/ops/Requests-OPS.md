@@ -99,6 +99,11 @@
 ### OPS-R-15 — Caster pulpit stations and the Quality feedback note
 The caster crew works on the MES pulpit screen: `mes_operations.pulpit_code` gains the caster stations (CASTER_CCM1, CASTER_CCM2) so the casting operations resolve to a pulpit of their own. `mes_pulpit_note.note_type` gains QA_FEEDBACK and the table gains `blocks_confirmation`; a Quality feedback note is displayed as a pop-up that must be acknowledged but never blocks a confirmation. `mes_pulpit_note_ack` gains `ack_remark` (what was corrected), and the acknowledgement — user, time, remark — is readable by the Quality module, which shows it against the online inspection that raised the note. Raised with the Quality module's own request for the same loop (SMS QA SOW rows 15 and 16).
 
+### OPS-R-16 — Route stage on execution and on the deviation
+`mes_route_deviation` gains `route_stage_id` FK `mes_material_route_stage` (Y) so a runtime diversion is recorded against the composite-route stage the material left. The next-operation pointer (`mes_inventory.next_operation`) is set from the next planned route stage rather than from the schedule child alone, and the pulpit queue reads the stage the material stands at (`mes_inventory.route_stage_id`). The route tables, their resolution at order-line release and the inventory pointers themselves are raised in the Planning design as PPC-R-17 and PPC-R-18; this request covers only what Operations writes and reads at execution time.
+
+**Affects:** pulpit queue and route-change dialog, hot-out and ABGM stage status, the schedule view PPC reads.
+
 ## Quality module items (designed in the QA Data-Model §30, not requests)
 - §30.1 hot-out decision worklist item writing `mes_hot_out_event.qa_decision`.
 - §30.2 bar segregation entry screen over `mes_segregation_entry` / `_line` (`entered_by_role = QUALITY`).
