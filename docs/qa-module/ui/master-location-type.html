@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bluemingo MES v2 — Standard Limit</title>
+<title>Bluemingo MES v2 — Location Type</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -221,12 +221,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
         <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
         <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
-        <a href="master-standard-limit.html" class="active"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
+        <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
         <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
         <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
         <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
         <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
-        <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
+        <a href="master-location-type.html" class="active"><i class="fa-solid fa-shapes"></i> Location Type</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
@@ -243,12 +243,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
   </nav>
   <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="masters.html"><i class="fa-solid fa-arrow-left"></i> Masters</a> <span>/</span> <b>Standard Limit</b></div>
+    <div class="crumb"><a href="masters.html"><i class="fa-solid fa-arrow-left"></i> Masters</a> <span>/</span> <b>Location Type</b></div>
     <div class="page-head">
-      <div><h1><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</h1><div class="sub">Published spec values per standard × grade × characteristic / element (drives Fill-from-standard). Chemistry rows reference the Element master (element_id); others the characteristic dictionary (attribute_id) — exactly one applies.</div></div>
+      <div><h1><i class="fa-solid fa-shapes"></i> Location Type</h1><div class="sub">The kinds of place material can be held in — yard, bay, stack, rack, bin, pit and whatever else a plant keeps; they are data, so a plant adds its own without a code change. Storage Location points at this master for its type (mes_qc_location_type) (SOW: SMSQA13-100).</div></div>
       <div class="ph-actions">
         <select class="jump" onchange="jump(this)"><option value="">Jump to master…</option><option value="master-inspection-type.html">Inspection Type</option><option value="master-test-type.html">Test Type</option><option value="master-chemistry-type.html">Chemistry Type</option><option value="master-defect-type.html">Defect Type</option><option value="master-defect-reason.html">Defect Reason</option><option value="master-sample-status.html">Sample Status</option><option value="master-test.html">Quality Test</option><option value="master-defect.html">Defect Catalogue</option><option value="master-characteristic.html">Characteristic</option><option value="master-element.html">Element (Chemistry)</option><option value="master-stage-qc-map.html">Stage-QC Map</option><option value="master-inspection-path.html">Inspection Path</option><option value="master-sample-type.html">Sample Type</option><option value="master-sampling-rule.html">Sampling Rule</option><option value="master-size-basis.html">Size Basis</option><option value="master-prep-checklist.html">Prep Checklist</option><option value="master-material-status.html">Material Status</option><option value="master-ud-type.html">UD Type</option><option value="master-ud-reason.html">UD Reason</option><option value="master-ud-action.html">UD Action</option><option value="master-salvage-type.html">Salvage Type</option><option value="master-ncr-category.html">NCR Category</option><option value="master-standard.html">Standard</option><option value="master-standard-limit.html">Standard Limit</option><option value="master-colour-code.html">Colour Code</option><option value="master-barcode-type.html">Barcode Type</option><option value="master-end-discard.html">End Discard</option><option value="master-storage-location.html">Storage Location</option><option value="master-location-type.html">Location Type</option><option value="master-length.html">Length</option><option value="master-dim-tolerance.html">Dim Tolerance</option><option value="master-grade-chemistry.html">Grade Chemistry</option><option value="master-instrument-type.html">Instrument Type</option><option value="master-agency.html">Agency</option><option value="master-supplier.html">Supplier</option><option value="master-notification-rule.html">Notification Rule</option><option value="master-formula.html">Formula</option><option value="master-document-type.html">Document Type</option><option value="master-psn-unit-matrix.html">PSN Unit Matrix</option><option value="master-certificate-template.html">Certificate Template</option></select>
-        <button class="btn btn-primary btn-sm" onclick="openAdd()"><i class="fa-solid fa-plus"></i> Add Limit</button>
+        <button class="btn btn-primary btn-sm" onclick="openAdd()"><i class="fa-solid fa-plus"></i> Add Location Type</button>
       </div>
     </div>
     <div class="filterbar"><span class="lbl">Filter</span><div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="q" placeholder="Search..." oninput="render()"/></div><span class="meta" id="count"></span></div>
@@ -261,7 +261,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeM()">Cancel</button><button class="btn btn-primary" onclick="save()"><i class="fa-solid fa-check"></i> Save</button></div>
 </div></div>
 <script>
-const C = {"singular": "Limit", "cols": [{"k": "standard", "label": "Standard", "cls": "mono"}, {"k": "grade", "label": "Grade"}, {"k": "attribute", "label": "Characteristic / Element"}, {"k": "min", "label": "Min", "cls": "num"}, {"k": "max", "label": "Max", "cls": "num"}, {"k": "uom", "label": "UoM"}, {"k": "active", "label": "Active", "bool": true}], "rows": [{"standard": "ASTM A276", "grade": "316L", "attribute": "Cr", "min": 16.0, "max": 18.0, "uom": "%", "active": true}, {"standard": "ASTM A276", "grade": "316L", "attribute": "Ni", "min": 10.0, "max": 14.0, "uom": "%", "active": true}, {"standard": "ASTM A276", "grade": "316L", "attribute": "C", "min": 0, "max": 0.03, "uom": "%", "active": true}, {"standard": "ASTM A276", "grade": "304L", "attribute": "Cr", "min": 18.0, "max": 20.0, "uom": "%", "active": true}, {"standard": "ASTM A564", "grade": "17-4PH", "attribute": "Cr", "min": 15.0, "max": 17.5, "uom": "%", "active": true}, {"standard": "ASTM A564", "grade": "17-4PH", "attribute": "YS", "min": 795, "max": 0, "uom": "N/mm\u00b2", "active": true}], "form": [{"k": "standard", "label": "Standard"}, {"k": "grade", "label": "Grade"}, {"k": "attribute", "label": "Characteristic / Element", "type": "select", "options": ["C", "Mn", "Si", "P", "S", "Cr", "Ni", "Mo", "Cu", "N", "Nb", "YS", "UTS", "Elong", "RA", "Hardness", "Impact", "Diameter", "Length"]}, {"k": "min", "label": "Min", "type": "number"}, {"k": "max", "label": "Max", "type": "number"}, {"k": "uom", "label": "UoM"}, {"k": "active", "label": "Active", "type": "checkbox"}]};
+const C = {"singular": "Location Type", "cols": [{"k": "code", "label": "Code", "cls": "mono", "tip": "MLTY-F01 · Code · SOW: SMSQA13-100"}, {"k": "name", "label": "Name", "tip": "MLTY-F02 · Name — what the plant calls this kind of place · SOW: SMSQA13-100"}, {"k": "description", "label": "Description", "tip": "MLTY-F03 · Description"}, {"k": "display_seq", "label": "Display sequence", "cls": "num", "tip": "MLTY-F04 · Display sequence — order the kinds are listed in on the Storage Location master and on Location Tracking"}, {"k": "active", "label": "Active", "bool": true, "tip": "MLTY-F05 · Active"}], "rows": [{"code": "YARD", "name": "Yard", "description": "Open storage area, usually outdoors", "display_seq": 10, "active": true}, {"code": "BAY", "name": "Bay", "description": "Covered bay inside a shop", "display_seq": 20, "active": true}, {"code": "STACK", "name": "Stack", "description": "Stack of bundles within a yard or bay", "display_seq": 30, "active": true}, {"code": "RACK", "name": "Rack", "description": "Rack with addressable positions", "display_seq": 40, "active": true}, {"code": "BIN", "name": "Bin", "description": "Bin or pallet for small quantities", "display_seq": 50, "active": true}, {"code": "PIT", "name": "Pit", "description": "Cooling or soaking pit", "display_seq": 60, "active": true}], "form": [{"k": "code", "label": "Code"}, {"k": "name", "label": "Name"}, {"k": "description", "label": "Description", "full": true}, {"k": "display_seq", "label": "Display sequence", "type": "number"}, {"k": "active", "label": "Active", "type": "checkbox"}]};
 let EDIT=null;
 function colorFor(v){v=(''+v).toUpperCase();
   if(['OK','ACTIVE','YES','ACCEPT','PASS','CLEARED','APPROV','RELEASE','IN_HOUSE','MILL'].some(t=>v.includes(t)))return 'b-done';
@@ -274,7 +274,8 @@ function cv(c,r){let v=r[c.k];
   if(c.badge)return (v===''||v==null)?'—':'<span class="badge '+colorFor(v)+'">'+v+'</span>';
   if(v===''||v==null||v===undefined)return '—';
   return v;}
-function buildHead(){document.getElementById('thead').innerHTML='<tr>'+C.cols.map(c=>'<th class="'+(c.cls==='num'?'num':'')+'">'+c.label+'</th>').join('')+'<th class="col-actions"></th></tr>';}
+function buildHead(){document.getElementById('thead').innerHTML='<tr>'+C.cols.map(c=>'<th class="'+(c.cls==='num'?'num':'')+'" title="'+(c.tip||'')+'">'+c.label+'</th>').join('')+'<th class="col-actions"></th></tr>';}
+function alertLite(t){var h=document.createElement('div');h.textContent=t;h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;background:#333;box-shadow:0 4px 12px rgba(0,0,0,.25)';document.body.appendChild(h);setTimeout(function(){h.remove();},2600);}
 function render(){
   const q=(document.getElementById('q').value||'').toLowerCase();
   const rows=C.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(' ').toLowerCase().includes(q));

@@ -48,7 +48,7 @@
 
 ### OPS-R-07 — Hot-out events, pieces and the digital shift log
 **Date:** 2026-09-15 · **From:** §8 · **Status:** DRAFT
-**Ask:** new `mes_hot_out_event`, `mes_hot_out_piece`, `mes_shift_log`; direct hot-out from charging / furnace (charge line HOT_OUT, inventory back to AVAILABLE, re-weigh on re-charge, single loss booking); indirect hot-out split 2–6 through the batch-derivation SPLIT rule with re-measure, classification and re-sequencing; overstay events waiting for the Quality decision (`qa_decision` written by the Quality module); shift-log auto-entries and the hand-over acknowledgement alert.
+**Ask:** new `mes_hot_out_event`, `mes_hot_out_piece`, `mes_shift_log`; direct hot-out from charging / furnace (charge line HOT_OUT, inventory back to AVAILABLE, re-weigh on re-charge, single loss booking); indirect hot-out split 2–6 through the batch-derivation SPLIT rule with re-measure, classification and re-sequencing; the Quality decision written back by the Quality module — `qa_decision` (RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD), `qa_next_operation_id` naming the destination for REWORK and DIVERT, and `qa_keep_code` telling the receiving operation to skip the form conversion — with an overstay piece held until it is given; shift-log auto-entries and the hand-over acknowledgement alert.
 **Why:** HO-001…005, HOT-001, 9.9 gap note.
 **Affects:** charging, salvage / scrap confirmation, Manual Sequencing, inventory holds.
 
@@ -105,7 +105,7 @@ The caster crew works on the MES pulpit screen: `mes_operations.pulpit_code` gai
 **Affects:** pulpit queue and route-change dialog, hot-out and ABGM stage status, the schedule view PPC reads.
 
 ## Quality module items (designed in the QA Data-Model §30, not requests)
-- §30.1 hot-out decision worklist item writing `mes_hot_out_event.qa_decision`.
+- §30.1 hot-out decision worklist item writing `mes_hot_out_event.qa_decision` (RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD) with `qa_next_operation_id` and `qa_keep_code`.
 - §30.2 bar segregation entry screen over `mes_segregation_entry` / `_line` (`entered_by_role = QUALITY`).
 - §30.3 auto-clearance rule trigger on the acknowledged ERP confirmation (pickling).
 - §30.4 GMM hardness tests against the ball lot; downstream sampling frequency from the PSN.

@@ -82,6 +82,7 @@
 | `mes_qc_ud_type` | — | Usage-decision categories |
 | `mes_qc_ud_reason` | — | Usage-decision reasons |
 | `mes_qc_ud_action` | `material_status_id` (resulting status) | Usage-decision actions |
+| `mes_qc_location_type` | — (e.g. YARD / BAY / STACK / RACK / BIN / PIT — data, not enum) | Kind of storage location (referenced by the storage-location master 34.3) |
 | `mes_qc_size_basis` | — (e.g. BY_LENGTH / BY_WEIGHT / BY_PIECES / FULL_SECTION — data, not enum) | Sample **size basis** (referenced by the sampling rule §7.5.3) |
 
 *All lookup masters also carry an optional `description varchar(255)` + the standard audit tail.*
@@ -1131,7 +1132,7 @@ erDiagram
 | **JSW Process Control touchpoints (§31)** | `notification_rule_recipient` (new); `notification_rule` + severity / condition / escalation / shift-aware, `ncr` + `process_deviation_id`; worklist item kinds PROCESS_DEVIATION and SUSPECT chip; screen policy PSN_REJECTION_BLOCK; reads the platform views `v_pc_parameter_trace` and writes `mes_process_deviation` dispositions and `mes_batches` suspect verification (source: `docs/modules/pc/PC-Data-Model.md`) |
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
-| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `storage_location`, `location_move`, `hot_out_clearance` (new); `inspection` + `raise_condition`, `stage_qc_map` + `raise_condition`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
+| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance` (new); `inspection` + `raise_condition`, `stage_qc_map` + `raise_condition`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
 | **Composite material route (§35)** | no new Quality tables — `inspection` + `route_stage_id` / `content_level`, `sample` + `route_stage_id` / `gate_route_stage_id`, view `v_qc_route_quality`; the route and its stages are platform objects of the Planning design |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
@@ -1235,7 +1236,7 @@ The development build has evolved past the original design in places. §25 was w
 
 ## 26. Submodule — JSW Mills QA additions (2026-09-03)
 
-Designed from the JSW **Mills QA** SOW gap analysis (MQA 1–29; scope = rows owned by QA, QA + Platform, QA + L2 (machine)). Product-agnostic per D0 — "path", "auto line", "agency", "machine log book", "barcode type" are configuration/master data, not hard-coding. Each subsection names the MQA rows it closes. PPC-owned and YMS-owned points are listed in §26.10, not designed here.
+Designed from the JSW **Mills QA** SOW gap analysis (MQA 1–29; scope = rows owned by QA, QA + Platform, QA + L2 (machine)). Product-agnostic per D0 — "path", "auto line", "agency", "machine log book", "barcode type" are configuration/master data, not hard-coding. Each subsection names the MQA rows it closes. Points owned by PPC or by an external location system are listed in §26.10, not designed here.
 
 ### 26.1 Inspection path allocation *(MQA 7, 8; master `master-inspection-path.html`, worklist extension)*
 The SOW's inspection-path matrix: named inspection routes (STD, Double Rolling, Annealing, Bright-bar, Slow-cooled, Auto-line, Subcon-WIP — data rows), resolved automatically per lot from order/spec axes, modifiable per batch by a specific role with a reason.
@@ -1287,7 +1288,7 @@ Transports and message formats are agreed with the machine vendors — open poin
 
 ### 26.10 Scope & alignment notes
 1. **PPC-owned (coordination, not designed here):** campaign/day-wise production views (MQA 1/2); **batch split & merge** with weight updation, proportional end-cut/salvage weights and child numbering (MQA 25 — the UD screen hosts the action, the inventory mutation is production's); production confirmations and product-code conversion (MQA 28/29); the batch-characteristic derivation master (undefined — open point); plan production dates on the bright-bar monitor (MQA 27).
-2. **YMS-owned:** yard/location tracking, location modification and receiving acknowledgement (MQA 6). §26.2's handover record is the auto-line quality record, not location tracking.
+2. **Owned by an external location system (not designed here):** yard/location tracking, location modification and receiving acknowledgement (MQA 6). §26.2's handover record is the auto-line quality record, not location tracking.
 3. **Numbering:** this section is **§26 in this design copy and lands as §31 in the development copy** (its §25–§30 are used). No migrations are authored here; schema changes follow the development repo's approval rule.
 4. **Dev alignment:** implementation lands on the dev structures (config framework, heat-first chemistry, attribute-first capture) — the §25.10/§28.10 notes apply unchanged to this submodule.
 
@@ -2199,11 +2200,11 @@ The acknowledgement blocks nothing (decision of 21-Sep-2026); escalation is a no
 | `storage_location_id` | bigint | PK | N | |
 | `code` | varchar(50) | UQ | N | e.g. MILL-Y2-B03 |
 | `name` | varchar(255) | | N | |
-| `area` | varchar(20) | | N | SMS_YARD / MILL_YARD / ABGM_BAY / PIT / OTHER |
-| `location_type` | varchar(20) | | N | YARD / BAY / STACK / PIT |
-| `parent_location_id` | bigint | FK → `mes_qc_storage_location` | Y | Location of a higher type in the same area |
+| `location_type_id` | bigint | FK → `mes_qc_location_type` | N | Yard, bay, stack, rack, bin, pit — master rows, so a plant adds its own kinds |
+| `parent_location_id` | bigint | FK → `mes_qc_storage_location` | Y | The location this one sits inside; a yard is simply a location with no parent, so no separate area column is needed |
 | `barcode` | varchar(100) | UQ | Y | Printed on the location board |
-| `yms_code` | varchar(50) | | Y | Code in the yard management system (future interface) |
+| `external_code` | varchar(50) | | Y | The location's code in an external system; which system is named in the external code map of the Master Data design |
+| `source_of_record` | varchar(20) | | N | MES / INTERFACE — INTERFACE means an external system owns this location's content (34.4) |
 
 ### 34.4 `mes_qc_location_move` — batch location moves (SOW 65, 90, 100, 101, 104)
 | Field | Type | Key | Null | Description |
@@ -2213,8 +2214,9 @@ The acknowledgement blocks nothing (decision of 21-Sep-2026); escalation is a no
 | `heat_number` | varchar(100) | | N | |
 | `from_location_id` | bigint | FK → `mes_qc_storage_location` | Y | The previous current location |
 | `to_location_id` | bigint | FK → `mes_qc_storage_location` | N | |
-| `event` | varchar(20) | | N | HANDOVER / RECEIPT / MODIFY / FINAL_INSPECTION / ABGM / YMS |
-| `source` | varchar(10) | | N | SCAN / MANUAL / YMS |
+| `event` | varchar(20) | | N | HANDOVER / RECEIPT / MODIFY / SYSTEM |
+| `operation_id` | bigint | FK → `mes_operations` | Y | The stage that caused a SYSTEM move — a confirmation, an inspection or a conversion step records where it left the material |
+| `source` | varchar(10) | | N | SCAN / MANUAL / INTERFACE — the external system behind INTERFACE is identified by the external code map, never by an enum value |
 | `device_id` | bigint | | Y | Scanner (Operations design device register) |
 | `handed_to` | varchar(100) | | Y | Department or person receiving |
 | `reason` | varchar(255) | | Y | Required for MODIFY |
@@ -2222,7 +2224,7 @@ The acknowledgement blocks nothing (decision of 21-Sep-2026); escalation is a no
 | `moved_by` | bigint | | N | |
 | `moved_at` | timestamptz | | N | |
 
-The current location stays on the platform inventory row (`mes_inventory.location_code`, Planning and Operations designs), written through change request QA-SMS-R-02. Location pre-assignment (SOW 102) and receiving acknowledgement (SOW 103) are out of scope as agreed with JSW.
+The current location stays on the platform inventory row (`mes_inventory.location_code`, Planning and Operations designs), written through change request QA-SMS-R-02. Location pre-assignment (SOW 102) and receiving acknowledgement (SOW 103) are out of scope as agreed with JSW. Nothing in this model changes when an external location system is contracted: its updates arrive as moves with source INTERFACE against locations whose `source_of_record` is INTERFACE, and any code or payload transformation belongs to the integration layer.
 
 ### 34.5 `mes_qc_hot_out_clearance` — hot-out clearance item (SOW 91–97)
 | Field | Type | Key | Null | Description |
@@ -2244,15 +2246,15 @@ The current location stays on the platform inventory row (`mes_inventory.locatio
 | `sticker_applied` | boolean | | N | |
 | `marking_done` | boolean | | N | |
 | `marking_text` | varchar(100) | | Y | |
-| `decision` | varchar(20) | | Y | RE_ROLL_OK / ABGM / SCRAP / DIVERT / HOLD |
+| `decision` | varchar(20) | | Y | RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD — REWORK and DIVERT carry the next operation, so a grinding or conditioning unit is a destination, not a verb |
 | `next_operation_id` | bigint | FK → `mes_operations` | Y | |
 | `decision_reason` | varchar(255) | | Y | Required for SCRAP, DIVERT and HOLD |
-| `keep_code` | boolean | | N | True for ABGM decisions — the grinding confirmation skips the form conversion |
+| `keep_code` | boolean | | N | Set when the material returns to a conversion operation it has already passed; that confirmation then records the work without a form conversion |
 | `status` | varchar(20) | | N | RECEIVED / PATH_ASSIGNED / SAMPLED / INSPECTED / DECIDED / CLOSED / HOLD |
 | `decided_by` | bigint | | Y | |
 | `decided_at` | timestamptz | | Y | |
 
-Widens §30.1: the Quality decision now covers every hot-out type, not only overstay; the write-back vocabulary becomes RE_ROLL_OK / ABGM / SCRAP / DIVERT / HOLD with the next operation and the keep-code flag (QA-SMS-R-03).
+Widens §30.1: the Quality decision now covers every hot-out type, not only overstay; the write-back vocabulary becomes RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD with the next operation and the keep-code flag (QA-SMS-R-03).
 
 ### 34.6 `mes_qc_inspection` — additions (SMS review v3) (SOW 68)
 | Field | Type | Key | Null | Description |
@@ -2285,8 +2287,8 @@ Widens §30.1: the Quality decision now covers every hot-out type, not only over
 | Request | Subject | SOW |
 |---|---|---|
 | QA-SMS-R-01 | Caster pulpit stations (CASTER_CCM1, CASTER_CCM2) so the caster crew works on the MES pulpit screen; pulpit note type QA_FEEDBACK with pop-up acknowledgement that never blocks a confirmation; the acknowledgement (user, time, remark) readable by the Quality module. Designed in the Operations design and raised there as OPS-R-15 | 15, 16 |
-| QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from YMS | 65, 90, 100–104 |
-| QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; decision, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, ABGM (no form conversion when keep-code) and scrap | 91–97 |
+| QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from an external location system through the integration layer | 65, 90, 100–104 |
+| QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; decision, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, by the conditioning operation on the decision (no form conversion when keep-code) and by scrap | 91–97 |
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
 | QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
