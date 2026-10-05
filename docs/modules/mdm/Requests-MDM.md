@@ -84,7 +84,7 @@
 
 ### MDM-R-13 — Batch derivation rules
 **Date:** 2026-09-12 · **From:** §4.11 · **Status:** DRAFT
-**Ask:** new `mes_batch_derivation_rule`, `mes_batch_derivation_characteristic` (FK to `mes_batch_number_generation_config`) + screen + uploads.
+**Ask:** new `mes_batch_derivation_rule`, `mes_batch_derivation_characteristic` (FK to `mes_batch_number_generation_config`) + screen + uploads. The live `mes_batch_number_generation_config` (per-operation numbering) and `mes_batch_relations` (parent↔child, SPLIT / MERGE / TRANSFORM) stay as they are and keep forming numbers and lineage; the two new tables add the event, the parent→child rule and the characteristic map, and the screen replaces JSON editing.
 **Why:** F12.15-01, BRD 8.11/8.12/10.9 — batch numbering on split/merge/conversion and the characteristic derivation for the later SAP batch-characteristic update.
 **Affects:** batch generation, split/merge (Operations pass); QA UD hand-off.
 

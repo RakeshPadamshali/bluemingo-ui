@@ -94,7 +94,7 @@
 | `test_code` | varchar(50) | UQ | N | |
 | `test_name` | varchar(255) | | N | e.g. Tensile, Hardness, Impact, Macro, Spectro |
 | `test_type_id` | bigint | FK→`mes_qc_test_type` | N | |
-| `sample_required` | boolean | | N | Almost always true |
+| `sample_required` | boolean | | N | True for a laboratory test on a drawn sample; false means the test is taken on the material itself and is recorded against the batch (7.2.1) |
 | `validate_against_tdc` | boolean | | N | |
 | `description` | varchar(255) | | Y | |
 | `method_standard` | varchar(100) | | Y | Default test-method standard (e.g. ASTM A370 / E18); overridable per-TDC via §11.6 |
@@ -326,7 +326,11 @@ The shared registry `mes_global_attributes` gains only **`use_for_qa boolean NOT
 | `test_record_id` | bigint | PK | N | |
 | `test_record_number` | varchar(100) | UQ | N | Generated test id |
 | `test_id` | bigint | FK→`mes_qc_test` | N | Which test |
-| `sample_id` | bigint | FK→`mes_qc_sample` | N | **Primary anchor** |
+| `test_origin` | varchar(10) | | N | SAMPLE (default) / MATERIAL — whether the test was taken on a drawn sample or on the material itself (`mes_qc_test.sample_required` false); see 7.2.1 |
+| `sample_id` | bigint | FK→`mes_qc_sample` | Y | **Primary anchor for a sample test**; empty on a material test |
+| `batch_id` | bigint | FK→`mes_batches` | Y | The material the test was taken on; empty on a sample test |
+| `heat_number` | varchar(100) | | Y | Carried with the material test so the register and the certificate read the same as for a sample |
+| `inspection_id` | bigint | FK→`mes_qc_inspection` | Y | The worklist item the material test was recorded on |
 | `tdc_id` | bigint | FK→`mes_tdc_input` | Y | Governing spec |
 | `test_date` | timestamptz | | Y | |
 | `tested_by` | bigint | | Y | Lab user |
@@ -338,6 +342,11 @@ The shared registry `mes_global_attributes` gains only **`use_for_qa boolean NOT
 | `specimen_orientation` | varchar(20) | | Y | LONGITUDINAL / TRANSVERSE (printed on MTC) |
 | `remarks` | varchar(500) | | Y | |
 | | | | | **+ audit tail** |
+
+Check: exactly one origin is present — `sample_id` with origin SAMPLE, `batch_id` with origin MATERIAL.
+
+#### 7.2.1 Tests taken on the material (SOW 68)
+A test whose master has `sample_required` false is **not** a laboratory errand: the method is applied to the material where it stands — a spark reading on a billet, a portable hardness impression on a bar, a coating-thickness reading on a finished piece. The record is the same `mes_qc_test_record` with its results, limits and register line, but it is anchored on the batch instead of a sample, no `mes_qc_sample` row and no sample issue are created, and the route stage carries the obligation as a material-bound check rather than a draw paired with a later gate (35.1). The reading is taken on the worklist item the stage raised, so the inspector never leaves the screen; the laboratory sees such records in its register and may verify or amend them under the same role rules as any other record.
 
 ### 7.3 `mes_qc_test_result` — test readings (normalized, non-chemistry)
 | Field | Type | Key | Null | Description |
@@ -1132,7 +1141,7 @@ erDiagram
 | **JSW Process Control touchpoints (§31)** | `notification_rule_recipient` (new); `notification_rule` + severity / condition / escalation / shift-aware, `ncr` + `process_deviation_id`; worklist item kinds PROCESS_DEVIATION and SUSPECT chip; screen policy PSN_REJECTION_BLOCK; reads the platform views `v_pc_parameter_trace` and writes `mes_process_deviation` dispositions and `mes_batches` suspect verification (source: `docs/modules/pc/PC-Data-Model.md`) |
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
-| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance` (new); `inspection` + `raise_condition`, `stage_qc_map` + `raise_condition`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
+| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance` (new); `raise_condition` (master); `inspection` + `raise_condition_id`, `stage_qc_map` + `raise_condition_id`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
 | **Composite material route (§35)** | no new Quality tables — `inspection` + `route_stage_id` / `content_level`, `sample` + `route_stage_id` / `gate_route_stage_id`, view `v_qc_route_quality`; the route and its stages are platform objects of the Planning design |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
@@ -2148,7 +2157,7 @@ QA_COMPLAINT_RECEIVED · QA_COMPLAINT_DISCREPANCY · QA_COMPLAINT_REGISTERED · 
 
 ## 34. Submodule — JSW SMS QA review v3 — gap closure (2026-09-21)
 
-Designed from the SMS QA SOW-versus-design review v3 (43 rows not OK, decisions of 21-Sep-2026). The report rows (SOW 33, 40, 107–116) are unchanged by decision. Every subsection names the SOW rows it closes; the platform touchpoints are raised as change requests in §34.11 — nothing in the production-confirmation or Allocation applications is changed directly. Screens: new `heat-plan.html`, `hot-out-clearance.html`, `location-tracking.html`, `master-storage-location.html`; extended `qc-worklist.html`, `clearance.html`, `usage-decision.html`, `pit-cooling.html`, `master-stage-qc-map.html`.
+Designed from the SMS QA SOW-versus-design review v3 (43 rows not OK, decisions of 21-Sep-2026). The report rows (SOW 33, 40, 107–116) are unchanged by decision. Every subsection names the SOW rows it closes; the platform touchpoints are raised as change requests in §34.12 — nothing in the production-confirmation or Allocation applications is changed directly. Screens: new `heat-plan.html`, `hot-out-clearance.html`, `location-tracking.html`, `master-storage-location.html`; extended `qc-worklist.html`, `clearance.html`, `usage-decision.html`, `pit-cooling.html`, `master-stage-qc-map.html`.
 
 ### 34.1 `mes_qc_inspection_feedback` — online inspection feedback to the caster (SOW 15, 16)
 | Field | Type | Key | Null | Description |
@@ -2290,15 +2299,38 @@ The current location stays on the platform inventory row (`mes_inventory.locatio
 
 Widens §30.1: the Quality decision now covers every hot-out type, not only overstay; the write-back vocabulary becomes RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD with the next operation and the keep-code flag (QA-SMS-R-03).
 
-### 34.6 `mes_qc_inspection` — additions (SMS review v3) (SOW 68)
+### 34.6 Conditional quality items — the condition is master data (SOW 68)
+
+Some checks are not owed every time. A spark test may be wanted only on the first unit after a grade change, a dimensional check only on every tenth bar, an extra inspection only while a supplier is under watch. **Which conditions exist is the plant's business, so the conditions are rows**; what the product defines is the small set of **evaluators** a condition can be built on. A Stage-QC Map row with no condition is owed every time, so an "always" row is not needed in the master — an empty reference means unconditional.
+
+#### 34.6.1 `mes_qc_raise_condition` — raise condition master (prefix MRCD)
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
-| `raise_condition` | varchar(30) | | Y | ALWAYS / GRADE_TRANSITION / MIX_UP_SUSPECT / ON_DEMAND — why a conditional item was generated |
+| `raise_condition_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | Plant vocabulary — the seed carries GRADE_TRANSITION, MIX_UP_SUSPECT, ON_DEMAND |
+| `name` | varchar(255) | | N | What the picker offers and the worklist chip reads |
+| `evaluator` | varchar(20) | | N | ATTRIBUTE_CHANGED / FLAG_SET / EVERY_NTH / MANUAL — the four ways the product can decide, each taking its own parameters below |
+| `attribute_id` | bigint | FK → `mes_global_attributes` | Y | ATTRIBUTE_CHANGED: the attribute compared against the previous unit (grade, section, customer, supplier, heat-treatment code — any routing or order attribute) |
+| `sequence_scope` | varchar(20) | | Y | ATTRIBUTE_CHANGED and EVERY_NTH: the ordered stream in which *previous* and *every Nth* are counted — EQUIPMENT / OPERATION / ORDER_LINE / SHIFT / CAMPAIGN |
+| `flag_source` | varchar(20) | | Y | FLAG_SET: where the flag is read — MATERIAL_STATUS / HOLD / INSPECTION_RESULT / ATTRIBUTE |
+| `flag_code` | varchar(50) | | Y | FLAG_SET: the code that switches the condition on, taken from the master the source names |
+| `every_n` | int | | Y | EVERY_NTH: N |
+| `n_offset` | int | | Y | EVERY_NTH: which member of each group of N is taken (default 1 — the first) |
+| `description` | varchar(255) | | Y | Shown as the help text of the condition |
+| `display_seq` | int | | Y | |
+| `active` | boolean | | N | |
+
+Check: the parameters the evaluator needs are present and the others are empty — ATTRIBUTE_CHANGED needs the attribute and the sequence scope, FLAG_SET the source and the code, EVERY_NTH the count and the scope, MANUAL none. The seed is GRADE_TRANSITION (ATTRIBUTE_CHANGED · grade · EQUIPMENT — the casting sequence at one caster), MIX_UP_SUSPECT (FLAG_SET · MATERIAL_STATUS · MIX_UP_SUSPECT) and ON_DEMAND (MANUAL). A plant that wants a check on every tenth bar adds a row; nothing is built.
+
+#### 34.6.2 `mes_qc_inspection` — additions (SMS review v3) (SOW 68)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `raise_condition_id` | bigint | FK → `mes_qc_raise_condition` | Y | The condition that raised a conditional item; empty on items owed every time |
 
 ### 34.7 `mes_qc_stage_qc_map` — additions (SMS review v3) (SOW 68)
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
-| `raise_condition` | varchar(30) | | N | ALWAYS (default) / GRADE_TRANSITION / MIX_UP_SUSPECT / ON_DEMAND; a value other than ALWAYS only when `is_mandatory` is false |
+| `raise_condition_id` | bigint | FK → `mes_qc_raise_condition` | Y | Empty (the default) means the row is owed every time; a condition may be set only when `is_mandatory` is false |
 | `tally_required` | varchar(10) | | N | NONE (default) / STAGE / HEAT — the fallback level of the tally configuration for material that carries no route (SOW 66) |
 | `tally_basis` | varchar(10) | | Y | PIECES / WEIGHT / BOTH |
 | `tally_tol_pieces` | int | | Y | |
@@ -2318,10 +2350,84 @@ Widens §30.1: the Quality decision now covers every hot-out type, not only over
 - `v_qc_material_feedback_history` — one row per earlier inspection of a lot and of its parent batches (batch relations: split, hot-out cut, grinding, code conversion): stage, time, inspector, result, defects, remarks, caster feedback status and acknowledgement, deviation reference. Read by the Earlier feedback panel of every inspection and clearance screen (FDD CL-11) — SOW 78, 15.
 - `v_qc_heat_plan` — read-only projection of the Planning design's casting indent lines and rolling slot with the QA readiness flags (pit-cooling hours from §28 `pit_cooling_rule` or the PSN, ABGM from §28 `grinding_rule`, special tests from the PSN, open chemistry hold from `clearance`) — SOW 1.
 - `v_qc_location_history` — the moves of §34.4 joined with the location master for the consolidated tracking view — SOW 104.
+- `v_qc_dispatch_readiness` — the dispatch verdict per unit with its obligations, concession, certificate and age (§34.11) — SOW 78.
 - Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) and QA clearance after ABGM grinding (SOW 84) are open items for JSW; the split would follow the Batch Derivation Rules of §28.
 - Code conversion and batch identity after the decision (SOW 81, 82, 88, 89) and the grinding route (SOW 85, 86) are answered by the Master Data design (Form Conversion Rules, Batch Derivation Rules, Grinding Rules) and the ABGM screen of the Operations design (SOW 87); no QA table.
 
-### 34.11 Platform change requests (raised, not built here)
+### 34.11 Dispatch readiness — the Quality verdict at the dispatch point (SOW 78)
+
+Quality's verdict has to be where the dispatch happens, and it has to stop a dispatch of material the module has not cleared. The verdict is **computed on read, never stored**, so it cannot go stale: one row per dispatchable unit carrying MAY_DISPATCH or BLOCKED and the reason line. **What "Quality is satisfied" means is configuration** — each obligation is a row, so a plant that does not want a certificate before dispatch deactivates that row instead of asking for a change. The only thing stored is the override, because a waiver needs an author.
+
+#### 34.11.1 `mes_qc_dispatch_obligation` — what Quality must have in place before dispatch (prefix MDOB)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `obligation_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | Plant vocabulary — the seed carries CLEARED_DECISION, CERTIFICATE_ISSUED, NO_OPEN_FINDING, NO_PENDING_CHECK, MARKING_DONE |
+| `name` | varchar(255) | | N | Read by the verdict panel and by the dispatch screens |
+| `check_kind` | varchar(30) | | N | What the product knows how to evaluate — DECISION_STATE / CERTIFICATE / OPEN_FINDING / PENDING_CHECK / ATTRIBUTE_SET |
+| `check_param` | varchar(100) | | Y | The parameter the kind needs: the decision states that count as cleared, the document type of the certificate, the finding severity that counts as blocking, the attribute that must carry a value |
+| `severity` | varchar(10) | | N | BLOCK — dispatch refused; WARN — shown on the panel, dispatch allowed |
+| `material_form_id` | bigint | FK → `mes_material_forms` | Y | Product form scope (null = all) |
+| `product_category_id` | bigint | FK → `mes_product_category_input` | Y | Finer scope (null = all) |
+| `sku_id` | bigint | FK → `mes_skus` | Y | Finest scope (null = all) |
+| `customer_id` | bigint | FK → `mes_customers` | Y | Customer scope (null = all) — a customer who demands the certificate before the truck leaves |
+| `operation_id` | bigint | FK → `mes_operations` | Y | The dispatch point the obligation applies at (null = every dispatch point) |
+| `reason_text` | varchar(255) | | Y | The line shown when the obligation is not met; generated from the name when empty |
+| `display_seq` | int | | Y | |
+| `active` | boolean | | N | |
+| | | | | **+ audit tail** |
+
+Obligations **accumulate** — unlike a limit lookup there is no most-specific winner: every active row whose scope matches the unit applies, and the verdict is BLOCKED when any BLOCK obligation is unmet. A WARN obligation never refuses a dispatch; it puts its line on the panel.
+
+#### 34.11.2 `v_qc_dispatch_readiness` — the verdict (view, one row per dispatchable unit)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `unit_kind` | varchar(10) | | N | HEAT / BATCH / PIECE |
+| `batch_id` | bigint | FK → `mes_batches` | N | |
+| `material_number` | varchar(50) | | Y | Piece id where the unit is a piece |
+| `heat_number` | varchar(30) | | Y | |
+| `order_line_id` | bigint | FK → `mes_order_line_items` | Y | |
+| `customer_id` | bigint | FK → `mes_customers` | Y | Drives the customer-scoped obligations |
+| `verdict` | varchar(15) | | N | MAY_DISPATCH / BLOCKED |
+| `reason_text` | varchar(500) | | Y | The unmet blocking obligations joined; empty when the verdict allows dispatch |
+| `warn_text` | varchar(500) | | Y | The unmet warning obligations, which refuse nothing |
+| `ud_id` / `ud_number` / `ud_decision` | | | Y | The current decision of the supersession chain |
+| `decided_by` / `decided_at` / `approval_status` | | | Y | Who released the unit and when |
+| `under_concession` | boolean | | N | True when the acceptance was conditional or under deviation |
+| `deviation_ref` | varchar(50) | | Y | The concession reference shown beside it |
+| `certificate_id` / `certificate_no` | | | Y | The certificate where one exists |
+| `open_finding_count` | int | | N | Findings and non-conformances open at or above the blocking severity |
+| `pending_check_count` | int | | N | Quality content the unit's route stage still owes |
+| `material_status_code` | varchar(30) | | Y | With its `blocks_dispatch` flag |
+| `obligations_json` | jsonb | | N | Per obligation: code, name, severity, met, detail — what the panel and the dispatch screens list |
+| `override_id` / `overridden_by` / `overridden_at` | | | Y | The waiver in force, where there is one |
+| `cleared_at` | timestamptz | | Y | Approval time of the current decision — the start of the age |
+| `dispatched_at` | timestamptz | | Y | From the platform's dispatch facts |
+| `age_hours` | int | | Y | `cleared_at` to `dispatched_at`, or to now while the unit is undispatched (BR-UDX-23) |
+
+Assembled from `mes_qc_usage_decision` (the current row of the supersession chain) with `mes_qc_ud_action` and `mes_qc_material_status`, `mes_qc_certificate`, the open rows of `mes_qc_inspection` and `mes_qc_ncr`, the stage content still owed (§35), `mes_qc_dispatch_obligation`, `mes_qc_dispatch_override`, and the platform's dispatch facts — `mes_batches.handover_status`, `mes_uid_dispatch`, `mes_dispatch_challan` — read-only. The verdict is computed on read: BLOCKED when any BLOCK obligation is unmet and unwaived, MAY_DISPATCH otherwise.
+
+#### 34.11.3 `mes_qc_dispatch_override` — a waiver has an author
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `override_id` | bigint | PK | N | |
+| `batch_id` | bigint | FK → `mes_batches` | N | The unit the block was waived for |
+| `material_number` | varchar(50) | | Y | Piece id when the waiver is per piece |
+| `heat_number` | varchar(30) | | Y | Denormalised for the register |
+| `obligation_id` | bigint | FK → `mes_qc_dispatch_obligation` | N | One row per obligation waived — a waiver is never blanket |
+| `ud_id` | bigint | FK → `mes_qc_usage_decision` | Y | The decision current at the time of the waiver |
+| `reason` | varchar(500) | | N | Mandatory |
+| `action_code` | varchar(50) | | N | The privileged action exercised — QA_DISPATCH_OVERRIDE |
+| `overridden_by` | bigint | | N | |
+| `overridden_at` | timestamptz | | N | |
+| `valid_until` | timestamptz | | Y | Optional expiry; an expired waiver stops counting and the verdict returns to BLOCKED |
+| `dispatch_ref` | varchar(60) | | Y | The challan or slip the waiver was used on, written back by the dispatch screens |
+| | | | | **+ audit tail** |
+
+- The override is only reachable through the privileged action `QA_DISPATCH_OVERRIDE` (platform action master, Master Data design); without it the panel shows the block and offers nothing.
+- Ageing needs no table: the threshold is a row of `mes_qc_notification_rule` with the event QA_CLEARED_NOT_DISPATCHED and the number of days as its parameter, so each plant sets its own patience.
+
+### 34.12 Platform change requests (raised, not built here)
 | Request | Subject | SOW |
 |---|---|---|
 | QA-SMS-R-01 | Caster pulpit stations (CASTER_CCM1, CASTER_CCM2) so the caster crew works on the MES pulpit screen; pulpit note type QA_FEEDBACK with pop-up acknowledgement that never blocks a confirmation; the acknowledgement (user, time, remark) readable by the Quality module. Designed in the Operations design and raised there as OPS-R-15 | 15, 16 |
@@ -2330,6 +2436,7 @@ Widens §30.1: the Quality decision now covers every hot-out type, not only over
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
 | QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
+| QA-SMS-R-07 | Quality verdict at the dispatch point: show the verdict, its reason and the obligations on the dispatch screens (UID Dispatch Details, Generate Unload Slip); refuse the ready tick and the dispatch status while the verdict is BLOCKED, writing the Quality reason into the existing lock reason; send an override (user, time, obligation, reason, dispatch reference) back to the Quality module | 78 |
 
 The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.
 
@@ -2340,7 +2447,7 @@ The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decis
 The composite material route joins the process route and the inspection route into one resolved, pinned object per order line; the route and its stages are platform objects designed in the Planning design (`mes_material_route`, `mes_material_route_stage`). This section is the Quality side: which content each stage carries, where the resolution level is recorded, and how inspections and samples point back at the stage they belong to.
 
 ### 35.1 Content resolution and where the level is recorded (SOW: design item, PSN-driven routing)
-The quality content of a stage is resolved at order-line release and pinned into `qc_content_json` on the platform stage row (`mes_material_route_stage`, Planning design). It holds, per stage: the material-bound checks (kind, type, characteristic, limit source and snapshot, mandatory flag, capture source, default mode, raise condition), the sampling obligations with their rule and draw positions, the clearance gates the stage must satisfy with the draw that feeds each, the hold behaviour on failure, and the **level** the content came from — PSN / MAP / OP_FLOOR / NONE. The ladder, the late-resolution cases and the floor are the module's common rule (FDD CL-12); the floor itself is a catch-all `mes_qc_stage_qc_map` row scoped to the operation with a blank product scope, so the master that decides what to inspect stays the only source.
+The quality content of a stage is resolved at order-line release and pinned into `qc_content_json` on the platform stage row (`mes_material_route_stage`, Planning design). It holds, per stage: the material-bound checks (kind, type, characteristic, limit source and snapshot, mandatory flag, capture source, default mode, raise condition) — among them the **tests taken on the material itself**, which are content of the stage and pair no draw with a gate (7.2) — the sampling obligations with their rule and draw positions, the clearance gates the stage must satisfy with the draw that feeds each, the hold behaviour on failure, and the **level** the content came from — PSN / MAP / OP_FLOOR / NONE. The ladder, the late-resolution cases and the floor are the module's common rule (FDD CL-12); the floor itself is a catch-all `mes_qc_stage_qc_map` row scoped to the operation with a blank product scope, so the master that decides what to inspect stays the only source.
 
 Alongside the checks, a stage carries the **quantity reconciliation** it owes: `tally_required` (NONE / STAGE / HEAT), `tally_basis` and the two tolerances, resolved and pinned by the same ladder (34.2). This is why the production tally is a stage attribute rather than a property of one named operation: a plant that reconciles after every operation and a plant that reconciles once per heat are the same design with different configuration.
 
@@ -2357,7 +2464,7 @@ Alongside the checks, a stage carries the **quantity reconciliation** it owes: `
 | `gate_route_stage_id` | bigint | | Y | The stage whose clearance gate consumes the result — often later than the draw |
 
 ### 35.4 Unchanged masters
-`mes_qc_stage_qc_map` needs nothing beyond `raise_condition` from the SMS review: it keeps saying what an operation owes, and the route pins the answer per material. `mes_qc_inspection_path` and `mes_qc_path_rule` keep their shape; the rule gains the product-type and order-type axes so the matrix reads the same attribute set as the process routing, and the allocated path feeds the merge instead of standing alone. `mes_qc_sampling_rule` keeps `path_id`.
+`mes_qc_stage_qc_map` needs nothing beyond `raise_condition_id` from the SMS review: it keeps saying what an operation owes, and the route pins the answer per material. `mes_qc_inspection_path` and `mes_qc_path_rule` keep their shape; the rule gains the product-type and order-type axes so the matrix reads the same attribute set as the process routing, and the allocated path feeds the merge instead of standing alone. `mes_qc_sampling_rule` keeps `path_id`.
 
 ### 35.5 Reporting
 - **View `v_qc_route_quality`** — one row per route stage: order line, batch, stage sequence and operation, content owed by kind, content given with its result, the gates with their state and the draw that feeds each, the resolution level, and the waiting reason where a gate stands on a laboratory result. Drives the quality columns of the Material Route screen and the review list of stages that resolved at the floor or at nothing.

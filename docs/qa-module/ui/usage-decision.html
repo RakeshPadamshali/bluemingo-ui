@@ -280,6 +280,36 @@ button{font-family:inherit;cursor:pointer;}
 .dbody .efb{margin-top:0;}
 .dv-in{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
 .dv-in:disabled{background:#f5f5f5;color:#999;}
+/* ===== disp- (SOW: SMSQA9-78) — dispatch readiness verdict: computed from the matching Dispatch Obligation
+   rows (v_qc_dispatch_readiness); BLOCK obligations refuse a dispatch, WARN only show; a waiver needs the
+   privileged action QA_DISPATCH_OVERRIDE and is recorded with its reason ===== */
+.disp{border:1px solid var(--color-border);border-radius:8px;overflow:hidden;}
+.disp-h{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f5f8fa;border-bottom:1px solid var(--color-border);font-weight:600;font-size:13px;flex-wrap:wrap;}
+.disp-v{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px;}
+.dv-ok{background:#e8f5e9;color:#1b5e20;}
+.dv-no{background:#fdecea;color:#b71c1c;}
+.disp-rsn{color:#b71c1c;font-weight:500;font-size:12px;}
+.disp-b{padding:8px 10px;display:grid;gap:8px;}
+.disp-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:#455a64;}
+.disp-meta b{color:#222;}
+.conc{background:#fff3e0;color:#e65100;border:1px solid #ffcc80;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;}
+.disp table{width:100%;border-collapse:collapse;font-size:12px;}
+.disp th,.disp td{border-top:1px solid #eceff1;padding:4px 6px;text-align:left;vertical-align:top;}
+.disp th{color:#607d8b;font-weight:600;background:#fafbfc;border-top:none;}
+.ob-met{color:#1b5e20;font-weight:600;}
+.ob-un{color:#b71c1c;font-weight:600;}
+.ob-sev{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;}
+.sv-block{background:#fdecea;color:#b71c1c;}
+.sv-warn{background:#fff8e1;color:#8d6e00;}
+.ovr{border:1px dashed #b0bec5;border-radius:6px;padding:8px;background:#fcfdfe;display:grid;gap:6px;}
+.ovr .ovr-t{font-size:12px;font-weight:600;color:#37474f;}
+.ovr label{font-size:12px;display:flex;gap:6px;align-items:flex-start;}
+.ovr input[type=text],.ovr input[type=date]{width:100%;padding:5px 7px;border:1px solid #cfd8dc;border-radius:4px;font:inherit;font-size:12px;}
+.ovr-trail{font-size:11px;color:#546e7a;border-top:1px dotted #cfd8dc;padding-top:4px;}
+.age-chip{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:#eceff1;color:#455a64;}
+.age-old{background:#fff3e0;color:#e65100;}
+.lfilt{display:flex;align-items:center;gap:6px;font-size:12px;color:#455a64;padding:4px 10px 8px;}
+.mut{color:#90a4ae;font-weight:400;font-size:11px;}
 </style>
 </head>
 <body>
@@ -348,6 +378,7 @@ button{font-family:inherit;cursor:pointer;}
         <a href="master-characteristic.html"><i class="fa-solid fa-list-ol"></i> Characteristic</a>
         <a href="master-element.html"><i class="fa-solid fa-atom"></i> Element (Chemistry)</a>
         <a href="master-stage-qc-map.html"><i class="fa-solid fa-sitemap"></i> Stage-QC Map</a>
+        <a href="master-raise-condition.html"><i class="fa-solid fa-code-branch"></i> Raise Condition</a>
         <a href="master-inspection-path.html"><i class="fa-solid fa-route"></i> Inspection Path</a>
         <a href="master-sample-type.html"><i class="fa-solid fa-vials"></i> Sample Type</a>
         <a href="master-sampling-rule.html"><i class="fa-solid fa-diagram-project"></i> Sampling Rule</a>
@@ -368,6 +399,7 @@ button{font-family:inherit;cursor:pointer;}
         <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
         <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
         <a href="master-tally-reason.html"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
+        <a href="master-dispatch-obligation.html"><i class="fa-solid fa-truck-fast"></i> Dispatch Obligation</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
@@ -392,6 +424,7 @@ button{font-family:inherit;cursor:pointer;}
       <div class="card">
         <div class="lhead"><div class="lh-title">Lots — awaiting / recent UD</div>
           <div class="lsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Heat / order / UID…" /></div></div>
+        <div class="lfilt" title="UDX-F73 · Cleared, not dispatched — cleared lots that have not reached a dispatch, with their age (BR-UDX-23) · SOW: SMSQA9-78"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="fClr" onchange="renderList()" /> Cleared, not dispatched</label><span id="fClrN" class="mut"></span></div>
         <div class="litems" id="list"></div>
       </div>
       <div class="card detail" id="detail"></div>
@@ -543,6 +576,101 @@ const ROUTE_NEXT={'2526-16496':'OP_STRAIGHTENING','2526-16776':'OP_FINISHING','2
 const NEXT_OPS=['OP_ROLLING','OP_HEAT TREATMENT','OP_STRAIGHTENING','OP_PEELING','OP_DRAWING','OP_FINISHING','OP_ABGM'];
 function routeNext(lot){return ROUTE_NEXT[lot.heat]||'OP_FINISHING';}
 function nextOpOpts(lot,sel){const rn=routeNext(lot);return NEXT_OPS.map(o=>`<option value="${o}" ${o===sel?'selected':''}>${o}${o===rn?' (route next)':''}</option>`).join('');}
+
+/* ===== SMSQA9-78 — dispatch readiness (v_qc_dispatch_readiness): one verdict per dispatchable unit,
+   computed on read and never stored. The obligations are rows of the Dispatch Obligation master (MDOB):
+   BLOCK refuses the dispatch, WARN only shows. The verdict and its reason are what the dispatch screens of
+   the production-confirmation application display and enforce (QA-SMS-R-07). ===== */
+const DISP_AGE_DAYS=3;   /* notification rule QA_CLEARED_NOT_DISPATCHED — plant-tunable */
+const DISP={
+ '2526-16496':{ud:'UD-2526-0121',by:'S. Nair',at:'24-Jun 09:40',conc:null,cert:'MTC-2526-0391',ageH:23,dispatched:'25-Jun 08:10',
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',1,'UD-2526-0121 · approved 24-Jun 09:40'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',1,'none open'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',1,'nothing owed at OP_FINISHING'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',1,'MTC-2526-0391'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',1,'Yellow · 17-4PH']]},
+ '2526-16776':{ud:'UD-2526-0126',by:'A. Das',at:'25-Jun 11:05',conc:'DEV-118',cert:null,ageH:6,dispatched:null,
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',1,'UD-2526-0126 · accepted under concession DEV-118'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',0,'1 open finding (MAJOR) — chemistry out of spec'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',1,'nothing owed'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',0,'not issued'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',0,'not recorded']]},
+ '2526-16482':{ud:'UD-2526-0121',by:'S. Nair',at:'14-Jul 10:20',conc:null,cert:null,ageH:0,dispatched:null,
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',0,'current decision is rework — not a cleared state'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',0,'1 open finding (MAJOR) — low hardness'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',0,'re-test owed after re-heat-treatment'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',0,'not issued'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',0,'not recorded']]},
+ '2526-16783':{ud:null,by:null,at:null,conc:null,cert:null,ageH:0,dispatched:null,
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',0,'no usage decision recorded'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',1,'none open'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',0,'UT clearance still pending'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',0,'not issued'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',0,'not recorded']]},
+ '2526-16798':{ud:'UD-2526-0129',by:'R. Sahoo',at:'26-Jun 07:15',conc:'DEV-121',cert:'MTC-2526-0404',ageH:52,dispatched:null,
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',1,'UD-2526-0129 · accepted under concession DEV-121'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',1,'1 open finding (MINOR) — below the blocking severity'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',1,'nothing owed'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',1,'MTC-2526-0404 · concession noted on the certificate'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',0,'not recorded']]},
+ '2526-16426':{ud:'UD-2526-0118',by:'S. Nair',at:'24-Jun 09:40',conc:null,cert:'MTC-2526-0377',ageH:74,dispatched:null,
+  ob:[['CLEARED_DECISION','Clearance decision approved and released','BLOCK',1,'UD-2526-0118 · approved 24-Jun 09:40'],
+      ['NO_OPEN_FINDING','No open finding at or above MAJOR','BLOCK',1,'none open'],
+      ['NO_PENDING_CHECK','No quality check still owed at this stage','BLOCK',1,'nothing owed'],
+      ['CERTIFICATE_ISSUED','Mill certificate issued','BLOCK',1,'MTC-2526-0377'],
+      ['MARKING_DONE','Colour code / marking recorded','WARN',1,'Red · 416']]}
+};
+const WAIVERS={};                 /* mes_qc_dispatch_override — one row per waived obligation */
+let CAN_OVERRIDE=true;            /* privileged action QA_DISPATCH_OVERRIDE held by the signed-in role */
+let ovrOpen=false;
+function dispOf(lot){return DISP[lot.heat]||null;}
+function waived(lot,code){return (WAIVERS[lot.heat]||[]).some(w=>w.code===code);}
+function unmetBlocks(lot){const d=dispOf(lot);if(!d)return[];return d.ob.filter(o=>o[2]==='BLOCK'&&!o[3]&&!waived(lot,o[0]));}
+function verdict(lot){return unmetBlocks(lot).length?'BLOCKED':'MAY DISPATCH';}
+function dispReason(lot){const u=unmetBlocks(lot);return u.map(o=>(o[4]||'').indexOf('not issued')===0?'Certificate not issued':o[1]).join(' · ');}
+function ageTxt(h){const d=Math.floor(h/24);return (d?d+' d ':'')+(h%24)+' h';}
+function clearedNotDispatched(lot){const d=dispOf(lot);return !!(d&&d.ud&&!d.dispatched&&verdict(lot)==='MAY DISPATCH');}
+function dispHtml(lot){
+  const d=dispOf(lot);if(!d)return'';
+  const v=verdict(lot),ok=v==='MAY DISPATCH',w=WAIVERS[lot.heat]||[];
+  const rows=d.ob.map(o=>{const wv=waived(lot,o[0]),met=o[3]||wv;
+    return '<tr><td>'+o[1]+' <span class="mono" style="color:#90a4ae">'+o[0]+'</span></td>'+
+      '<td><span class="ob-sev '+(o[2]==='BLOCK'?'sv-block':'sv-warn')+'">'+o[2]+'</span></td>'+
+      '<td class="'+(met?'ob-met':'ob-un')+'">'+(met?(wv?'WAIVED':'MET'):'NOT MET')+'</td>'+
+      '<td>'+o[4]+(wv?' — waived':'')+'</td></tr>';}).join('');
+  const meta=['<span>Decision: <b>'+(d.ud||'—')+'</b>'+(d.by?' · '+d.by+' · '+d.at:'')+'</span>',
+    '<span>Certificate: <b>'+(d.cert||'not issued')+'</b></span>',
+    d.conc?'<span class="conc" title="UDX-F79 · accepted under concession — the fact a dispatcher must not miss">UNDER CONCESSION · '+d.conc+'</span>':'',
+    d.dispatched?'<span>Dispatched: <b>'+d.dispatched+'</b></span>'
+      :(d.ud?'<span>Cleared <b>'+d.at+'</b> · not dispatched · <span class="age-chip '+(d.ageH>DISP_AGE_DAYS*24?'age-old':'')+'">age '+ageTxt(d.ageH)+'</span></span>':'')].join('');
+  let ovr='';
+  if(!ok&&CAN_OVERRIDE){
+    ovr=ovrOpen?('<div class="ovr"><div class="ovr-t">Waive the dispatch block — privileged action QA_DISPATCH_OVERRIDE (UDX-F81…F83)</div>'+
+      unmetBlocks(lot).map((o,i)=>'<label><input type="checkbox" id="ow_'+i+'" value="'+o[0]+'" /> <span>'+o[1]+' <span class="mono" style="color:#90a4ae">'+o[0]+'</span></span></label>').join('')+
+      '<input type="text" id="ovrReason" placeholder="Reason — mandatory" /><label style="gap:8px">Valid until <input type="date" id="ovrUntil" style="max-width:170px" /></label>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="submitOvr()"><i class="fa-solid fa-unlock"></i> Record waiver</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="toggleOvr()">Cancel</button></div></div>')
+      :('<div><button class="btn btn-ghost btn-sm" onclick="toggleOvr()" title="A BLOCKED unit may be dispatched only through the privileged action QA_DISPATCH_OVERRIDE, obligation by obligation, with a reason (BR-UDX-22)"><i class="fa-solid fa-unlock"></i> Override dispatch block</button></div>');
+  }else if(!ok){ovr='<div class="ovr-trail">Waiving a dispatch block needs the privileged action QA_DISPATCH_OVERRIDE.</div>';}
+  const trail=w.length?'<div class="ovr-trail"><b>Waiver trail (UDX-F84):</b> '+w.map(x=>x.code+' — '+x.by+' · '+x.at+(x.until?' · valid until '+x.until:'')+' · "'+x.reason+'"').join(' · ')+'</div>':'';
+  return '<div class="disp" title="UDX-F75…F80 · Dispatch verdict (v_qc_dispatch_readiness) · SOW: SMSQA9-78">'+
+    '<div class="disp-h"><i class="fa-solid fa-truck-fast"></i> Dispatch verdict <span class="disp-v '+(ok?'dv-ok':'dv-no')+'">'+v+'</span>'+
+    (ok?'':'<span class="disp-rsn">'+dispReason(lot)+'</span>')+
+    (ok&&w.length?'<span class="disp-rsn" style="color:#e65100">'+w.length+' obligation(s) waived</span>':'')+'</div>'+
+    '<div class="disp-b"><div class="disp-meta">'+meta+'</div>'+
+    '<table><thead><tr><th>Obligation</th><th>Severity</th><th>State</th><th>Detail</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    ovr+trail+'</div></div>';
+}
+function toggleOvr(){ovrOpen=!ovrOpen;renderDetail();}
+function submitOvr(){const lot=cur(),picked=[];
+  unmetBlocks(lot).forEach((o,i)=>{const el=document.getElementById('ow_'+i);if(el&&el.checked)picked.push(o[0]);});
+  const r=(document.getElementById('ovrReason').value||'').trim();
+  if(!picked.length){mesToast('Tick at least one obligation — a waiver is never blanket','err');return;}
+  if(!r){mesToast('Enter the reason — a waiver has an author and a reason (BR-UDX-22)','err');return;}
+  const until=(document.getElementById('ovrUntil').value||'');
+  WAIVERS[lot.heat]=(WAIVERS[lot.heat]||[]).concat(picked.map(c=>({code:c,reason:r,by:'Quality Head',at:'now',until:until})));
+  ovrOpen=false;renderList();renderDetail();
+  mesToast('Dispatch block waived on '+picked.length+' obligation(s) — recorded against '+(dispOf(lot).ud||'the lot')+' with the reason','ok');}
 /* ===== SMSQA9-78 / CL-11 — earlier feedback of the lot ===== */
 const UD_EFB={
  '2526-16496':[
@@ -582,13 +710,19 @@ function initForm(){const d=suggest(cur());form=Object.assign({decision:d,remark
 
 function renderList(){
   const q=(document.getElementById('search').value||'').toLowerCase();
+  const fc=document.getElementById('fClr'),onlyCnd=!!(fc&&fc.checked);
   document.getElementById('list').innerHTML=LOTS.map((l,i)=>{
     if(q&&!(l.heat+' '+l.order+' '+l.uid+' '+l.grade).toLowerCase().includes(q))return'';
+    if(onlyCnd&&!clearedNotDispatched(l))return'';
     const rd=readiness(l);
+    const d=dispOf(l),agec=(d&&clearedNotDispatched(l))?`<span class="age-chip ${d.ageH>DISP_AGE_DAYS*24?'age-old':''}" title="UDX-F74 · age since clearance (BR-UDX-23)">${ageTxt(d.ageH)}</span>`:'';
     return `<div class="litem ${i===curIdx?'sel':''}" onclick="sel(${i})">
       <div><div class="lh">${l.heat}</div><div class="lg">${l.grade} · ${l.uid}</div></div>
-      <span class="badge ${M[rd]}">${rd}</span></div>`;
+      <div style="display:flex;align-items:center;gap:6px">${agec}<span class="badge ${M[rd]}">${rd}</span></div></div>`;
   }).join('');
+  const cnd=LOTS.filter(clearedNotDispatched),old=cnd.filter(l=>dispOf(l).ageH>DISP_AGE_DAYS*24);
+  const fn=document.getElementById('fClrN');
+  if(fn)fn.textContent=cnd.length?(cnd.length+' lot(s)'+(old.length?' · '+old.length+' past '+DISP_AGE_DAYS+' days':'')):'none';
 }
 function sel(i){curIdx=i;reUdMode=false;initForm();renderList();renderDetail();}
 function toggleDet(i){const e=document.getElementById('det-'+i);if(!e)return;e.hidden=!e.hidden;const c=document.getElementById('chev-'+i);if(c)c.style.transform=e.hidden?'':'rotate(180deg)';}
@@ -675,6 +809,7 @@ function renderDetail(){
         <table class="agg-table"><thead><tr><th>Dimension</th><th>Stage</th><th>Records</th><th>Result</th><th></th></tr></thead><tbody>${aggRows}</tbody></table>
       </section>
       <section>${efbHtml(UD_EFB[lot.heat]||[],'UDX-F72 · Earlier feedback (CL-11) · SOW: SMSQA9-78')}</section>
+      <section>${dispHtml(lot)}</section>
       ${relSec}
       ${inspSec}
       ${testSec}
@@ -947,7 +1082,7 @@ window.addEventListener("load",function(){setTimeout(udScrollHook,50);});
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
