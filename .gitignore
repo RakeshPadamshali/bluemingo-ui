@@ -16,3 +16,6 @@ docs/qa-module/_pipeline/
 docs/qa-module/JSW-QA-*.pdf
 _pipeline/
 docs/modules/*.pdf
+
+# rebuild backups
+*.bak

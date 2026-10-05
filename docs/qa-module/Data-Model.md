@@ -2170,29 +2170,63 @@ Designed from the SMS QA SOW-versus-design review v3 (43 rows not OK, decisions 
 
 The acknowledgement blocks nothing (decision of 21-Sep-2026); escalation is a notification rule (`QA_ONLINE_FEEDBACK_ACK_OVERDUE`, default 30 minutes).
 
-### 34.2 `mes_qc_production_tally` — production tally per heat at SMS final inspection (SOW 66)
+### 34.2 Production tally — configurable reconciliation (SOW 66)
+
+The tally is **not tied to one stage**. Where a tally is taken, which flavour it is and on what quantity basis are **attributes of the route stage** (Planning design `mes_material_route_stage.tally_required`, `tally_basis`, `tally_tol_pieces`, `tally_tol_weight_pct`), pinned at order-line release like every other thing a stage owes (CL-12). Where the material carries no route, the same attributes on the Stage-QC Map row for the operation answer; where neither says anything, no tally is taken. Two flavours:
+
+- **STAGE** — reconciliation across one operation: what entered the stage against what left it, for the batches confirmed there.
+- **HEAT** — accounting for a production unit (a heat, a lot, a charge — whatever the plant's batching produces): what was produced against everything Quality has decided.
+
+Seeded configuration puts heat accounting on the melting-shop final-inspection operation and leaves every other stage at NONE; a plant turns a stage tally on by editing the route stage, with no code change.
+
+#### 34.2.1 `mes_qc_tally_reason` — mismatch reason master (prefix MTRS)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `tally_reason_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | Plant vocabulary — the seed carries COUNT_ERROR, IN_TRANSIT, SCRAP_NOT_BOOKED, SAMPLE_CUT, WEIGHT_TOLERANCE, OTHER |
+| `name` | varchar(255) | | N | |
+| `applies_to` | varchar(10) | | N | STAGE / HEAT / BOTH — which flavour the reason may be chosen on |
+| `requires_remark` | boolean | | N | Default false; true forces the remark field |
+| `is_material_loss` | boolean | | N | True when the variance under this reason is a real material loss (feeds the loss reporting of S20), false when it is a counting or weighing correction |
+| `display_seq` | int | | Y | |
+| `active` | boolean | | N | |
+
+#### 34.2.2 `mes_qc_production_tally` — tally header
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `tally_id` | bigint | PK | N | |
-| `heat_number` | varchar(100) | UQ | N | One tally per heat and operation |
-| `operation_id` | bigint | FK → `mes_operations` | N | SMS final inspection stage |
-| `planned_pieces` | int | | Y | Casting indent (Planning design) |
-| `produced_pieces` | int | | N | Production confirmation |
-| `produced_weight_t` | numeric(12,3) | | Y | |
-| `received_pieces` | int | | N | Receipt count (BR-RMI-03) |
-| `inspected_pieces` | int | | N | |
-| `cleared_pieces` | int | | N | |
-| `held_pieces` | int | | N | |
-| `rejected_pieces` | int | | N | |
-| `end_cut_pieces` | int | | N | |
-| `hot_out_pieces` | int | | N | |
-| `pending_pieces` | int | | N | |
-| `variance_pieces` | int | | N | produced − (cleared + held + rejected + end cut + hot-out + pending) |
-| `mismatch_reason` | varchar(30) | | Y | COUNT_ERROR / PIECES_IN_TRANSIT / SCRAP_NOT_BOOKED / SAMPLE_CUT / OTHER — required when the variance is not zero at sign-off |
-| `remarks` | varchar(500) | | Y | Required for OTHER |
+| `tally_scope` | varchar(10) | UQ | N | STAGE / HEAT — resolved from the route stage (BR-WKL-23) |
+| `batch_group_key` | varchar(100) | UQ | N | The production unit the tally is taken for: the heat or lot number for a HEAT tally, the operation's batch set key for a STAGE tally |
+| `operation_id` | bigint | FK → `mes_operations`, UQ | N | The operation the tally belongs to |
+| `route_stage_id` | bigint | FK → `mes_material_route_stage` | Y | The pinned stage that asked for it; empty for material with no route |
+| `quantity_basis` | varchar(10) | | N | PIECES / WEIGHT / BOTH — from the stage; a plant that works in weight never sees a piece column |
+| `tol_pieces` | int | | Y | Variance within this is not a mismatch (default 0) |
+| `tol_weight_pct` | numeric(5,2) | | Y | Weight variance within this percentage is not a mismatch (default 0.50) |
+| `variance_pieces` | int | | Y | Sum of the SOURCE lines less the sum of the ACCOUNTED lines, in pieces |
+| `variance_weight_t` | numeric(12,3) | | Y | The same in weight |
+| `within_tolerance` | boolean | | N | Computed from the variance and the tolerances |
+| `tally_reason_id` | bigint | FK → `mes_qc_tally_reason` | Y | Required when the tally is signed off outside tolerance |
+| `remarks` | varchar(500) | | Y | Required when the reason says so (`requires_remark`) |
 | `status` | varchar(20) | | N | OPEN / SIGNED_OFF / REOPENED |
 | `signed_by` | bigint | | Y | |
 | `signed_at` | timestamptz | | Y | |
+
+Unique: (`tally_scope`, `batch_group_key`, `operation_id`) — one tally per production unit per operation.
+
+#### 34.2.3 `mes_qc_production_tally_line` — one line per quantity bucket
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `tally_line_id` | bigint | PK | N | |
+| `tally_id` | bigint | FK → `mes_qc_production_tally` | N | |
+| `bucket_code` | varchar(30) | | N | Product-defined, by scope. HEAT: PRODUCED · CLEARED · HELD · REJECTED · END_CUT · HOT_OUT · PENDING · PLANNED · RECEIVED · INSPECTED. STAGE: STAGE_IN · STAGE_OUT · SCRAP · SAMPLE_CUT · END_CUT · HELD_AT_STAGE · PENDING_AT_STAGE |
+| `line_side` | varchar(10) | | N | SOURCE (what must be accounted for) / ACCOUNTED (what has been accounted for) / REFERENCE (shown, outside the arithmetic) |
+| `pieces` | int | | Y | |
+| `weight_t` | numeric(12,3) | | Y | |
+| `value_source` | varchar(40) | | N | Where the number came from: PRODUCTION_CONFIRMATION, RECEIPT_COUNT, CLEARANCE, INSPECTION, END_CUT, HOT_OUT, PLAN, MANUAL |
+| `is_manual` | boolean | | N | True when a user typed the value over a system count (allowed only for a bucket whose source is MANUAL) |
+| `line_remark` | varchar(255) | | Y | |
+
+Unique: (`tally_id`, `bucket_code`). The arithmetic is the same whichever flavour is taken: **variance = Σ SOURCE − Σ ACCOUNTED**, computed on each basis the stage asks for.
 
 ### 34.3 `mes_qc_storage_location` — storage location master (SOW 65, 90, 100)
 | Field | Type | Key | Null | Description |
@@ -2265,6 +2299,10 @@ Widens §30.1: the Quality decision now covers every hot-out type, not only over
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `raise_condition` | varchar(30) | | N | ALWAYS (default) / GRADE_TRANSITION / MIX_UP_SUSPECT / ON_DEMAND; a value other than ALWAYS only when `is_mandatory` is false |
+| `tally_required` | varchar(10) | | N | NONE (default) / STAGE / HEAT — the fallback level of the tally configuration for material that carries no route (SOW 66) |
+| `tally_basis` | varchar(10) | | Y | PIECES / WEIGHT / BOTH |
+| `tally_tol_pieces` | int | | Y | |
+| `tally_tol_weight_pct` | numeric(5,2) | | Y | |
 
 ### 34.8 `mes_qc_usage_decision` — additions (SMS review v3) (SOW 96)
 | Field | Type | Key | Null | Description |
@@ -2303,6 +2341,8 @@ The composite material route joins the process route and the inspection route in
 
 ### 35.1 Content resolution and where the level is recorded (SOW: design item, PSN-driven routing)
 The quality content of a stage is resolved at order-line release and pinned into `qc_content_json` on the platform stage row (`mes_material_route_stage`, Planning design). It holds, per stage: the material-bound checks (kind, type, characteristic, limit source and snapshot, mandatory flag, capture source, default mode, raise condition), the sampling obligations with their rule and draw positions, the clearance gates the stage must satisfy with the draw that feeds each, the hold behaviour on failure, and the **level** the content came from — PSN / MAP / OP_FLOOR / NONE. The ladder, the late-resolution cases and the floor are the module's common rule (FDD CL-12); the floor itself is a catch-all `mes_qc_stage_qc_map` row scoped to the operation with a blank product scope, so the master that decides what to inspect stays the only source.
+
+Alongside the checks, a stage carries the **quantity reconciliation** it owes: `tally_required` (NONE / STAGE / HEAT), `tally_basis` and the two tolerances, resolved and pinned by the same ladder (34.2). This is why the production tally is a stage attribute rather than a property of one named operation: a plant that reconciles after every operation and a plant that reconciles once per heat are the same design with different configuration.
 
 ### 35.2 `mes_qc_inspection` — additions (composite route)
 | Field | Type | Key | Null | Description |

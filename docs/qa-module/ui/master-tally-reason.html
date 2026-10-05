@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bluemingo MES v2 — Heat Plan</title>
+<title>Bluemingo MES v2 — Tally Reason</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -41,9 +41,16 @@ button{font-family:inherit;cursor:pointer;}
 .sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
 .sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
 .content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.crumb{font-size:var(--fs-sm);color:var(--color-text-muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.crumb a{color:var(--color-primary-dark);text-decoration:none;}
+.crumb a:hover{text-decoration:underline;}
+.crumb b{color:var(--color-text-primary);}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
-.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
+.page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;display:flex;align-items:center;gap:10px;}
+.page-head h1 i{color:var(--color-primary);font-size:20px;}
 .page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}
+.ph-actions{display:flex;align-items:center;gap:var(--sp2);}
+.jump{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;background:#fff;}
 .btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:10px 20px;border:none;border-radius:var(--r-sm);font:500 var(--fs-base) var(--font);transition:background-color .15s;}
 .btn-primary{background:var(--color-primary);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--color-primary-dark);}
 .btn-ghost{background:transparent;color:var(--color-text-secondary);border:1px solid var(--color-border);}
@@ -51,58 +58,55 @@ button{font-family:inherit;cursor:pointer;}
 .btn-sm{padding:6px 12px;font-size:var(--fs-sm);}
 .btn-icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:var(--r-sm);background:rgba(var(--color-primary-rgb),.1);color:var(--color-primary);font-size:13px;}
 .btn-icon:hover{background:var(--color-primary);color:#fff;}
+.btn-icon.danger{background:rgba(244,67,54,.1);color:#d32f2f;} .btn-icon.danger:hover{background:#d32f2f;color:#fff;}
 .badge{display:inline-block;padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
 .b-draft{background:rgba(158,158,158,.14);color:#757575;} .b-info{background:rgba(33,150,243,.12);color:#2196f3;}
 .b-pend{background:rgba(255,152,0,.12);color:#ef6c00;} .b-done{background:rgba(76,175,80,.12);color:#388e3c;}
 .b-hold{background:rgba(244,67,54,.12);color:#c62828;} .b-clr{background:rgba(103,58,183,.12);color:#673ab7;}
-/* filter bar */
 .filterbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp2);margin-bottom:var(--sp3);}
 .filterbar .lbl{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:600;}
 .fsearch{position:relative;}
 .fsearch i{position:absolute;left:10px;top:9px;color:var(--color-text-hint);font-size:11px;}
-.fsearch input{width:240px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
-.filterbar select{padding:7px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
-.filterbar input:focus,.filterbar select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
+.fsearch input{width:280px;padding:7px 10px 7px 28px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fsearch input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(var(--color-primary-rgb),.15);}
 .filterbar .meta{margin-left:auto;font-size:var(--fs-sm);color:var(--color-text-muted);}
-/* card + table */
 .card{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1;}
 .tbl-wrap{overflow:auto;flex:1;min-height:0;}
 table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
-.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);cursor:pointer;user-select:none;}
-.tbl thead th.num{text-align:right;} .tbl thead th .car{font-size:9px;color:#bbb;margin-left:3px;} .tbl thead th .car.on{color:var(--color-primary);}
-.tbl tbody td{padding:5px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+.tbl thead th{position:sticky;top:0;background:#f0f4f7;z-index:2;text-align:left;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--color-border);}
+.tbl thead th.num{text-align:right;}
+.tbl tbody td{padding:6px 10px;border-bottom:1px solid #f3f3f3;white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis;}
 .tbl tbody tr:nth-child(even) td{background:#fafbfc;} .tbl tbody tr:hover td{background:#eef7fc;}
 .tbl td.mono,.tbl th.mono{font-variant-numeric:tabular-nums;}
 .tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
 .tbl td.actions{text-align:right;}.tbl td.actions .btn-icon{margin-left:4px;}
 .tbl th.col-actions,.tbl td.actions{position:sticky;right:0;background:#fff;z-index:3;box-shadow:-7px 0 8px -8px rgba(0,0,0,.18);}
 .tbl tbody tr:nth-child(even) td.actions{background:#fafbfc;} .tbl tbody tr:hover td.actions{background:#eef7fc;}
-.crit{color:var(--color-danger);font-size:10px;margin-left:4px;}
-.due-hint{font-size:var(--fs-xs);color:var(--color-text-hint);}
 .empty td{text-align:center;font-style:italic;color:var(--color-text-hint);padding:24px;background:#fff!important;}
 .pager{display:flex;align-items:center;gap:var(--sp2);padding:var(--sp3) var(--sp4);border-top:1px solid var(--color-border-light);font-size:var(--fs-sm);color:var(--color-text-muted);}
-/* modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;}
 .overlay.open{display:flex;}
-.modal{background:#fff;border-radius:var(--r-lg);width:660px;max-width:94vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
-.modal.sm{width:500px;}
+.modal{background:#fff;border-radius:var(--r-lg);width:560px;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.15);}
 .modal-head{padding:16px 20px;border-bottom:1px solid var(--color-border-light);font-size:var(--fs-md);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
 .modal-head .x{color:var(--color-text-hint);cursor:pointer;}
 .modal-body{padding:20px;overflow:auto;}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3) var(--sp4);}
 .fld label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;}
-.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.fld input,.fld select{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
 .fld input:focus,.fld select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(var(--color-primary-rgb),.15);}
 .fld.full{grid-column:1/-1;}
-.fld.hide{display:none;}
-.prep-ctx{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--sp3);}
-.prep-ctx .chip{font-size:var(--fs-sm);background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:3px 8px;}
-.prep-ctx .chip b{color:var(--color-text-primary);}
-.sec-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-muted);font-weight:700;margin:var(--sp3) 0 var(--sp1);}
-.result-band{display:flex;flex-wrap:wrap;align-items:center;gap:16px;background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:var(--r-sm);padding:10px 14px;margin-top:var(--sp3);font-size:var(--fs-sm);}
-.result-band span{color:var(--color-text-muted);}
-.result-band b{font-variant-numeric:tabular-nums;}
+.chkfld{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--color-text-secondary);}
+.chkfld input{width:auto;}
 .modal-foot{padding:14px 20px;border-top:1px solid var(--color-border-light);display:flex;justify-content:flex-end;gap:var(--sp3);}
+/* landing tiles */
+.tiles{overflow:auto;flex:1;min-height:0;padding-right:4px;}
+.tile-group{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-muted);font-weight:700;margin:var(--sp4) 0 var(--sp2);}
+.tile-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--sp3);}
+.tile{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--color-border);border-radius:var(--r-md);padding:14px 16px;text-decoration:none;color:inherit;transition:all .15s;}
+.tile:hover{border-color:var(--color-primary);box-shadow:0 2px 10px rgba(var(--color-primary-rgb),.12);}
+.tile .ic{width:38px;height:38px;border-radius:var(--r-md);background:var(--color-primary-light);color:var(--color-primary-dark);display:grid;place-items:center;font-size:16px;flex:none;}
+.tile .tx b{display:block;font-size:13.5px;font-weight:600;}
+.tile .tx span{font-size:var(--fs-xs);color:var(--color-text-muted);}
 
 .sidebar .ms-chev{margin-left:auto;font-size:10px;width:auto!important;padding:3px 4px;border-radius:3px;transition:transform .15s;color:rgba(255,255,255,.4);}
 .sidebar .ms-chev:hover{background:rgba(255,255,255,.15);color:#fff;}
@@ -136,51 +140,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 .sidebar .navgrp>.s-group .gchev{margin-left:auto;font-size:9px;width:auto;transition:transform .15s;}
 .sidebar .navgrp.collapsed>.s-group .gchev{transform:rotate(-90deg);}
 .sidebar .navgrp.collapsed .grp-items{display:none;}
-
-.vrow{display:flex;justify-content:space-between;gap:18px;padding:8px 2px;border-bottom:1px solid var(--color-border-light);font-size:13px;align-items:center;}
-.vrow:last-child{border-bottom:none;}
-.vrow .vk{color:var(--color-text-muted);font-weight:500;white-space:nowrap;}
-.vrow .vv{text-align:right;color:var(--color-text-primary);}
-.vrow .vv .btn-icon,.vrow .vv .btn{display:none;}
-
-/* ===== Heat Plan (SMS QA 1) page-specific ===== */
-.chipstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--sp3);flex:none;}
-.ichip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);background:#fff;border:1px solid var(--color-border);border-radius:999px;padding:5px 12px;color:var(--color-text-secondary);}
-.ichip i{color:var(--color-primary);font-size:11px;}
-.ichip b{color:var(--color-text-primary);font-weight:600;}
-.depbanner{display:flex;gap:10px;align-items:flex-start;background:var(--color-primary-light);border:1px solid #b3e5fc;border-radius:var(--r-sm);padding:9px 14px;margin-bottom:var(--sp3);font-size:var(--fs-sm);color:var(--color-text-secondary);flex:none;}
-.depbanner i{color:var(--color-primary-dark);margin-top:2px;}
-.rchip{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;margin-right:4px;white-space:nowrap;}
-.r-pit{background:rgba(33,150,243,.13);color:#1565c0;} .r-abgm{background:rgba(103,58,183,.13);color:#673ab7;}
-.r-test{background:rgba(0,150,136,.13);color:#00796b;} .r-hold{background:rgba(244,67,54,.13);color:#c62828;}
-.flbl{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--color-text-muted);}
-.flbl input{padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font-family:inherit;font-size:var(--fs-sm);}
-tr.sel td{background:#e1f5fe!important;}
-.tbl tbody tr{cursor:pointer;}
-.sidepanel{background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-.sidepanel .sp-head{padding:11px 16px;border-bottom:1px solid var(--color-border-light);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex:none;}
-.sidepanel .sp-head i{color:var(--color-primary);}
-.sidepanel .sp-head .meta{margin-left:auto;font-weight:400;font-size:var(--fs-xs);color:var(--color-text-muted);}
-.sidepanel .sp-body{padding:10px 16px 14px;overflow:auto;min-height:0;flex:1;}
-.ro-note{font-size:var(--fs-xs);color:var(--color-text-hint);margin-top:10px;display:flex;gap:6px;align-items:flex-start;}
-
-.kpis{display:grid;gap:var(--sp3);margin-bottom:var(--sp3);flex:none;}
-.kpi{position:relative;background:#fff;border:1px solid var(--color-border);border-radius:var(--r-lg);padding:10px 16px 12px;overflow:hidden;}
-.kpi .k-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-muted);font-weight:600;}
-.kpi .k-value{font-size:22px;font-weight:600;line-height:1.15;margin-top:4px;color:var(--color-text-primary);font-variant-numeric:tabular-nums;}
-.kpi .k-sub{font-size:var(--fs-sm);color:var(--color-text-muted);margin-top:2px;}
-.kpi .k-accent{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--color-primary);}
-.kpi.alert .k-value{color:var(--color-danger);} .kpi.alert .k-accent{background:var(--color-danger);}
-.kpi.warn .k-accent{background:var(--color-warning);} .kpi.ok .k-accent{background:var(--color-success);}
-
-.kpis{grid-template-columns:repeat(4,1fr);}
-.hp-wrap{display:grid;grid-template-columns:1fr 300px;gap:var(--sp3);flex:1;min-height:0;}
-.hp-wrap .tbl thead th{white-space:normal;vertical-align:bottom;line-height:1.25;}
-.hp-wrap .tbl tbody td{padding:5px 8px;}
-.hp-wrap td.rdcell{white-space:normal;max-width:130px;}
-.lockchip{color:#ef6c00;font-size:12px;}
-.tlist{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--color-text-primary);}
-.tlist li{margin:2px 0;}
 </style>
 </head>
 <body>
@@ -188,7 +147,7 @@ tr.sel td{background:#e1f5fe!important;}
   <header class="header">
     <div class="logo"><span class="dot"><i class="fa-solid fa-feather"></i></span> Bluemingo MES v2</div>
     <div class="module">Quality</div><div class="spacer"></div>
-    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search heat / PSN…" /></div>
+    <div class="h-search"><i class="fa-solid fa-magnifying-glass"></i><input placeholder="Search master data..." /></div>
     <div class="avatar">QA</div>
   </header>
       <nav class="sidebar">
@@ -197,7 +156,7 @@ tr.sel td{background:#e1f5fe!important;}
     <div class="navgrp" data-g="Material Flow">
       <div class="s-group" onclick="grpToggle(this)">Material Flow<i class="fa-solid fa-chevron-down gchev"></i></div>
       <div class="grp-items">
-        <a href="heat-plan.html" class="active"><i class="fa-solid fa-calendar-days"></i> Heat Plan</a>
+        <a href="heat-plan.html"><i class="fa-solid fa-calendar-days"></i> Heat Plan</a>
         <a href="rm-inward.html"><i class="fa-solid fa-truck-ramp-box"></i> RM Quality</a>
         <a href="heat-chemistry.html"><i class="fa-solid fa-vial-circle-check"></i> Heat Chemistry</a>
         <a href="qc-worklist.html"><i class="fa-solid fa-clipboard-check"></i> Inspection</a>
@@ -268,7 +227,7 @@ tr.sel td{background:#e1f5fe!important;}
         <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
         <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
         <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
-        <a href="master-tally-reason.html"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
+        <a href="master-tally-reason.html" class="active"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
@@ -285,124 +244,62 @@ tr.sel td{background:#e1f5fe!important;}
   </nav>
   <main class="content">
     <div class="tabbar" id="tabbar"></div>
+    <div class="crumb"><a href="masters.html"><i class="fa-solid fa-arrow-left"></i> Masters</a> <span>/</span> <b>Tally Reason</b></div>
     <div class="page-head">
-      <div><h1>Heat Plan</h1><div class="sub">SMS casting plan with the QA readiness of every heat — read-only view of the Planning casting indent (SOW: SMS QA 1)</div></div>
-      <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="refreshPlan()"><i class="fa-solid fa-rotate"></i> Refresh</button><button class="btn btn-ghost btn-sm" onclick="exportPlan()"><i class="fa-solid fa-file-excel"></i> Export (Excel)</button></div>
+      <div><h1><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</h1><div class="sub">Why a production tally does not add up. Rows, not a fixed list — each reason says whether it demands a remark and whether the variance is a real material loss or only a counting correction; the mismatch picker of the production tally offers the active rows whose scope matches the tally (mes_qc_tally_reason) (SOW: SMSQA8-66).</div></div>
+      <div class="ph-actions">
+        <select class="jump" onchange="jump(this)"><option value="">Jump to master…</option><option value="master-inspection-type.html">Inspection Type</option><option value="master-test-type.html">Test Type</option><option value="master-chemistry-type.html">Chemistry Type</option><option value="master-defect-type.html">Defect Type</option><option value="master-defect-reason.html">Defect Reason</option><option value="master-sample-status.html">Sample Status</option><option value="master-test.html">Quality Test</option><option value="master-defect.html">Defect Catalogue</option><option value="master-characteristic.html">Characteristic</option><option value="master-element.html">Element (Chemistry)</option><option value="master-stage-qc-map.html">Stage-QC Map</option><option value="master-inspection-path.html">Inspection Path</option><option value="master-sample-type.html">Sample Type</option><option value="master-sampling-rule.html">Sampling Rule</option><option value="master-size-basis.html">Size Basis</option><option value="master-prep-checklist.html">Prep Checklist</option><option value="master-material-status.html">Material Status</option><option value="master-ud-type.html">UD Type</option><option value="master-ud-reason.html">UD Reason</option><option value="master-ud-action.html">UD Action</option><option value="master-salvage-type.html">Salvage Type</option><option value="master-ncr-category.html">NCR Category</option><option value="master-standard.html">Standard</option><option value="master-standard-limit.html">Standard Limit</option><option value="master-colour-code.html">Colour Code</option><option value="master-barcode-type.html">Barcode Type</option><option value="master-end-discard.html">End Discard</option><option value="master-storage-location.html">Storage Location</option><option value="master-location-type.html">Location Type</option><option value="master-tally-reason.html">Tally Reason</option><option value="master-length.html">Length</option><option value="master-dim-tolerance.html">Dim Tolerance</option><option value="master-grade-chemistry.html">Grade Chemistry</option><option value="master-instrument-type.html">Instrument Type</option><option value="master-agency.html">Agency</option><option value="master-supplier.html">Supplier</option><option value="master-notification-rule.html">Notification Rule</option><option value="master-formula.html">Formula</option><option value="master-document-type.html">Document Type</option><option value="master-psn-unit-matrix.html">PSN Unit Matrix</option><option value="master-certificate-template.html">Certificate Template</option></select>
+        <button class="btn btn-primary btn-sm" onclick="openAdd()"><i class="fa-solid fa-plus"></i> Add Tally Reason</button>
+      </div>
     </div>
-    <div class="chipstrip">
-      <span class="ichip" title="HPV-F03 · Plan source · SOW: SMS QA 1"><i class="fa-solid fa-lock"></i> Source <b>Planning — casting indent (read-only)</b></span>
-      <span class="ichip"><i class="fa-solid fa-circle-info"></i> Readiness from the Pit Cooling Rules, the Grinding Rules (ABGM), the PSN special tests and open chemistry holds</span>
-    </div>
-    <div class="kpis" id="kpis"></div>
-    <div class="filterbar">
-      <span class="lbl">Filters</span>
-      <label class="flbl" title="HPV-F01 · Plan date · SOW: SMS QA 1">Plan date <input type="date" id="fDate" value="2026-09-21" onchange="render()"/></label>
-      <select id="fCaster" title="HPV-F02 · Caster · SOW: SMS QA 1" onchange="render()"><option value="">All casters</option><option>CCM-1</option><option>CCM-2</option></select>
-      <select id="fStatus" title="HPV-F04 · Indent status · SOW: SMS QA 1" onchange="render()"><option value="">All indent statuses</option><option>PLANNED</option><option>SENT</option><option>ACKNOWLEDGED</option><option>IN_PRODUCTION</option><option>CAST</option></select>
-      <select id="fReady" title="HPV-F05 · Readiness filter · SOW: SMS QA 1" onchange="render()"><option value="">All readiness</option><option value="PIT">Pit cooling</option><option value="ABGM">ABGM route</option><option value="TEST">Special test</option><option value="HOLD">Chemistry hold</option></select>
-      <span class="meta" id="meta"></span>
-    </div>
-    <div class="hp-wrap">
-      <div class="card"><div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><div class="pager"><span id="rowCount"></span></div></div>
-      <div class="sidepanel" id="drawer"></div>
-    </div>
+    <div class="filterbar"><span class="lbl">Filter</span><div class="fsearch"><i class="fa-solid fa-magnifying-glass"></i><input id="q" placeholder="Search..." oninput="render()"/></div><span class="meta" id="count"></span></div>
+    <div class="card"><div class="tbl-wrap"><table class="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div></div>
   </main>
 </div>
-
+<div class="overlay" id="ov"><div class="modal">
+  <div class="modal-head"><span id="mTitle">Add</span> <span class="x" onclick="closeM()"><i class="fa-solid fa-xmark"></i></span></div>
+  <div class="modal-body"><div class="mgrid" id="form"></div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeM()">Cancel</button><button class="btn btn-primary" onclick="save()"><i class="fa-solid fa-check"></i> Save</button></div>
+</div></div>
 <script>
-/* ============================================================
-   SMS QA 1 — Heat Plan (read-only). Rows = the Planning casting indent lines for the plan date
-   (casting indent + lines, Planning design); QA readiness per heat: pit-cooling hours (Pit Cooling Rules or the
-   PSN characteristic), grinding route (Grinding Rules — ABGM), special tests from the PSN, open chemistry hold.
-   Projection v_qc_heat_plan. No edit actions: the plan is maintained in Planning.
-   ============================================================ */
-const PLAN=[
- {seq:1, heat:'2526-16898',caster:'CCM-1',grade:'304L',  psn:'TDC-004810',sec:'160 × 160',start:'21-Sep 00:40',pcs:40,t:60.2,st:'CAST',         lock:false,rd:['MACRO'],       slot:'BRM 22-Sep A',tests:['Macro etch — 1 per heat','Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
- {seq:2, heat:'2526-16899',caster:'CCM-2',grade:'316L',  psn:'TDC-006132',sec:'160 × 160',start:'21-Sep 01:10',pcs:38,t:57.1,st:'CAST',         lock:false,rd:['HOLD'],        slot:'BRM 22-Sep A',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)',hold:'Chemistry hold — Mo 2.62 above max 2.50 (awaiting disposition)'},
- {seq:3, heat:'2526-16900',caster:'CCM-1',grade:'17-4PH',psn:'TDC-004275',sec:'125 × 125',start:'21-Sep 02:20',pcs:52,t:50.3,st:'CAST',         lock:true, rd:['UT'],          slot:'BRM 22-Sep B',tests:['Ultrasonic — 100 % billets','Macro etch — 1 per heat'],pit:'— (no pit-cooling hours resolve)',grd:'CONDITIONAL — GRD-012 (17-4PH ≤ 125, surface-defect grade ≥ 2)'},
- {seq:4, heat:'2526-16901',caster:'CCM-2',grade:'416',   psn:'TDC-003922',sec:'160 × 160',start:'21-Sep 03:05',pcs:36,t:54.3,st:'IN_PRODUCTION',lock:true, rd:['PIT36'],       slot:'BRM 23-Sep A',tests:['Spectro (OES) — heat chemistry','Hardness after pit cooling — 3 billets'],pit:'PCR-012 · 36 h (416, 160 × 160)',grd:'NO — GRD-007 (martensitic 416)'},
- {seq:5, heat:'2526-16902',caster:'CCM-1',grade:'304L',  psn:'TDC-004810',sec:'125 × 125',start:'21-Sep 04:30',pcs:52,t:50.4,st:'IN_PRODUCTION',lock:false,rd:[],            slot:'BRM 22-Sep B',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
- {seq:6, heat:'2526-16903',caster:'CCM-2',grade:'17-4PH',psn:'TDC-004275',sec:'160 × 160',start:'21-Sep 05:15',pcs:40,t:60.0,st:'ACKNOWLEDGED', lock:false,rd:['ABGM','MACRO'],slot:'ABGM → BRM 24-Sep',   tests:['Macro etch — 1 per heat','Ultrasonic after grinding — 100 %'],pit:'— (no pit-cooling hours resolve)',grd:'YES — GRD-011 (17-4PH billets 160 × 160, full grind 1.5 mm)'},
- {seq:7, heat:'2526-16904',caster:'CCM-1',grade:'316L',  psn:'TDC-006132',sec:'125 × 125',start:'21-Sep 06:40',pcs:52,t:50.1,st:'ACKNOWLEDGED', lock:false,rd:['UT'],          slot:'BRM 23-Sep A',tests:['Ultrasonic — 100 % billets'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'},
- {seq:8, heat:'2526-16905',caster:'CCM-2',grade:'416',   psn:'TDC-003922',sec:'160 × 160',start:'21-Sep 07:30',pcs:36,t:54.0,st:'SENT',         lock:true, rd:['PIT24'],       slot:'BRM 23-Sep B',tests:['Spectro (OES) — heat chemistry'],pit:'PSN characteristic · 24 h',grd:'NO — GRD-007 (martensitic 416)'},
- {seq:9, heat:'2526-16906',caster:'CCM-1',grade:'17-4PH',psn:'TDC-004275',sec:'160 × 160',start:'21-Sep 08:50',pcs:40,t:60.1,st:'SENT',         lock:false,rd:['ABGM'],        slot:'ABGM → BRM 24-Sep',   tests:['Ultrasonic after grinding — 100 %'],pit:'— (no pit-cooling hours resolve)',grd:'YES — GRD-011 (17-4PH billets 160 × 160, full grind 1.5 mm)'},
- {seq:10,heat:'2526-16907',caster:'CCM-2',grade:'304L',  psn:'TDC-004810',sec:'160 × 160',start:'21-Sep 09:40',pcs:38,t:57.0,st:'PLANNED',      lock:false,rd:[],            slot:'BRM 24-Sep A',tests:['Spectro (OES) — heat chemistry'],pit:'— (no pit-cooling hours resolve)',grd:'NO — GRD-004 (austenitic, all sections)'}
-];
-const RCHIP={PIT36:['r-pit','PIT 36H','PIT'],PIT24:['r-pit','PIT 24H','PIT'],ABGM:['r-abgm','ABGM','ABGM'],MACRO:['r-test','MACRO','TEST'],UT:['r-test','UT','TEST'],HOLD:['r-hold','CHEM HOLD','HOLD']};
-const ST_B={PLANNED:'b-draft',SENT:'b-info',ACKNOWLEDGED:'b-clr',IN_PRODUCTION:'b-pend',CAST:'b-done'};
-const COLS=[
- {k:'seq',label:'Seq',cls:'num',tip:'HPV-F10 · Sequence in the casting indent'},
- {k:'heat',label:'Heat no',cls:'mono',tip:'HPV-F11 · Planned heat number'},
- {k:'caster',label:'Caster',tip:'HPV-F12 · Caster'},
- {k:'grade',label:'Grade',tip:'HPV-F13 · Grade'},
- {k:'psn',label:'PSN',cls:'mono',tip:'HPV-F14 · PSN (extended TDC) of the order'},
- {k:'sec',label:'Section',tip:'HPV-F15 · Cast section'},
- {k:'start',label:'Planned cast start',tip:'HPV-F16 · Planned cast start'},
- {k:'qty',label:'Billets / t',cls:'num',tip:'HPV-F17 · Billets and tonnes planned'},
- {k:'st',label:'Indent status',tip:'HPV-F18 · Indent status (PLANNED / SENT / ACKNOWLEDGED / IN_PRODUCTION / CAST)'},
- {k:'lock',label:'Priority lock',tip:'HPV-F19 · Priority lock set by Planning'},
- {k:'rd',label:'Readiness',cls:'rdcell',tip:'HPV-F20 · QA readiness flags'},
- {k:'slot',label:'Rolling slot',tip:'HPV-F21 · Planned rolling date / block'}
-];
-let cur=3;
-function kpiTile(label,val,sub,cls,tip){return '<div class="kpi '+(cls||'')+'" title="'+tip+'"><div class="k-label">'+label+'</div><div class="k-value">'+val+'</div><div class="k-sub">'+sub+'</div><div class="k-accent"></div></div>';}
-function renderKpis(rows){
-  const pit=rows.filter(function(r){return r.rd.some(function(x){return x.indexOf('PIT')===0;});});
-  const abgm=rows.filter(function(r){return r.rd.indexOf('ABGM')>=0;});
-  const hold=rows.filter(function(r){return r.rd.indexOf('HOLD')>=0;});
-  const c1=rows.filter(function(r){return r.caster==='CCM-1';}).length;
-  document.getElementById('kpis').innerHTML=
-    kpiTile('Heats planned',rows.length,'CCM-1 '+c1+' · CCM-2 '+(rows.length-c1),'','HPV-F06 · Heats planned for the plan date · SOW: SMS QA 1')+
-    kpiTile('Pit-cooling heats',pit.length,pit.map(function(r){return r.heat;}).join(' · ')||'—','','HPV-F07 · Heats whose pit-cooling hours resolve')+
-    kpiTile('ABGM-route heats',abgm.length,abgm.map(function(r){return r.heat;}).join(' · ')||'—','warn','HPV-F08 · Heats routed to ABGM by the grinding rule')+
-    kpiTile('Open chemistry holds',hold.length,hold.map(function(r){return r.heat;}).join(' · ')||'none','alert','HPV-F09 · Heats with an open chemistry hold');
-}
-function cell(c,r){
-  if(c.k==='qty')return r.pcs+' / '+r.t.toFixed(1);
-  if(c.k==='st')return '<span class="badge '+(ST_B[r.st]||'b-draft')+'">'+r.st+'</span>';
-  if(c.k==='lock')return r.lock?'<i class="fa-solid fa-lock lockchip" title="Priority lock — Planning"></i>':'—';
-  if(c.k==='rd')return r.rd.length?r.rd.map(function(x){return '<span class="rchip '+RCHIP[x][0]+'">'+RCHIP[x][1]+'</span>';}).join(''):'—';
-  return r[c.k];
-}
-function passes(r){
-  const fc=document.getElementById('fCaster').value,fs=document.getElementById('fStatus').value,fr=document.getElementById('fReady').value;
-  if(fc&&r.caster!==fc)return false;
-  if(fs&&r.st!==fs)return false;
-  if(fr&&!r.rd.some(function(x){return RCHIP[x][2]===fr;}))return false;
-  return true;
-}
+const C = {"singular": "Tally Reason", "cols": [{"k": "code", "label": "Code", "cls": "mono", "tip": "MTRS-F01 · Code · SOW: SMSQA8-66"}, {"k": "name", "label": "Name", "tip": "MTRS-F02 · Name — what the mismatch picker shows"}, {"k": "applies_to", "label": "Applies to", "badge": true, "tip": "MTRS-F03 · Applies to — STAGE / HEAT / BOTH (BR-WKL-23)"}, {"k": "requires_remark", "label": "Requires remark", "bool": true, "tip": "MTRS-F04 · Requires remark — makes the tally remark mandatory"}, {"k": "is_material_loss", "label": "Material loss", "bool": true, "tip": "MTRS-F05 · Material loss — Yes counts the variance as a real loss, No as a counting correction"}, {"k": "display_seq", "label": "Display sequence", "cls": "num", "tip": "MTRS-F06 · Display sequence"}, {"k": "active", "label": "Active", "bool": true, "tip": "MTRS-F07 · Active"}], "rows": [{"code": "COUNT_ERROR", "name": "Counting error at the stage", "applies_to": "BOTH", "requires_remark": true, "is_material_loss": false, "display_seq": 10, "active": true}, {"code": "IN_TRANSIT", "name": "Pieces still in transit", "applies_to": "BOTH", "requires_remark": true, "is_material_loss": false, "display_seq": 20, "active": true}, {"code": "SCRAP_NOT_BOOKED", "name": "Scrap not yet booked", "applies_to": "BOTH", "requires_remark": true, "is_material_loss": true, "display_seq": 30, "active": true}, {"code": "SAMPLE_CUT", "name": "Cut away for sampling", "applies_to": "BOTH", "requires_remark": false, "is_material_loss": true, "display_seq": 40, "active": true}, {"code": "WEIGHT_TOLERANCE", "name": "Weighbridge / scale difference", "applies_to": "HEAT", "requires_remark": false, "is_material_loss": false, "display_seq": 50, "active": true}, {"code": "OTHER", "name": "Other — explain in the remark", "applies_to": "BOTH", "requires_remark": true, "is_material_loss": false, "display_seq": 90, "active": true}], "form": [{"k": "code", "label": "Code"}, {"k": "name", "label": "Name"}, {"k": "applies_to", "label": "Applies to", "type": "select", "options": ["BOTH", "STAGE", "HEAT"]}, {"k": "requires_remark", "label": "Requires remark", "type": "checkbox"}, {"k": "is_material_loss", "label": "Material loss", "type": "checkbox"}, {"k": "display_seq", "label": "Display sequence", "type": "number"}, {"k": "active", "label": "Active", "type": "checkbox"}]};
+let EDIT=null;
+function colorFor(v){v=(''+v).toUpperCase();
+  if(['OK','ACTIVE','YES','ACCEPT','PASS','CLEARED','APPROV','RELEASE','IN_HOUSE','MILL'].some(t=>v.includes(t)))return 'b-done';
+  if(['HOLD','REJECT','FAIL','SCRAP','RETURN','INACTIVE','BLOCK','CRITICAL'].some(t=>v.includes(t)))return 'b-hold';
+  if(['REWORK','PEND','REVIEW','DUE','MINOR','RETEST'].some(t=>v.includes(t)))return 'b-pend';
+  if(['DOWNGRADE','CONCESSION','DEVIATION','RETAIN','CONSUM','THIRD'].some(t=>v.includes(t)))return 'b-clr';
+  return 'b-info';}
+function cv(c,r){let v=r[c.k];
+  if(c.bool)return '<span class="badge '+(v?'b-done':'b-draft')+'">'+(v?'Yes':'No')+'</span>';
+  if(c.badge)return (v===''||v==null)?'—':'<span class="badge '+colorFor(v)+'">'+v+'</span>';
+  if(v===''||v==null||v===undefined)return '—';
+  return v;}
+function buildHead(){document.getElementById('thead').innerHTML='<tr>'+C.cols.map(c=>'<th class="'+(c.cls==='num'?'num':'')+'" title="'+(c.tip||'')+'">'+c.label+'</th>').join('')+'<th class="col-actions"></th></tr>';}
+function alertLite(t){var h=document.createElement('div');h.textContent=t;h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;background:#333;box-shadow:0 4px 12px rgba(0,0,0,.25)';document.body.appendChild(h);setTimeout(function(){h.remove();},2600);}
 function render(){
-  document.getElementById('thead').innerHTML='<tr>'+COLS.map(function(c){return '<th class="'+(c.cls==='num'?'num':'')+'" title="'+c.tip+' · SOW: SMS QA 1">'+c.label+'</th>';}).join('')+'</tr>';
-  const rows=PLAN.map(function(r,i){return {r:r,i:i};}).filter(function(x){return passes(x.r);});
-  document.getElementById('tbody').innerHTML=rows.length?rows.map(function(x){return '<tr class="'+(x.i===cur?'sel':'')+'" onclick="pick('+x.i+')">'+COLS.map(function(c){return '<td class="'+(c.cls||'')+'">'+cell(c,x.r)+'</td>';}).join('')+'</tr>';}).join('')
-    :'<tr class="empty"><td colspan="'+COLS.length+'">No casting-indent lines match the filters.</td></tr>';
-  document.getElementById('rowCount').textContent=rows.length+' of '+PLAN.length+' heats · plan date 21-Sep-2026';
-  document.getElementById('meta').textContent='Read-only — maintained in Planning';
-  renderKpis(PLAN);
-  renderDrawer();
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  const rows=C.rows.map((r,i)=>({r,i})).filter(x=>!q||Object.values(x.r).join(' ').toLowerCase().includes(q));
+  const tb=document.getElementById('tbody');
+  if(!rows.length){tb.innerHTML='<tr class="empty"><td colspan="'+(C.cols.length+1)+'">No records match.</td></tr>';}
+  else tb.innerHTML=rows.map(x=>'<tr>'+C.cols.map(c=>'<td class="'+(c.cls||'')+'">'+cv(c,x.r)+'</td>').join('')+'<td class="actions"><button class="btn-icon" title="Edit" onclick="openEdit('+x.i+')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon danger" title="Delete" onclick="del('+x.i+')"><i class="fa-solid fa-trash"></i></button></td></tr>').join('');
+  document.getElementById('count').textContent=rows.length+' of '+C.rows.length+' records';
 }
-function pick(i){cur=i;render();}
-function vrow(k,v,tip){return '<div class="vrow"'+(tip?' title="'+tip+'"':'')+'><span class="vk">'+k+'</span><span class="vv">'+v+'</span></div>';}
-function renderDrawer(){
-  const r=PLAN[cur];
-  document.getElementById('drawer').innerHTML='<div class="sp-head" style="white-space:nowrap"><i class="fa-solid fa-fire-burner"></i> '+r.heat+' <span class="badge '+(ST_B[r.st]||'b-draft')+'">'+r.st+'</span></div>'+
-   '<div class="sp-body">'+
-   vrow('Caster',r.caster)+vrow('Grade / PSN',r.grade+' · '+r.psn)+vrow('Section',r.sec)+vrow('Planned cast start',r.start)+vrow('Billets / t',r.pcs+' / '+r.t.toFixed(1))+
-   vrow('Priority lock',r.lock?'<i class="fa-solid fa-lock lockchip"></i> locked by Planning':'—')+vrow('Rolling slot',r.slot)+
-   '<div class="sec-label">QA readiness</div>'+
-   '<div class="vrow" title="HPV-F22 · Special tests from the PSN · SOW: SMS QA 1" style="display:block"><span class="vk">Special tests from the PSN</span><ul class="tlist">'+r.tests.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'+
-   vrow('Pit-cooling rule applied',r.pit,'HPV-F23 · Pit-cooling rule applied (rule code + hours, or the PSN characteristic) · SOW: SMS QA 1')+
-   vrow('Grinding rule applied',r.grd,'HPV-F24 · Grinding rule applied (YES / NO / CONDITIONAL + rule code) · SOW: SMS QA 1')+
-   (r.hold?vrow('Chemistry hold','<span class="badge b-hold">HOLD</span> '+r.hold):'')+
-   '<div class="ro-note"><i class="fa-solid fa-lock"></i><span>Read-only. The casting indent is maintained in Planning; readiness is resolved from the Quality masters for the heat’s PSN, grade and section.</span></div>'+
-   '</div>';
-}
-function refreshPlan(){mesToast('Casting indent refreshed from Planning · 21-Sep-2026','ok');}
-function exportPlan(){mesToast('Heat plan exported (Excel) · 10 heats','ok');}
-
-function mesToast(m,k){var h=document.getElementById('mesToastHost');if(!h){h=document.createElement('div');h.id='mesToastHost';h.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;display:flex;flex-direction:column;gap:8px';document.body.appendChild(h);}var t=document.createElement('div');t.textContent=m;t.style.cssText='padding:10px 14px;border-radius:8px;font:13px Roboto,sans-serif;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;background:'+({ok:'#2e7d32',warn:'#ed6c02',err:'#c62828'}[k]||'#333');h.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},250);},2600);}
-
-render();
+function buildForm(r){document.getElementById('form').innerHTML=C.form.map(f=>{
+  const v=(r&&r[f.k]!==undefined)?r[f.k]:(f.type==='checkbox'?(f.k==='active'):'');
+  if(f.type==='checkbox')return '<label class="chkfld"><input type="checkbox" id="f_'+f.k+'" '+(v?'checked':'')+'/> '+f.label+'</label>';
+  if(f.type==='select')return '<div class="fld'+(f.full?' full':'')+'"><label>'+f.label+'</label><select id="f_'+f.k+'">'+f.options.map(o=>'<option '+(o===v?'selected':'')+'>'+o+'</option>').join('')+'</select></div>';
+  return '<div class="fld'+(f.full?' full':'')+'"><label>'+f.label+'</label><input id="f_'+f.k+'" type="'+(f.type==='number'?'number':'text')+'" step="any" value="'+(v===null?'':v)+'"/></div>';
+}).join('');}
+function openAdd(){EDIT=null;buildForm({});document.getElementById('mTitle').textContent='Add '+C.singular;document.getElementById('ov').classList.add('open');}
+function openEdit(i){EDIT=i;buildForm(C.rows[i]);document.getElementById('mTitle').textContent='Edit '+C.singular;document.getElementById('ov').classList.add('open');}
+function save(){const o={};C.form.forEach(f=>{const el=document.getElementById('f_'+f.k);o[f.k]=f.type==='checkbox'?el.checked:(f.type==='number'?(+el.value||0):el.value);});
+  if(EDIT!=null)C.rows[EDIT]=Object.assign({},C.rows[EDIT],o);else C.rows.unshift(o);
+  closeM();render();}
+function del(i){if(C._confirm!==false){} C.rows.splice(i,1);render();}
+function closeM(){document.getElementById('ov').classList.remove('open');}
+function jump(s){if(s.value)location.href=s.value;}
+buildHead();render();
 </script>
 <script>
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
@@ -433,9 +330,6 @@ render();})();</script>
 <script>
 function grpToggle(h){var g=h.closest('.navgrp');if(!g)return;g.classList.toggle('collapsed');var s={};document.querySelectorAll('.sidebar .navgrp').forEach(function(x){s[x.getAttribute('data-g')]=x.classList.contains('collapsed');});try{localStorage.setItem('mesNav',JSON.stringify(s));}catch(e){}}
 (function(){var s={};try{s=JSON.parse(localStorage.getItem('mesNav')||'{}');}catch(e){}document.querySelectorAll('.sidebar .navgrp').forEach(function(g){var k=g.getAttribute('data-g');if(k in s)g.classList.toggle('collapsed',!!s[k]);});var a=document.querySelector('.sidebar .grp-items a.active');if(a){var g=a.closest('.navgrp');if(g)g.classList.remove('collapsed');}var sb=document.querySelector('.sidebar');if(sb){try{var y=sessionStorage.getItem('mesNavScroll');if(y!=null)sb.scrollTop=+y;else if(a)a.scrollIntoView({block:'center'});}catch(e){}sb.addEventListener('scroll',function(){try{sessionStorage.setItem('mesNavScroll',sb.scrollTop);}catch(e){}});}})();
-</script>
-<div class="overlay" id="viewOv"><div class="modal sm"><div class="modal-head">Record details <span class="x" onclick="document.getElementById('viewOv').classList.remove('open')"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body"><div id="viewBody"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="document.getElementById('viewOv').classList.remove('open')">Close</button></div></div></div><script>
-function openViewEl(btn){var tr=btn.closest('tr');if(!tr)return;var tbl=tr.closest('table');var ths=tbl?tbl.querySelectorAll('thead tr:first-child th'):[];var labs=[].map.call(ths,function(th){return th.textContent.replace(/[▲▼⇅]/g,'').trim();});var tds=tr.children,h='';for(var k=0;k<tds.length;k++){if(tds[k].classList.contains('actions'))continue;var lab=labs[k]||'';if(!lab)continue;h+='<div class="vrow"><span class="vk">'+lab+'</span><span class="vv">'+tds[k].innerHTML+'</span></div>';}document.getElementById('viewBody').innerHTML=h;document.getElementById('viewOv').classList.add('open');}
 </script>
 </body>
 </html>

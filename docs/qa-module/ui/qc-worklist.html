@@ -338,8 +338,17 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 .subcard table.tbl select{padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;font-family:inherit;}
 .subcard table.tbl input{padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:11.5px;font-family:inherit;width:120px;}
 #tallyCard table.tbl thead th{white-space:normal;vertical-align:bottom;line-height:1.2;padding:7px 8px;}
-#tallyCard table.tbl tbody td{padding:4px 8px;}
+#tallyCard table.tbl tbody td{padding:4px 8px;white-space:normal;vertical-align:top;}
+#tallyCard table.tbl tbody td.cell-acc{min-width:230px;max-width:300px;}
+#tallyCard table.tbl tbody td.cell-ref{min-width:150px;max-width:210px;}
+#tallyCard{max-height:340px;}
 #tallyCard .tby{display:block;font-size:10.5px;color:#888;line-height:1.2;}
+#tallyCard .tly{display:inline-block;margin:1px 3px 1px 0;padding:1px 6px;border-radius:10px;font-size:11px;white-space:nowrap;}
+#tallyCard .tly b{font-weight:500;color:#555;}
+#tallyCard .tly-src{background:rgba(37,169,224,.10);}
+#tallyCard .tly-acc{background:rgba(76,175,80,.10);}
+#tallyCard .tly-ref{background:#f2f2f2;color:#777;}
+#tallyCard .tly-ref b{color:#888;}
 .tbl tbody td.k-type{max-width:360px;}   /* room for the SUPPLEMENTARY / CONDITIONAL chips */
 </style>
 </head>
@@ -434,6 +443,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
         <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
         <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
+        <a href="master-tally-reason.html"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
@@ -501,10 +511,14 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <select id="pgSize"><option>50</option><option>100</option><option>250</option><option>500</option></select>
       </div>
     </div>
-    <!-- SMSQA8-66 — Production tally per heat at SMS final inspection (mes_qc_production_tally):
-         variance = produced − (cleared + held + rejected + end cut + hot-out + pending); a non-zero variance needs a reason; QA signs off -->
+    <!-- SMSQA8-66 — Production tally, taken where the route stage asks for one (tally_required NONE / STAGE / HEAT):
+         variance = sum(SOURCE lines) − sum(ACCOUNTED lines) on each basis the stage asks for; outside the stage tolerance it needs a
+         reason from the Tally Reason master; QA signs off (mes_qc_production_tally + mes_qc_production_tally_line) -->
     <div class="subcard" id="tallyCard">
-      <div class="sc-head"><i class="fa-solid fa-scale-balanced"></i> Production tally — SMS final inspection (per heat) <span class="meta" id="tallyMeta"></span></div>
+      <div class="sc-head"><i class="fa-solid fa-scale-balanced"></i> Production tally <span class="meta" id="tallyMeta"></span>
+        <span style="flex:1"></span>
+        <span class="meta" style="font-weight:400">Taken where the route stage asks for one — scope, basis and tolerance come from the stage (BR-WKL-23)</span>
+      </div>
       <div class="sc-wrap"><table class="tbl"><thead id="tallyHead"></thead><tbody id="tallyBody"></tbody></table></div>
     </div>
   </main>
@@ -1192,35 +1206,118 @@ function renderRmEfb(row){
   const lines=own.concat(EFB_EXTRA[row.heat]||[]).sort((a,b)=>(''+b.when).localeCompare(''+a.when,undefined,{numeric:true}));
   document.getElementById('rmEfb').innerHTML=efbHtml(lines,'WKL-F74 · Earlier feedback (CL-11) · SOW: SMSQA9-78');
 }
-/* ===== SMSQA8-66 — production tally per heat (mes_qc_production_tally) ===== */
+/* ===== SMSQA8-66 — production tally: scope, basis and tolerance resolved from the route stage
+       (mes_qc_production_tally + mes_qc_production_tally_line; reasons from mes_qc_tally_reason) ===== */
 const TALLY=[
- {heat:'2526-16798',plan:40,prod:40,t:7.9,rec:40,insp:38,clr:34,held:2,rej:1,ec:1,ho:0,pend:2,reason:'',rem:'',st:'SIGNED_OFF',by:'R. Sahoo',at:'21-Sep 11:20'},
- {heat:'2526-16866',plan:36,prod:36,t:7.1,rec:36,insp:34,clr:30,held:1,rej:1,ec:1,ho:0,pend:1,reason:'PIECES_IN_TRANSIT',rem:'2 billets on the transfer table to the SMS yard',st:'OPEN',by:'',at:''},
- {heat:'2526-16783',plan:38,prod:38,t:7.5,rec:38,insp:30,clr:28,held:0,rej:0,ec:0,ho:0,pend:10,reason:'',rem:'',st:'OPEN',by:'',at:''}
+ {scope:'HEAT', key:'2526-16798', op:'SMS final inspection', stage:'Stage 40 · QUALITY', basis:'BOTH',
+  tolP:0, tolW:0.50, reason:'', rem:'', st:'SIGNED_OFF', by:'R. Sahoo', at:'21-Sep 11:20',
+  src:{PRODUCED:[40,7.900]},
+  acc:{CLEARED:[34,6.715],HELD:[2,0.395],REJECTED:[1,0.198],END_CUT:[1,0.197],HOT_OUT:[0,0],PENDING:[2,0.395]},
+  ref:{PLANNED:[40,7.900],RECEIVED:[40,7.900],INSPECTED:[38,7.505]}},
+ {scope:'HEAT', key:'2526-16866', op:'SMS final inspection', stage:'Stage 40 · QUALITY', basis:'BOTH',
+  tolP:0, tolW:0.50, reason:'IN_TRANSIT', rem:'2 billets on the transfer table', st:'OPEN', by:'', at:'',
+  src:{PRODUCED:[36,7.100]},
+  acc:{CLEARED:[30,5.918],HELD:[1,0.197],REJECTED:[1,0.197],END_CUT:[1,0.198],HOT_OUT:[0,0],PENDING:[1,0.200]},
+  ref:{PLANNED:[36,7.100],RECEIVED:[36,7.100],INSPECTED:[34,6.707]}},
+ {scope:'HEAT', key:'2526-16783', op:'SMS final inspection', stage:'Stage 40 · QUALITY', basis:'WEIGHT',
+  tolP:0, tolW:0.50, reason:'', rem:'', st:'OPEN', by:'', at:'',
+  src:{PRODUCED:[null,7.500]},
+  acc:{CLEARED:[null,5.530],HELD:[null,0.000],REJECTED:[null,0.000],END_CUT:[null,0.000],HOT_OUT:[null,0.000],PENDING:[null,1.942]},
+  ref:{PLANNED:[null,7.500],RECEIVED:[null,7.500],INSPECTED:[null,5.530]}},
+ {scope:'STAGE', key:'Rolling · shift A', op:'Rolling', stage:'Stage 60 · BOTH', basis:'PIECES',
+  tolP:0, tolW:0, reason:'', rem:'', st:'OPEN', by:'', at:'',
+  src:{STAGE_IN:[36,null]},
+  acc:{STAGE_OUT:[34,null],SCRAP:[1,null],SAMPLE_CUT:[1,null],END_CUT:[0,null],HELD_AT_STAGE:[0,null],PENDING_AT_STAGE:[0,null]},
+  ref:{}}
 ];
-const MISMATCH=['','COUNT_ERROR','PIECES_IN_TRANSIT','SCRAP_NOT_BOOKED','SAMPLE_CUT','OTHER'];
-function tVar(r){return r.prod-(r.clr+r.held+r.rej+r.ec+r.ho+r.pend);}
+/* mes_qc_tally_reason — master rows, not a fixed list (BR-MTRS-01) */
+const TREASON=[
+ {code:'COUNT_ERROR',      name:'Counting error at the stage',    scope:'BOTH', rem:true,  loss:false},
+ {code:'IN_TRANSIT',       name:'Pieces still in transit',        scope:'BOTH', rem:true,  loss:false},
+ {code:'SCRAP_NOT_BOOKED', name:'Scrap not yet booked',           scope:'BOTH', rem:true,  loss:true},
+ {code:'SAMPLE_CUT',       name:'Cut away for sampling',          scope:'BOTH', rem:false, loss:true},
+ {code:'WEIGHT_TOLERANCE', name:'Weighbridge / scale difference', scope:'HEAT', rem:false, loss:false},
+ {code:'OTHER',            name:'Other — explain in the remark',  scope:'BOTH', rem:true,  loss:false}
+];
+const BKT={PRODUCED:'Produced',CLEARED:'Cleared',HELD:'Held',REJECTED:'Rejected',END_CUT:'End cut',HOT_OUT:'Hot-out',PENDING:'Pending',
+ PLANNED:'Planned',RECEIVED:'Received',INSPECTED:'Inspected',STAGE_IN:'In',STAGE_OUT:'Out',SCRAP:'Scrap',SAMPLE_CUT:'Sample cut',
+ HELD_AT_STAGE:'Held',PENDING_AT_STAGE:'At stage'};
+function tSum(o,k){return Object.keys(o).reduce(function(a,b){return a+(o[b][k]||0);},0);}
+function tVarP(r){return tSum(r.src,0)-tSum(r.acc,0);}
+function tVarW(r){return +(tSum(r.src,1)-tSum(r.acc,1)).toFixed(3);}
+function tWpct(r){var d=tSum(r.src,1);return d?Math.abs(tVarW(r))/d*100:0;}
+function tOK(r){var p=(r.basis==='WEIGHT')||Math.abs(tVarP(r))<=r.tolP;
+                var w=(r.basis==='PIECES')||tWpct(r)<=r.tolW;return p&&w;}
+function tReasons(r){return TREASON.filter(function(x){return x.scope==='BOTH'||x.scope===r.scope;});}
+function tQty(v,basis){var p=v[0],w=v[1];
+  if(basis==='PIECES')return (p==null?'—':p);
+  if(basis==='WEIGHT')return (w==null?'—':w.toFixed(3));
+  return (p==null?'—':p)+' / '+(w==null?'—':w.toFixed(3));}
 function renderTally(){
-  const H=[['Heat','WKL-F75 · Heat'],['Planned','WKL-F76 · Planned pieces (casting indent)'],['Produced pcs / t','WKL-F77 · Produced pieces / tonnes (production confirmation)'],['Received','WKL-F78 · Received at QA'],['Inspected','WKL-F79 · Inspected'],['Cleared','WKL-F80 · Cleared'],['Held','WKL-F81 · Held'],['Rejected','WKL-F82 · Rejected'],['End cut','WKL-F83 · End cut'],['Hot-out','WKL-F84 · Hot-out'],['Pending','WKL-F85 · Pending'],['Variance','WKL-F86 · Variance = produced − (cleared + held + rejected + end cut + hot-out + pending)'],['Mismatch reason','WKL-F87 · Mismatch reason — required when the variance is not zero'],['Remarks','WKL-F88 · Remarks'],['Tally status','WKL-F89 · Tally status (OPEN / SIGNED_OFF / REOPENED) with signed by / at']];
-  document.getElementById('tallyHead').innerHTML='<tr>'+H.map(h=>`<th title="${h[1]} · SOW: SMSQA8-66">${h[0]}</th>`).join('')+'<th class="col-actions"></th></tr>';
-  document.getElementById('tallyBody').innerHTML=TALLY.map((r,i)=>{const v=tVar(r),open=r.st!=='SIGNED_OFF',dz=opsView?' disabled':'';
-    const stB={OPEN:'b-pend',SIGNED_OFF:'b-done',REOPENED:'b-prog'}[r.st]||'b-draft';
-    const reason=open?`<select onchange="TALLY[${i}].reason=this.value;renderTally()"${dz}>${MISMATCH.map(o=>`<option ${o===r.reason?'selected':''} value="${o}">${o||'—'}</option>`).join('')}</select>`:(r.reason||'—');
-    const rem=open?`<input value="${r.rem}" placeholder="remarks" onchange="TALLY[${i}].rem=this.value"${dz}/>`:(r.rem||'—');
-    const act=open?`<button class="btn btn-primary btn-sm"${dz} ${(v!==0&&!r.reason)?'disabled title="Select the mismatch reason first"':''} onclick="tallySign(${i})"><i class="fa-solid fa-signature"></i> Sign off tally</button>`:`<button class="btn btn-ghost btn-sm"${dz} onclick="tallyReopen(${i})"><i class="fa-solid fa-rotate-left"></i> Reopen tally</button>`;
-    return `<tr><td class="mono">${r.heat}</td><td class="num">${r.plan}</td><td class="num">${r.prod} / ${r.t.toFixed(1)}</td><td class="num">${r.rec}</td><td class="num">${r.insp}</td><td class="num">${r.clr}</td><td class="num">${r.held}</td><td class="num">${r.rej}</td><td class="num">${r.ec}</td><td class="num">${r.ho}</td><td class="num">${r.pend}</td><td class="num ${v===0?'var-ok':'var-bad'}">${v}</td><td>${reason}</td><td>${rem}</td><td><span class="badge ${stB}">${r.st}</span>${r.by?`<span class="tby">${r.by} · ${r.at}</span>`:''}</td><td class="actions">${act}</td></tr>`;}).join('');
-  const bad=TALLY.filter(r=>tVar(r)!==0).length, so=TALLY.filter(r=>r.st==='SIGNED_OFF').length;
-  document.getElementById('tallyMeta').textContent=TALLY.length+' heats · '+so+' signed off · '+bad+' with variance';
+  var rows=TALLY.map(function(r,i){
+    var ok=tOK(r), open=r.st!=='SIGNED_OFF', dz=opsView?' disabled':'';
+    var stB={OPEN:'b-pend',SIGNED_OFF:'b-done',REOPENED:'b-prog'}[r.st]||'b-draft';
+    var chips='<span class="badge b-info" title="WKL-F75 · Tally scope — from the route stage">'+r.scope+'</span> '
+      +'<span class="badge b-draft" title="WKL-F78 · Quantity basis — from the route stage">'+r.basis+'</span>';
+    var line=function(o,cls){return Object.keys(o).map(function(k){
+      return '<span class="tly '+cls+'"><b>'+(BKT[k]||k)+'</b> '+tQty(o[k],r.basis)+'</span>';}).join('');};
+    var vtxt=(r.basis==='PIECES')?(tVarP(r)+' pcs')
+            :(r.basis==='WEIGHT')?(tVarW(r).toFixed(3)+' t ('+tWpct(r).toFixed(2)+' %)')
+            :(tVarP(r)+' pcs / '+tVarW(r).toFixed(3)+' t ('+tWpct(r).toFixed(2)+' %)');
+    var tol=(r.basis==='PIECES')?('±'+r.tolP+' pcs')
+           :(r.basis==='WEIGHT')?('±'+r.tolW.toFixed(2)+' %')
+           :('±'+r.tolP+' pcs · ±'+r.tolW.toFixed(2)+' %');
+    var rsn=tReasons(r), sel=rsn.filter(function(x){return x.code===r.reason;})[0];
+    var reason=open?('<select onchange="TALLY['+i+'].reason=this.value;renderTally()"'+dz+' title="WKL-F87 · Mismatch reason — Tally Reason master (BR-MTRS-01)"><option value="">—</option>'
+        +rsn.map(function(o){return '<option '+(o.code===r.reason?'selected':'')+' value="'+o.code+'">'+o.name+(o.loss?' · loss':'')+'</option>';}).join('')+'</select>')
+      :(sel?sel.name:'—');
+    var needRem=!!(sel&&sel.rem);
+    var rem=open?('<input value="'+r.rem+'" placeholder="'+(needRem?'remark required':'remark')+'" onchange="TALLY['+i+'].rem=this.value;renderTally()"'+dz+' title="WKL-F88 · Tally remarks"'+((needRem&&!r.rem)?' style="border-color:#d32f2f"':'')+'/>')
+      :(r.rem||'—');
+    var blocked=(!ok&&!r.reason)||(needRem&&!r.rem);
+    var act=open?('<button class="btn btn-primary btn-sm"'+dz+(blocked?(' disabled title="'+((!ok&&!r.reason)?'Choose the mismatch reason first':'This reason needs a remark')+'"'):'')+' onclick="tallySign('+i+')"><i class="fa-solid fa-signature"></i> Sign off</button>')
+      :('<button class="btn btn-ghost btn-sm"'+dz+' onclick="tallyReopen('+i+')"><i class="fa-solid fa-rotate-left"></i> Reopen</button>');
+    return '<tr>'
+      +'<td class="mono">'+r.key+'<span class="tby">'+r.op+' · '+r.stage+'</span></td>'
+      +'<td>'+chips+'</td>'
+      +'<td title="WKL-F79 · Source quantity">'+line(r.src,'tly-src')+'</td>'
+      +'<td class="cell-acc" title="WKL-F80 · Accounted lines">'+line(r.acc,'tly-acc')+'</td>'
+      +'<td class="cell-ref" title="WKL-F83 · Reference lines — outside the arithmetic">'+(Object.keys(r.ref).length?line(r.ref,'tly-ref'):'—')+'</td>'
+      +'<td class="num '+(ok?'var-ok':'var-bad')+'" title="WKL-F84 / F85 · Variance = source − accounted">'+vtxt
+      +'<span class="tby">tolerance '+tol+'</span></td>'
+      +'<td><span class="badge '+(ok?'b-done':'b-hold')+'" title="WKL-F86 · Within tolerance">'+(ok?'Within':'Outside')+'</span></td>'
+      +'<td>'+reason+'</td><td>'+rem+'</td>'
+      +'<td><span class="badge '+stB+'">'+r.st+'</span>'+(r.by?('<span class="tby">'+r.by+' · '+r.at+'</span>'):'')+'</td>'
+      +'<td class="actions">'+act+'</td></tr>';
+  });
+  var H=[['Tally key','WKL-F76 · Tally key · WKL-F77 · Operation / route stage'],
+   ['Scope / basis','WKL-F75 · Scope · WKL-F78 · Quantity basis'],
+   ['Source','WKL-F79 · Source quantity — produced, or what entered the stage'],
+   ['Accounted','WKL-F80 · Accounted lines · WKL-F81 pieces · WKL-F82 weight'],
+   ['Reference','WKL-F83 · Reference lines — shown for context, outside the arithmetic'],
+   ['Variance','WKL-F84 pieces · WKL-F85 weight'],['Tolerance','WKL-F86 · Within tolerance'],
+   ['Mismatch reason','WKL-F87 · From the Tally Reason master'],
+   ['Remarks','WKL-F88 · Required when the reason says so'],
+   ['Status','WKL-F89 · OPEN / SIGNED_OFF / REOPENED with signed by / at']];
+  document.getElementById('tallyHead').innerHTML='<tr>'+H.map(function(h){return '<th title="'+h[1]+' · SOW: SMSQA8-66">'+h[0]+'</th>';}).join('')+'<th class="col-actions"></th></tr>';
+  document.getElementById('tallyBody').innerHTML=rows.join('');
+  var bad=TALLY.filter(function(r){return !tOK(r);}).length, so=TALLY.filter(function(r){return r.st==='SIGNED_OFF';}).length;
+  document.getElementById('tallyMeta').textContent=TALLY.length+' tallies · '+so+' signed off · '+bad+' outside tolerance';
 }
-function tallySign(i){const r=TALLY[i];if(tVar(r)!==0&&!r.reason){mesToast('Select the mismatch reason — variance '+tVar(r),'err');return;}r.st='SIGNED_OFF';r.by='QA user';r.at='21-Sep 12:05';renderTally();mesToast('Tally signed off — heat '+r.heat+(tVar(r)?' (variance '+tVar(r)+', '+r.reason+')':''),'ok');}
-function tallyReopen(i){const r=TALLY[i];r.st='REOPENED';r.by='';r.at='';renderTally();mesToast('Tally reopened — heat '+r.heat,'warn');}
+function tallySign(i){var r=TALLY[i];
+  if(!tOK(r)&&!r.reason){mesToast('Choose the mismatch reason — the variance is outside tolerance','err');return;}
+  var sel=tReasons(r).filter(function(x){return x.code===r.reason;})[0];
+  if(sel&&sel.rem&&!r.rem){mesToast('"'+sel.name+'" needs a remark','err');return;}
+  r.st='SIGNED_OFF';r.by='QA user';r.at='21-Sep 12:05';renderTally();
+  mesToast('Tally signed off — '+r.key+(tOK(r)?'':(' (outside tolerance, '+r.reason+')')),tOK(r)?'ok':'warn');}
+function tallyReopen(i){var r=TALLY[i];r.st='REOPENED';r.by='';r.at='';renderTally();mesToast('Tally reopened — '+r.key,'warn');}
 renderBody();renderTally();   /* re-render with the feedback chips and conditional items seeded above */
 </script>
 <script>
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
