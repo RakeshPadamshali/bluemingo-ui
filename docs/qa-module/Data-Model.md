@@ -407,6 +407,7 @@ Sampling rules decide **how many / what size / where** samples are drawn per hea
 |-------|------|-----|------|-------------|
 | `sampling_rule_id` | bigint | PK | N | |
 | `operation_id` | bigint | FK→`mes_operations` | N | Sampling stage |
+| `path_id` | bigint | FK→`mes_qc_inspection_path` | Y | Optional inspection-path scope — the rule applies only to material allocated to that path, which is what makes the sampling matrix readable by process path and inspection route (SOW 10); blank = every path |
 | `material_form_id` | bigint | FK→`mes_material_forms` | Y | Product-form scope (G1) |
 | `product_category_id` | bigint | FK→`mes_product_category_input` | Y | |
 | `sku_id` | bigint | FK→`mes_skus` | Y | |
@@ -423,6 +424,8 @@ Sampling rules decide **how many / what size / where** samples are drawn per hea
 | | | | | **+ audit tail** |
 
 *The rule's **test plan** is held in §7.5.2 `mes_qc_sampling_rule_test` (tests selected from the Test master) — the default tests at issue.*
+
+*Resolution counts the path with the other axes, most specific first: a rule scoped to a path beats an unscoped one at the same operation, which is how one operation samples differently on the annealing route and on the bright-bar route. The remaining columns of the Master Data additions (§28.2 `trigger_event`, `trigger_n`, `route_stage`) govern when inside the stage the rule fires; the path decides whether it applies at all.*
 
 ### 7.5.4 `mes_qc_sample` — **extend §7.1** for issue
 Add: `sample_type_id` FK→`mes_qc_sample_type` · `sampling_rule_id` FK→`mes_qc_sampling_rule` (Y) · `ht_card_no varchar(100)` (job card) · `condition varchar(100)` (material/HT condition) · `issue_date timestamptz` · `completion_date timestamptz` · `testing_required varchar(255)` (tests to perform — defaults from the sampling rule §7.5.2, QA-overridable) · `agency_id` FK→`mes_qc_agency` (Y) · `barcode varchar(100)` (else reuse `sample_number`) · `issue_type varchar(30)`. *(Maps to the QA-LAB "Production sample issue" fields: Ht Card, Grade, Heat, RM Size, UID, Condition, Issue/Receiving/Completion dates, Sample Len/Pcs/Wt, Testing Req.)*
@@ -2375,7 +2378,7 @@ Check: the parameters the evaluator needs are present and the others are empty �
 | `tally_basis` | varchar(10) | | Y | PIECES / WEIGHT / BOTH |
 | `tally_tol_pieces` | int | | Y | |
 | `tally_tol_weight_pct` | numeric(5,2) | | Y | |
-| `allow_split` | boolean | | N | Default false; true lets Quality start a batch split at this operation (SOW 69, 34.13). Read at operation scope: a split is offered when any active row in scope allows it |
+| `allow_split` | boolean | | N | Default false; true lets Quality start a batch split at this operation (SOW 69, 34.12). Read at operation scope: a split is offered when any active row in scope allows it |
 
 ### 34.8 `mes_qc_usage_decision` — additions (SMS review v3) (SOW 96)
 | Field | Type | Key | Null | Description |
@@ -2392,7 +2395,7 @@ Check: the parameters the evaluator needs are present and the others are empty �
 - `v_qc_heat_plan` — read-only projection of the Planning design's casting indent lines and rolling slot with the QA readiness flags (pit-cooling hours from §28 `pit_cooling_rule` or the PSN, ABGM from §28 `grinding_rule`, special tests from the PSN, open chemistry hold from `clearance`) — SOW 1.
 - `v_qc_location_history` — the moves of §34.4 joined with the location master for the consolidated tracking view — SOW 104.
 - `v_qc_dispatch_readiness` — the dispatch verdict per unit with its obligations, concession, certificate and age (§34.11) — SOW 78.
-- Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) is designed in 34.13 and executed by the production-confirmation application through the Batch Derivation Rules of §28; QA clearance after ABGM grinding (SOW 84) remains an open item for JSW.
+- Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) is designed in 34.12 and executed by the production-confirmation application through the Batch Derivation Rules of §28; QA clearance after ABGM grinding (SOW 84) remains an open item for JSW.
 - Code conversion and batch identity after the decision (SOW 81, 82, 88, 89) and the grinding route (SOW 85, 86) are answered by the Master Data design (Form Conversion Rules, Batch Derivation Rules, Grinding Rules) and the ABGM screen of the Operations design (SOW 87); no QA table.
 
 ### 34.11 Dispatch readiness — the Quality verdict at the dispatch point (SOW 78)
@@ -2468,13 +2471,13 @@ Assembled from `mes_qc_usage_decision` (the current row of the supersession chai
 - The override is only reachable through the privileged action `QA_DISPATCH_OVERRIDE` (platform action master, Master Data design); without it the panel shows the block and offers nothing.
 - Ageing needs no table: the threshold is a row of `mes_qc_notification_rule` with the event QA_CLEARED_NOT_DISPATCHED and the number of days as its parameter, so each plant sets its own patience.
 
-### 34.13 Batch split — Quality decides, the production-confirmation application executes (SOW 69, MQA 25)
+### 34.12 Batch split — Quality decides, the production-confirmation application executes (SOW 69, MQA 25)
 
 A batch is divided for three reasons, and they are not one thing. Part of it passes while part is held or rejected; part must take a different onward route — a conditional finding sending it to grinding, or a downgrade onto another order — while the rest goes direct; or a piece is physically cut, so one piece becomes two. The first two divide an **identity**: nothing is cut, and the split is a consequence of a quality decision. The third divides **material**, and Quality asks for it only when there is a reason to. Both kinds carry a **reason**, and the reasons are master rows.
 
 Batch numbers, inventory and lineage belong to the production-confirmation application, which already derives a child batch on the SPLIT event — numbering, suffix, weight rule and characteristic map (Master Data design, §28). Quality therefore **requests**, naming the parts and what each is for, and that application **executes** and returns the child batch numbers. A physical split additionally waits for the floor to confirm the cut before the children are usable; a decision split does not.
 
-#### 34.13.1 `mes_qc_split_reason` — split reason master (prefix MSPL)
+#### 34.12.1 `mes_qc_split_reason` — split reason master (prefix MSPL)
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `split_reason_id` | bigint | PK | N | |
@@ -2487,7 +2490,7 @@ Batch numbers, inventory and lineage belong to the production-confirmation appli
 | `active` | boolean | | N | A reason in use is deactivated, never deleted |
 | | | | | **+ audit tail** |
 
-#### 34.13.2 `mes_qc_split_request` — one request per split
+#### 34.12.2 `mes_qc_split_request` — one request per split
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `split_request_id` | bigint | PK | N | |
@@ -2518,7 +2521,7 @@ Batch numbers, inventory and lineage belong to the production-confirmation appli
 
 A request is cancelled before execution and never edited after it; a correction is a new request. Status order is REQUESTED → EXECUTED → (PHYSICAL only) CUT_CONFIRMED, with CANCELLED reachable from REQUESTED and FAILED from the execution attempt.
 
-#### 34.13.3 `mes_qc_split_request_line` — one line per part
+#### 34.12.3 `mes_qc_split_request_line` — one line per part
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `split_line_id` | bigint | PK | N | |
@@ -2536,22 +2539,51 @@ A request is cancelled before execution and never edited after it; a correction 
 | `child_material_number` | varchar(50) | | Y | Piece id of the child, where the split is per piece |
 | | | | | **+ audit tail** |
 
-#### 34.13.4 What the children inherit, and what reconciles
+#### 34.12.4 What the children inherit, and what reconciles
 The children are not new material. Each inherits the heat, the pinned route and the position in it the parent stood at, and every quality result the parent had earned; the parent-to-child lineage is the platform's `mes_batch_relations` (event SPLIT), which is what `v_qc_material_feedback_history` already walks, so a certificate for a child shows the parent's tests without a second register line. Anything the stage still owed is copied to each child, and the usage decision is then recorded **per child** rather than as a partial decision on the parent. Where a laboratory result is outstanding, the obligation stays with the child carrying the sampled piece and the others inherit the result as evidence (§35.3 draw and gate).
 
 The parts must add back up to the parent on each basis the stage works in, within **the stage's tally tolerance** (34.2 `tally_tol_pieces`, `tally_tol_weight_pct`) — no second tolerance is defined. Material already certified or dispatched is not split: it returns through the recall path (`mes_qc_fg_recall`, S12).
 
-### 34.12 Platform change requests (raised, not built here)
+### 34.13 Chemistry divert — re-purposing a heat at the chemistry decision (SOW 45)
+
+A heat sometimes analyses outside the grade or product spec it was cast for while sitting comfortably inside another one. Three verdicts answer what to do with the heat as it stands — accept, accept with the chemistry corrected, accept under deviation — and none of them answers the fourth case the SOW names: the heat is no longer that grade, it is another. **Divert** is that decision.
+
+It is the **same mechanism as the downgrade on the usage decision** (FDD BR-SLV-05), not a second one: the permitted targets come from the grade hierarchy `mes_qc_grade_downgrade` (S5.7), the material is re-matched against open demand for the target, and the outcome is recorded as MATCHED / ALLOCATED / STOCK. Only the trigger differs — the chemistry of a whole heat before it is rolled, rather than the disposition of a piece that failed later.
+
+#### 34.13.1 `mes_qc_clearance` — additions (chemistry divert) (SOW 45)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `divert_to_grade` | varchar(50) | | Y | The grade the heat becomes — a permitted target of `mes_qc_grade_downgrade` for the heat's grade, or the heat's own grade when only the product spec changes |
+| `divert_to_tdc_id` | bigint | FK → `mes_tdc_input` | Y | The product spec the heat becomes, where the divert moves it onto another one |
+| `divert_reason` | varchar(255) | | Y | Why the heat is re-purposed; mandatory when `result` = DIVERTED |
+| `realloc_order_line_id` | bigint | FK → `mes_order_line_items` | Y | The open order line the heat is re-matched to (the same rematch as the usage-decision downgrade) |
+| `realloc_status` | varchar(20) | | Y | MATCHED / ALLOCATED / STOCK / NONE — outcome of the open-order rematch, one vocabulary with `mes_qc_salvage.realloc_status` |
+| `divert_applied` | varchar(10) | | Y | PENDING / APPLIED / FAILED — whether the production-confirmation application has stamped the new grade and spec on the heat and moved the pegging (QA-SMS-R-09) |
+| `divert_applied_at` | timestamptz | | Y | When that came back |
+
+`result` gains **DIVERTED** alongside CLEARED / HOLD / REJECTED / CONDITIONAL: the heat is cleared, but as something else. The decision is one more row of the same clearance history — never an edit of an earlier one — and it carries the deciding user and time in the existing `cleared_by` / `cleared_date`.
+
+#### 34.13.2 Which targets may be offered
+A target is offered only when the analysis in hand satisfies it, element by element, on the **same resolution ladder the screen already uses** (FDD BR-HCH-03): the target spec's APPLIED limits where the candidate carries a spec, else the works grade band of `mes_qc_grade_chemistry`, and report-only elements never block. Candidates are the permitted targets of `mes_qc_grade_downgrade` for the heat's grade, in its priority order, plus the heat's own grade where only the spec changes; each is shown with the open demand found for it. Where no candidate fits, no divert is offered and the heat stays with its hold, its corrective action or acceptance under deviation.
+
+#### 34.13.3 What follows a divert, and what blocks it
+- **The limits change, so everything resolved from them is resolved again:** the heat's bands come from the new spec and grade, and the quality content pinned on its route stages is re-resolved at the new values (S35.1) — a divert before rolling is exactly the case the pinning ladder exists for.
+- **The route may change** and **the pegging moves**: the new grade and spec are stamped on the heat and the demand link moves from the original order line to the matched one. Both belong to the production-confirmation application and the Allocation application and are raised as QA-SMS-R-09; `divert_applied` carries the answer.
+- **The melting shop is told**: the decision leaves over the same outbound chemistry channel that carries the corrected values and the acceptance-under-deviation decision, so both systems hold one grade for the heat.
+- **Guards.** A divert is not offered once any material of the heat has been cleared at a later stage or certified (`mes_qc_clearance` rows at later operations, `mes_qc_certificate`) — that material returns through the recall path. The reason is mandatory. The decision needs the privileged action `QA_CHEMISTRY_DIVERT` (platform action master, Master Data design) and the same multi-level sign-off as acceptance under deviation, recorded in `mes_qc_approval` (S10.3); until that sign-off completes the divert stands as the current decision but `divert_applied` remains PENDING.
+
+### 34.14 Platform change requests (raised, not built here)
 | Request | Subject | SOW |
 |---|---|---|
 | QA-SMS-R-01 | Caster pulpit stations (CASTER_CCM1, CASTER_CCM2) so the caster crew works on the MES pulpit screen; pulpit note type QA_FEEDBACK with pop-up acknowledgement that never blocks a confirmation; the acknowledgement (user, time, remark) readable by the Quality module. Designed in the Operations design and raised there as OPS-R-15 | 15, 16 |
 | QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from an external location system through the integration layer | 65, 90, 100–104 |
 | QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; the decision code, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, by the conditioning operation on the decision (no form conversion when keep-code) and by scrap. The decision vocabulary is Quality master data (34.5.1), so `qa_decision` holds a code the Quality module supplies rather than a fixed list, and the receiving side acts on the flags sent with it | 91–97 |
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
-| QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
+| QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row. The same confirmation must also **capture the pit and the pit entry time** at the consolidated-inspection step and expose both to the Quality module, since the cooling countdown is derived from them and Quality never enters them (BR-PIT-01, BR-PIT-06) | 1, 23, 24, 25 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
-| QA-SMS-R-08 | Batch split on Quality's request: execute the split with the Batch Derivation Rules (event SPLIT), return one child batch number per request line, confirm the physical cut where the request asks for one, and report a failure back with its reason. The parent-child lineage is written to `mes_batch_relations` as today | 69 |
 | QA-SMS-R-07 | Quality verdict at the dispatch point: show the verdict, its reason and the obligations on the dispatch screens (UID Dispatch Details, Generate Unload Slip); refuse the ready tick and the dispatch status while the verdict is BLOCKED, writing the Quality reason into the existing lock reason; send an override (user, time, obligation, reason, dispatch reference) back to the Quality module | 78 |
+| QA-SMS-R-08 | Batch split on Quality's request: execute the split with the Batch Derivation Rules (event SPLIT), return one child batch number per request line, confirm the physical cut where the request asks for one, and report a failure back with its reason. The parent-child lineage is written to `mes_batch_relations` as today | 69 |
+| QA-SMS-R-09 | Chemistry divert: stamp the grade and product spec a diverted heat becomes on the heat and its material, move the demand link from the original order line to the one Quality matched, and return the outcome so the decision can show APPLIED or FAILED. The decision also reaches the melting-shop system over the existing outbound chemistry channel | 45 |
 
 The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.
 

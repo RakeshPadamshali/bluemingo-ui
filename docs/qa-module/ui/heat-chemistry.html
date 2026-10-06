@@ -161,6 +161,25 @@ table.hist-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 .aud-inline input{padding:8px 10px;border:1px solid #ffcc80;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;width:190px;}
 .aud-inline input:focus{outline:none;border-color:var(--color-warning);box-shadow:0 0 0 3px rgba(245,124,0,.15);}
 .badge.b-aud{background:rgba(245,124,0,.14);color:#e65100;}
+.badge.b-dvt{background:rgba(2,119,189,.14);color:#01579b;}
+/* SMSQA7-45 - fourth decision: divert the heat to the grade / spec its chemistry fits */
+.btn-dvt{background:#e3f2fd;color:#01579b;border:1px solid #90caf9;}
+.btn-dvt:hover:not(:disabled){background:#bbdefb;}
+.dv-panel{margin-top:var(--sp3);border:1px solid #90caf9;border-radius:var(--r-sm);background:#f5fbff;padding:var(--sp3);}
+.dv-head{display:flex;align-items:center;gap:var(--sp2);font-weight:600;color:#01579b;font-size:var(--fs-sm);margin-bottom:var(--sp2);}
+.dv-grid{width:100%;border-collapse:collapse;font-size:var(--fs-sm);background:#fff;}
+.dv-grid th,.dv-grid td{padding:7px 10px;border-bottom:1px solid var(--color-border);text-align:left;}
+.dv-grid th{background:#eef6fc;font-weight:600;color:var(--color-text-secondary);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.3px;}
+.dv-grid tr.sel td{background:rgba(2,119,189,.07);}
+.dv-grid td.blk{color:var(--color-danger);}
+.fitchip{display:inline-block;padding:1px 8px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;}
+.fitchip.f-yes{background:rgba(76,175,80,.16);color:#2e7d32;}
+.fitchip.f-no{background:rgba(211,47,47,.12);color:#c62828;}
+.dv-form{display:flex;align-items:center;gap:var(--sp2);flex-wrap:wrap;margin-top:var(--sp3);}
+.dv-form input{flex:1;min-width:240px;padding:8px 10px;border:1px solid #90caf9;border-radius:var(--r-sm);font-size:var(--fs-sm);font-family:inherit;}
+.dv-form input:focus{outline:none;box-shadow:0 0 0 3px rgba(2,119,189,.15);}
+.dv-none{color:var(--color-danger);font-size:var(--fs-sm);}
+.dv-note{margin-top:var(--sp2);font-size:var(--fs-xs);color:var(--color-text-hint);}
 /* SMSQA7-45 — per-correction write-back tag (mes_qc_heat_chemistry_hist.writeback_status §25.3; outbound QA → SMS MES §25.8) */
 .wbtag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
 .wbtag.wb-na{background:rgba(158,158,158,.14);color:#9e9e9e;}
@@ -414,7 +433,7 @@ const HEATS=[
  {heat:'2526-16426',grade:'416',tdc:'TDC-003922',sample:'CHM-2526-0187',cast:'23-Jun 20:10',furnace:'Furnace-20T',lab:'Wet Lab',state:'PASS'},
  {heat:'2526-16798',grade:'304L',tdc:'TDC-004810',sample:'CHM-2526-0186',cast:'23-Jun 18:55',furnace:'Furnace-6T',lab:'Central Lab',state:'HOLD'}
 ];
-const BADGE={PASS:'b-pass',FAIL:'b-fail',PENDING:'b-pend',HOLD:'b-hold',CLEARED:'b-clr',CONDITIONAL:'b-aud'}; /* CONDITIONAL = Accepted Under Deviation (SOW SMSQA7-45) */
+const BADGE={PASS:'b-pass',FAIL:'b-fail',PENDING:'b-pend',HOLD:'b-hold',CLEARED:'b-clr',CONDITIONAL:'b-aud',DIVERTED:'b-dvt'}; /* CONDITIONAL = Accepted Under Deviation (SOW SMSQA7-45) */
 
 /* ===== deterministic mock actuals ===== */
 function rnd(v){const a=Math.abs(v);return a<1?+v.toFixed(3):a<100?+v.toFixed(2):Math.round(v);}
@@ -438,6 +457,32 @@ HEATS.forEach(h=>{
     store[h.heat]._src.Ladle='L2';
   }
 });
+
+
+/* ===== SOW SMSQA7-45 - divert targets =====
+   The candidates are the permitted targets of the grade-downgrade hierarchy
+   (mes_qc_grade_downgrade: from_grade -> to_grade, priority) - the same master the
+   usage-decision downgrade uses. Each carries the band the analysis is judged against
+   and the open demand the rematch found (mes_order_line_items). */
+const DIVERT_TARGETS={
+ '304L':[
+   {grade:'304',  spec:'TDC-004933', prio:1, band:{C:[null,0.08],Mn:[null,2.00],Si:[null,0.75],S:[null,0.030],P:[null,0.045],Cr:[18.0,20.0],Ni:[8.0,10.5]}, demand:'SO-2526-0518 line 10 - RO 68 Dia, 22.4 t open', realloc:'MATCHED'},
+   {grade:'302',  spec:'', prio:2, band:{C:[null,0.15],Mn:[null,2.00],Cr:[17.0,19.0],Ni:[8.0,10.0]}, demand:'no open demand - secondary stock', realloc:'STOCK'}],
+ '316L':[
+   {grade:'316',  spec:'TDC-006210', prio:1, band:{C:[null,0.08],Mn:[null,2.00],Cr:[16.0,18.0],Ni:[10.0,14.0],Mo:[2.0,3.0]}, demand:'SO-2526-0491 line 20 - RO 45 Dia, 9.8 t open', realloc:'MATCHED'}],
+ '416':[
+   {grade:'416 (commercial)', spec:'', prio:1, band:{C:[null,0.15],Mn:[null,1.25],Cr:[12.0,14.0],S:[0.15,0.35]}, demand:'no open demand - secondary stock', realloc:'STOCK'}],
+ '17-4PH':[
+   {grade:'630 H1150', spec:'TDC-004301', prio:1, band:{C:[null,0.07],Cr:[15.0,17.5],Ni:[3.0,5.0],Cu:[3.0,5.0],Nb:[0.15,0.45]}, demand:'SO-2526-0463 line 30 - RO 32 Dia, 6.1 t open', realloc:'MATCHED'}]
+};
+/* Two analyses are pinned so the divert cases are reproducible on screen:
+   2526-16776 fails 304L on carbon only and fits 304; 2526-16798 fails on chromium,
+   which 304 cannot take either, so that candidate shows NO with its blocking element. */
+const DIVERT_DEMO={
+ '2526-16776':{C:0.042,Mn:1.42,Si:0.48,S:0.021,P:0.032,Cr:18.90,Ni:9.40,Mo:0.28,Cu:0.31,N:0.062},
+ '2526-16798':{C:0.028,Mn:1.38,Si:0.51,S:0.019,P:0.030,Cr:17.60,Ni:9.10,Mo:0.26,Cu:0.29,N:0.058}
+};
+Object.keys(DIVERT_DEMO).forEach(hn=>{ if(store[hn]) Object.assign(store[hn].Ladle, DIVERT_DEMO[hn]); });
 
 let cur=0, curType='Ladle';
 
@@ -606,13 +651,14 @@ function renderDetail(){
       </table>
       <div class="hc-legend">Limit source: <span class="srctag t-tdc">TDC</span> (customer spec) › <span class="srctag t-grd">GRADE</span> (works spec §5.9) › <span class="srctag t-rep">REPORT</span> report-only · elements from the Element master</div>
       ${histPanelHtml(h)}
+      ${divertPanelHtml(h)}
     </div>
     <div class="hc-foot">
-      <div class="ov">Overall chemistry: <span class="badge big ${ov==='PASS'?'b-pass':ov==='FAIL'?'b-fail':'b-pend'}" id="ovBadge">${ov}</span> <span class="hc-note" id="hcNote"></span></div>
+      <div class="ov">Overall chemistry: <span class="badge big ${ov==='PASS'?'b-pass':ov==='FAIL'?'b-fail':'b-pend'}" id="ovBadge">${ov}</span>${h.state==='DIVERTED'?` <span class="badge b-dvt" title="Chemistry decision: diverted to ${h.divert?h.divert.grade:''} (SOW SMSQA7-45)">DIVERTED \u2192 ${h.divert?h.divert.grade:''}</span>`:''} <span class="hc-note" id="hcNote"></span></div>
       <div class="dec-wrap" id="decWrap">${decisionHtml(ov,h)}</div>
     </div>`;
 }
-function setType(t){curType=t;audOpen=false;renderDetail();}
+function setType(t){curType=t;audOpen=false;divertOpen=false;divertPick=-1;renderDetail();}
 function onEdit(inp){
   const h=HEATS[cur];
   trackChange(h,inp.dataset.el,store[h.heat][curType][inp.dataset.el],inp.value); /* SMSQA7-46: queue Old→New; logged to history on Save */
@@ -691,10 +737,72 @@ function decisionHtml(ov,h){
   const aud=audOpen
     ? `<span class="aud-inline"><input id="audRef" placeholder="Deviation ref — e.g. DEV-${h.heat}" onkeydown="if(event.key==='Enter')confirmAUD()"/><button class="btn btn-aud" onclick="confirmAUD()"><i class="fa-solid fa-file-signature"></i> Record AUD</button><button class="btn btn-ghost" onclick="cancelAUD()">Cancel</button></span>`
     : `<button class="btn btn-aud" onclick="openAUD()" ${canAud?'':'disabled'} title="${canAud?'Record CONDITIONAL clearance against a deviation reference':'Enabled when chemistry is out of spec'}"><i class="fa-solid fa-file-signature"></i> Accepted Under Deviation</button>`;
+  const canDiv=ov==='FAIL'&&divertCandidates(h).length>0;
+  const div=`<button class="btn btn-dvt" onclick="openDivert()" ${canDiv?'':'disabled'} title="${canDiv?'Re-purpose the heat to the grade or spec its chemistry fits (SOW SMSQA7-45) - needs the divert action and sign-off':'Enabled when the chemistry is out of spec and a permitted target fits the analysis'}"><i class="fa-solid fa-shuffle"></i> Divert heat</button>`;
   return hold
     +`<button class="btn btn-primary" onclick="decideOk()" ${canOk?'':'disabled'} title="${canOk?'Record chemistry clearance (CLEARED)':'Enabled when overall chemistry is PASS'}"><i class="fa-solid fa-circle-check"></i> Ok</button>`
     +`<button class="btn btn-ghost" onclick="decideOkEdit()" ${canEdit?'':'disabled'} title="${canEdit?'Clear and queue corrected values for SMS MES write-back':'Enabled when overall is PASS and this heat has pending / committed corrections'}"><i class="fa-solid fa-pen-to-square"></i> Ok with edit</button>`
-    +aud;
+    +aud+div;   /* the fourth decision is always offered, disabled until a target fits (as AUD is) */
+}
+
+/* ===== SOW SMSQA7-45 - divert: candidates, feasibility, decision =====
+   A candidate is offered only when the analysis in hand satisfies every banded element
+   of the target, on the same ladder as the grid (the target spec's applied limits where
+   it carries one, else the works grade band). mes_qc_clearance gains divert_to_grade,
+   divert_to_tdc_id, divert_reason, realloc_order_line_id, realloc_status, divert_applied. */
+let divertOpen=false, divertPick=-1;
+function divertCandidates(h){
+  const vals=store[h.heat]?store[h.heat][curType]:{};
+  return (DIVERT_TARGETS[h.grade]||[]).map(c=>{
+    let fits=true, blocking='';
+    Object.keys(c.band).forEach(el=>{
+      const v=parseFloat(vals[el]); if(isNaN(v)) return;
+      const [mn,mx]=c.band[el];
+      if(mn!=null&&v<mn&&fits){fits=false;blocking=el+' '+v.toFixed(v<1?3:2)+' < '+mn.toFixed(mn<1?3:2);}
+      else if(mx!=null&&v>mx&&fits){fits=false;blocking=el+' '+v.toFixed(v<1?3:2)+' > '+mx.toFixed(mx<1?3:2);}
+    });
+    return Object.assign({},c,{fits:fits,blocking:blocking});
+  });
+}
+function divertPanelHtml(h){
+  if(!divertOpen) return '';
+  const cands=divertCandidates(h), any=cands.some(c=>c.fits);
+  const rows=cands.map((c,i)=>`<tr class="${divertPick===i?'sel':''}">
+      <td>${c.fits?`<input type="radio" name="dvt" ${divertPick===i?'checked':''} onclick="pickTarget(${i})"/>`:''}</td>
+      <td><b>${c.grade}</b></td><td>${c.spec||'<span style="color:var(--color-text-hint)">\u2014</span>'}</td>
+      <td><span class="fitchip ${c.fits?'f-yes':'f-no'}">${c.fits?'FITS':'NO'}</span></td>
+      <td class="${c.fits?'':'blk'}">${c.fits?'<span style="color:var(--color-text-hint)">every banded element inside</span>':c.blocking}</td>
+      <td>${c.demand}</td><td>${c.fits?c.realloc:'<span style="color:var(--color-text-hint)">\u2014</span>'}</td></tr>`).join('');
+  return `<div class="dv-panel" id="dvPanel">
+    <div class="dv-head"><i class="fa-solid fa-shuffle"></i> Divert heat ${h.heat} \u2014 permitted targets for ${h.grade}
+      <span style="font-weight:400;color:var(--color-text-hint)">(grade-downgrade hierarchy, priority order \u2014 the same master the usage-decision downgrade uses)</span></div>
+    <table class="dv-grid">
+      <thead><tr><th></th><th>Grade</th><th>Product spec</th><th>Fits</th><th>Blocking element</th><th>Open demand</th><th>Re-allocation</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${any?`<div class="dv-form">
+      <input id="dvReason" placeholder="Reason \u2014 e.g. carbon above the low-carbon limit; chemistry fits 304"/>
+      <button class="btn btn-dvt" onclick="recordDivert()"><i class="fa-solid fa-file-signature"></i> Record divert</button>
+      <button class="btn btn-ghost" onclick="cancelDivert()">Cancel</button></div>`
+     :`<div class="dv-form"><span class="dv-none">No permitted target fits this analysis \u2014 the heat stays on hold, under corrective action or accepted under deviation.</span>
+      <button class="btn btn-ghost" onclick="cancelDivert()">Close</button></div>`}
+    <div class="dv-note">A divert needs the privileged action and the same multi-level sign-off as a deviation concession; the new grade and spec are then stamped on the heat and the demand link moved (applied state PENDING \u2192 APPLIED / FAILED).</div>
+  </div>`;
+}
+function openDivert(){ if(overall()!=='FAIL') return; divertOpen=true; divertPick=divertCandidates(HEATS[cur]).findIndex(c=>c.fits); renderDetail(); }
+function cancelDivert(){ divertOpen=false; divertPick=-1; renderDetail(); }
+function pickTarget(i){ divertPick=i; renderDetail(); }
+function recordDivert(){
+  const h=HEATS[cur], c=divertCandidates(h)[divertPick];
+  if(!c||!c.fits){ mesToast('Select a target that fits the analysis','warn'); return; }
+  const r=document.getElementById('dvReason'), reason=(r&&r.value.trim())||'';
+  if(!reason){ mesToast('A reason is mandatory on a divert','warn'); if(r) r.focus(); return; }
+  divertOpen=false; divertPick=-1;
+  h.state='DIVERTED'; h.divert={grade:c.grade,spec:c.spec,realloc:c.realloc,demand:c.demand};
+  renderList(); renderDetail();
+  const nd=document.getElementById('hcNote');
+  if(nd){ nd.textContent='\u2192 Diverted to '+c.grade+(c.spec?' / '+c.spec:'')+' \u2014 re-allocation '+c.realloc+'; sign-off routed, grade change pending'; nd.className='hc-note warn'; }
+  mesToast('Heat '+h.heat+' diverted to '+c.grade+' \u2014 '+(c.realloc==='MATCHED'?'re-matched to an open order':'moved to secondary stock'),'ok');
 }
 function decRefresh(){ const d=document.getElementById('decWrap'); if(d) d.innerHTML=decisionHtml(overall(),HEATS[cur]); }
 function decideOk(){ if(overall()!=='PASS') return; doClearance(); }   /* existing CLEARED path */

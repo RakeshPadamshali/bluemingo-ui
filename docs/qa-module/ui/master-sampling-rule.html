@@ -269,13 +269,17 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 </div></div>
 <script>
 /* Size basis: codes from the Size Basis master (mes_qc_size_basis §5.1). Sampling basis: sampling_rule.sampling_basis (NOT NULL, default PER_HEAT).
-   TDC: optional scope (sampling_rule.tdc_id) — a TDC-scoped rule overrides the generic one (most-specific wins). */
+   TDC: optional scope (sampling_rule.tdc_id) — a TDC-scoped rule overrides the generic one (most-specific wins).
+   Inspection path: optional scope (sampling_rule.path_id → mes_qc_inspection_path) — the axis that makes this
+   master readable as a matrix by process path and inspection route (SOW SMSQA2-10); a path-scoped rule beats one
+   left open to every path at the same operation. */
 const C = {"singular": "Rule",
  "cols": [
   {"k": "operation", "label": "Operation"},
   {"k": "material_form", "label": "Form"},
   {"k": "grade", "label": "Grade"},
   {"k": "tdc", "label": "TDC", "badge": true},
+  {"k": "path", "label": "Inspection path", "badge": true},
   {"k": "sample_type", "label": "Sample Type"},
   {"k": "samples", "label": "Samples", "cls": "num"},
   {"k": "qty", "label": "Qty per basis", "cls": "num"},
@@ -285,16 +289,17 @@ const C = {"singular": "Rule",
   {"k": "tests", "label": "Tests required"},
   {"k": "active", "label": "Active", "bool": true}],
  "rows": [
-  {"operation": "OP_CASTING", "material_form": "All", "grade": "All", "tdc": "", "sample_type": "Chemical", "samples": 1, "qty": "—", "sampling_basis": "PER_HEAT", "size": "BY_PIECES", "location": "Caster", "tests": "Spectro (OES)", "active": true},
-  {"operation": "OP_HEAT TREATMENT", "material_form": "Round Bar", "grade": "All", "tdc": "", "sample_type": "Mechanical", "samples": 1, "qty": "—", "sampling_basis": "PER_LOT", "size": "BY_LENGTH", "location": "HT exit", "tests": "Tensile, Hardness, Impact", "active": true},
-  {"operation": "OP_HEAT TREATMENT", "material_form": "Round Bar", "grade": "17-4PH", "tdc": "TDC-004275", "sample_type": "Mechanical", "samples": 2, "qty": "—", "sampling_basis": "PER_LOT", "size": "BY_LENGTH", "location": "HT exit — tail end", "tests": "Tensile, Hardness, Impact, R.A.", "active": true},
-  {"operation": "OP_HEAT TREATMENT", "material_form": "All", "grade": "17-4PH", "tdc": "", "sample_type": "Macro", "samples": 1, "qty": "—", "sampling_basis": "PER_HEAT", "size": "FULL_SECTION", "location": "HT exit — head end", "tests": "Macro etch", "active": true},
-  {"operation": "OP_ROLLING", "material_form": "Round Bar", "grade": "All", "tdc": "", "sample_type": "UT piece", "samples": 1, "qty": 50, "sampling_basis": "PER_N_PIECES", "size": "BY_LENGTH", "location": "Cooling bed — tail end", "tests": "Ultrasonic", "active": true}],
+  {"operation": "OP_CASTING", "material_form": "All", "grade": "All", "tdc": "", "path": "", "sample_type": "Chemical", "samples": 1, "qty": "—", "sampling_basis": "PER_HEAT", "size": "BY_PIECES", "location": "Caster", "tests": "Spectro (OES)", "active": true},
+  {"operation": "OP_HEAT TREATMENT", "material_form": "Round Bar", "grade": "All", "tdc": "", "path": "", "sample_type": "Mechanical", "samples": 1, "qty": "—", "sampling_basis": "PER_LOT", "size": "BY_LENGTH", "location": "HT exit", "tests": "Tensile, Hardness, Impact", "active": true},
+  {"operation": "OP_HEAT TREATMENT", "material_form": "Round Bar", "grade": "17-4PH", "tdc": "TDC-004275", "path": "", "sample_type": "Mechanical", "samples": 2, "qty": "—", "sampling_basis": "PER_LOT", "size": "BY_LENGTH", "location": "HT exit — tail end", "tests": "Tensile, Hardness, Impact, R.A.", "active": true},
+  {"operation": "OP_HEAT TREATMENT", "material_form": "All", "grade": "17-4PH", "tdc": "", "path": "", "sample_type": "Macro", "samples": 1, "qty": "—", "sampling_basis": "PER_HEAT", "size": "FULL_SECTION", "location": "HT exit — head end", "tests": "Macro etch", "active": true},
+  {"operation": "OP_ROLLING", "material_form": "Round Bar", "grade": "All", "tdc": "", "path": "Annealing", "sample_type": "UT piece", "samples": 1, "qty": 50, "sampling_basis": "PER_N_PIECES", "size": "BY_LENGTH", "location": "Cooling bed — tail end", "tests": "Ultrasonic", "active": true}],
  "form": [
   {"k": "operation", "label": "Operation", "type": "select", "options": ["OP_CASTING", "OP_ROLLING", "OP_HEAT TREATMENT", "OP_FINISHING"]},
   {"k": "material_form", "label": "Material form", "type": "select", "options": ["All", "Round Bar", "Hex Bar", "Flat Bar", "Billet"]},
   {"k": "grade", "label": "Grade (or All)"},
   {"k": "tdc", "label": "TDC (optional)", "type": "select", "options": ["", "TDC-004275", "TDC-004810", "TDC-003922"], "help": "TDC-specific rule overrides the generic one (most-specific wins)."},
+  {"k": "path", "label": "Inspection path (optional)", "type": "select", "options": ["", "STD", "Double rolling", "Annealing", "Annealed bright bar", "Bright bar", "Slow cooled", "Auto line", "Subcon WIP"], "help": "Applies the rule only to material allocated to that path \u2014 a path-scoped rule beats an unscoped one (SOW SMSQA2-10)."},
   {"k": "sample_type", "label": "Sample type", "type": "select", "options": ["Mechanical", "Chemical", "Macro", "UT piece"]},
   {"k": "samples", "label": "Samples to draw", "type": "number", "help": "How many samples this rule draws each time it fires."},
   {"k": "qty", "label": "Qty per basis", "type": "number", "help": "The “1 sample per N pieces / MT” denominator — only used when the basis is PER_N_PIECES."},
