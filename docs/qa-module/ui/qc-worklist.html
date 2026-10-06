@@ -354,6 +354,33 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
 #tallyCard .tly-ref{background:#f2f2f2;color:#777;}
 #tallyCard .tly-ref b{color:#888;}
 .tbl tbody td.k-type{max-width:360px;}   /* room for the SUPPLEMENTARY / CONDITIONAL chips */
+
+/* ===== SMSQA8-69 — batch split: Quality requests (one line per part, its intended use and the reason),
+   the production-confirmation application forms the children through the Batch Derivation Rules ===== */
+#splitCard{max-height:320px;}
+#splitCard table.tbl thead th{white-space:normal;vertical-align:bottom;line-height:1.2;padding:7px 8px;}
+#splitCard table.tbl tbody td{padding:5px 8px;white-space:normal;vertical-align:top;}
+.spl-k{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;letter-spacing:.3px;white-space:nowrap;}
+.spl-dec{background:rgba(33,150,243,.13);color:#1565c0;}
+.spl-phy{background:rgba(255,152,0,.15);color:#e65100;}
+.spl-st{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;}
+.st-req{background:#fff8e1;color:#8d6e00;} .st-exe{background:#e3f2fd;color:#1565c0;}
+.st-cut{background:#e8f5e9;color:#1b5e20;} .st-can{background:#eceff1;color:#546e7a;} .st-fail{background:#fdecea;color:#b71c1c;}
+.spl-part{display:block;line-height:1.35;}
+.spl-part b{font-weight:600;}
+.spl-chd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#1b5e20;}
+.spl-rsn{color:#607d8b;}
+.spl-ok{color:#1b5e20;font-weight:600;} .spl-bad{color:#b71c1c;font-weight:600;}
+.spl-trail{font-size:10.5px;color:#78909c;line-height:1.35;display:block;}
+.spl-grid{display:grid;gap:10px;}
+.spl-row{display:grid;grid-template-columns:90px 1fr 1fr 130px 32px;gap:8px;align-items:end;}
+.spl-row label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600;display:block;margin-bottom:3px;}
+.spl-row input,.spl-row select{width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:var(--r-sm);font:inherit;font-size:var(--fs-sm);}
+.spl-head2{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:#455a64;}
+.spl-head2 b{color:#222;}
+.spl-kind label{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-right:14px;}
+.spl-recon{font-size:12px;padding:6px 9px;border-radius:6px;background:#f6f8fa;border:1px solid var(--color-border-light);}
+.spl-note{font-size:11px;color:#78909c;}
 </style>
 </head>
 <body>
@@ -441,6 +468,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
         <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
         <a href="master-hot-out-decision.html"><i class="fa-solid fa-code-fork"></i> Hot-out Decision</a>
+        <a href="master-split-reason.html"><i class="fa-solid fa-scissors"></i> Split Reason</a>
         <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
         <a href="master-dispatch-obligation.html"><i class="fa-solid fa-truck-fast"></i> Dispatch Obligation</a>
         <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
@@ -529,7 +557,45 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
       </div>
       <div class="sc-wrap"><table class="tbl"><thead id="tallyHead"></thead><tbody id="tallyBody"></tbody></table></div>
     </div>
+    <!-- SMSQA8-69 — batch split: a DECISION split divides the identity (part held, rejected or sent another way),
+         a PHYSICAL split cuts the material and waits for the floor to confirm the cut. Quality requests
+         (mes_qc_split_request + _line); the production-confirmation application forms the children (QA-SMS-R-08) -->
+    <div class="subcard" id="splitCard">
+      <div class="sc-head"><i class="fa-solid fa-scissors"></i> Batch split requests <span class="meta" id="splitMeta"></span>
+        <span style="flex:1"></span>
+        <span class="meta" style="font-weight:400">Quality names the parts and the reason; the production-confirmation application forms the children (BR-WKL-27)</span>
+      </div>
+      <div class="sc-wrap"><table class="tbl"><thead id="splitHead"></thead><tbody id="splitBody"></tbody></table></div>
+    </div>
   </main>
+</div>
+
+<!-- SMSQA8-69 — split request dialog (WKL-F95…F105): parts, intended use, reason, live reconciliation -->
+<div class="overlay" id="splitOverlay">
+  <div class="modal">
+    <div class="modal-head"><span>Request batch split</span> <span class="x" onclick="closeSplit()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="spl-grid">
+        <div class="spl-head2" id="splCtx"></div>
+        <div class="spl-kind" title="WKL-F95 · kind of split — a decision divides the identity, a physical split cuts the material and waits for the cut to be confirmed (BR-WKL-27)">
+          <label><input type="radio" name="splKind" value="DECISION" checked onchange="splKind('DECISION')"/> Decision — part held, rejected or sent another way; nothing is cut</label>
+          <label><input type="radio" name="splKind" value="PHYSICAL" onchange="splKind('PHYSICAL')"/> Physical — a piece is cut in two</label>
+        </div>
+        <div class="spl-row" style="grid-template-columns:1fr 2fr">
+          <div><label title="WKL-F102 · split reason — master row (BR-MSPL-01)">Split reason</label><select id="splReason"></select></div>
+          <div><label>Remark</label><input id="splRemark" placeholder="e.g. surface finding on 6 pieces — held pending review"/></div>
+        </div>
+        <div>
+          <label style="font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600">Parts (WKL-F98…F103) — at least two</label>
+          <div id="splLines" class="spl-grid" style="margin-top:6px"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="splAdd()"><i class="fa-solid fa-plus"></i> Add part</button>
+        </div>
+        <div class="spl-recon" id="splRecon"></div>
+        <div class="spl-note">The children inherit the heat, the route stage and every result the parent earned; a usage decision is then recorded per child (BR-WKL-29).</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeSplit()">Cancel</button><button class="btn btn-primary" id="splSubmit" onclick="splSubmit()"><i class="fa-solid fa-scissors"></i> Submit split request</button></div>
+  </div>
 </div>
 
 <!-- Record Result modal (opened from a worklist row) -->
@@ -734,6 +800,119 @@ const RAW=[
  ['INS-2526-0022','Inspection','Dimensional','OP_ROLLING','2526-16837','E122644','304L','Round Bar','PASS','COMPLETED','24-Jun 14:12','L2 / Gauge','ONLINE'],
 ];
 const DATA=RAW.map(r=>({no:r[0],kind:r[1],type:r[2],stage:r[3],heat:r[4],uid:r[5],grade:r[6],form:r[7],result:r[8],status:r[9],date:r[10],by:r[11],mode:r[12]}));
+/* ===== SMSQA8-69 — batch split (mes_qc_split_request + mes_qc_split_request_line).
+   Quality decides and names the parts; the production-confirmation application executes the split with the
+   Batch Derivation Rules (event SPLIT) and returns the child batch numbers (QA-SMS-R-08, BR-WKL-27…30). ===== */
+const SPLIT_OPS=['OP_CASTING','OP_FINISHING','OP_ROLLING'];       /* mes_qc_stage_qc_map.allow_split at operation scope */
+const SPLIT_REASONS=[                                             /* mes_qc_split_reason — master rows (BR-MSPL-01) */
+ {code:'REJECTION',name:'Part of the batch rejected',kind:'DECISION',rem:true,loss:false},
+ {code:'HOLD',name:'Part of the batch held for review',kind:'DECISION',rem:false,loss:false},
+ {code:'ROUTE_CHANGE',name:'Part takes a different onward route',kind:'DECISION',rem:true,loss:false},
+ {code:'DOWNGRADE',name:'Part downgraded onto another order',kind:'DECISION',rem:true,loss:false},
+ {code:'DAMAGE',name:'Damaged length separated',kind:'BOTH',rem:true,loss:true},
+ {code:'DEFECT_CUT',name:'Defect cut out — piece cut in two',kind:'PHYSICAL',rem:true,loss:true}];
+const SPLIT_USE=['Release to next operation','Hold','Reject','Release to another operation','Downgrade'];  /* mes_qc_ud_action */
+const SPLIT_TOL={pieces:0,weightPct:0.50};                        /* the stage's tally tolerance — never a second one (BR-WKL-28) */
+let SPLITS=[                                                      /* two seeded requests */
+ {no:'SPL-2526-0007',kind:'DECISION',item:'INS-2526-0021',heat:'2526-16798',parent:'E122401',op:'OP_FINISHING',
+  basis:'BOTH',pp:40,pw:7.900,reason:'HOLD',remark:'Surface finding on 6 pieces — held pending review',
+  lines:[{pcs:34,w:6.700,use:'Release to next operation',child:'E122401-01'},
+         {pcs:6,w:1.195,use:'Hold',child:'E122401-02'}],
+  status:'EXECUTED',by:'M. Iyer',at:'24-Jun 13:52',exeAt:'24-Jun 13:55',exeRef:'SPLIT-88214'},
+ {no:'SPL-2526-0008',kind:'PHYSICAL',item:'UT-2526-0074',heat:'2526-16866',parent:'E121724',op:'OP_ROLLING',
+  basis:'PIECES',pp:2,pw:null,reason:'DEFECT_CUT',remark:'UT indication at 1.8 m — cut out and re-test the sound length',
+  lines:[{pcs:1,w:null,use:'Release to next operation',child:null,reason:null},
+         {pcs:1,w:null,use:'Reject',child:null,reason:'DAMAGE'}],
+  status:'REQUESTED',by:'S. Khan',at:'24-Jun 11:05'}];
+let splCur=null, splKindSel='DECISION', splDraft=[];
+const splReason=c=>SPLIT_REASONS.find(r=>r.code===c)||{name:c};
+function splScoped(kind){return SPLIT_REASONS.filter(r=>r.kind===kind||r.kind==='BOTH');}
+function splStatusChip(st){const m={REQUESTED:['st-req','REQUESTED'],EXECUTED:['st-exe','EXECUTED'],
+  CUT_CONFIRMED:['st-cut','CUT CONFIRMED'],CANCELLED:['st-can','CANCELLED'],FAILED:['st-fail','FAILED']}[st];
+  return '<span class="spl-st '+m[0]+'">'+m[1]+'</span>';}
+function splSum(r,k){return r.lines.reduce((a,l)=>a+(Number(l[k])||0),0);}
+function splVariance(r){return {p:(r.pp||0)-splSum(r,'pcs'), w:+(((r.pw||0)-splSum(r,'w')).toFixed(3))};}
+function splReconText(r){
+  const v=splVariance(r),out=[];
+  if(r.basis!=='WEIGHT')out.push((v.p===0?'<span class="spl-ok">0 pcs</span>':'<span class="spl-bad">'+v.p+' pcs</span>'));
+  if(r.basis!=='PIECES'&&r.pw){const pct=Math.abs(v.w)/r.pw*100, ok=pct<=SPLIT_TOL.weightPct;
+    out.push((ok?'<span class="spl-ok">':'<span class="spl-bad">')+v.w.toFixed(3)+' t · '+pct.toFixed(2)+' %</span>');}
+  return out.join(' · ');
+}
+function renderSplit(){
+  const head=document.getElementById('splitHead'); if(!head)return;
+  head.innerHTML='<tr><th>Request</th><th>Kind</th><th>Parent lot</th><th>Parts — quantity · intended use · child</th>'+
+    '<th>Reason</th><th>Reconciliation</th><th>Status &amp; trail</th></tr>';
+  document.getElementById('splitBody').innerHTML=SPLITS.map(r=>{
+    const parts=r.lines.map((l,i)=>'<span class="spl-part"><b>'+(l.pcs!=null?l.pcs+' pcs':'')+
+      (l.w!=null?' · '+l.w.toFixed(3)+' t':'')+'</b> → '+l.use+
+      (l.child?' → <span class="spl-chd">'+l.child+'</span>':' <span class="spl-rsn">(awaiting the child number)</span>')+
+      (l.reason?' <span class="spl-rsn">· '+splReason(l.reason).name.toLowerCase()+'</span>':'')+'</span>').join('');
+    const trail=['requested '+r.at+' · '+r.by,
+      r.exeAt?('executed '+r.exeAt+' · ref '+r.exeRef):(r.kind==='PHYSICAL'?'awaiting execution':'awaiting execution'),
+      r.status==='EXECUTED'&&r.kind==='PHYSICAL'?'awaiting the floor to confirm the cut':''].filter(Boolean).join(' → ');
+    return '<tr><td><b>'+r.no+'</b><span class="spl-trail">'+r.item+'</span></td>'+
+      '<td><span class="spl-k '+(r.kind==='DECISION'?'spl-dec':'spl-phy')+'">'+r.kind+'</span></td>'+
+      '<td>'+r.parent+'<span class="spl-trail">heat '+r.heat+' · '+r.op+' · '+(r.pp!=null?r.pp+' pcs':'')+(r.pw?' / '+r.pw.toFixed(3)+' t':'')+'</span></td>'+
+      '<td>'+parts+'</td>'+
+      '<td>'+splReason(r.reason).name+'<span class="spl-trail">'+(r.remark||'')+'</span></td>'+
+      '<td>'+splReconText(r)+'<span class="spl-trail">tolerance '+SPLIT_TOL.pieces+' pcs · '+SPLIT_TOL.weightPct.toFixed(2)+' % (stage)</span></td>'+
+      '<td>'+splStatusChip(r.status)+'<span class="spl-trail">'+trail+'</span>'+
+      (r.status==='EXECUTED'&&r.kind==='PHYSICAL'?'<button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="splConfirmCut(\''+r.no+'\')">Confirm cut</button>':'')+
+      (r.status==='REQUESTED'?'<button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="splCancel(\''+r.no+'\')">Cancel request</button>':'')+'</td></tr>';
+  }).join('');
+  const open=SPLITS.filter(r=>r.status==='REQUESTED'||(r.kind==='PHYSICAL'&&r.status==='EXECUTED')).length;
+  document.getElementById('splitMeta').textContent=SPLITS.length+' request(s) · '+open+' awaiting execution or cut';
+}
+function splRowsOf(lot){return SPLITS.filter(r=>r.heat===lot);}
+function openSplit(no){
+  const row=DATA.find(r=>r.no===no); if(!row)return;
+  if(!SPLIT_OPS.includes(row.stage)){mesToast('This operation does not allow splits — set Allow split on the Stage-QC Map row','err');return;}
+  splCur=row; splKindSel='DECISION';
+  splDraft=[{pcs:'',use:SPLIT_USE[0]},{pcs:'',use:'Hold'}];
+  document.getElementById('splCtx').innerHTML=['Parent <b>'+row.uid+'</b>','Heat <b>'+row.heat+'</b>','Grade <b>'+row.grade+'</b>',
+    'Operation <b>'+row.stage+'</b>','Item <b>'+row.no+'</b>','Basis <b>pieces</b>'].map(x=>'<span>'+x+'</span>').join('');
+  splRenderForm();
+  document.getElementById('splitOverlay').classList.add('open');
+}
+function closeSplit(){document.getElementById('splitOverlay').classList.remove('open');}
+function splKind(k){splKindSel=k;splRenderForm();}
+function splAdd(){splDraft.push({pcs:'',use:SPLIT_USE[0]});splRenderForm();}
+function splDel(i){if(splDraft.length<=2){mesToast('A split has at least two parts','err');return;}splDraft.splice(i,1);splRenderForm();}
+function splSet(i,k,v){splDraft[i][k]=v;splRenderForm();}
+function splRenderForm(){
+  const rs=splScoped(splKindSel);
+  const sel=document.getElementById('splReason');
+  const keep=sel.value&&rs.some(r=>r.code===sel.value)?sel.value:rs[0].code;
+  sel.innerHTML=rs.map(r=>'<option value="'+r.code+'"'+(r.code===keep?' selected':'')+'>'+r.name+' ('+r.code+')</option>').join('');
+  document.getElementById('splLines').innerHTML=splDraft.map((l,i)=>
+    '<div class="spl-row"><div><label>Pieces</label><input type="number" min="1" value="'+(l.pcs||'')+'" oninput="splSet('+i+',\'pcs\',this.value)"/></div>'+
+    '<div><label>Intended use</label><select onchange="splSet('+i+',\'use\',this.value)">'+SPLIT_USE.map(u=>'<option'+(u===l.use?' selected':'')+'>'+u+'</option>').join('')+'</select></div>'+
+    '<div><label>Part reason (only if it differs)</label><select onchange="splSet('+i+',\'reason\',this.value)"><option value="">— same as the request —</option>'+
+      rs.map(r=>'<option value="'+r.code+'"'+(l.reason===r.code?' selected':'')+'>'+r.name+'</option>').join('')+'</select></div>'+
+    '<div><label>Child</label><input value="formed on execution" disabled/></div>'+
+    '<div><button class="btn-icon danger" title="Remove part" onclick="splDel('+i+')"><i class="fa-solid fa-trash"></i></button></div></div>').join('');
+  const parent=splCur?36:0;   /* the parent piece count of the selected lot — seeded for the mock-up */
+  const sum=splDraft.reduce((a,l)=>a+(Number(l.pcs)||0),0), v=parent-sum;
+  document.getElementById('splRecon').innerHTML='Parent <b>'+parent+' pcs</b> · parts <b>'+sum+' pcs</b> · difference '+
+    (v===0?'<span class="spl-ok">0 pcs — within the stage tolerance</span>'
+          :'<span class="spl-bad">'+v+' pcs — outside the stage tolerance of '+SPLIT_TOL.pieces+'; Submit stays disabled (BR-WKL-28)</span>');
+  document.getElementById('splSubmit').disabled=(v!==0);
+}
+function splSubmit(){
+  const rs=document.getElementById('splReason').value;
+  SPLITS=SPLITS.concat([{no:'SPL-2526-00'+(9+SPLITS.length-1),kind:splKindSel,item:splCur.no,heat:splCur.heat,parent:splCur.uid,
+    op:splCur.stage,basis:'PIECES',pp:36,pw:null,reason:rs,remark:document.getElementById('splRemark').value||'',
+    lines:splDraft.map(l=>({pcs:Number(l.pcs)||0,w:null,use:l.use,child:null,reason:l.reason||null})),
+    status:'REQUESTED',by:'M. Iyer',at:'now'}]);
+  closeSplit();renderSplit();
+  mesToast('Split requested — the production-confirmation application forms the children and returns their numbers','ok');
+}
+function splConfirmCut(no){const r=SPLITS.find(x=>x.no===no);if(!r)return;r.status='CUT_CONFIRMED';r.cutAt='now';renderSplit();
+  mesToast('Cut confirmed — the children of '+no+' are usable','ok');}
+function splCancel(no){const r=SPLITS.find(x=>x.no===no);if(!r)return;r.status='CANCELLED';renderSplit();
+  mesToast('Request '+no+' cancelled — a correction is a new request, never an edit (BR-WKL-30)','ok');}
+
 /* §26.1 MQA 7 — allocated inspection path per lot (mes_qc_material_path; source=AUTO from mes_qc_path_rule, first active match by priority).
    Path follows the batch (heat · UID): AUTOLINE = auto-line route (§26.2), ANNEAL = HT route, BB = bright bar, DBL-ROLL = double rolling. */
 const PTH_SEED={
@@ -861,7 +1040,7 @@ function cell(c,row){
   if(c.key==='result') return `<span class="badge ${RESULT_B[v]||'b-draft'}">${v}</span>`;
   if(c.key==='status') return `<span class="badge ${STATUS_B[v]||'b-draft'}">${v}</span>`;
   if(c.key==='actions'){const dz=opsView?' disabled':'';   /* SMSQA8-70: OPS_VIEWER keeps View only — other actions disabled + no-op */
-    return `<button class="btn-icon"${dz} title="Inspection group" onclick="openGroup('${row.pc}')"><i class="fa-solid fa-layer-group"></i></button><button class="btn-icon" title="View (read-only)" onclick="openRecord('${row.no}','view')"><i class="fa-solid fa-eye"></i></button><button class="btn-icon"${dz} title="${row.result==='PENDING'?'Record result':'Edit result'}" onclick="openRecord('${row.no}','edit')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon"${dz} title="Raise Salvage / NCR" onclick="raiseSalvage({uid:'${row.uid}',heat:'${row.heat}',grade:'${row.grade}',stage:'${row.stage}',ref:'${row.no}',src:'Inspection'})"><i class="fa-solid fa-screwdriver-wrench"></i></button>`;}
+    return `<button class="btn-icon"${dz} title="Inspection group" onclick="openGroup('${row.pc}')"><i class="fa-solid fa-layer-group"></i></button><button class="btn-icon" title="View (read-only)" onclick="openRecord('${row.no}','view')"><i class="fa-solid fa-eye"></i></button><button class="btn-icon"${dz} title="${row.result==='PENDING'?'Record result':'Edit result'}" onclick="openRecord('${row.no}','edit')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon"${dz} title="Raise Salvage / NCR" onclick="raiseSalvage({uid:'${row.uid}',heat:'${row.heat}',grade:'${row.grade}',stage:'${row.stage}',ref:'${row.no}',src:'Inspection'})"><i class="fa-solid fa-screwdriver-wrench"></i></button><button class="btn-icon"${dz||(SPLIT_OPS.includes(row.stage)?'':' disabled')} title="${SPLIT_OPS.includes(row.stage)?'Request batch split — part held or rejected, part sent another way, or a piece cut (BR-WKL-27)':'This operation does not allow splits (Stage-QC Map · allow split)'}" onclick="openSplit('${row.no}')"><i class="fa-solid fa-scissors"></i></button>`;}
   return v??'';
 }
 
@@ -896,6 +1075,7 @@ function buildSortRow(){
 }
 function cmp(x,y){return (''+(x??'')).localeCompare(''+(y??''),undefined,{numeric:true,sensitivity:'base'});}
 function passes(row){
+  if(splOnly&&!splPendingNos().has(row.heat)) return false;   /* WKL-F109 — awaiting split execution */
   for(const p of PICKERS){ if(!picked[p.key].has(row[p.key])) return false; }   /* exclusive multi-select filters */
   return COLS.every(c=>{const f=(filters[c.key]||'').trim().toLowerCase();return !f|| String(row[c.key]??'').toLowerCase().includes(f);});
 }
@@ -927,6 +1107,9 @@ function pickerBtnHtml(key){
   const all=picked[key].size===distinct(key).length, lbl=PICKERS.find(p=>p.key===key).label;
   return `${lbl}${all?'':` <span class="fb-count">${picked[key].size}</span>`} <i class="fa-solid fa-chevron-down" style="font-size:9px"></i>`;
 }
+let splOnly=false;   /* WKL-F109 — lots whose split request has not been executed or whose cut is not confirmed */
+function splPendingNos(){try{return new Set(SPLITS.filter(r=>r.status==='REQUESTED'||(r.kind==='PHYSICAL'&&r.status==='EXECUTED')).map(r=>r.heat));}catch(e){return new Set();}}   /* the bar is built once before the split seed is evaluated, then again at boot */
+function toggleSplOnly(cb){splOnly=cb.checked;page=1;renderBody();}
 function buildFilterBar(){
   const bar=document.getElementById('filterbar');
   bar.innerHTML=`<span class="fb-label">Filters</span>`+PICKERS.map(p=>{
@@ -938,7 +1121,7 @@ function buildFilterBar(){
         ${p.search?`<div class="picker-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Type heat no…" data-search="${p.key}"/></div>`:''}
         <div class="picker-list">${vals.map(v=>`<label><input type="checkbox" value="${v}" ${sel.has(v)?'checked':''}/> ${v}</label>`).join('')}</div>
       </div></div>`;
-  }).join('')+`<a class="fb-clear" id="fbClear">Reset all</a>`;
+  }).join('')+`<label class="fb-btn" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--color-border);border-radius:var(--r-sm);cursor:pointer" title="WKL-F109 · Awaiting split execution — requests not yet executed, and physical splits whose cut is not confirmed (BR-WKL-27)"><input type="checkbox" onchange="toggleSplOnly(this)" ${splOnly?'checked':''}/> Awaiting split execution <span class="fb-count">${splPendingNos().size}</span></label>`+`<a class="fb-clear" id="fbClear">Reset all</a>`;
   bar.querySelectorAll('.picker').forEach(pk=>{
     const key=pk.dataset.fp,btn=pk.querySelector('.fb-btn');
     btn.onclick=e=>{const panel=pk.querySelector('.picker-panel'),open=panel.classList.contains('open');closeAllPanels();if(!open)panel.classList.add('open');e.stopPropagation();};
@@ -1234,6 +1417,7 @@ function renderRmEfb(row){
   const lines=own.concat(EFB_EXTRA[row.heat]||[]).sort((a,b)=>(''+b.when).localeCompare(''+a.when,undefined,{numeric:true}));
   document.getElementById('rmEfb').innerHTML=efbHtml(lines,'WKL-F74 · Earlier feedback (CL-11) · SOW: SMSQA9-78');
 }
+
 /* ===== SMSQA8-66 — production tally: scope, basis and tolerance resolved from the route stage
        (mes_qc_production_tally + mes_qc_production_tally_line; reasons from mes_qc_tally_reason) ===== */
 const TALLY=[
@@ -1339,13 +1523,13 @@ function tallySign(i){var r=TALLY[i];
   r.st='SIGNED_OFF';r.by='QA user';r.at='21-Sep 12:05';renderTally();
   mesToast('Tally signed off — '+r.key+(tOK(r)?'':(' (outside tolerance, '+r.reason+')')),tOK(r)?'ok':'warn');}
 function tallyReopen(i){var r=TALLY[i];r.st='REOPENED';r.by='';r.at='';renderTally();mesToast('Tally reopened — '+r.key,'warn');}
-renderBody();renderTally();   /* re-render with the feedback chips and conditional items seeded above */
+renderBody();renderTally();renderSplit();buildFilterBar();   /* re-render with the feedback chips, conditional items and split requests seeded above */
 </script>
 <script>
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}, "master-hot-out-decision.html": {"t": "Hot-out Decision", "i": "fa-code-fork"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}, "master-hot-out-decision.html": {"t": "Hot-out Decision", "i": "fa-code-fork"}, "master-split-reason.html": {"t": "Split Reason", "i": "fa-scissors"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}

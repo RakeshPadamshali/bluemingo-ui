@@ -1141,7 +1141,7 @@ erDiagram
 | **JSW Process Control touchpoints (§31)** | `notification_rule_recipient` (new); `notification_rule` + severity / condition / escalation / shift-aware, `ncr` + `process_deviation_id`; worklist item kinds PROCESS_DEVIATION and SUSPECT chip; screen policy PSN_REJECTION_BLOCK; reads the platform views `v_pc_parameter_trace` and writes `mes_process_deviation` dispositions and `mes_batches` suspect verification (source: `docs/modules/pc/PC-Data-Model.md`) |
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
-| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance`, `production_tally_line`, `dispatch_override` (new); `raise_condition`, `tally_reason`, `dispatch_obligation`, `hot_out_decision` (masters); `inspection` + `raise_condition_id`, `stage_qc_map` + `raise_condition_id`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
+| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance`, `production_tally_line`, `dispatch_override`, `split_request` + `split_request_line` (new); `raise_condition`, `tally_reason`, `dispatch_obligation`, `hot_out_decision`, `split_reason` (masters); `inspection` + `raise_condition_id`, `stage_qc_map` + `raise_condition_id`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
 | **Composite material route (§35)** | no new Quality tables — `inspection` + `route_stage_id` / `content_level`, `sample` + `route_stage_id` / `gate_route_stage_id`, view `v_qc_route_quality`; the route and its stages are platform objects of the Planning design |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
@@ -1296,7 +1296,7 @@ Materials whose allocated path routes through the AUTOLINE unit group appear on 
 Transports and message formats are agreed with the machine vendors — open point.
 
 ### 26.10 Scope & alignment notes
-1. **PPC-owned (coordination, not designed here):** campaign/day-wise production views (MQA 1/2); **batch split & merge** with weight updation, proportional end-cut/salvage weights and child numbering (MQA 25 — the UD screen hosts the action, the inventory mutation is production's); production confirmations and product-code conversion (MQA 28/29); the batch-characteristic derivation master (undefined — open point); plan production dates on the bright-bar monitor (MQA 27).
+1. **PPC-owned (coordination, not designed here):** campaign/day-wise production views (MQA 1/2); **batch split & merge** with weight updation, proportional end-cut/salvage weights and child numbering (MQA 25 — Quality requests the split and names the parts (34.13), the inventory mutation is production's; merge stays with production); production confirmations and product-code conversion (MQA 28/29); the batch-characteristic derivation master (undefined — open point); plan production dates on the bright-bar monitor (MQA 27).
 2. **Owned by an external location system (not designed here):** yard/location tracking, location modification and receiving acknowledgement (MQA 6). §26.2's handover record is the auto-line quality record, not location tracking.
 3. **Numbering:** this section is **§26 in this design copy and lands as §31 in the development copy** (its §25–§30 are used). No migrations are authored here; schema changes follow the development repo's approval rule.
 4. **Dev alignment:** implementation lands on the dev structures (config framework, heat-first chemistry, attribute-first capture) — the §25.10/§28.10 notes apply unchanged to this submodule.
@@ -2375,6 +2375,7 @@ Check: the parameters the evaluator needs are present and the others are empty �
 | `tally_basis` | varchar(10) | | Y | PIECES / WEIGHT / BOTH |
 | `tally_tol_pieces` | int | | Y | |
 | `tally_tol_weight_pct` | numeric(5,2) | | Y | |
+| `allow_split` | boolean | | N | Default false; true lets Quality start a batch split at this operation (SOW 69, 34.13). Read at operation scope: a split is offered when any active row in scope allows it |
 
 ### 34.8 `mes_qc_usage_decision` — additions (SMS review v3) (SOW 96)
 | Field | Type | Key | Null | Description |
@@ -2391,7 +2392,7 @@ Check: the parameters the evaluator needs are present and the others are empty �
 - `v_qc_heat_plan` — read-only projection of the Planning design's casting indent lines and rolling slot with the QA readiness flags (pit-cooling hours from §28 `pit_cooling_rule` or the PSN, ABGM from §28 `grinding_rule`, special tests from the PSN, open chemistry hold from `clearance`) — SOW 1.
 - `v_qc_location_history` — the moves of §34.4 joined with the location master for the consolidated tracking view — SOW 104.
 - `v_qc_dispatch_readiness` — the dispatch verdict per unit with its obligations, concession, certificate and age (§34.11) — SOW 78.
-- Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) and QA clearance after ABGM grinding (SOW 84) are open items for JSW; the split would follow the Batch Derivation Rules of §28.
+- Chemistry deviation decision by Customer Quality (SOW 44): role access only (`mes_qc_role_screen_access`), no schema change. Batch split (SOW 69) is designed in 34.13 and executed by the production-confirmation application through the Batch Derivation Rules of §28; QA clearance after ABGM grinding (SOW 84) remains an open item for JSW.
 - Code conversion and batch identity after the decision (SOW 81, 82, 88, 89) and the grinding route (SOW 85, 86) are answered by the Master Data design (Form Conversion Rules, Batch Derivation Rules, Grinding Rules) and the ABGM screen of the Operations design (SOW 87); no QA table.
 
 ### 34.11 Dispatch readiness — the Quality verdict at the dispatch point (SOW 78)
@@ -2467,6 +2468,79 @@ Assembled from `mes_qc_usage_decision` (the current row of the supersession chai
 - The override is only reachable through the privileged action `QA_DISPATCH_OVERRIDE` (platform action master, Master Data design); without it the panel shows the block and offers nothing.
 - Ageing needs no table: the threshold is a row of `mes_qc_notification_rule` with the event QA_CLEARED_NOT_DISPATCHED and the number of days as its parameter, so each plant sets its own patience.
 
+### 34.13 Batch split — Quality decides, the production-confirmation application executes (SOW 69, MQA 25)
+
+A batch is divided for three reasons, and they are not one thing. Part of it passes while part is held or rejected; part must take a different onward route — a conditional finding sending it to grinding, or a downgrade onto another order — while the rest goes direct; or a piece is physically cut, so one piece becomes two. The first two divide an **identity**: nothing is cut, and the split is a consequence of a quality decision. The third divides **material**, and Quality asks for it only when there is a reason to. Both kinds carry a **reason**, and the reasons are master rows.
+
+Batch numbers, inventory and lineage belong to the production-confirmation application, which already derives a child batch on the SPLIT event — numbering, suffix, weight rule and characteristic map (Master Data design, §28). Quality therefore **requests**, naming the parts and what each is for, and that application **executes** and returns the child batch numbers. A physical split additionally waits for the floor to confirm the cut before the children are usable; a decision split does not.
+
+#### 34.13.1 `mes_qc_split_reason` — split reason master (prefix MSPL)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `split_reason_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | Plant vocabulary — the seed carries REJECTION, HOLD, DAMAGE, ROUTE_CHANGE, DOWNGRADE, DEFECT_CUT |
+| `name` | varchar(255) | | N | What the split form offers and the request line shows |
+| `applies_to` | varchar(10) | | N | DECISION / PHYSICAL / BOTH — which kind of split the reason may be chosen on |
+| `requires_remark` | boolean | | N | Default false; true forces the remark on the line |
+| `is_material_loss` | boolean | | N | True when the difference the reason causes is a real material loss (feeds the loss reporting of S20), false when it is a re-count |
+| `display_seq` | int | | Y | |
+| `active` | boolean | | N | A reason in use is deactivated, never deleted |
+| | | | | **+ audit tail** |
+
+#### 34.13.2 `mes_qc_split_request` — one request per split
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `split_request_id` | bigint | PK | N | |
+| `request_no` | varchar(30) | UQ | N | SPL-2526-nnnn (CL-05) |
+| `split_kind` | varchar(10) | | N | DECISION (the identity divides, nothing is cut) / PHYSICAL (the material is cut) |
+| `parent_batch_id` | bigint | FK → `mes_batches` | N | The batch being divided |
+| `parent_material_number` | varchar(50) | | Y | Piece id where the parent is a piece |
+| `heat_number` | varchar(30) | | N | Denormalised for the register |
+| `operation_id` | bigint | FK → `mes_operations` | N | The operation the split is requested at; it must allow splits (34.7 `allow_split`) |
+| `route_stage_id` | bigint | FK → `mes_material_route_stage` | Y | The pinned stage, where the material carries a route |
+| `inspection_id` | bigint | FK → `mes_qc_inspection` | Y | The worklist item the request was started from |
+| `clearance_id` | bigint | FK → `mes_qc_clearance` | Y | The clearance it was started from, where that is the entry point |
+| `quantity_basis` | varchar(10) | | N | PIECES / WEIGHT / BOTH — the stage's basis, as for the tally (34.2) |
+| `parent_pieces` | int | | Y | The parent as it stood when the request was made |
+| `parent_weight_t` | numeric(12,3) | | Y | |
+| `split_reason_id` | bigint | FK → `mes_qc_split_reason` | N | Why the batch is being divided — mandatory on every split |
+| `remarks` | varchar(500) | | Y | Required when the chosen reason says so (`requires_remark`) |
+| `status` | varchar(20) | | N | REQUESTED / EXECUTED / CUT_CONFIRMED / CANCELLED / FAILED |
+| `requested_by` | bigint | | N | |
+| `requested_at` | timestamptz | | N | |
+| `executed_at` | timestamptz | | Y | When the children came back |
+| `execution_ref` | varchar(60) | | Y | The reference the executing application returned |
+| `cut_confirmed_by` | bigint | | Y | PHYSICAL only — who confirmed the cut |
+| `cut_confirmed_at` | timestamptz | | Y | |
+| `cancel_reason` | varchar(255) | | Y | Required on CANCELLED |
+| `failure_text` | varchar(500) | | Y | What the executing application reported on FAILED |
+| | | | | **+ audit tail** |
+
+A request is cancelled before execution and never edited after it; a correction is a new request. Status order is REQUESTED → EXECUTED → (PHYSICAL only) CUT_CONFIRMED, with CANCELLED reachable from REQUESTED and FAILED from the execution attempt.
+
+#### 34.13.3 `mes_qc_split_request_line` — one line per part
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `split_line_id` | bigint | PK | N | |
+| `split_request_id` | bigint | FK → `mes_qc_split_request` | N | |
+| `line_no` | int | UQ | N | Unique within the request; at least two lines |
+| `pieces` | int | | Y | The part, on the basis the stage works in |
+| `weight_t` | numeric(12,3) | | Y | |
+| `ud_action_id` | bigint | FK → `mes_qc_ud_action` | N | What the part is intended for — cleared, held, rejected, released to another operation, downgraded. The action master already carries the resulting material status, so the intent is master data and not a second vocabulary |
+| `next_operation_id` | bigint | FK → `mes_operations` | Y | Required when the intended action routes the part elsewhere |
+| `realloc_order_line_id` | bigint | FK → `mes_order_line_items` | Y | The order the part is intended for on a downgrade (BR-SLV-05 rematches it) |
+| `split_reason_id` | bigint | FK → `mes_qc_split_reason` | Y | The reason for this part where it differs from the request's — a batch split for a hold may still have one part separated for damage |
+| `line_remark` | varchar(255) | | Y | Required when the line's own reason says so (`requires_remark`) |
+| `child_batch_id` | bigint | FK → `mes_batches` | Y | Returned by the executing application |
+| `child_batch_number` | varchar(50) | | Y | Denormalised for the register and the trail |
+| `child_material_number` | varchar(50) | | Y | Piece id of the child, where the split is per piece |
+| | | | | **+ audit tail** |
+
+#### 34.13.4 What the children inherit, and what reconciles
+The children are not new material. Each inherits the heat, the pinned route and the position in it the parent stood at, and every quality result the parent had earned; the parent-to-child lineage is the platform's `mes_batch_relations` (event SPLIT), which is what `v_qc_material_feedback_history` already walks, so a certificate for a child shows the parent's tests without a second register line. Anything the stage still owed is copied to each child, and the usage decision is then recorded **per child** rather than as a partial decision on the parent. Where a laboratory result is outstanding, the obligation stays with the child carrying the sampled piece and the others inherit the result as evidence (§35.3 draw and gate).
+
+The parts must add back up to the parent on each basis the stage works in, within **the stage's tally tolerance** (34.2 `tally_tol_pieces`, `tally_tol_weight_pct`) — no second tolerance is defined. Material already certified or dispatched is not split: it returns through the recall path (`mes_qc_fg_recall`, S12).
+
 ### 34.12 Platform change requests (raised, not built here)
 | Request | Subject | SOW |
 |---|---|---|
@@ -2476,6 +2550,7 @@ Assembled from `mes_qc_usage_decision` (the current row of the supersession chai
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
 | QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
+| QA-SMS-R-08 | Batch split on Quality's request: execute the split with the Batch Derivation Rules (event SPLIT), return one child batch number per request line, confirm the physical cut where the request asks for one, and report a failure back with its reason. The parent-child lineage is written to `mes_batch_relations` as today | 69 |
 | QA-SMS-R-07 | Quality verdict at the dispatch point: show the verdict, its reason and the obligations on the dispatch screens (UID Dispatch Details, Generate Unload Slip); refuse the ready tick and the dispatch status while the verdict is BLOCKED, writing the Quality reason into the existing lock reason; send an override (user, time, obligation, reason, dispatch reference) back to the Quality module | 78 |
 
 The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.
