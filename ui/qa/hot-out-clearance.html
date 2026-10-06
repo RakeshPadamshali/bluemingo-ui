@@ -298,19 +298,20 @@ tr.sel td{background:#e1f5fe!important;}
         <a href="master-ud-reason.html"><i class="fa-solid fa-comment-dots"></i> UD Reason</a>
         <a href="master-ud-action.html"><i class="fa-solid fa-arrow-right-arrow-left"></i> UD Action</a>
         <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
+        <a href="master-hot-out-decision.html"><i class="fa-solid fa-code-fork"></i> Hot-out Decision</a>
         <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
+        <a href="master-dispatch-obligation.html"><i class="fa-solid fa-truck-fast"></i> Dispatch Obligation</a>
         <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
         <a href="master-standard-limit.html"><i class="fa-solid fa-ruler-horizontal"></i> Standard Limit</a>
         <a href="master-colour-code.html"><i class="fa-solid fa-palette"></i> Colour Code</a>
         <a href="master-barcode-type.html"><i class="fa-solid fa-barcode"></i> Barcode Type</a>
         <a href="master-end-discard.html"><i class="fa-solid fa-scissors"></i> End Discard</a>
-        <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
-        <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
-        <a href="master-tally-reason.html"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
-        <a href="master-dispatch-obligation.html"><i class="fa-solid fa-truck-fast"></i> Dispatch Obligation</a>
         <a href="master-length.html"><i class="fa-solid fa-ruler-horizontal"></i> Length</a>
         <a href="master-dim-tolerance.html"><i class="fa-solid fa-arrows-left-right-to-line"></i> Dim Tolerance</a>
         <a href="master-grade-chemistry.html"><i class="fa-solid fa-flask-vial"></i> Grade Chemistry</a>
+        <a href="master-location-type.html"><i class="fa-solid fa-shapes"></i> Location Type</a>
+        <a href="master-storage-location.html"><i class="fa-solid fa-warehouse"></i> Storage Location</a>
+        <a href="master-tally-reason.html"><i class="fa-solid fa-scale-unbalanced"></i> Tally Reason</a>
         <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
         <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
         <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
@@ -348,14 +349,33 @@ tr.sel td{background:#e1f5fe!important;}
    SMSQA11 — Hot-out Clearance. Every hot-out event of the mill (DIRECT, INDIRECT per piece, OVERSTAY — the hot-out
    event and pieces of the Operations design) creates a QA hot-out clearance (mes_qc_hot_out_clearance):
    path (inspection path matrix, override with reason) → chemistry sample to the spectro lab (sample ID, barcode,
-   sticker) → visual inspection with colour code, barcode sticker and marking → decision RE_ROLL_OK / REWORK /
-   SCRAP / DIVERT / HOLD with the next operation, written back to the hot-out event. REWORK and DIVERT carry the
-   operation the material goes to; material returning to a conversion operation it has already passed keeps its
-   product code (SOW 97).
+   sticker) → visual inspection with colour code, barcode sticker and marking → the decision, taken from the
+   Hot-out Decision master (mes_qc_hot_out_decision — the plant's own list), whose row says whether the chemistry
+   result is needed, whether an operation is named and how, whether a reason is compulsory, whether a hold or a
+   scrap booking follows, and whether the product code survives a return to an operation already converted
+   (SOW 96, 97). The decision's code and those flags are written back to the hot-out event.
    ============================================================ */
 const TODAY='23-Sep';
-const OPS_NEXT={RE_ROLL_OK:'OP_CHARGING — Charging (re-roll)',REWORK:'',SCRAP:'Scrap confirmation',DIVERT:'',HOLD:'— (material hold)'};
-/* operations the plant allows as a destination — master data, so REWORK is a decision and the unit is a row */
+/* Hot-out Decision master (mes_qc_hot_out_decision) — rows, not a fixed list of verbs. mode: NONE / ROUTE_DEFAULT
+   / REQUIRED; chem = the chemistry result must be in; keep = keeps the product code on return; term = closes the
+   item. The last two rows are plant additions, to show that a new decision is data and not a code change. */
+const DECISIONS=[
+ {code:'RE_ROLL_OK',name:'Re-roll OK',chem:true,mode:'ROUTE_DEFAULT',defOp:'OP_CHARGING — Charging (re-roll)',reason:false,hold:false,scrap:false,keep:true,term:false,status:'OK',active:true},
+ {code:'REWORK',name:'Rework at conditioning',chem:true,mode:'REQUIRED',defOp:'',reason:false,hold:false,scrap:false,keep:true,term:false,status:'REWORK',active:true},
+ {code:'SCRAP',name:'Scrap',chem:false,mode:'NONE',defOp:'Scrap confirmation',reason:true,hold:false,scrap:true,keep:false,term:true,status:'REJECTED',active:true},
+ {code:'DIVERT',name:'Divert',chem:true,mode:'REQUIRED',defOp:'',reason:true,hold:false,scrap:false,keep:true,term:false,status:'OK',active:true},
+ {code:'HOLD',name:'Hold for salvage',chem:false,mode:'NONE',defOp:'— (material hold)',reason:true,hold:true,scrap:false,keep:false,term:false,status:'HOLD',active:true},
+ {code:'RETEST_ONLY',name:'Re-test only',chem:false,mode:'NONE',defOp:'— (awaiting re-test)',reason:true,hold:true,scrap:false,keep:false,term:false,status:'HOLD',active:true},
+ {code:'RETURN_TO_SUPPLIER',name:'Return to supplier',chem:false,mode:'NONE',defOp:'',reason:true,hold:false,scrap:false,keep:false,term:true,status:'REJECTED',active:false}
+];
+function dec(code){for(var i=0;i<DECISIONS.length;i++)if(DECISIONS[i].code===code)return DECISIONS[i];return null;}
+function decName(code){var d=dec(code);return d?d.name:code;}
+function decDemands(d){var t=[];t.push(d.chem?'chemistry result required':'no chemistry result needed');
+ t.push(d.mode==='NONE'?'no next operation':(d.mode==='ROUTE_DEFAULT'?'next operation defaults from the route':'next operation compulsory'));
+ if(d.reason)t.push('reason required');if(d.hold)t.push('places a hold');if(d.scrap)t.push('books scrap');
+ if(d.keep)t.push('keeps the code on return');if(d.term)t.push('closes the item');t.push('sets '+d.status);
+ return t.join(' · ');}
+/* operations the plant allows as a destination — master data, so the unit is a row and never a decision verb */
 const CONV_OPS=['OP_ABGM — ABGM grinding'];
 const NEXT_OPTS=['OP_CHARGING — Charging (re-roll)','OP_ABGM — ABGM grinding','Scrap confirmation','OP_CONSOLIDATED — Consolidated inspection','OP_PIT_COOLING — Pit cooling','OP_SMS_YARD — SMS yard (hold bay)'];
 const PATHS=['HOT-OUT','STD','SLOW-COOL','ABGM'];
@@ -416,7 +436,7 @@ function cell(c,r){
   if(c.k==='gp')return r.grade+' · '+r.psn;
   if(c.k==='rw')return r.rw==null?'—':r.rw.toLocaleString('en-IN');
   if(c.k==='status')return '<span class="badge '+(ST_B[r.status]||'b-draft')+'">'+r.status+'</span>';
-  if(c.k==='decision')return r.decision?'<span class="badge dec-'+r.decision+'">'+r.decision+'</span>':'—';
+  if(c.k==='decision')return r.decision?'<span class="badge dec-'+r.decision+'" title="'+r.decision+' · Hot-out Decision master">'+decName(r.decision)+'</span>':'—';
   return r[c.k];
 }
 function passes(r){
@@ -461,9 +481,9 @@ function renderDetail(){
     fld('Marking text','<input value="'+r.mark+'" placeholder="e.g. heat · grade · piece"'+dis+'/>','HOC-F30 · Marking text · SOW: SMSQA11-95')+
     '</div></div></div>';
   const decC='<div class="dcard"><div class="dc-head"><span class="n">4</span> Decision <span class="meta">SOW: SMSQA11-96, 97</span></div><div class="dc-body"><div class="mgrid">'+
-    fld('Decision','<select id="dDec" onchange="decChg()"'+dis+'><option value=""></option>'+opt(['RE_ROLL_OK','REWORK','SCRAP','DIVERT','HOLD'],r.decision)+'</select>','HOC-F31 · Decision (RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD) · SOW: SMSQA11-96')+
-    fld('Next operation','<select id="dNext"'+dis+'><option value=""></option>'+opt(NEXT_OPTS,r.next)+'</select><div class="hint">RE_ROLL_OK defaults to charging; mandatory for REWORK and DIVERT</div>','HOC-F32 · Next operation — defaulted from the decision, mandatory for REWORK and DIVERT · SOW: SMSQA11-96')+
-    fld('Reason / remarks','<input value="'+r.rem+'"'+dis+'/>','HOC-F33 · Reason / remarks · SOW: SMSQA11-96','full')+
+    fld('Decision','<select id="dDec" onchange="decChg()"'+dis+'><option value=""></option>'+DECISIONS.filter(function(d){return d.active||d.code===r.decision;}).map(function(d){return '<option value="'+d.code+'"'+(d.code===r.decision?' selected':'')+'>'+d.name+'</option>';}).join('')+'</select><div class="hint" id="dHint">'+(r.decision?decDemands(dec(r.decision)):'the active rows of the <a href="master-hot-out-decision.html">Hot-out Decision master</a> — the row picked says what is then demanded')+'</div>','HOC-F31 · Decision — Hot-out Decision master (BR-HOC-05, BR-MHOD-01) · SOW: SMSQA11-96')+
+    fld('Next operation','<select id="dNext"'+dis+'><option value=""></option>'+opt(NEXT_OPTS,r.next)+'</select><div class="hint" id="nHint">'+(r.decision?nextHint(dec(r.decision)):'driven by the decision — none, defaulted from the route, or compulsory')+'</div>','HOC-F32 · Next operation — none, defaulted from the route or compulsory, as the decision row says · SOW: SMSQA11-96')+
+    fld('Reason / remarks','<input value="'+r.rem+'" id="dRem"'+dis+'/>','HOC-F33 · Reason / remarks — compulsory when the decision requires one · SOW: SMSQA11-96','full')+
     fld('Product code after decision',(r.code?'<span class="codechip"><i class="fa-solid fa-barcode"></i> '+r.code+'</span>':'<span class="due-hint">set when the decision is recorded</span>'),'HOC-F34 · Product code after decision (read-only) — the code is kept when the material returns to a conversion operation it has already passed · SOW: SMSQA11-97','full')+
     '</div></div></div>';
   const lineage=r.batch.split('-')[0];
@@ -475,20 +495,38 @@ function renderDetail(){
     acts.push('<button class="btn btn-ghost btn-sm" onclick="printSticker()"'+(r.sample?'':' disabled')+'><i class="fa-solid fa-print"></i> Print sticker</button>');
     acts.push('<button class="btn btn-ghost btn-sm" onclick="doAct(\'insp\')"><i class="fa-solid fa-floppy-disk"></i> Save inspection</button>');
     acts.push('<button class="btn btn-ghost btn-sm" onclick="doAct(\'hold\')"><i class="fa-solid fa-hand"></i> Hold</button>');
-    acts.push('<button class="btn btn-primary btn-sm" onclick="doAct(\'decide\')"'+(r.spectro==='PASS'||r.spectro==='FAIL'?'':' disabled title="Awaiting the spectro result"')+'><i class="fa-solid fa-gavel"></i> Decide</button>');
+    var dsel=r.decision?dec(r.decision):null;var needChem=(!dsel||dsel.chem);
+    acts.push('<button class="btn btn-primary btn-sm" onclick="doAct(\'decide\')"'+((!needChem||r.spectro==='PASS'||r.spectro==='FAIL')?'':' disabled title="This decision needs the chemistry result"')+'><i class="fa-solid fa-gavel"></i> Decide</button>');
   } else acts.push('<span class="due-hint">Decided '+(r.decidedAt||'')+' · written back to the hot-out event</span>');
   document.getElementById('dFoot').innerHTML=acts.join('');
 }
 function addDef(sel){var r=HO[cur];if(sel.value&&r.defects.indexOf(sel.value)<0){r.defects.push(sel.value);}renderDetail();}
 function pathChg(){mesToast('Path changed — enter the override reason','warn');}
-function decChg(){var d=document.getElementById('dDec').value,n=document.getElementById('dNext');if(OPS_NEXT[d]!==undefined&&OPS_NEXT[d])n.value=OPS_NEXT[d];else if(d==='REWORK'||d==='DIVERT')n.value='';}
+function nextHint(d){if(d.mode==='NONE')return 'not named for this decision';
+ if(d.mode==='ROUTE_DEFAULT')return 'defaulted from the route — '+(d.defOp||'the route\'s next operation')+' — editable';
+ return 'compulsory — pick the operation the material goes to';}
+function decChg(){var c=document.getElementById('dDec').value,n=document.getElementById('dNext'),d=dec(c);
+ var dh=document.getElementById('dHint'),nh=document.getElementById('nHint');
+ if(!d){if(dh)dh.textContent='pick a decision';return;}
+ if(dh)dh.textContent=decDemands(d);
+ if(nh)nh.textContent=nextHint(d);
+ n.disabled=(d.mode==='NONE');
+ n.value=(d.mode==='ROUTE_DEFAULT')?d.defOp:(d.mode==='NONE'?(d.defOp||''):'');}
 function printSticker(){var r=HO[cur];if(!r.sample){mesToast('Draw the chemistry sample first','err');return;}mesToast('Sticker printed · '+r.sample+' · 62×29 mm','ok');}
 function doAct(a){var r=HO[cur];
   if(a==='path'){r.status='PATH_ASSIGNED';mesToast(r.no+' — path '+r.path+' assigned','ok');}
   if(a==='sample'){r.sample='SMP-2526-06'+(20+cur);r.spectro='PENDING';r.status='SAMPLED';mesToast('Sample '+r.sample+' drawn — sticker queued for print','ok');}
   if(a==='insp'){r.status='INSPECTED';mesToast('Visual inspection saved','ok');}
   if(a==='hold'){r.status='HOLD';r.decision='HOLD';mesToast(r.batch+' placed on hold','warn');}
-  if(a==='decide'){var d=document.getElementById('dDec').value;if(!d){mesToast('Select a decision','err');return;}var n=document.getElementById('dNext').value;if((d==='REWORK'||d==='DIVERT')&&!n){mesToast('Select the next operation for '+d,'err');return;}r.decision=d;r.next=n||OPS_NEXT[d];r.status='DECIDED';r.decidedAt=TODAY+' 09:05';r.code=CONV_OPS.indexOf(r.next)>=0?'Code kept':'No change';mesToast(r.batch+' — '+d+' written back to the hot-out event','ok');}
+  if(a==='decide'){var c=document.getElementById('dDec').value;if(!c){mesToast('Select a decision','err');return;}
+    var d=dec(c),n=document.getElementById('dNext').value,rem=(document.getElementById('dRem')||{}).value||r.rem;
+    if(d.chem&&r.spectro!=='PASS'&&r.spectro!=='FAIL'){mesToast(d.name+' needs the chemistry result','err');return;}
+    if(d.mode==='REQUIRED'&&!n){mesToast('Select the next operation for '+d.name,'err');return;}
+    if(d.reason&&!(rem||'').trim()){mesToast(d.name+' needs a reason','err');return;}
+    r.decision=c;r.next=(d.mode==='NONE')?(d.defOp||''):(n||d.defOp);r.rem=rem;
+    r.status=d.hold?'HOLD':'DECIDED';r.decidedAt=TODAY+' 09:05';
+    r.code=(d.keep&&CONV_OPS.indexOf(r.next)>=0)?'Code kept':(d.scrap?'No change (scrapped)':'No change');
+    mesToast(r.batch+' — '+d.code+' written back to the hot-out event'+(d.keep&&CONV_OPS.indexOf(r.next)>=0?' · product code kept':''),'ok');}
   render();}
 
 /* ===== Earlier feedback panel (CL-11): earlier inspections of the lot and of its parent batches, newest first
@@ -511,7 +549,7 @@ render();
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}, "master-hot-out-decision.html": {"t": "Hot-out Decision", "i": "fa-code-fork"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}

@@ -1141,7 +1141,7 @@ erDiagram
 | **JSW Process Control touchpoints (§31)** | `notification_rule_recipient` (new); `notification_rule` + severity / condition / escalation / shift-aware, `ncr` + `process_deviation_id`; worklist item kinds PROCESS_DEVIATION and SUSPECT chip; screen policy PSN_REJECTION_BLOCK; reads the platform views `v_pc_parameter_trace` and writes `mes_process_deviation` dispositions and `mes_batches` suspect verification (source: `docs/modules/pc/PC-Data-Model.md`) |
 | **JSW Roll Management (§32)** | `pass_profile` + `_groove`, `roll_groove`, `pass_schedule` + `_line`, `roll_assembly` + `_item`, `roll_assignment`, `roll_plan` + `_line`, `roll_requirement`, `roll_event`, `roll_maintenance`; `roll_type`, `roll`, `roll_grinding`, `roll_inspection` extended; 10 views `v_qc_roll_*` (source: `docs/modules/roll/ROLL-Data-Model.md`, D-06) |
 | **JSW Customer Complaints (§33)** | `complaint_category`, `complaint` + `_material` + `_log`, `complaint_sync`, `complaint_investigation`, `root_cause_category`, `rca` + `rca_step`, `complaint_watch` + `_lot`, `effectiveness_check`; `capa`, `ncr`, `fg_recall` extended; 8 views `v_qc_complaint_*` / `v_qc_capa_*` / `v_qc_effectiveness_report` / `v_qc_investigation_report` (source: `docs/modules/ccm/CCM-Data-Model.md`, D-13) |
-| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance` (new); `raise_condition` (master); `inspection` + `raise_condition_id`, `stage_qc_map` + `raise_condition_id`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
+| **JSW SMS QA review v3 (§34)** | `inspection_feedback`, `production_tally`, `location_type` (lookup), `storage_location`, `location_move`, `hot_out_clearance`, `production_tally_line`, `dispatch_override` (new); `raise_condition`, `tally_reason`, `dispatch_obligation`, `hot_out_decision` (masters); `inspection` + `raise_condition_id`, `stage_qc_map` + `raise_condition_id`, `usage_decision` + next operation / divert, `pit_cooling` + awaiting entry; views `v_qc_material_feedback_history`, `v_qc_heat_plan`, `v_qc_location_history` |
 | **Composite material route (§35)** | no new Quality tables — `inspection` + `route_stage_id` / `content_level`, `sample` + `route_stage_id` / `gate_route_stage_id`, view `v_qc_route_quality`; the route and its stages are platform objects of the Planning design |
 
 ≈ **88 new tables + 2 extended (`mes_tdc_input`; `mes_global_attributes` +`use_for_qa` only) + 6 views.** *(+5 for the Track A back-ports: `corrective_action`, `grade_downgrade`, `approval`, `fg_recall`, `fg_recall_unit`; +3 for the traceability pass: `sample_test`, `corrective_action_applied`, `salvage_type_ncr_category`; +2 for the 2026-07-16 scope points: `size_basis`, `grade_chemistry`; +2 chemistry/attribute separation: `element`, `attribute_ext`; **+13 for the JSW SMS QA additions (§25)**; views +`v_qc_pit_cooling`, `v_qc_end_cut`.)*
@@ -1745,7 +1745,7 @@ Designed with the JSW **Operations — Mills & Downstream** gap review (BRD §9 
 
 ### 30.1 Hot-out re-roll decision *(Operations design §8, R-OPS-23; BRD HOT-001, HO-003)*
 - The worklist (`v_qc_worklist`, §25 operations mode) gains an item kind **HOT_OUT_DECISION** projected from the platform table `mes_hot_out_event` where `hot_out_type = OVERSTAY` (or any event whose `qa_decision` is NULL and the unit's policy requires a decision): batch, heat, grade, station, declared at, overstay hours, pieces and their classification.
-- The decision dialog writes back `mes_hot_out_event.qa_decision` (RE_ROLL_OK / SCRAP / HOLD), `qa_decided_by`, `qa_decided_at` (platform columns, Quality writes — as `mes_production_sample.received_by` today); HOLD also raises the material hold (§10) with the reason "Hot-out under review". Re-sequencing of the piece is refused by the platform until RE_ROLL_OK.
+- The decision dialog writes back `mes_hot_out_event.qa_decision` — the code of the decision row taken (34.5.1; the first three seeded rows, re-roll, scrap and hold, were the whole vocabulary of this earlier pass) — with `qa_decided_by` and `qa_decided_at` (platform columns, Quality writes — as `mes_production_sample.received_by` today); a decision whose `places_hold` is true also raises the material hold (§10) with the reason "Hot-out under review". Re-sequencing of the piece is refused by the platform until a decision that routes the material onward is recorded.
 - Notification vocabulary (§25.4) gains **QA_HOT_OUT_DECISION_REQUESTED** (to the Mills QA role, with the event hyperlink) and **QA_HOT_OUT_DECIDED** (to the mill pulpit role).
 
 ### 30.2 Bar segregation entry *(Operations design §10, R-OPS-33; BRD 9.11 additional point)*
@@ -2269,7 +2269,44 @@ Unique: (`tally_id`, `bucket_code`). The arithmetic is the same whichever flavou
 
 The current location stays on the platform inventory row (`mes_inventory.location_code`, Planning and Operations designs), written through change request QA-SMS-R-02. Location pre-assignment (SOW 102) and receiving acknowledgement (SOW 103) are out of scope as agreed with JSW. Nothing in this model changes when an external location system is contracted: its updates arrive as moves with source INTERFACE against locations whose `source_of_record` is INTERFACE, and any code or payload transformation belongs to the integration layer.
 
-### 34.5 `mes_qc_hot_out_clearance` — hot-out clearance item (SOW 91–97)
+### 34.5 Hot-out clearance — the decision is master data (SOW 91–97)
+
+What Quality may decide about hot-out material is the plant's business, so the decisions are **rows**, not a fixed list of verbs. What the product defines is the small set of **behaviours** a decision can switch on: whether the chemistry result must be in before the decision may be taken, whether an operation must be named and whether it defaults from the route, whether a reason is compulsory, whether the material goes on hold, whether a scrap booking follows, and whether the product code is kept when the material returns to an operation whose conversion it has already passed. A plant that wants "return to supplier" or "re-test only" adds a row; nothing is built.
+
+This is a master of its own rather than rows of `mes_qc_ud_action` or `mes_qc_salvage_type`, because the five decisions in use straddle both: "re-roll OK" is a release, which the usage-decision action master handles but which carries no routing behaviour, while "scrap" and "rework" are dispositions, which the salvage master handles but only for material that has already failed a clearance. Neither could host the chemistry prerequisite or the keep-code behaviour without lying about its own name. The three share one deliberate shape — code and name as data, behaviour as flags, the resulting status taken from `mes_qc_material_status` — so a plant maintaining them sees one idea in three places, not three inventions.
+
+#### 34.5.1 `mes_qc_hot_out_decision` — hot-out decision master (prefix MHOD)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `hot_out_decision_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | Plant vocabulary — the seed carries RE_ROLL_OK, REWORK, SCRAP, DIVERT, HOLD |
+| `name` | varchar(255) | | N | What the decision picker offers and the grid chip reads |
+| `requires_chemistry_result` | boolean | | N | True: the decision cannot be taken until the chemistry result is PASS or FAIL |
+| `next_operation_mode` | varchar(15) | | N | NONE / ROUTE_DEFAULT / REQUIRED — whether an operation is named at all, defaulted from the material's route (editable), or compulsory |
+| `default_next_operation_id` | bigint | FK → `mes_operations` | Y | ROUTE_DEFAULT: the operation offered when the route names none |
+| `requires_reason` | boolean | | N | True: the reason / remark is compulsory |
+| `places_hold` | boolean | | N | True: a material hold is placed and the item waits for salvage review |
+| `books_scrap` | boolean | | N | True: a scrap confirmation follows the decision |
+| `keep_code_on_return` | boolean | | N | True: returning the material to an operation whose conversion it has already passed keeps the product code (34.5.3) |
+| `is_terminal` | boolean | | N | True: the decision closes the item — no further movement is expected |
+| `default_material_status_id` | bigint | FK → `mes_qc_material_status` | Y | Quality status the decision sets on the material |
+| `description` | varchar(255) | | Y | Shown as the help text of the decision |
+| `display_seq` | int | | Y | |
+| `active` | boolean | | N | |
+
+Check: `default_next_operation_id` is present only with ROUTE_DEFAULT and empty otherwise; a decision may not be both `is_terminal` and `next_operation_mode = REQUIRED`; `books_scrap` and `places_hold` are never both true. A decision in use on a clearance item may be deactivated but not deleted, and editing one changes later decisions only — items already decided keep what they were decided on.
+
+The seed reproduces the five decisions in use today, and the rows are the plant's configuration rather than the product's vocabulary:
+
+| Code | Chemistry | Next operation | Reason | Hold | Scrap | Keeps code | Status | Terminal |
+|---|---|---|---|---|---|---|---|---|
+| RE_ROLL_OK | required | ROUTE_DEFAULT — the charging operation | no | no | no | yes | OK | no |
+| REWORK | required | REQUIRED — the conditioning operation on the decision | no | no | no | yes | REWORK | no |
+| SCRAP | not required | NONE | yes | no | yes | — | REJECTED | yes |
+| DIVERT | required | REQUIRED — any operation the plant allows | yes | no | no | yes | OK | no |
+| HOLD | not required | NONE | yes | yes | no | — | HOLD | no |
+
+#### 34.5.2 `mes_qc_hot_out_clearance` — hot-out clearance item
 | Field | Type | Key | Null | Description |
 |-------|------|-----|------|-------------|
 | `hot_out_clearance_id` | bigint | PK | N | |
@@ -2289,15 +2326,18 @@ The current location stays on the platform inventory row (`mes_inventory.locatio
 | `sticker_applied` | boolean | | N | |
 | `marking_done` | boolean | | N | |
 | `marking_text` | varchar(100) | | Y | |
-| `decision` | varchar(20) | | Y | RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD — REWORK and DIVERT carry the next operation, so a grinding or conditioning unit is a destination, not a verb |
-| `next_operation_id` | bigint | FK → `mes_operations` | Y | |
-| `decision_reason` | varchar(255) | | Y | Required for SCRAP, DIVERT and HOLD |
-| `keep_code` | boolean | | N | Set when the material returns to a conversion operation it has already passed; that confirmation then records the work without a form conversion |
+| `hot_out_decision_id` | bigint | FK → `mes_qc_hot_out_decision` | Y | The decision taken, from the master (34.5.1); the destination is always an operation reference, so a grinding or conditioning unit is a row and never a verb |
+| `next_operation_id` | bigint | FK → `mes_operations` | Y | Named, defaulted or empty as the decision's `next_operation_mode` says |
+| `decision_reason` | varchar(255) | | Y | Compulsory when the decision's `requires_reason` is true |
+| `keep_code` | boolean | | N | Stamped when the decision's `keep_code_on_return` is true and the next operation is one whose conversion the material has already passed; that confirmation then records the work without a form conversion |
 | `status` | varchar(20) | | N | RECEIVED / PATH_ASSIGNED / SAMPLED / INSPECTED / DECIDED / CLOSED / HOLD |
 | `decided_by` | bigint | | Y | |
 | `decided_at` | timestamptz | | Y | |
 
-Widens §30.1: the Quality decision now covers every hot-out type, not only overstay; the write-back vocabulary becomes RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD with the next operation and the keep-code flag (QA-SMS-R-03).
+Widens §30.1: the Quality decision now covers every hot-out type, not only overstay. The write-back carries the decision's **code** with the behaviour the platform has to act on — the next operation, the keep-code stamp and whether a scrap booking follows — so the receiving side needs no fixed list of verbs and a plant adding a decision changes no code on either side (QA-SMS-R-03).
+
+#### 34.5.3 Keeping the product code
+A decision whose `keep_code_on_return` is true, sending material back to an operation whose form conversion it has already passed, stamps `keep_code` on the item: the Form Conversion Rules hold no row from the converted form, the confirmation at that operation records the work without a conversion, and the batch keeps its number.
 
 ### 34.6 Conditional quality items — the condition is master data (SOW 68)
 
@@ -2432,7 +2472,7 @@ Assembled from `mes_qc_usage_decision` (the current row of the supersession chai
 |---|---|---|
 | QA-SMS-R-01 | Caster pulpit stations (CASTER_CCM1, CASTER_CCM2) so the caster crew works on the MES pulpit screen; pulpit note type QA_FEEDBACK with pop-up acknowledgement that never blocks a confirmation; the acknowledgement (user, time, remark) readable by the Quality module. Designed in the Operations design and raised there as OPS-R-15 | 15, 16 |
 | QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from an external location system through the integration layer | 65, 90, 100–104 |
-| QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; decision, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, by the conditioning operation on the decision (no form conversion when keep-code) and by scrap | 91–97 |
+| QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; the decision code, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, by the conditioning operation on the decision (no form conversion when keep-code) and by scrap. The decision vocabulary is Quality master data (34.5.1), so `qa_decision` holds a code the Quality module supplies rather than a fixed list, and the receiving side acts on the flags sent with it | 91–97 |
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
 | QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row | 1, 24 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
