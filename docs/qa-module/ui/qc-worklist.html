@@ -412,6 +412,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="pit-cooling.html"><i class="fa-solid fa-temperature-arrow-down"></i> Pit Cooling</a>
         <a href="hot-out-clearance.html"><i class="fa-solid fa-fire-flame-curved"></i> Hot-out Clearance</a>
         <a href="location-tracking.html"><i class="fa-solid fa-location-dot"></i> Location Tracking</a>
+        <a href="rolling-plan.html"><i class="fa-solid fa-industry"></i> Rolling Plan</a>
         <a href="sample-issue.html"><i class="fa-solid fa-vials"></i> Sampling</a>
         <a href="test-entry.html"><i class="fa-solid fa-flask"></i> Testing</a>
         <a href="lab-worklist.html"><i class="fa-solid fa-microscope"></i> Lab Worklist</a>
@@ -469,6 +470,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-salvage-type.html"><i class="fa-solid fa-screwdriver-wrench"></i> Salvage Type</a>
         <a href="master-hot-out-decision.html"><i class="fa-solid fa-code-fork"></i> Hot-out Decision</a>
         <a href="master-split-reason.html"><i class="fa-solid fa-scissors"></i> Split Reason</a>
+        <a href="master-auto-ud-rule.html"><i class="fa-solid fa-robot"></i> Auto UD Rule</a>
         <a href="master-ncr-category.html"><i class="fa-solid fa-file-circle-exclamation"></i> NCR Category</a>
         <a href="master-dispatch-obligation.html"><i class="fa-solid fa-truck-fast"></i> Dispatch Obligation</a>
         <a href="master-standard.html"><i class="fa-solid fa-book"></i> Standard</a>
@@ -485,6 +487,7 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <a href="master-instrument-type.html"><i class="fa-solid fa-ruler-combined"></i> Instrument Type</a>
         <a href="master-roll-type.html"><i class="fa-solid fa-record-vinyl"></i> Roll Type</a>
         <a href="master-agency.html"><i class="fa-solid fa-building"></i> Agency</a>
+        <a href="master-inspector.html"><i class="fa-solid fa-user-shield"></i> Inspector</a>
         <a href="master-supplier.html"><i class="fa-solid fa-truck-field"></i> Supplier</a>
         <a href="master-notification-rule.html"><i class="fa-solid fa-bell"></i> Notification Rule</a>
         <a href="master-formula.html"><i class="fa-solid fa-square-root-variable"></i> Formula</a>
@@ -567,9 +570,38 @@ table.imx-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
       </div>
       <div class="sc-wrap"><table class="tbl"><thead id="splitHead"></thead><tbody id="splitBody"></tbody></table></div>
     </div>
+    <!-- MQA 25 — batch merge: Quality requests (mes_qc_merge_request + _line) after the eligibility check;
+         the production-confirmation application forms the merged batch (event MERGE, QA-SMS-R-08) -->
+    <div class="subcard" id="mergeCard">
+      <div class="sc-head"><i class="fa-solid fa-object-group"></i> Batch merge requests <span class="meta" id="mergeMeta"></span>
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost btn-sm" onclick="openMerge()" title="Request merge — two or more lots; the operation must allow merges (MSQM-F19) · SOW: MQA 25"><i class="fa-solid fa-object-group"></i> Request merge</button>
+      </div>
+      <div class="sc-wrap"><table class="tbl"><thead id="mergeHead"></thead><tbody id="mergeBody"></tbody></table></div>
+    </div>
   </main>
 </div>
 
+<!-- MQA 25 — merge request dialog (WKL-F111…F116): source lots, eligibility, reason, hold override -->
+<div class="overlay" id="mergeOverlay">
+  <div class="modal">
+    <div class="modal-head"><span>Request batch merge</span> <span class="x" onclick="closeMerge()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="modal-body">
+      <div class="spl-grid">
+        <div><label style="font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--color-text-muted);font-weight:600" title="WKL-F111 · source lots">Lots to combine — at least two</label>
+          <div id="mrgLots" class="spl-grid" style="margin-top:6px"></div></div>
+        <div class="spl-recon" id="mrgElig" title="WKL-F112 · eligibility (BR-WKL-32)"></div>
+        <div class="spl-row" style="grid-template-columns:1fr 2fr">
+          <div><label title="WKL-F113 · merge reason — Split Reason rows scoped MERGE">Merge reason</label><select id="mrgReason"><option value="PART_BUNDLE">Combining part bundles into one (PART_BUNDLE)</option></select></div>
+          <div><label title="WKL-F114">Remark</label><input id="mrgRemark" placeholder="e.g. two part bundles of the same heat into one full bundle"/></div>
+        </div>
+        <div class="spl-recon" id="mrgTot" title="WKL-F116 · totals"></div>
+        <div class="spl-note">The merged batch keeps the lineage to every source, so each source's results stand behind it (BR-WKL-33). Lots on hold need the Quality supervisor's override with a reason.</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeMerge()">Cancel</button><button class="btn btn-primary" id="mrgSubmit" onclick="mrgSubmit()"><i class="fa-solid fa-object-group"></i> Submit merge request</button></div>
+  </div>
+</div>
 <!-- SMSQA8-69 — split request dialog (WKL-F95…F105): parts, intended use, reason, live reconciliation -->
 <div class="overlay" id="splitOverlay">
   <div class="modal">
@@ -815,9 +847,9 @@ const SPLIT_USE=['Release to next operation','Hold','Reject','Release to another
 const SPLIT_TOL={pieces:0,weightPct:0.50};                        /* the stage's tally tolerance — never a second one (BR-WKL-28) */
 let SPLITS=[                                                      /* two seeded requests */
  {no:'SPL-2526-0007',kind:'DECISION',item:'INS-2526-0021',heat:'2526-16798',parent:'E122401',op:'OP_FINISHING',
-  basis:'BOTH',pp:40,pw:7.900,reason:'HOLD',remark:'Surface finding on 6 pieces — held pending review',
-  lines:[{pcs:34,w:6.700,use:'Release to next operation',child:'E122401-01'},
-         {pcs:6,w:1.195,use:'Hold',child:'E122401-02'}],
+  basis:'BOTH',pp:40,pw:7.900,loss:100,reason:'HOLD',remark:'Surface finding on 6 pieces — held pending review',
+  lines:[{pcs:34,w:6.700,use:'Release to next operation',child:'E122401-01',ls:85},
+         {pcs:6,w:1.195,use:'Hold',child:'E122401-02',ls:15}],
   status:'EXECUTED',by:'M. Iyer',at:'24-Jun 13:52',exeAt:'24-Jun 13:55',exeRef:'SPLIT-88214'},
  {no:'SPL-2526-0008',kind:'PHYSICAL',item:'UT-2526-0074',heat:'2526-16866',parent:'E121724',op:'OP_ROLLING',
   basis:'PIECES',pp:2,pw:null,reason:'DEFECT_CUT',remark:'UT indication at 1.8 m — cut out and re-test the sound length',
@@ -825,7 +857,7 @@ let SPLITS=[                                                      /* two seeded 
          {pcs:1,w:null,use:'Reject',child:null,reason:'DAMAGE'}],
   status:'REQUESTED',by:'S. Khan',at:'24-Jun 11:05'}];
 let splCur=null, splKindSel='DECISION', splDraft=[];
-const splReason=c=>SPLIT_REASONS.find(r=>r.code===c)||{name:c};
+const splReason=c=>SPLIT_REASONS.find(r=>r.code===c)||(c==='PART_BUNDLE'?{name:'Combining part bundles into one'}:{name:c});
 function splScoped(kind){return SPLIT_REASONS.filter(r=>r.kind===kind||r.kind==='BOTH');}
 function splStatusChip(st){const m={REQUESTED:['st-req','REQUESTED'],EXECUTED:['st-exe','EXECUTED'],
   CUT_CONFIRMED:['st-cut','CUT CONFIRMED'],CANCELLED:['st-can','CANCELLED'],FAILED:['st-fail','FAILED']}[st];
@@ -847,13 +879,14 @@ function renderSplit(){
     const parts=r.lines.map((l,i)=>'<span class="spl-part"><b>'+(l.pcs!=null?l.pcs+' pcs':'')+
       (l.w!=null?' · '+l.w.toFixed(3)+' t':'')+'</b> → '+l.use+
       (l.child?' → <span class="spl-chd">'+l.child+'</span>':' <span class="spl-rsn">(awaiting the child number)</span>')+
-      (l.reason?' <span class="spl-rsn">· '+splReason(l.reason).name.toLowerCase()+'</span>':'')+'</span>').join('');
+      (l.reason?' <span class="spl-rsn">· '+splReason(l.reason).name.toLowerCase()+'</span>':'')+
+      (l.ls!=null?' <span class="spl-rsn" title="WKL-F110 · share of the end-cut and salvage loss booked on the parent (BR-WKL-31) · SOW: MQA 25">· loss share '+l.ls+' kg</span>':'')+'</span>').join('');
     const trail=['requested '+r.at+' · '+r.by,
       r.exeAt?('executed '+r.exeAt+' · ref '+r.exeRef):(r.kind==='PHYSICAL'?'awaiting execution':'awaiting execution'),
       r.status==='EXECUTED'&&r.kind==='PHYSICAL'?'awaiting the floor to confirm the cut':''].filter(Boolean).join(' → ');
     return '<tr><td><b>'+r.no+'</b><span class="spl-trail">'+r.item+'</span></td>'+
       '<td><span class="spl-k '+(r.kind==='DECISION'?'spl-dec':'spl-phy')+'">'+r.kind+'</span></td>'+
-      '<td>'+r.parent+'<span class="spl-trail">heat '+r.heat+' · '+r.op+' · '+(r.pp!=null?r.pp+' pcs':'')+(r.pw?' / '+r.pw.toFixed(3)+' t':'')+'</span></td>'+
+      '<td>'+r.parent+'<span class="spl-trail">heat '+r.heat+' · '+r.op+' · '+(r.pp!=null?r.pp+' pcs':'')+(r.pw?' / '+r.pw.toFixed(3)+' t':'')+(r.loss?' · booked loss '+r.loss+' kg':'')+'</span></td>'+
       '<td>'+parts+'</td>'+
       '<td>'+splReason(r.reason).name+'<span class="spl-trail">'+(r.remark||'')+'</span></td>'+
       '<td>'+splReconText(r)+'<span class="spl-trail">tolerance '+SPLIT_TOL.pieces+' pcs · '+SPLIT_TOL.weightPct.toFixed(2)+' % (stage)</span></td>'+
@@ -908,6 +941,52 @@ function splSubmit(){
   closeSplit();renderSplit();
   mesToast('Split requested — the production-confirmation application forms the children and returns their numbers','ok');
 }
+/* ===== MQA 25 — batch merge (BR-WKL-32, BR-WKL-33) ===== */
+const MERGE_ALLOW={'OP_FINISHING':'SAME_HEAT','OP_INSPECTION':'SAME_HEAT'};   /* Stage-QC Map MSQM-F19 */
+const MRG_CAND=[
+ {batch:'E121717-1',heat:'2526-16776',psn:'PSN-1001',grade:'316L',size:'RO 68',clr:'CLEARED',hold:false,pcs:22,w:3.540,op:'OP_FINISHING'},
+ {batch:'E121717-2',heat:'2526-16776',psn:'PSN-1001',grade:'316L',size:'RO 68',clr:'CLEARED',hold:false,pcs:18,w:2.900,op:'OP_FINISHING'},
+ {batch:'E121802-3',heat:'2526-16791',psn:'PSN-1002',grade:'304L',size:'23 Hex',clr:'CLEARED',hold:false,pcs:12,w:1.180,op:'OP_FINISHING'}];
+let MERGES=[{no:'MRG-2526-0002',op:'OP_FINISHING',reason:'PART_BUNDLE',src:['E121650-1 · 14 pcs','E121650-2 · 16 pcs'],heat:'2526-16771',result:'E121650',status:'EXECUTED',by:'M. Iyer',at:'23-Jun 15:10',exeAt:'23-Jun 15:12'}];
+let mrgSel=[0,1,2];
+function mrgElig(){
+  const L=mrgSel.map(i=>MRG_CAND[i]);
+  if(L.length<2)return 'Choose at least two lots';
+  const f=L[0];
+  for(const x of L){
+    if(x.psn!==f.psn)return 'Specification number differs ('+x.batch+')';
+    if(x.grade!==f.grade)return 'Grade differs ('+x.batch+')';
+    if(x.size!==f.size)return 'Size differs ('+x.batch+')';
+    if(x.clr!==f.clr)return 'Clearance status differs ('+x.batch+')';
+    if((MERGE_ALLOW[x.op]||'NONE')==='SAME_HEAT'&&x.heat!==f.heat)return 'Heat differs — this operation merges within a heat only ('+x.batch+')';
+    if(x.hold)return 'Lot on hold — Quality supervisor override needed ('+x.batch+')';
+  }
+  return '';
+}
+function mrgRender(){
+  document.getElementById('mrgLots').innerHTML=MRG_CAND.map((c,i)=>'<label class="spl-part" style="display:flex;gap:8px;align-items:center"><input type="checkbox" '+(mrgSel.includes(i)?'checked':'')+' onchange="mrgToggle('+i+',this.checked)"/> <b>'+c.batch+'</b> · heat '+c.heat+' · '+c.grade+' · '+c.psn+' · '+c.size+' · '+c.clr+' · '+c.pcs+' pcs / '+c.w.toFixed(3)+' t</label>').join('');
+  const e=mrgElig();
+  document.getElementById('mrgElig').innerHTML=e?'<span class="spl-bad">'+e+' — Submit stays disabled</span>':'<span class="spl-ok">Eligible — same specification number, grade, size and clearance status; same heat</span>';
+  const L=mrgSel.map(i=>MRG_CAND[i]);
+  document.getElementById('mrgTot').innerHTML='Merged batch <b>'+L.reduce((a,x)=>a+x.pcs,0)+' pcs</b> · <b>'+L.reduce((a,x)=>a+x.w,0).toFixed(3)+' t</b>';
+  document.getElementById('mrgSubmit').disabled=!!e;
+}
+function mrgToggle(i,on){mrgSel=on?mrgSel.concat([i]):mrgSel.filter(x=>x!==i);mrgRender();}
+function openMerge(){mrgSel=[0,1,2];mrgRender();document.getElementById('mergeOverlay').classList.add('open');}
+function closeMerge(){document.getElementById('mergeOverlay').classList.remove('open');}
+function mrgSubmit(){
+  const L=mrgSel.map(i=>MRG_CAND[i]);
+  MERGES=MERGES.concat([{no:'MRG-2526-0003',op:L[0].op,reason:document.getElementById('mrgReason').value,src:L.map(x=>x.batch+' · '+x.pcs+' pcs'),heat:L[0].heat,result:null,status:'REQUESTED',by:'M. Iyer',at:'now'}]);
+  closeMerge();renderMerge();
+  mesToast('Merge requested — the production-confirmation application forms the merged batch and returns its number','ok');
+}
+function renderMerge(){
+  const h=document.getElementById('mergeHead');if(!h)return;
+  h.innerHTML='<tr><th>Request</th><th>Operation</th><th>Source lots</th><th>Reason</th><th>Merged batch</th><th>Status &amp; trail</th></tr>';
+  document.getElementById('mergeBody').innerHTML=MERGES.map(r=>'<tr><td><b>'+r.no+'</b><span class="spl-trail">heat '+r.heat+'</span></td><td>'+r.op+'</td><td>'+r.src.map(x=>'<span class="spl-part">'+x+'</span>').join('')+'</td><td>'+splReason(r.reason).name+'</td><td>'+(r.result?'<span class="spl-chd">'+r.result+'</span>':'<span class="spl-rsn">awaiting the batch number</span>')+'</td><td>'+splStatusChip(r.status)+'<span class="spl-trail">requested '+r.at+' · '+r.by+(r.exeAt?' → executed '+r.exeAt:'')+'</span>'+(r.status==='REQUESTED'?'<button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="mrgCancel(\''+r.no+'\')">Cancel request</button>':'')+'</td></tr>').join('');
+  document.getElementById('mergeMeta').textContent=MERGES.length+' request(s)';
+}
+function mrgCancel(no){const r=MERGES.find(x=>x.no===no);if(!r)return;r.status='CANCELLED';renderMerge();mesToast('Merge request cancelled — reason recorded','info');}
 function splConfirmCut(no){const r=SPLITS.find(x=>x.no===no);if(!r)return;r.status='CUT_CONFIRMED';r.cutAt='now';renderSplit();
   mesToast('Cut confirmed — the children of '+no+' are usable','ok');}
 function splCancel(no){const r=SPLITS.find(x=>x.no===no);if(!r)return;r.status='CANCELLED';renderSplit();
@@ -1523,13 +1602,13 @@ function tallySign(i){var r=TALLY[i];
   r.st='SIGNED_OFF';r.by='QA user';r.at='21-Sep 12:05';renderTally();
   mesToast('Tally signed off — '+r.key+(tOK(r)?'':(' (outside tolerance, '+r.reason+')')),tOK(r)?'ok':'warn');}
 function tallyReopen(i){var r=TALLY[i];r.st='REOPENED';r.by='';r.at='';renderTally();mesToast('Tally reopened — '+r.key,'warn');}
-renderBody();renderTally();renderSplit();buildFilterBar();   /* re-render with the feedback chips, conditional items and split requests seeded above */
+renderBody();renderTally();renderSplit();renderMerge();buildFilterBar();   /* re-render with the feedback chips, conditional items and split requests seeded above */
 </script>
 <script>
 function msToggle(e){e.preventDefault();e.stopPropagation();var g=document.getElementById('msGroup');if(g)g.classList.toggle('open');}
 (function(){var f=(location.pathname.split('/').pop()||'').toLowerCase();var g=document.getElementById('msGroup');if(!g)return;var inM=false;g.querySelectorAll('.submenu a').forEach(function(a){if((a.getAttribute('href')||'').toLowerCase()===f){a.classList.add('active');inM=true;}});if(inM||f==='masters.html'){g.classList.add('open');var p=g.querySelector('.ms-parent');if(p)p.classList.add('active');}})();
 </script>
-<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}, "master-hot-out-decision.html": {"t": "Hot-out Decision", "i": "fa-code-fork"}, "master-split-reason.html": {"t": "Split Reason", "i": "fa-scissors"}};var KEY='mesOpenTabs';
+<div class="tabmenu" id="tabmenu"><button onclick="tabAct('close')"><i class="fa-solid fa-xmark"></i> Close</button><button onclick="tabAct('others')"><i class="fa-solid fa-arrows-left-right-to-line"></i> Close others</button><button onclick="tabAct('right')"><i class="fa-solid fa-arrow-right-long"></i> Close to the right</button><div class="sep"></div><button onclick="tabAct('all')"><i class="fa-solid fa-trash-can"></i> Close all</button></div><script>(function(){var REG={"dashboard.html": {"t": "Dashboard", "i": "fa-gauge-high"}, "rm-inward.html": {"t": "RM Quality", "i": "fa-truck-ramp-box"}, "heat-chemistry.html": {"t": "Heat Chemistry", "i": "fa-vial-circle-check"}, "qc-worklist.html": {"t": "Inspection", "i": "fa-clipboard-check"}, "auto-line.html": {"t": "Auto Line", "i": "fa-timeline"}, "agency-allocation.html": {"t": "Agency Allocation", "i": "fa-building-user"}, "pit-cooling.html": {"t": "Pit Cooling", "i": "fa-temperature-arrow-down"}, "sample-issue.html": {"t": "Sampling", "i": "fa-vials"}, "rolling-plan.html": {"t": "Rolling Plan", "i": "fa-industry"}, "test-entry.html": {"t": "Testing", "i": "fa-flask"}, "lab-worklist.html": {"t": "Lab Worklist", "i": "fa-microscope"}, "defect-mapping.html": {"t": "Defects", "i": "fa-triangle-exclamation"}, "clearance.html": {"t": "Clearance", "i": "fa-circle-check"}, "usage-decision.html": {"t": "Usage Decision", "i": "fa-gavel"}, "salvage-ncr.html": {"t": "Salvage & NCR", "i": "fa-screwdriver-wrench"}, "certificate.html": {"t": "Certificates", "i": "fa-certificate"}, "instruments.html": {"t": "Instruments", "i": "fa-ruler-combined"}, "instrument-checklist.html": {"t": "Instrument Checklist", "i": "fa-list-check"}, "layout-audit.html": {"t": "Layout Audit", "i": "fa-vector-square"}, "tdc.html": {"t": "TDC", "i": "fa-file-contract"}, "masters.html": {"t": "Masters", "i": "fa-sliders"}, "master-inspection-type.html": {"t": "Inspection Type", "i": "fa-clipboard-check"}, "master-test-type.html": {"t": "Test Type", "i": "fa-flask"}, "master-chemistry-type.html": {"t": "Chemistry Type", "i": "fa-vial"}, "master-defect-type.html": {"t": "Defect Type", "i": "fa-layer-group"}, "master-defect-reason.html": {"t": "Defect Reason", "i": "fa-magnifying-glass"}, "master-sample-status.html": {"t": "Sample Status", "i": "fa-vials"}, "master-test.html": {"t": "Quality Test", "i": "fa-flask"}, "master-defect.html": {"t": "Defect Catalogue", "i": "fa-triangle-exclamation"}, "master-characteristic.html": {"t": "Characteristic", "i": "fa-list-ol"}, "master-element.html": {"t": "Element (Chemistry)", "i": "fa-atom"}, "master-stage-qc-map.html": {"t": "Stage-QC Map", "i": "fa-sitemap"}, "master-raise-condition.html": {"t": "Raise Condition", "i": "fa-code-branch"}, "master-inspection-path.html": {"t": "Inspection Path", "i": "fa-route"}, "master-sample-type.html": {"t": "Sample Type", "i": "fa-vials"}, "master-sampling-rule.html": {"t": "Sampling Rule", "i": "fa-diagram-project"}, "master-size-basis.html": {"t": "Size Basis", "i": "fa-ruler-combined"}, "master-prep-checklist.html": {"t": "Prep Checklist", "i": "fa-list-check"}, "master-material-status.html": {"t": "Material Status", "i": "fa-flag"}, "master-ud-type.html": {"t": "UD Type", "i": "fa-gavel"}, "master-ud-reason.html": {"t": "UD Reason", "i": "fa-comment-dots"}, "master-ud-action.html": {"t": "UD Action", "i": "fa-arrow-right-arrow-left"}, "master-salvage-type.html": {"t": "Salvage Type", "i": "fa-screwdriver-wrench"}, "master-ncr-category.html": {"t": "NCR Category", "i": "fa-file-circle-exclamation"}, "master-standard.html": {"t": "Standard", "i": "fa-book"}, "master-standard-limit.html": {"t": "Standard Limit", "i": "fa-ruler-horizontal"}, "master-colour-code.html": {"t": "Colour Code", "i": "fa-palette"}, "master-barcode-type.html": {"t": "Barcode Type", "i": "fa-barcode"}, "master-end-discard.html": {"t": "End Discard", "i": "fa-scissors"}, "master-length.html": {"t": "Length", "i": "fa-ruler-horizontal"}, "master-dim-tolerance.html": {"t": "Dim Tolerance", "i": "fa-arrows-left-right-to-line"}, "master-grade-chemistry.html": {"t": "Grade Chemistry", "i": "fa-flask-vial"}, "master-instrument-type.html": {"t": "Instrument Type", "i": "fa-ruler-combined"}, "master-roll-type.html": {"t": "Roll Type", "i": "fa-record-vinyl"}, "master-agency.html": {"t": "Agency", "i": "fa-building"}, "master-inspector.html": {"t": "Inspector", "i": "fa-user-shield"}, "master-supplier.html": {"t": "Supplier", "i": "fa-truck-field"}, "master-notification-rule.html": {"t": "Notification Rule", "i": "fa-bell"}, "psn.html": {"t": "PSN", "i": "fa-file-signature"}, "psn-search.html": {"t": "PSN Search", "i": "fa-magnifying-glass-chart"}, "psn-review.html": {"t": "PSN Review & Approval", "i": "fa-user-check"}, "psn-compare.html": {"t": "PSN Revision Compare", "i": "fa-code-compare"}, "psn-validation.html": {"t": "PSN Validation", "i": "fa-clipboard-check"}, "psn-dashboard.html": {"t": "PSN Dashboard", "i": "fa-chart-pie"}, "master-formula.html": {"t": "Formula", "i": "fa-square-root-variable"}, "master-document-type.html": {"t": "Document Type", "i": "fa-file-lines"}, "master-psn-unit-matrix.html": {"t": "PSN Unit Matrix", "i": "fa-table-cells-large"}, "master-certificate-template.html": {"t": "Certificate Template", "i": "fa-file-certificate"}, "heat-plan.html": {"t": "Heat Plan", "i": "fa-calendar-days"}, "hot-out-clearance.html": {"t": "Hot-out Clearance", "i": "fa-fire-flame-curved"}, "location-tracking.html": {"t": "Location Tracking", "i": "fa-location-dot"}, "master-storage-location.html": {"t": "Storage Location", "i": "fa-warehouse"}, "master-location-type.html": {"t": "Location Type", "i": "fa-shapes"}, "master-tally-reason.html": {"t": "Tally Reason", "i": "fa-scale-unbalanced"}, "master-dispatch-obligation.html": {"t": "Dispatch Obligation", "i": "fa-truck-fast"}, "master-hot-out-decision.html": {"t": "Hot-out Decision", "i": "fa-code-fork"}, "master-split-reason.html": {"t": "Split Reason", "i": "fa-scissors"}, "master-auto-ud-rule.html": {"t": "Auto UD Rule", "i": "fa-robot"}};var KEY='mesOpenTabs';
 var here=(location.pathname.split('/').pop()||'dashboard.html').toLowerCase();
 function ld(){try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}}
 function sv(a){try{sessionStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}

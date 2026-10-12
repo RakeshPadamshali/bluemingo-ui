@@ -2579,10 +2579,10 @@ A target is offered only when the analysis in hand satisfies it, element by elem
 | QA-SMS-R-02 | Current location on the inventory row (`mes_inventory.location_code`) writable from the Quality module, later from an external location system through the integration layer | 65, 90, 100–104 |
 | QA-SMS-R-03 | Every hot-out event (direct, indirect piece, overstay) raises the Quality clearance item; the decision code, next operation and keep-code flag written back to `mes_hot_out_event` and honoured by charging, by the conditioning operation on the decision (no form conversion when keep-code) and by scrap. The decision vocabulary is Quality master data (34.5.1), so `qa_decision` holds a code the Quality module supplies rather than a fixed list, and the receiving side acts on the flags sent with it | 91–97 |
 | QA-SMS-R-04 | Release to a chosen next operation from the usage decision: the routing sends the batch to `next_operation_id` | 96 |
-| QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row. The same confirmation must also **capture the pit and the pit entry time** at the consolidated-inspection step and expose both to the Quality module, since the cooling countdown is derived from them and Quality never enters them (BR-PIT-01, BR-PIT-06) | 1, 23, 24, 25 |
+| QA-SMS-R-05 | Read access to the casting indent and rolling sequence (Planning design) and the casting-confirmation event that seeds the AWAITING_ENTRY pit-cooling row. The same confirmation must also **capture the pit and the pit entry time** at the consolidated-inspection step and expose both to the Quality module, since the cooling countdown is derived from them and Quality never enters them (BR-PIT-01, BR-PIT-06). Also read access to the campaign and to the charging rows for the rolling plan view (36.1) | 1, 23, 24, 25; MQA 1, MQA 2 |
 | QA-SMS-R-06 | Grade-transition flag (first heat after a grade change in the caster sequence) and the mix-up hold flag readable at worklist generation | 68 |
 | QA-SMS-R-07 | Quality verdict at the dispatch point: show the verdict, its reason and the obligations on the dispatch screens (UID Dispatch Details, Generate Unload Slip); refuse the ready tick and the dispatch status while the verdict is BLOCKED, writing the Quality reason into the existing lock reason; send an override (user, time, obligation, reason, dispatch reference) back to the Quality module | 78 |
-| QA-SMS-R-08 | Batch split on Quality's request: execute the split with the Batch Derivation Rules (event SPLIT), return one child batch number per request line, confirm the physical cut where the request asks for one, and report a failure back with its reason. The parent-child lineage is written to `mes_batch_relations` as today | 69 |
+| QA-SMS-R-08 | Batch split on Quality's request: execute the split with the Batch Derivation Rules (event SPLIT), return one child batch number per request line, confirm the physical cut where the request asks for one, and report a failure back with its reason. The parent-child lineage is written to `mes_batch_relations` as today. Also the merge on Quality's request (event MERGE, merged batch number returned, lineage written) and the proportional share of the loss already booked applied to the children's weights (36.6, 36.7) | 69; MQA 25 |
 | QA-SMS-R-09 | Chemistry divert: stamp the grade and product spec a diverted heat becomes on the heat and its material, move the demand link from the original order line to the one Quality matched, and return the outcome so the decision can show APPLIED or FAILED. The decision also reaches the melting-shop system over the existing outbound chemistry channel | 45 |
 
 The Operations design's Hot-Out & Re-roll screen (BR-HOT-03, overstay-only decision) is to be aligned with QA-SMS-R-03 in its next revision.
@@ -2618,3 +2618,186 @@ Alongside the checks, a stage carries the **quantity reconciliation** it owes: `
 
 ### 35.6 Dependencies
 The route instance, its stages and the routing axes are platform work raised in the Planning design (PPC-R-17, PPC-R-18); the Quality module resolves and pins the content of each stage and reads the stage status back. No Quality screen is added: the worklist chip names the stage (BR-WKL-16, BR-WKL-25), the path master feeds the merge (BR-MIPT-04), and the sampling draw is paired with its gate (BR-SMP-14).
+
+---
+
+## 36. Submodule — Mills QA review — gap closure (2026-10-12)
+
+The design was reconciled against the 29 Mills QA points (MQA 1–29). Eighteen were already answered; of the eleven left open, three are answered by what exists (MQA 6 by Location Tracking, MQA 14 and 15 by the auto-line machine units), three belong to the production-confirmation application as configuration (MQA 27, 28 and 29 — the downstream confirmation screens), and the rest close below. Two items the Master Data design already holds are only referenced: the inspector register (Master Data §4.6, MQA 18) and the sampling triggers on the sampling rule (Master Data `trigger_event`, `trigger_n` — every N pieces, grade change, specification change, heat start, shift start).
+
+### 36.1 Rolling plan view — what the mill is rolling, seen by Quality (MQA 1, MQA 2)
+Online inspection starts from what the mill is rolling. The plan and the charging belong to Planning and to the production-confirmation application; Quality **reads** them and adds its own state on top. Nothing is planned, sequenced or charged from Quality's view, and nothing in it is stored by Quality. The mill is a selector over data — any rolling operation with a campaign behind it appears, so one view serves every mill.
+
+- **View `v_qc_campaign_plan`** — one row per campaign order line: mill operation, campaign code, basis, period, status, order line, customer, grade, specification number, size, planned and balance quantities, inclusion, and the campaign's tonnage per day (`mes_campaign`, `mes_campaign_order`, `mes_campaign_day`).
+- **View `v_qc_daywise_plan`** — one row per released block: mill operation, plan date, shift, schedule code and status, block sequence, shape, size, grade, specification number, planned tonnes and billets, rolled length (`mes_rolling_schedule`, `mes_rolling_schedule_block`, `mes_rolling_schedule_block_order`; where no schedule is released, the built rolling program `mes_rolling_program` for that date).
+- **View `v_qc_daywise_charging`** — one row per charged batch in charging order: mill operation, date, charge number, block, product (shape, size, grade, specification number), heat, batch, pieces and tonnes charged, position in the charging order (`mes_charges`, `mes_inventory_charges.charge_seq`).
+- **Quality overlay** (all three views, derived): per block or batch, the sampling state — **DUE** (a sampling rule applies and no group holds the batch), **GROUPED** (in an open sample group), **ID GENERATED**, **RESULT PENDING**, **RESULT RECORDED** — read from `mes_qc_sample` and `mes_qc_sample_batch` (36.2).
+
+### 36.2 Sample groups — one sample ID for consecutive batches, with sub-samples (MQA 1, MQA 2)
+At the mill, a sample is not drawn per batch: consecutive batches in charging order share one sample ID until the plan says a new sample is due, and each sample ID carries a sample from more than one position along the bar. The triggers already sit on the sampling rule (Master Data); what is added here is the **group** and its **sub-samples**.
+
+#### 36.2.1 `mes_qc_sampling_rule` — additions (sample groups)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `group_batches` | boolean | | N | Default false; true makes consecutive batches at the rule's operation share one sample ID until a trigger closes the group |
+| `sub_sample_scheme` | varchar(60) | | Y | The sub-samples each sample ID carries, as suffix and draw position pairs — e.g. `F:HEAD, M:MID, B:TAIL`. Blank = no sub-samples. Suffixes and positions are data, so a plant naming its positions differently configures them here |
+
+#### 36.2.2 `mes_qc_sample` — additions (sample groups)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `sample_group_id` | bigint | FK → `mes_qc_sample` | Y | On a sub-sample, the sample ID it belongs to; empty on the group sample itself and on an ungrouped sample |
+| `sub_sample_suffix` | varchar(10) | | Y | The suffix from the rule's scheme — the sub-sample's number is the group's number plus `-` and the suffix (SMP-2526-0451-F) |
+| `group_status` | varchar(10) | | Y | On the group sample: OPEN (batches still joining) / CLOSED |
+| `group_close_trigger` | varchar(30) | | Y | The trigger that closed the group — EVERY_N_PIECES / GRADE_CHANGE / PSN_CHANGE / HEAT_START / SHIFT_START — or MANUAL |
+| `group_closed_at` | timestamptz | | Y | |
+| `group_pieces` | int | | Y | Pieces counted into the group, for the EVERY_N_PIECES trigger |
+
+#### 36.2.3 `mes_qc_sample_batch` — which batches a sample ID covers
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `sample_batch_id` | bigint | PK | N | |
+| `sample_id` | bigint | FK → `mes_qc_sample` | N | The group sample |
+| `batch_id` | bigint | FK → `mes_batches` | N | A batch the sample stands for; a batch belongs to at most one group per operation and sample type |
+| `heat_number` | varchar(30) | | N | Denormalised for the register |
+| `charge_seq` | int | | Y | The batch's position in the charging order (`mes_inventory_charges.charge_seq`) |
+| `pieces` | int | | Y | Pieces the batch brought into the group |
+| `joined_at` | timestamptz | | N | |
+| | | | | **+ audit tail** |
+
+#### 36.2.4 How a group opens, fills and closes
+- A group **opens** with the first charged batch at the operation that a grouping rule applies to and that no open group already holds; each following batch in charging order **joins** it.
+- The group **closes** on the first trigger that fires among the active rules for that operation and sample type: the piece count reaching `trigger_n` (EVERY_N_PIECES — the batch that reaches the count is the last one in), or a change of grade, of specification number, of heat or of shift (the batch that brings the change opens the next group and is not in the closing one). A supervisor may close a group by hand, recorded as MANUAL.
+- When a group closes, the sample ID is numbered with its sub-samples (one per pair in the scheme, each with its draw position and its own sticker), the group's batches leave the sampling list, and they appear in result recording against that sample ID (MQA 3, MQA 4).
+- *Worked example: rule — every 5 pieces or on grade or specification change, scheme `F:HEAD, M:MID, B:TAIL`. Charged in order: B1–B5 (316L, PSN-1001, one billet each), B6–B7 (316L, PSN-1001), B8 (304L, PSN-1002). B1–B5 close the first group on the count (SMP-2526-0451 with -F, -M, -B); B6 and B7 form the second, closed by the grade change B8 brings with two pieces counted (SMP-2526-0452); B8 opens the third.*
+
+### 36.3 One log book for more than one unit (MQA 14, MQA 15)
+A machine's shift log book is the instrument checklist bound to that machine (`mes_qc_instrument_checklist.instrument_id`). Where one book serves two units — a line keeping a single book for its ultrasonic and flux-leakage testers — the book is bound to each unit it serves.
+
+#### 36.3.1 `mes_qc_checklist_unit` — which units a log book serves
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `checklist_unit_id` | bigint | PK | N | |
+| `checklist_id` | bigint | FK → `mes_qc_instrument_checklist` | N | The log book |
+| `operation_id` | bigint | FK → `mes_operations` | N | The unit it serves (an auto-line stage's operation) |
+| `area_code` | varchar(30) | | Y | The line or area, where the same unit exists on several lines; blank = every line |
+| `active` | boolean | | N | |
+| | | | | **+ audit tail** |
+
+The unit's log-book link opens the book bound to (operation, line); the per-shift completion gate is held **per book**, so completing a shared book clears every unit it serves for that shift. *Worked example: Line-3 binds one book to both its ultrasonic and flux-leakage units; Line-4 binds a book to its ultrasonic unit only.*
+
+### 36.4 Inspector on the record (MQA 18)
+The inspector register is the Master Data design's (`mes_qc_inspector`, `mes_qc_inspector_qualification`, §4.6), and `mes_qc_inspection.inspector_id` and `mes_qc_test_record.inspector_id` already exist there. Magnetic-particle, visual and manual ultrasonic records name the inspector beside the user who enters them, so internal Quality can record on an agency inspector's behalf. A qualification is enforced only where a test or inspection type is marked as requiring one; where none is marked, the register works as a plain list of inspectors.
+
+### 36.5 Machines in the instrument-type seed (MQA 14, 15, 18, 22, 23)
+Data only. `mes_qc_instrument_type` gains seed rows **SPARK_METASCOPE**, **MOBILE_SPECTRO**, **MPI_UNIT**, **MFLT** and **EDDY_CURRENT**, each with one example instrument, so these machines are registered, calibrated and alerted like every other instrument, and each test's planned equipment defaults to its own machine type.
+
+### 36.6 Batch merge — Quality decides, the production-confirmation application executes (MQA 25)
+The reverse of the split: two or more batches become one — part bundles combined into a full bundle, for example. As with the split, batch numbers, inventory and lineage belong to the production-confirmation application, which already knows the MERGE event and its weight rule (Master Data batch derivation, event MERGE); Quality **requests** the merge, having checked that the batches may be one, and that application **executes** it and returns the batch number.
+
+#### 36.6.1 `mes_qc_stage_qc_map` — addition (merge)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `allow_merge` | varchar(10) | | N | NONE (default) / SAME_HEAT / ANY_HEAT — whether Quality may start a merge at this operation and whether the batches must share a heat. Read at operation scope like `allow_split` |
+
+#### 36.6.2 `mes_qc_merge_request` — one request per merge
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `merge_request_id` | bigint | PK | N | |
+| `request_no` | varchar(30) | UQ | N | MRG-2526-nnnn (CL-05) |
+| `operation_id` | bigint | FK → `mes_operations` | N | The operation the merge is requested at; it must allow merges |
+| `route_stage_id` | bigint | FK → `mes_material_route_stage` | Y | The pinned stage, where the material carries a route |
+| `psn_no` | varchar(40) | | N | The specification number every source shares |
+| `grade` | varchar(50) | | N | |
+| `size` | varchar(50) | | N | |
+| `clearance_status` | varchar(20) | | N | The clearance status every source shares |
+| `split_reason_id` | bigint | FK → `mes_qc_split_reason` | N | Why the batches are combined — a reason whose `applies_to` covers MERGE |
+| `remarks` | varchar(500) | | Y | Required when the reason says so |
+| `hold_override` | boolean | | N | True when a source was on hold and Quality overrode it |
+| `hold_override_reason` | varchar(255) | | Y | Required when `hold_override` |
+| `total_pieces` | int | | Y | Sum of the lines |
+| `total_weight_t` | numeric(12,3) | | Y | |
+| `status` | varchar(20) | | N | REQUESTED / EXECUTED / CANCELLED / FAILED |
+| `result_batch_id` | bigint | FK → `mes_batches` | Y | Returned by the executing application |
+| `result_batch_number` | varchar(50) | | Y | Denormalised |
+| `requested_by` | bigint | | N | |
+| `requested_at` | timestamptz | | N | |
+| `executed_at` | timestamptz | | Y | |
+| `cancel_reason` | varchar(255) | | Y | Required on CANCELLED |
+| `failure_text` | varchar(500) | | Y | What the executing application reported on FAILED |
+| | | | | **+ audit tail** |
+
+#### 36.6.3 `mes_qc_merge_request_line` — one line per source batch
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `merge_line_id` | bigint | PK | N | |
+| `merge_request_id` | bigint | FK → `mes_qc_merge_request` | N | |
+| `source_batch_id` | bigint | FK → `mes_batches` | N | At least two lines; a batch appears once |
+| `heat_number` | varchar(30) | | N | |
+| `pieces` | int | | Y | |
+| `weight_t` | numeric(12,3) | | Y | |
+| | | | | **+ audit tail** |
+
+`mes_qc_split_reason.applies_to` gains **MERGE**; the seed adds PART_BUNDLE ("Combining part bundles").
+
+#### 36.6.4 Who may be merged, and what the merged batch carries
+- **Eligibility:** every source shares the specification number, grade and size and stands at the same clearance status; with SAME_HEAT they also share the heat. Material on hold is refused unless Quality overrides with a reason. Material already certified or dispatched is not merged.
+- **What it carries:** the merged batch keeps the lineage to every source (`mes_batch_relations`, event MERGE), which is what the earlier-feedback panel walks, so each source's results stand behind it without a second register line; where sources come from different heats the certificate shows each heat's results.
+- The request is role-gated, cancelled before execution with a reason, and never edited after submission.
+
+### 36.7 Split — the loss already booked is shared across the children (MQA 25)
+#### 36.7.1 `mes_qc_split_request_line` — addition
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `loss_share_kg` | numeric(12,3) | | Y | The child's share of the end-cut and salvage loss already booked on the parent at this stage |
+
+The loss booked on the parent at the stage (end-cut and salvage records) is shared across the children by their share of the parent's weight — by pieces where the stage keeps no weight. Each share is rounded to the kilogram and any difference left by rounding is put on the largest child, so the shares add back to the loss exactly. The executing application applies the same arithmetic through its proportional weight rule (Master Data batch derivation, `weight_rule` PROPORTIONAL); Quality shows the shares on the request. *Worked example: parent 7,900 kg with 100 kg booked (60 end-cut, 40 salvage), split 2,500 + 2,500 + 2,900 kg → 31.65, 31.65 and 36.71 kg round to 32, 32 and 37 = 101; the difference of −1 goes on the largest child → 32, 32, 36 = 100 kg.*
+
+### 36.8 Final weight against the booked weight (MQA 25)
+#### 36.8.1 `mes_qc_usage_decision` — additions (weight check)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `booked_weight_kg` | numeric(12,3) | | Y | The batch's weight on record when the final weight was captured |
+| `weight_variance_pct` | numeric(6,2) | | Y | (final − booked) ÷ booked × 100 |
+| `weight_variance_flag` | boolean | | N | Default false; true when the variance is outside the stage's tally weight tolerance |
+
+The flag never blocks the decision; it shows on the decision and in the variance list for the stage. *Worked example: booked 7,900 kg, tolerance 0.50 %. Scale 7,935 kg → +0.44 %, no flag; scale 7,960 kg → +0.76 %, flagged.*
+
+### 36.9 Auto usage decision — the rule is master data (MQA 28)
+Some supply conditions need no human judgement once every check has passed. The rule that says so is a master row, scoped like the other rules; where it matches, the system records the acceptance itself.
+
+#### 36.9.1 `mes_qc_auto_ud_rule` — auto usage-decision rule master (prefix MAUD)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `auto_ud_rule_id` | bigint | PK | N | |
+| `code` | varchar(50) | UQ | N | |
+| `name` | varchar(255) | | N | |
+| `operation_id` | bigint | FK → `mes_operations` | N | The stage the rule decides at |
+| `supply_condition` | varchar(50) | | Y | Blank = any |
+| `material_form_id` | bigint | FK → `mes_material_forms` | Y | |
+| `customer_id` | bigint | | Y | |
+| `grade` | varchar(50) | | Y | |
+| `ud_type_id` | bigint | FK → `mes_qc_ud_type` | N | The acceptance recorded |
+| `ud_action_id` | bigint | FK → `mes_qc_ud_action` | N | What follows — e.g. release to the next operation |
+| `approval_required` | boolean | | N | True: the recorded decision enters the approval chain as usual; false: it stands approved |
+| `priority` | int | | N | Lower first, among rules equally specific |
+| `effective_from` / `effective_to` | date | | Y | |
+| `active` | boolean | | N | |
+| | | | | **+ audit tail** |
+
+#### 36.9.2 `mes_qc_usage_decision` — addition (auto decision)
+| Field | Type | Key | Null | Description |
+|-------|------|-----|------|-------------|
+| `auto_ud_rule_id` | bigint | FK → `mes_qc_auto_ud_rule` | Y | The rule that recorded the decision; set together with `is_auto` |
+
+#### 36.9.3 When the system decides
+When the last check a lot owes at the stage is cleared, the system looks for an active rule matching the stage and the lot (most specific first, then priority). It records the acceptance only when every owed check passed outright — no acceptance under deviation, no conditional result, no open non-conformance, no hold, no laboratory result outstanding and no split or merge in progress; otherwise the lot waits for a manual decision as today. The decision is tagged AUTO with the rule named, decided by the system user. *Worked example: rule AUTO-BRIGHT — stage peeling, supply condition Bright, approval not required. Lot E121717 clears its last dimensional check with every check passed → usage decision recorded at once, AUTO · AUTO-BRIGHT, release to the next operation. Lot E121718 carries a dimensional result accepted under deviation → no automatic decision; it waits in the usage-decision list.*
+
+### 36.10 Answered without new design (MQA 6, 14, 15, 22, 27, 28, 29)
+- **MQA 6** — Location Tracking (`mes_qc_location_move`, 34.4); pre-assigning a location before a move and receiving-end acknowledgement were agreed out of scope.
+- **MQA 14, MQA 15** — the flux-leakage and eddy-current units of the auto line: seeded stages of the inspection path, the bars-inspected tally, the machine interfaces; plus 36.3 and 36.5.
+- **MQA 22** — the spark test is a Quality Test master row read against the heat's chemistry and taken on the material; plus 36.5.
+- **MQA 27, MQA 28, MQA 29** — the peeling, reeling and centerless-grinding confirmation screens, the product-code conversion and the batch characteristics are the production-confirmation application's downstream operations, configured there. Quality's part: material reaches a unit only once its previous stage is cleared; earlier results follow the material through the code conversion (CL-11); a stage that owes no laboratory test simply has none on its Stage-QC Map rows; supply condition chooses the inspection path through the matrix; the inspection path after a code conversion is re-run by a supervisor (BR-PTH-05). MQA 28's automatic decision is 36.9.
+
+### 36.11 Platform change requests — additions
+- **QA-SMS-R-05** extends to read access to the campaign (`mes_campaign`, `mes_campaign_order`, `mes_campaign_day`) and to the charging rows (`mes_charges`, `mes_inventory_charges`) for the rolling plan view (MQA 1, MQA 2).
+- **QA-SMS-R-08** extends to the merge: execute a merge on Quality's request with the batch derivation rules (event MERGE), return the merged batch number, write the lineage to `mes_batch_relations`, and report a failure with its reason; on a split, apply the proportional weight rule to the loss already booked so the children's weights match the shares Quality showed (MQA 25).
