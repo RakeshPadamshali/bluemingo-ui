@@ -13,6 +13,7 @@
 **Ask:** `mes_orders` + `order_category`, `sap_order_type`, `sap_order_no`, `sap_status`, `sap_status_at`, `reference_order_id`, `planning_relevant`, `planning_override_by`, `marketing_rank`, `trial_flags_json`, `plant_of_supply`, `job_work_vendor_id`, `received_at`; `mes_order_line_items` + `psn_no`, `section_shape`, `section_size`, `input_section`, `grinding_required`, `length_tolerance_mm`, `release_qty` (+ by / at), `dispatched_qty`, `fgho_qty`, `rejected_qty`, `diverted_qty`, `short_closed_qty`, `hold_status`, `slot_score`, `sla_delivery_date`, `otif_status`, `flags_json`; Orders screen shows category / type / flags; creation of ISO / internal / NCO / trial orders by PPC (with-reference inherits attributes).
 **Why:** BRD OMB-001…006, 7.1.3, F7.1-07/09 — one order book for planning, balances, allocation and campaigns.
 **Affects:** Orders screen and import; order-data post-process; QA reads `psn_no`.
+**Amended 2026-10-13:** `hold_status` withdrawn — the hold state is the existing line `status` ON_HOLD / BLOCKED (§19.2 R-PPC-57); `sap_status` gains LOCKED; `mes_orders` + `capa_id`.
 
 ### PPC-R-02 — MES production orders split from the SAP order
 **Date:** 2026-09-15 · **From:** §2.2 · **Status:** DRAFT
@@ -38,6 +39,7 @@
 **Date:** 2026-09-15 · **From:** §2.6 · **Status:** DRAFT
 **Ask:** new `mes_order_hold`; held lines excluded from every scheduling screen; SAP / SFDC holds applied automatically; mass actions gated by ORDER_MASS_HOLD / RELEASE (MDM-R-02).
 **Why:** OMB-015, F7.1-03.
+**Amended 2026-10-13:** held lines are those with the existing line status ON_HOLD / BLOCKED; `mes_order_hold` is the history; a SAP lock applies a hold with reason SAP_LOCK (§19.2, §19.9).
 
 ### PPC-R-07 — SMS → Mills batch feed as a scheduled job
 **Date:** 2026-09-15 · **From:** §3.1 · **Status:** DRAFT `[assumption — D-07]`
@@ -78,6 +80,7 @@
 **Date:** 2026-09-15 · **From:** §6.2 · **Status:** DRAFT
 **Ask:** new `mes_downstream_schedule`, `mes_downstream_schedule_line`, `mes_gmm_lot`, `mes_gmm_lot_heat`; annealing charges from the annealing load rules (MDM-R-12) and HT cycles (QA); GMM 10-heat lots forming one batch id through the batch derivation rule MERGE (MDM-R-13); weekly Bright Bar schedule feeding the built operation-assignment screen.
 **Why:** ANL-01…07, F7.6-01…04, F7.7-01/02, F7.8-01.
+**Amended 2026-10-13:** period MONTH added; release with or without WIP; supply condition as campaign basis; GMM single sales order by default with the two-order model configurable (§19.6, PPC-R-23).
 
 ### PPC-R-15 — Ferro-alloy requirement plans and variance
 **Date:** 2026-09-15 · **From:** §7 · **Status:** DRAFT
@@ -88,6 +91,56 @@
 **Date:** 2026-09-15 · **From:** §8, §9 · **Status:** DRAFT
 **Ask:** `mes_inventory` + `current_equipment_id`, `location_code`, `location_updated_at`, `restricted`, `scan_status`, `planned_material_number`; views `v_ppc_wip_by_stage`, `v_ppc_stock_per_order`, `v_ppc_billet_availability`, `v_ppc_daily_stock`, `v_ppc_plan_vs_actual`, `v_ppc_fealloy_variance`; the 17 report list on the existing report platform.
 **Why:** 7.9, 7.10, F7.2-06, F7.12-01…04, F7.14-01…17.
+
+
+### PPC-R-19 — Make-to-stock beside make-to-order; pegging at charging; ISO at charging; order-scoped charging
+**Date:** 2026-10-13 · **From:** §19.1 · **Status:** DRAFT
+**Ask:** read the existing order-line `order_type` (MTO / MTS) as the production scenario, defaulted from the order-book rule PRODUCTION_SCENARIO; let open-stock children of a make-to-stock indent line follow a stock route (`mes_material_route.indent_line_id`) through inspection and grinding instead of stopping at billet cutting; on the charging screen, a label scan lists matching order lines (the rolling-program match widened with the FREE_TO_SO swap rules) with a supervisor soft-mismatch override, writing the allocation (`source = CHARGE_SCAN`) and the lot pegging; book an unmatched make-to-stock batch to an ISO order created at charging; `mes_pc_screen_config` + `order_scoped_charging` (default false = today's pool of every cleared lot, pegged batches first, others with a warning; true = pegged batches only, FORCED_CHARGE_OVERRIDE with reason); Σ allocations ≤ batch as a hard check where an allocation is made (warning only at confirmation); a charge-time swap writes its automatic REVERSE leg in the same transaction; the inventory upload gains an order-allocation column for the one-time SAP stock migration.
+**Why:** BRD v5.0 general requirement (make-to-stock as well as make-to-order), points 8, 17, 35–38, 44, 58, 124, 125, 131.
+**Affects:** Material Charging, Production Confirmation (open-stock children), inventory upload, allocation and swap services.
+
+### PPC-R-20 — Schedule hold enforced
+**Date:** 2026-10-13 · **From:** §19.2 R-PPC-58 · **Status:** DRAFT
+**Ask:** `mes_schedules` + `hold_reason_id`, `hold_note`, `held_by`, `held_at`; a held schedule is hidden from the operator queue and refused at charging and confirmation; hold and release need a reason (hold-reason master, applied at Schedule); releases in the audit log.
+**Why:** `is_hold` is stored and set today but read by nothing — a held schedule is still listed and chargeable (point 21).
+**Affects:** schedule screen, work queue, Material Charging, Production Confirmation eligibility.
+
+### PPC-R-21 — Campaign and sequence additions
+**Date:** 2026-10-13 · **From:** §19.3 · **Status:** DRAFT
+**Ask:** `mes_scheduling_constraint` + `equipment_id`, `tolerance_pct`, `exempt_json` (constraint type LOT_HEATS added); `mes_campaign_order` + `wip_cover_json`; `mes_order_line_items` + `over_attach_pct`; `mes_rolling_schedule` + `family_id`, `schedule_seq_no`, `product_form`, `sequence_template_id`, `monthly_plan_id`; `mes_rolling_schedule_block` + `planned_hours`, `planned_output_t`, `pass_schedule_id`; new `mes_sequence_template`, `mes_sequence_template_rule`, `mes_monthly_plan`, `mes_monthly_plan_line`; view `v_ppc_day_timeline`; MoQ evaluated in MES at equipment level (the planner run keeps `moqProduction` off); wider WIP netting; schedule numbering per mill and family with one product form per schedule; the block calculator; the setup sheet printed from the Process Control setup sheet of the block.
+**Why:** points 50, 53, 61, 67, 126–130; MoQ ownership (closes OPEN-PPC-1).
+
+### PPC-R-22 — Casting-indent additions
+**Date:** 2026-10-13 · **From:** §19.4 · **Status:** DRAFT
+**Ask:** `mes_casting_indent_line` + `demand_source` (ORDER / AS_CAST_SALE / MTS_STOCK / NCO_FILLER), `cast_form_id`, `cast_length_source`, `double_rolling`, `grinding_required`, `special_override_reason`; cast length from the Allocation application's per-line billet length where present, else the length master's cast lengths (MDM-R-19), within the caster's equipment section limits; NCO filler up to heat load or caster daily capacity, unplanned remainder left as the existing free metal; stock column from the existing Billet Stock Summary logic.
+**Why:** points 70, 71, 78, 79, 80, 84.
+**Affects:** casting-plan upload and heat generation (consume the indent's demand sources).
+
+### PPC-R-23 — Downstream additions; GMM order model and lot size
+**Date:** 2026-10-13 · **From:** §19.6 · **Status:** DRAFT
+**Ask:** `mes_abgm_schedule_line` + `shift_id`, `bypass`, `bypass_reason`, `bypass_by` (a bypass writes a route deviation); `mes_downstream_schedule` + `supply_condition`; `mes_downstream_schedule_line` + `release_mode`; `mes_schedule_change_log` + `abgm_schedule_id`, `downstream_schedule_id`, `block_id` and the approval columns (SCHEDULE_CHANGE_APPROVE), also written by Manual Sequencing moves; `mes_gmm_lot` + `order_model`, `min_heats`, `max_heats`; a minimum batch weight in the batch-formation grouping configuration for the GMM operation (seed 1 t); period MONTH on downstream schedules; Manual Sequencing per equipment gains the shift for the grinding team.
+**Why:** points 86, 95–98, 101, 104; conflicts 2 and 3 (single sales order through GMM by default, lot size a setting).
+
+### PPC-R-24 — Ferro-alloy plan carry-forward and category filter
+**Date:** 2026-10-13 · **From:** §19.7 · **Status:** DRAFT
+**Ask:** `mes_fealloy_plan_line` + `carry_forward_t`, `carried_from_line_id`; part of an order on a plan line with the remainder carried to the next month; cost-category filter on the variance view.
+**Why:** points 88, 111.
+
+### PPC-R-25 — Job work
+**Date:** 2026-10-13 · **From:** §19.9 R-PPC-89 · **Status:** DRAFT
+**Ask:** `mes_material_route_stage` + `job_work_vendor_id` (supplier master, type JOB_WORK); new `mes_job_work_movement` (send-out and receipt with output, visible loss, computed invisible loss, scrap, challan); the lot continues on its route after receipt; `mes_orders.job_work_vendor_id` references the supplier master.
+**Why:** BRD v5.0 additional requirement 1 (point 3) — nothing exists for job work today.
+
+### PPC-R-26 — Purchased billets and blooms become lots from the accepted raw-material receipt
+**Date:** 2026-10-13 · **From:** §19.9 R-PPC-90 · **Status:** DRAFT
+**Ask:** when the Quality module accepts a raw-material receipt of form billet or bloom, create the lot at the mill's charging stage from the batch the receipt creates, with the supplier heat and the certificate chemistry, free for allocation or pegged to the order named on the purchase order.
+**Why:** BRD v5.0 additional requirement 2 (point 5); the receipt and its inspection exist in the Quality design.
+**Affects:** inventory creation; Quality raw-material receipt (reads, no change to its screens).
+
+### PPC-R-27 — Outbound staging, IVL feed, planner variance, interface health
+**Date:** 2026-10-13 · **From:** §19.9 R-PPC-91…94 · **Status:** DRAFT `[integration deferred]`
+**Ask:** new `mes_integration_outbound` (schedule changes to the planner daily, production confirmations to SAP, heat and batch messages to the IVL MES, casting-indent and ferro-alloy issues to the SMS MES); `mes_sms_batch_feed.source_system` + IVL_MES; views `v_ppc_planner_variance` and `v_integration_health`; `sap_status` + LOCKED applying an order hold with reason SAP_LOCK.
+**Why:** points 108, 109, 123, 132, 133.
 
 ---
 

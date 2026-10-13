@@ -122,6 +122,12 @@
 **Why:** the composite material route (cross-module design note, D-RTE-1) resolves the process stages from the PSN and the order attributes; today the routing is keyed by size and grade, and its axis values cannot be maintained on a screen.
 **Affects:** route resolution at order-line release (Planning design, PPC-R-17 and PPC-R-18); the pulpit next-operation check (Operations design).
 
+### MDM-R-19 — MoQ per equipment; cast length on the length master; Planning rule-type and supplier-type seeds
+**Date:** 2026-10-13 · **From:** §3.1, §3.5, §3.10 (raised by the Planning review, PPC §19) · **Status:** DRAFT
+**Ask:** `mes_moq_rule` + `equipment_id` (an equipment row beats a unit row); `mes_length_master` + `cast_length_primary_mm`, `cast_length_alt1_mm`, `cast_length_alt2_mm` (the length of the cast product — billet, bloom or slab — per input form and section; the caster's minimum and maximum stay its equipment section limits, capability CAST); order-book rule types PRODUCTION_SCENARIO, OVER_ATTACH_PCT, RELEASE_MODE_BY_TIER, GMM_ORDER_MODEL (seed rows); supplier type JOB_WORK on the supplier master (seed).
+**Why:** MES owns MoQ at equipment level (closes OPEN-PPC-1); the casting indent needs cast lengths when the Allocation application gives none; make-to-stock, over-attach, release mode and the GMM order model are settings, not code.
+**Affects:** MoQ Rules and Length Master screens and uploads (MOQ_RULE, LENGTH_MASTER sheets gain the columns).
+
 ### ALC-R-01 — Migrate finished-length vocabulary
 **Date:** 2026-09-12 · **From:** §3.1 · **Status:** DRAFT
 **Ask:** export the 7,835 ranged rows of `Mst_Length_Master` with unit normalisation (values < 1,000 are metres → mm) for loading into QA `mes_qc_length_master` / `mes_length_master.finished_length_mm`; confirm with JSW whether this set is authoritative (open point 1).
