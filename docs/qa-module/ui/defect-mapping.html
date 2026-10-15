@@ -41,7 +41,9 @@ button{font-family:inherit;cursor:pointer;}
 .sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
 .sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
 .sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
-.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.content{grid-area:content;overflow:auto;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.content>*{flex-shrink:0;} .content>.tiles{flex:1 0 260px;} .content>.wrap2{flex:1 0 300px;}
+.panel{overflow-x:auto;flex-shrink:0;} .grid2>*,.grid3>*,.pv>*{min-width:0;overflow-x:auto;} .kpis .k .badge{white-space:normal;}
 .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp4);margin-bottom:var(--sp3);}
 .page-head h1{margin:0;font-size:var(--fs-xl);font-weight:600;}
 .page-head .sub{color:var(--color-text-muted);font-size:var(--fs-sm);margin-top:2px;}

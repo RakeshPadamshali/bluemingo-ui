@@ -40,7 +40,10 @@ button{font-family:inherit;cursor:pointer;}
 .sidebar a:hover{background:rgba(255,255,255,.08);color:#fff;}
 .sidebar a.active{background:rgba(37,169,224,.2);color:var(--color-primary-light);border-left-color:var(--color-primary);}
 .sidebar .s-group{color:rgba(255,255,255,.35);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.6px;padding:var(--sp4) var(--sp5) var(--sp2);}
-.content{grid-area:content;overflow:hidden;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.content{grid-area:content;overflow:auto;padding:var(--sp3) var(--sp4);display:flex;flex-direction:column;}
+.content>*{flex-shrink:0;} .content>.tiles{flex:1 0 260px;} .content>.wrap2{flex:1 0 300px;}
+.panel{overflow-x:auto;flex-shrink:0;} .grid2>*,.grid3>*,.pv>*{min-width:0;overflow-x:auto;} .kpis .k .badge{white-space:normal;}
+.content>.card{flex:1 0 260px;}
 .crumb{font-size:var(--fs-sm);color:var(--color-text-muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
 .crumb a{color:var(--color-primary-dark);text-decoration:none;}
 .crumb a:hover{text-decoration:underline;}
