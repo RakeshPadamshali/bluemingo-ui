@@ -415,6 +415,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
         <div class="fld"><label>Material / item</label><input id="cMat" value="SS Bar"/></div>
         <div class="fld"><label>Qty (MT)</label><input id="cQty" type="number" step="any"/></div>
         <div class="fld"><label>Pieces</label><input id="cPcs" type="number"/></div>
+        <div class="fld full"><label>For order (from the PO line · billet / bloom)</label><input id="cOrder" placeholder="e.g. SO-88012 / 10 — empty = free stock"/></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -437,10 +438,10 @@ const DECB={'ACCEPT':'b-done','RETEST':'b-info','RETURN':'b-hold','':'b-draft'};
 const SMPSTB={'PLANNED':'b-pend','TESTED':'b-done'};
 const ROUTEMSG={'ACCEPT-CANDIDATE':'Checks passed — recommend acceptance. Completing inspection moves the lot to the RM Usage Decision (step 3), where the RM No is issued.',
  'SEND TO TESTING':'Lab confirmation needed — completing inspection sets the lot to TESTING, auto-plans RM samples (chemistry / tensile) &amp; hands them to Sampling/Testing.',
- 'RETURN':'Rejected — quarantined &amp; returned to supplier; raises a supplier NCR (§ Salvage) with feedback / SCAR.'};
+ 'RETURN':'Rejected — quarantined &amp; returned to supplier; raises a supplier NCR (see Salvage) with feedback / SCAR.'};
 const UDMSG={ACCEPT:'Accepted — RM No issued, internal batch created &amp; released to Production for heat formation.',
  RETEST:'Held for re-test — fresh sample drawn &amp; re-analysed before the usage decision is revisited.',
- RETURN:'Rejected at UD — quarantined &amp; returned to supplier; raises a supplier NCR (§ Salvage) with feedback / SCAR.'};
+ RETURN:'Rejected at UD — quarantined &amp; returned to supplier; raises a supplier NCR (see Salvage) with feedback / SCAR.'};
 /* ---- Characteristics from the Characteristic dictionary (mes_global_attributes) ----
    ATTRS     = dictionary entries (name + unit) — what each captured row 'is'
    STD_LIMIT = the RM purchase spec: a Standard's published limits by grade (mes_qc_standard_limit)
@@ -750,7 +751,7 @@ function openReceive(){
   document.getElementById('cSupplier').innerHTML=SUPPLIERS.map(s=>`<option>${s}</option>`).join('');
   document.getElementById('cGrade').innerHTML=GRADES.map(s=>`<option>${s}</option>`).join('');
   document.getElementById('cForm').innerHTML=FORMS.map(s=>`<option>${s}</option>`).join('');
-  ['cHeat','cTc','cTdc','cSize','cQty','cPcs'].forEach(id=>document.getElementById(id).value='');
+  ['cHeat','cTc','cTdc','cSize','cQty','cPcs','cOrder'].forEach(id=>document.getElementById(id).value='');
   const ct=document.getElementById('cTdc'); ct.style.borderColor=''; ct.placeholder='Select a TDC…';
   document.getElementById('recvOverlay').classList.add('open');
 }
