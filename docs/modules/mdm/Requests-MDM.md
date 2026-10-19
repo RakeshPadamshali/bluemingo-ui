@@ -128,6 +128,12 @@
 **Why:** MES owns MoQ at equipment level (closes OPEN-PPC-1); the casting indent needs cast lengths when the Allocation application gives none; make-to-stock, over-attach, release mode and the GMM order model are settings, not code.
 **Affects:** MoQ Rules and Length Master screens and uploads (MOQ_RULE, LENGTH_MASTER sheets gain the columns).
 
+### MDM-R-20 — Order-book rule types and mill scope; hold, dummy-order and pre-release actions; form-conversion code states
+**Date:** 2026-10-16 · **From:** §2.3, §2.6, §3.10 (raised by the Planning checkpoint review, PPC §20) · **Status:** DRAFT
+**Ask:** order-book rule types PLANNING_BASIS, INCOMING_COVER, QUALITY_PRE_RELEASE and ORDER_TYPE_PLANNING (seed rows) and an `operation_id` scope on `mes_order_book_rule` (a rule per mill); privileged actions ORDER_HOLD, ORDER_RELEASE, DUMMY_ORDER_APPROVE and ORDER_QUALITY_PRE_RELEASE, with every hold and release action seeded to PPC_SUPER_USER; `mes_form_conversion_rule` + `from_code_state`, `to_code_state`, `route_condition`, with the gross → net → G&D seeds and the hot-out exception.
+**Why:** checkpoints PPC-01, PPC-06, PPC-10, PPC-19, PPC-53, PPC-95 — settings, not code.
+**Affects:** Order Book Rules, Privileged Actions and Form Conversion Rules screens and uploads.
+
 ### ALC-R-01 — Migrate finished-length vocabulary
 **Date:** 2026-09-12 · **From:** §3.1 · **Status:** DRAFT
 **Ask:** export the 7,835 ranged rows of `Mst_Length_Master` with unit normalisation (values < 1,000 are metres → mm) for loading into QA `mes_qc_length_master` / `mes_length_master.finished_length_mm`; confirm with JSW whether this set is authoritative (open point 1).

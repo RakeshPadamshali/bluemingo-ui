@@ -862,6 +862,7 @@ Raw material (billets / blooms / bars / coil from suppliers) is inspected at **i
 | `qty_unit_id` | bigint | FK→`mes_units` | Y | |
 | `received_date` | timestamptz | | N | |
 | `batch_id` | bigint | FK→`mes_batches` | Y | Internal batch created on acceptance |
+| `for_order_line_id` | bigint | FK→`mes_order_line_items` | Y | Order the PO line is for (bought billets / blooms); entered at receipt until the SAP purchase-order message exists — on acceptance Planning pegs the lot to it (§37) |
 | `status` | varchar(20) | | N | RECEIVED / UNDER_INSPECTION / **TESTING** / ACCEPTED / RETEST / REJECTED / RETURNED / PARTIAL |
 | | | | | **+ audit tail** |
 
@@ -2801,3 +2802,10 @@ When the last check a lot owes at the stage is cleared, the system looks for an 
 ### 36.11 Platform change requests — additions
 - **QA-SMS-R-05** extends to read access to the campaign (`mes_campaign`, `mes_campaign_order`, `mes_campaign_day`) and to the charging rows (`mes_charges`, `mes_inventory_charges`) for the rolling plan view (MQA 1, MQA 2).
 - **QA-SMS-R-08** extends to the merge: execute a merge on Quality's request with the batch derivation rules (event MERGE), return the merged batch number, write the lineage to `mes_batch_relations`, and report a failure with its reason; on a split, apply the proportional weight rule to the loss already booked so the children's weights match the shares Quality showed (MQA 25).
+
+## 37. Planning checkpoint touchpoints (2026-10-16)
+
+Raised by the Planning checkpoint review (PPC data model §20); no new Quality table.
+- **Bought billets and blooms for an order** — `mes_qc_rm_receipt.for_order_line_id` (§13.2): the Receive Raw Material dialog gains "For order (from the PO line)". On acceptance Planning creates the lot at the mill's charging stage pegged to that line, and the line's balance to cast falls by the accepted quantity (PPC R-PPC-100); with the field empty the lot is free stock.
+- **Code state at clearance** — the form-conversion rule that fires on Quality clearance (QA_CLEARANCE) moves a billet, bloom, rolled bloom or RCS lot from GROSS to NET; grinding moves it to G&D (PPC R-PPC-109, Master Data §2.3). Quality's usage decision is the trigger it already was; nothing changes in Quality's screens.
+- **Quality pre-release of order lines** — new or revised PSN, trial and development lines wait for Quality before planning; Quality releases or returns them on the Order Book through the privileged action ORDER_QUALITY_PRE_RELEASE (PPC R-PPC-108). The team and role are an open point (OPEN-PPC-14).

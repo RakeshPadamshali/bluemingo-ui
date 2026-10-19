@@ -95,7 +95,7 @@
 
 ### PPC-R-19 — Make-to-stock beside make-to-order; pegging at charging; ISO at charging; order-scoped charging
 **Date:** 2026-10-13 · **From:** §19.1 · **Status:** DRAFT
-**Ask:** read the existing order-line `order_type` (MTO / MTS) as the production scenario, defaulted from the order-book rule PRODUCTION_SCENARIO; let open-stock children of a make-to-stock indent line follow a stock route (`mes_material_route.indent_line_id`) through inspection and grinding instead of stopping at billet cutting; on the charging screen, a label scan lists matching order lines (the rolling-program match widened with the FREE_TO_SO swap rules) with a supervisor soft-mismatch override, writing the allocation (`source = CHARGE_SCAN`) and the lot pegging; book an unmatched make-to-stock batch to an ISO order created at charging; `mes_pc_screen_config` + `order_scoped_charging` (default false = today's pool of every cleared lot, pegged batches first, others with a warning; true = pegged batches only, FORCED_CHARGE_OVERRIDE with reason); Σ allocations ≤ batch as a hard check where an allocation is made (warning only at confirmation); a charge-time swap writes its automatic REVERSE leg in the same transaction; the inventory upload gains an order-allocation column for the one-time SAP stock migration.
+**Ask:** read the existing order-line `order_type` (MTO / MTS) as the production scenario, defaulted from the order-book rule PRODUCTION_SCENARIO; let open-stock children of a make-to-stock indent line follow a stock route (`mes_material_route.indent_line_id`) through inspection and grinding instead of stopping at billet cutting; on the charging screen, a label scan lists matching order lines (the rolling-program match widened with the FREE_TO_SO swap rules) with a supervisor soft-mismatch override, writing the allocation (`source = CHARGE_SCAN`) and the lot pegging; book an unmatched make-to-stock batch to an ISO order created at charging; `mes_pc_screen_config` + `charging_pool_mode` (ALL_CLEARED = today's pool of every cleared lot, pegged batches first, others with a warning; ORDER_SCOPED_MTO = pegged batches only for a make-to-order line, every cleared lot for a make-to-stock line — seed for BRM and BLM; ORDER_SCOPED = pegged batches only; FORCED_CHARGE_OVERRIDE with reason — amended 16-Oct-2026, §20.8); Σ allocations ≤ batch as a hard check where an allocation is made (warning only at confirmation); a charge-time swap writes its automatic REVERSE leg in the same transaction; the inventory upload gains an order-allocation column for the one-time SAP stock migration.
 **Why:** BRD v5.0 general requirement (make-to-stock as well as make-to-order), points 8, 17, 35–38, 44, 58, 124, 125, 131.
 **Affects:** Material Charging, Production Confirmation (open-stock children), inventory upload, allocation and swap services.
 
@@ -136,11 +136,37 @@
 **Ask:** when the Quality module accepts a raw-material receipt of form billet or bloom, create the lot at the mill's charging stage from the batch the receipt creates, with the supplier heat and the certificate chemistry, free for allocation or pegged to the order named on the purchase order.
 **Why:** BRD v5.0 additional requirement 2 (point 5); the receipt and its inspection exist in the Quality design.
 **Affects:** inventory creation; Quality raw-material receipt (reads, no change to its screens).
+**Amended 16-Oct-2026 (§20.3, R-PPC-100):** the lot is pegged to the receipt's order line (`mes_qc_rm_receipt.for_order_line_id`, entered at receipt until the SAP purchase-order message exists) and reduces that line's balance to cast through `mes_order_stage_balance.purchased_qty`; expected PO and STO material is listed by the view `v_ppc_incoming` and counted only under the order-book rule INCOMING_COVER.
 
 ### PPC-R-27 — Outbound staging, IVL feed, planner variance, interface health
 **Date:** 2026-10-13 · **From:** §19.9 R-PPC-91…94 · **Status:** DRAFT `[integration deferred]`
 **Ask:** new `mes_integration_outbound` (schedule changes to the planner daily, production confirmations to SAP, heat and batch messages to the IVL MES, casting-indent and ferro-alloy issues to the SMS MES); `mes_sms_batch_feed.source_system` + IVL_MES; views `v_ppc_planner_variance` and `v_integration_health`; `sap_status` + LOCKED applying an order hold with reason SAP_LOCK.
 **Why:** points 108, 109, 123, 132, 133.
+**Amended 16-Oct-2026 (§20.4, R-PPC-101):** message types ORDER_BOOK (a line change) and ORDER_BOOK_SNAPSHOT (the full open order book, daily) to SMS_MES — the read-only copy SMS MES works from until it moves to the platform; policies PPC_ORDER_BOOK_SNAPSHOT_TIME (06:00) and ORDER_BOOK_TO_SMS_MES (on).
+
+### PPC-R-28 — Campaign and sequence: BLM, planning basis, campaign basis, heat size, shortage watch
+**Date:** 2026-10-16 · **From:** §20.1, §20.2, §20.8 (R-PPC-95 … R-PPC-99, R-PPC-110, R-PPC-111) · **Status:** DRAFT
+**Ask:** `mes_scheduling_constraint` types CAMPAIGN_BASIS (the basis and the values offered, per mill or downstream unit) and HEAT_SIZE_T (per caster); `mes_rolling_schedule_block` + `charge_condition`, `cut_length_mm`, `cut_length_source`; `mes_campaign` + `planning_basis`, `planning_basis_reason` (default from the order-book rule PLANNING_BASIS, a different basis needs a reason); the BLM order pick — lines whose route passes BLM at the campaign's input size (double-rolled RCS demand and RCS sales) — with WIP netting over RCS and as-cast blooms; view `v_ppc_block_cover` and the event PPC_MATERIAL_SHORTAGE (policies PPC_SHORTAGE_LEAD_HOURS, PPC_SHORTAGE_TOLERANCE_PCT); the heat builder reads HEAT_SIZE_T instead of its fixed 25 t.
+**Why:** checkpoints PPC-01, PPC-46, PPC-52, PPC-64, PPC-66; BRD 7.3 CMP-001 (BLM campaigns by input size).
+**Affects:** Campaign Planning, Rolling Sequence, casting-plan heat generation, WIP Visibility.
+
+### PPC-R-29 — Order book: part hold, planning override, saved views, dummy orders, Quality pre-release, bought material
+**Date:** 2026-10-16 · **From:** §20.3, §20.5, §20.6, §20.7 (R-PPC-100, R-PPC-102 … R-PPC-108) · **Status:** DRAFT
+**Ask:** `mes_order_hold` + `hold_scope`, `held_qty` (a held balance cannot be released or the release quantity raised); `mes_order_line_items` + `planning_override`, `planning_override_reason`, `planning_override_by`, `planning_override_at`, `qa_pre_release_status`, `qa_pre_release_by`, `qa_pre_release_at`, `qa_pre_release_note`; `mes_orders` + `approval_status`, `dummy_reason`, `approved_by`, `approved_at`, `linked_order_id`; `mes_order_stage_balance` + `purchased_qty` (the balance formula subtracts it); new `mes_saved_view`; view `v_ppc_incoming`; hold and release, dummy-order approval and Quality pre-release checked against their privileged actions (MDM-R-20); AWAITING and RETURNED lines kept out of Campaign Planning and the casting indent; order types in or out of planning read from the order-book rule ORDER_TYPE_PLANNING, with a line override both ways.
+**Why:** checkpoints PPC-06, PPC-10, PPC-12, PPC-16, PPC-19 (conflict), PPC-24, PPC-95.
+**Affects:** Order Book, Order Hold & Release, Campaign Planning, Casting Indent, order upload (pre-release status on arrival).
+
+### PPC-R-30 — Lot code state; billets per heat
+**Date:** 2026-10-16 · **From:** §20.8 (R-PPC-109, R-PPC-110) · **Status:** DRAFT
+**Ask:** `mes_inventory` + `code_state` (GROSS / NET / G&D), set by the form-conversion rule that applies (Quality clearance, grinding confirmation; no change on the hot-out route); `mes_casting_indent_line.billets_per_cast` becomes `billets_per_heat` and gains `last_piece_mm`, both computed from HEAT_SIZE_T, the cast length and the section.
+**Why:** checkpoints PPC-53, PPC-64.
+**Affects:** SMS final clearance, ABGM confirmation, WIP Visibility, Casting Indent.
+
+### PPC-R-31 — Checks on a change inside a released downstream schedule
+**Date:** 2026-10-16 · **From:** §20.9 (R-PPC-112) · **Status:** DRAFT
+**Ask:** `mes_schedule_change_log` + `check_results_json`, `check_outcome`; on a proposed change of size, grade, customer priority or sequence, run the WIP-availability, equipment section limit, furnace load and grade-load, day capacity, order state, grade compatibility and setup checks; a BLOCK refuses the submission, warnings go with the change to the SCHEDULE_CHANGE_APPROVE approval.
+**Why:** checkpoint PPC-84 (BRD 7.8 — changes "based on operations and WIP availability").
+**Affects:** Downstream Schedules, ABGM Schedule, the schedule change log.
 
 ---
 
