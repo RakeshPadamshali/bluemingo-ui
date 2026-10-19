@@ -104,6 +104,12 @@ The caster crew works on the MES pulpit screen: `mes_operations.pulpit_code` gai
 
 **Affects:** pulpit queue and route-change dialog, hot-out and ABGM stage status, the schedule view PPC reads.
 
+### OPS-R-17 — Grade change at the cooling bed
+**Date:** 2026-10-19 · **From:** §10 R-OPS-57 · **Status:** DRAFT
+**Ask:** `mes_pulpit_note.note_type` + GRADE_CHANGE and the table + `change_basis` (GRADE / GRADE_SERIES / PSN), `qa_check_first_bars`, `qa_check_bars`; `mes_stage_event.event_type` + GRADE_SEPARATED. On the cooling-bed pulpit, when the next batch differs from the last one confirmed on the bed by the note's basis, raise the note as a pop-up (previous and next batch, heat, grade, block, instruction) and block the next confirmation until the separation is acknowledged with a remark; store the acknowledgement against the first batch of the new grade with a GRADE_SEPARATED stage event; show a separator in the queue at each change.
+**Why:** BRD SEQ-010 / 011 — the grade-change separation instruction at the cooling bed, not storied; the rolling sequence marks grade-change gaps but nothing reaches the bed today.
+**Affects:** cooling-bed pulpit queue and confirmation, Pulpit Notes master, batch traceability.
+
 ## Quality module items (designed in the QA Data-Model §30, not requests)
 - §30.1 hot-out decision worklist item writing `mes_hot_out_event.qa_decision` (RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD) with `qa_next_operation_id` and `qa_keep_code`.
 - §30.2 bar segregation entry screen over `mes_segregation_entry` / `_line` (`entered_by_role = QUALITY`).
