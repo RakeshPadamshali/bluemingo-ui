@@ -146,9 +146,9 @@
 
 ### PPC-R-28 — Campaign and sequence: BLM, planning basis, campaign basis, heat size, shortage watch
 **Date:** 2026-10-16 · **From:** §20.1, §20.2, §20.8 (R-PPC-95 … R-PPC-99, R-PPC-110, R-PPC-111) · **Status:** DRAFT
-**Ask:** `mes_scheduling_constraint` types CAMPAIGN_BASIS (the basis and the values offered, per mill or downstream unit) and HEAT_SIZE_T (per caster); `mes_rolling_schedule_block` + `charge_condition`, `cut_length_mm`, `cut_length_source`; `mes_campaign` + `planning_basis`, `planning_basis_reason` (default from the order-book rule PLANNING_BASIS, a different basis needs a reason); the BLM order pick — lines whose route passes BLM at the campaign's input size (double-rolled RCS demand and RCS sales) — with WIP netting over RCS and as-cast blooms; view `v_ppc_block_cover` and the event PPC_MATERIAL_SHORTAGE (policies PPC_SHORTAGE_LEAD_HOURS, PPC_SHORTAGE_TOLERANCE_PCT); the heat builder reads HEAT_SIZE_T instead of its fixed 25 t; `mes_monthly_plan_line` + `input_section` (BLM plan lines by input size, R-PPC-114 — amended 19-Oct-2026).
-**Why:** checkpoints PPC-01, PPC-46, PPC-52, PPC-64, PPC-66; BRD 7.3 CMP-001 (BLM campaigns by input size).
-**Affects:** Campaign Planning, Rolling Sequence, casting-plan heat generation, WIP Visibility.
+**Ask:** `mes_scheduling_constraint` types CAMPAIGN_BASIS (the basis and the values offered, per mill or downstream unit) and HEAT_SIZE_T (per caster); `mes_rolling_schedule_block` + `charge_condition`, `cut_length_mm`, `cut_length_source`; `mes_campaign` + `planning_basis`, `planning_basis_reason` (default from the order-book rule PLANNING_BASIS, a different basis needs a reason); the BLM order pick — lines whose route passes BLM at the campaign's input size (double-rolled RCS demand and RCS sales) — with WIP netting over RCS and as-cast blooms; view `v_ppc_block_cover` and the event PPC_MATERIAL_SHORTAGE (policies PPC_SHORTAGE_LEAD_HOURS, PPC_SHORTAGE_TOLERANCE_PCT); the heat builder reads HEAT_SIZE_T instead of its fixed 25 t; `mes_monthly_plan_line` + `input_section` (BLM plan lines by input size, R-PPC-114 — amended 19-Oct-2026); on rolling-schedule release the event PPC_BLOCK_RELEASED per block, PPC_BLOCK_CHANGED on a change or removal after release, and the roll-readiness chip per block read from `v_qc_roll_requirement_board` (R-PPC-115, answers ROLL-R-03 — amended 21-Oct-2026).
+**Why:** checkpoints PPC-01, PPC-46, PPC-52, PPC-64, PPC-66; BRD 7.3 CMP-001 (BLM campaigns by input size); BRD ROL-007 / ROL-008 (roll preparation starts from the sequence).
+**Affects:** Campaign Planning, Rolling Sequence, casting-plan heat generation, WIP Visibility, Roll Management (roll requirements).
 
 ### PPC-R-29 — Order book: part hold, planning override, saved views, dummy orders, Quality pre-release, bought material
 **Date:** 2026-10-16 · **From:** §20.3, §20.5, §20.6, §20.7 (R-PPC-100, R-PPC-102 … R-PPC-108) · **Status:** DRAFT
@@ -168,15 +168,16 @@
 **Why:** checkpoint PPC-84 (BRD 7.8 — changes "based on operations and WIP availability").
 **Affects:** Downstream Schedules, ABGM Schedule, the schedule change log.
 
----
-
-## Allocator items
-
 ### PPC-R-17 — Composite material route
+*Filed under the production-confirmation items on 21-Oct-2026 — the tables it asks for belong to that application.*
 `mes_material_route` and `mes_material_route_stage` as designed: resolved at order-line release from the routing attribute set (PSN among its axes) and the inspection-path matrix, merged on the operation code, with the quality content of each stage pinned and the conditional stages placed. The resolution stores the attribute values that decided it. A PSN-required test that consumes a drawn sample blocks the release when the route offers neither a draw stage nor a gate stage for it; a material-bound test — one the quality-test master does not require a sample for — needs neither, because it is recorded on the material where it stands. Each stage also carries the production-tally attributes — `tally_required` (NONE / STAGE / HEAT), `tally_basis` (PIECES / WEIGHT / BOTH) and the piece and weight tolerances — pinned with the rest of its quality content, so a tally is owed because the route stage says so rather than because of where the stage sits in the plant. Material with no route falls back to the Stage-QC Map row for the operation.
 
 ### PPC-R-18 — Route pointers and the routing axes
 `mes_inventory` gains `route_id` and `route_stage_id`, and the next-operation pointer is set from the route stage; `mes_schedule_material_childs` gains `route_stage_id`; `mes_routing_attr_value` / `_range` gain the PSN, product type, supply condition, rolling route, annealing type, market, order type and BOM-level axes, defined in `mes_global_attributes` as routing attributes.
+
+---
+
+## Allocator items
 
 ### ALC-R-05 — Read swap effects
 **Date:** 2026-09-15 · **From:** §3.3 · **Status:** DRAFT
