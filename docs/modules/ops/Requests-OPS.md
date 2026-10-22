@@ -2,9 +2,9 @@
 
 **Direction:** the Operations design (`OPS-Data-Model.md`) is a platform design: every table lives in the production-confirmation application (`Bluemingo_MES`), so the whole design is raised here as change requests to the platform team. The Allocator receives no new item (ALC-R-05 … 08 of the PPC register already cover swap effects, holds and the feed). Same rules as the other registers (append, one item = one ask, permanent ids, raise before the migration). Drafted 2026-09-15.
 
-**Statuses:** `DRAFT` → `OPEN` · `NEEDS_INFO` · `ACCEPTED` · `IN_PROGRESS` · `DONE` · `REJECTED`
+**Statuses:** `DRAFT` → `OPEN` · `NEEDS_INFO` · `ACCEPTED` · `IN_PROGRESS` · `DONE` · `REJECTED` · `WITHDRAWN`
 
-**Flags:** `[P4]` device foundation deferred — records and manual fallback only · `[D-08]` Level-1/2 exchange designed as messages under assumption · `[D-01]` ERP posting MES side only · `[D-05]` ABGM in scope.
+**Flags:** `[P4]` device foundation deferred — records and manual fallback only · `[D-08]` Level-1/2 exchange designed as messages under assumption · `[D-01]` ERP posting MES side only — SAP postings deferred to the PPC module's single outbox (22-Oct-2026) · `[D-05]` ABGM in scope.
 
 ---
 
@@ -12,9 +12,10 @@
 
 ### OPS-R-01 — Pulpit configuration, stage events and pulpit notes
 **Date:** 2026-09-15 · **From:** Operations design §2 · **Status:** DRAFT
-**Ask:** `mes_operations` + `pulpit_code`, `pulpit_sequence`; `mes_pc_screen_config` + `pulpit_mode` (FULL / ACKNOWLEDGE / HMI), the panel flags, `dimension_check_mode`, `order_tolerance_mode`, `require_scan_before_confirm`, `charge_overrun_pieces`, `mass_balance_tolerance_pct`, `erp_trigger_mode`, `downtime_alert_minutes`, `confirm_warning_text`, `wallboard_enabled`; new `mes_stage_event`, `mes_pulpit_note`, `mes_pulpit_note_ack`; a pulpit screen = the union of the queues of the operations sharing the pulpit code; ACKNOWLEDGE mode creates the automatic confirmation (`is_auto`) from the acknowledgement so PC step 9 promotes the next pulpit unchanged; a wallboard (read-only) mode.
+**Ask:** `mes_operations` + `pulpit_code`, `pulpit_sequence`; `mes_pc_screen_config` + `pulpit_mode` (FULL / ACKNOWLEDGE / HMI), the panel flags, `dimension_check_mode`, `order_tolerance_mode`, `require_scan_before_confirm`, `charge_overrun_pieces`, `mass_balance_tolerance_pct`, `downtime_alert_minutes`, `confirm_warning_text`, `wallboard_enabled`; new `mes_stage_event`, `mes_pulpit_note`, `mes_pulpit_note_ack`; a pulpit screen = the union of the queues of the operations sharing the pulpit code; ACKNOWLEDGE mode creates the automatic confirmation (`is_auto`) from the acknowledgement so PC step 9 promotes the next pulpit unchanged; a wallboard (read-only) mode.
 **Why:** BRD 9.1 additional point 1, PLT-001…003, IBA-002, SEQ-009, CHG-04 — station-wise screens, paper-free hand-over between pulpits, CAPA / instruction display.
 **Affects:** Production Confirmation screen and screen-config service; queue endpoints.
+**Revised 22-Oct-2026:** `erp_trigger_mode` removed — SAP postings: through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn).
 
 ### OPS-R-02 — Scan events and charging validation
 **Date:** 2026-09-15 · **From:** §3 · **Status:** DRAFT `[P4]`
@@ -32,19 +33,22 @@
 **Date:** 2026-09-15 · **From:** §5 · **Status:** DRAFT
 **Ask:** new `mes_virtual_id`; `mes_inventory` + `virtual_id`, `identity_kind`; the missing-number check on a NOT_FOUND scan against the heat's planned numbers; creation gated by VIRTUAL_ID_CREATE; the placeholder inventory row; ERP rows HELD_VIRTUAL; reconciliation through the existing planned → actual rename cascade (MaterialNumberCascade) with re-addressing of the held rows; the overdue alert.
 **Why:** VID-001…006, 9.6 additional point, 9.15.1 sensor swap — production must not stop for a late batch id.
-**Affects:** heat generation / material-number cascade; charging; ERP queue (OPS-R-05).
+**Affects:** heat generation / material-number cascade; charging.
+**Revised 22-Oct-2026:** the held SAP postings and their re-addressing wait for the PPC outbox — SAP postings: through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn); the register, the placeholder row and the reconciliation stay.
 
 ### OPS-R-05 — ERP outbound queue and bypass mode
-**Date:** 2026-09-15 · **From:** §6, annex D · **Status:** DRAFT `[D-01 — design part only]`
+**Date:** 2026-09-15 · **From:** §6, annex D · **Status:** WITHDRAWN (22-Oct-2026; was DRAFT `[D-01 — design part only]`)
+**Withdrawn 22-Oct-2026** — SAP postings go through the PPC module's single outbox when the SAP contract exists; nothing is built now.
 **Ask:** new `mes_erp_outbound`, `mes_bypass_mode`; rows written on confirmation, reversal, scrap, sample scrap, by-product, code conversion, storage location, weight correction and the Quality usage decision; AUTO / MANUAL trigger per unit with multi-select send; `depends_on_id` ordering (input weight before output confirmation); bypass by ERP_BYPASS_ENABLE with threshold and background sync; the transport and message formats wait for D-01.
 **Why:** SAP-001…006, 9.15.1, ANL-004/009/011, DSP-001.
 **Affects:** confirmation, reversal and sample services (queue writes); a background sync worker (the application has no scheduler today — add one, see PPC-R-03).
 
 ### OPS-R-06 — Declarations, route deviations, loss classes, guide positions, labels
 **Date:** 2026-09-15 · **From:** §7 · **Status:** DRAFT `[P4 for printing]`
-**Ask:** `mes_production_confirmation` + `declaration`, `discharged_at`, `route_deviation_id`, `order_tolerance_check`, `excess_qty`, `nco_declaration_id`, `dimension_check`, `l2_pdi_message_id`, `erp_outbound_id`, `pulpit_code`, `stage_event_id`, `cut_plan_id`; new `mes_route_deviation` (feasibility from the equipment-routing and linkage rules, approval when infeasible, visible to PPC); `mes_operation_loss_config` + `loss_class`, `posts_to_erp`, `byproduct_sku_code`, `movement_type`; `mes_secondary_equipment_instance` + `equipment_id`, `position_code`, `mounted_at`, `removed_at`; new `mes_label_template`, `mes_label_print` with auto-print on confirmation and reprint by reason; `v_ops_heat_yield`.
+**Ask:** `mes_production_confirmation` + `declaration`, `discharged_at`, `route_deviation_id`, `order_tolerance_check`, `excess_qty`, `nco_declaration_id`, `dimension_check`, `l2_pdi_message_id`, `pulpit_code`, `stage_event_id`, `cut_plan_id`; new `mes_route_deviation` (feasibility from the equipment-routing and linkage rules, approval when infeasible, visible to PPC); `mes_operation_loss_config` + `loss_class`; `mes_secondary_equipment_instance` + `equipment_id`, `position_code`, `mounted_at`, `removed_at`; new `mes_label_template`, `mes_label_print` with auto-print on confirmation and reprint by reason; `v_ops_heat_yield`.
 **Why:** MO-001…007, F8.1-04…14, F8.2-06…19 — declaration-driven routing, cobble handling, yield with scale loss, labels.
 **Affects:** confirmation card, next-operation selection, loss engine, secondary-equipment usage.
+**Revised 22-Oct-2026:** `erp_outbound_id` and the loss-configuration `posts_to_erp`, `byproduct_sku_code` and `movement_type` removed — SAP postings: through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn).
 
 ### OPS-R-07 — Hot-out events, pieces and the digital shift log
 **Date:** 2026-09-15 · **From:** §8 · **Status:** DRAFT
@@ -78,21 +82,24 @@
 
 ### OPS-R-12 — Mill reports
 **Date:** 2026-09-15 · **From:** §13 · **Status:** DRAFT
-**Ask:** views `v_ops_daily_production`, `v_ops_so_wise_production`, `v_ops_heat_yield`, `v_ops_process_parameters`, `v_ops_monthly_trend`, `v_ops_delay_cobble`, `v_ops_erp_confirmation`, `v_ops_yield_by_size`; the report screen lists them with filters; layouts on the deferred document service.
+**Ask:** views `v_ops_daily_production`, `v_ops_so_wise_production`, `v_ops_heat_yield`, `v_ops_process_parameters`, `v_ops_monthly_trend`, `v_ops_delay_cobble`, `v_ops_yield_by_size`; the report screen lists them with filters; layouts on the deferred document service.
 **Why:** F8.3-01…11, F9.0-02/03.
 **Affects:** report endpoints (19 existing reports stay).
+**Revised 22-Oct-2026:** `v_ops_erp_confirmation` removed — the posting-status report comes with the PPC outbox, designed when the SAP contract is available (OPS-R-05 withdrawn).
 
 ### OPS-R-13 — Annealing and pickling jobs
 **Date:** 2026-09-15 · **From:** §14 · **Status:** DRAFT `[D-08 for SCADA]`
-**Ask:** new `mes_ht_job`, `mes_ht_job_line`, `mes_ht_sample_position_rule`; `mes_production_sample` + `input_weight_kg`, `theoretical_cut_kg`, `cut_confirmed_at`, `erp_outbound_id`; jobs built from the PPC downstream schedule with hook / base / layer positions, the HT-cycle code from the PSN, cycle download and SCADA status, probable unloading time, invisible loss and by-product posting, sample cutting after confirmation with the SAMPLE_SCRAP posting, auto-swap of inaccessible coils through the swap engine; views `v_ops_ht_status`, `v_ops_base_utilisation`.
+**Ask:** new `mes_ht_job`, `mes_ht_job_line`, `mes_ht_sample_position_rule`; `mes_production_sample` + `input_weight_kg`, `theoretical_cut_kg`, `cut_confirmed_at`; jobs built from the PPC downstream schedule with hook / base / layer positions, the HT-cycle code from the PSN, cycle download and SCADA status, probable unloading time, invisible loss and by-product, sample cutting after confirmation, auto-swap of inaccessible coils through the swap engine; views `v_ops_ht_status`, `v_ops_base_utilisation`.
 **Why:** ANL-001…013, SCH-001/002, F9.1-01…10, F9.2-01…04, F9.3-01…03, 12.1.4 additional points.
 **Affects:** confirmation card for batch operations, production sample, swap engine (PPC-R-09), routing attribute rules (data).
+**Revised 22-Oct-2026:** `erp_outbound_id` and the by-product and sample-scrap postings removed — SAP postings: through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn).
 
 ### OPS-R-14 — ABGM, Bright Bar and GMM objects: code conversion, packs, bar outputs, bunkers
 **Date:** 2026-09-15 · **From:** §15, §16, §17, §18 · **Status:** DRAFT `[D-05]`
-**Ask:** new `mes_code_conversion_event`, `mes_pack`, `mes_pack_line`, `mes_gmm_zone_config`, `mes_gmm_bar_output`, `mes_bunker_movement`; `mes_abgm_schedule_line` + `status`, `scan_event_id`, `machine_priority`, `day_priority`, `grinding_confirmation_id`, `code_conversion_id`, `location_after`; `mes_downstream_schedule_line` + `dispatch_due_date`, `tempering_buffer_days`, `lead_time_days`, `required_production_date`; the ABGM screen over the schedule lines with the section-limit check and the grinding confirmation producing the converted code; bright-bar conversion per BOM level and packing; GMM counts and yield (R-OPS-51), segregation, bunker movements and bag numbering with heat shares, dispatch weight variance, the one-way save warning; views `v_ops_pending_material`, `v_ops_genealogy_flow`, `v_ops_gmm_prime_yield`.
+**Ask:** new `mes_code_conversion_event`, `mes_pack`, `mes_pack_line`, `mes_gmm_zone_config`, `mes_gmm_bar_output`, `mes_bunker_movement`; `mes_ppc_abgm_schedule_line` + `status`, `scan_event_id`, `machine_priority`, `day_priority`, `grinding_confirmation_id`, `code_conversion_id`, `location_after`; `mes_ppc_downstream_schedule_line` + `dispatch_due_date`, `tempering_buffer_days`, `lead_time_days`, `required_production_date`; the ABGM screen over the schedule lines with the section-limit check and the grinding confirmation producing the converted code; bright-bar conversion per BOM level and packing; GMM counts and yield (R-OPS-51), segregation, bunker movements and bag numbering with heat shares, dispatch weight variance, the one-way save warning; views `v_ops_pending_material`, `v_ops_genealogy_flow`, `v_ops_gmm_prime_yield`.
 **Why:** F9.5-01…03, F9.6-01…06, F9.4-01…08, GMM-001…011, SEG-001…004, PCK-001…006, DSP-001…003, F9.0-01.
 **Affects:** confirmation card (produced SKU from the conversion rule), form-conversion rules (MDM-R), GMM lots (PPC-R-14), dispatch challan.
+**Revised 22-Oct-2026:** `mes_code_conversion_event` and `mes_pack` carry no `erp_outbound_id`; the code-change, weight-correction and confirmation postings to SAP go through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn).
 
 ---
 
@@ -100,7 +107,7 @@
 The caster crew works on the MES pulpit screen: `mes_operations.pulpit_code` gains the caster stations (CASTER_CCM1, CASTER_CCM2) so the casting operations resolve to a pulpit of their own. `mes_pulpit_note.note_type` gains QA_FEEDBACK and the table gains `blocks_confirmation`; a Quality feedback note is displayed as a pop-up that must be acknowledged but never blocks a confirmation. `mes_pulpit_note_ack` gains `ack_remark` (what was corrected), and the acknowledgement — user, time, remark — is readable by the Quality module, which shows it against the online inspection that raised the note. Raised with the Quality module's own request for the same loop (SMS QA SOW rows 15 and 16).
 
 ### OPS-R-16 — Route stage on execution and on the deviation
-`mes_route_deviation` gains `route_stage_id` FK `mes_material_route_stage` (Y) so a runtime diversion is recorded against the composite-route stage the material left. The next-operation pointer (`mes_inventory.next_operation`) is set from the next planned route stage rather than from the schedule child alone, and the pulpit queue reads the stage the material stands at (`mes_inventory.route_stage_id`). The route tables, their resolution at order-line release and the inventory pointers themselves are raised in the Planning design as PPC-R-17 and PPC-R-18; this request covers only what Operations writes and reads at execution time.
+`mes_route_deviation` gains `route_stage_id` FK `mes_ppc_material_route_stage` (Y) so a runtime diversion is recorded against the composite-route stage the material left. The next-operation pointer (`mes_inventory.next_operation`) is set from the next planned route stage rather than from the schedule child alone, and the pulpit queue reads the stage the material stands at (`mes_inventory.route_stage_id`). The route tables, their resolution at order-line release and the inventory pointers themselves are raised in the Planning design as PPC-R-17 and PPC-R-18; this request covers only what Operations writes and reads at execution time.
 
 **Affects:** pulpit queue and route-change dialog, hot-out and ABGM stage status, the schedule view PPC reads.
 
@@ -113,5 +120,5 @@ The caster crew works on the MES pulpit screen: `mes_operations.pulpit_code` gai
 ## Quality module items (designed in the QA Data-Model §30, not requests)
 - §30.1 hot-out decision worklist item writing `mes_hot_out_event.qa_decision` (RE_ROLL_OK / REWORK / SCRAP / DIVERT / HOLD) with `qa_next_operation_id` and `qa_keep_code`.
 - §30.2 bar segregation entry screen over `mes_segregation_entry` / `_line` (`entered_by_role = QUALITY`).
-- §30.3 auto-clearance rule trigger on the acknowledged ERP confirmation (pickling).
+- §30.3 auto-clearance rule trigger on the PPC outbox acknowledgement of the confirmation (pickling) — deferred 22-Oct-2026 with the PPC outbox.
 - §30.4 GMM hardness tests against the ball lot; downstream sampling frequency from the PSN.
