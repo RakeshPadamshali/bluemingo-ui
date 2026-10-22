@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PPC in Plain Words</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column; the flow diagram and the hand-off table break out wider and scroll on their own on a phone. */
+:root {
+  --bg: #f3f4f5; --surface: #ffffff; --fg: #1c2228; --muted: #5b6670; --line: #8a949d;
+  --accent: #b4490f; --accent-soft: #fbe9dd; --ext: #eef1f3; --ext-line: #9aa4ad;
+  --app: #e3e9ef; --app-line: #5f6e7b;
+  --display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15191d; --surface: #1d2328; --fg: #e6e9ec; --muted: #a0aab3; --line: #7d8892;
+  --accent: #f08a4b; --accent-soft: #3a2518; --ext: #232a30; --ext-line: #5f6a74;
+  --app: #27313a; --app-line: #8a98a5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15191d; --surface: #1d2328; --fg: #e6e9ec; --muted: #a0aab3; --line: #7d8892;
+  --accent: #f08a4b; --accent-soft: #3a2518; --ext: #232a30; --ext-line: #5f6a74;
+  --app: #27313a; --app-line: #8a98a5; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font: 17px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+.col { max-width: 68ch; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.lede { font-size: 20px; color: var(--muted); margin-top: 14px; }
+.lede b { color: var(--fg); }
+.note { font-size: 15.5px; color: var(--muted); margin-top: 10px; }
+
+.diagram { background: var(--surface); border: 1px solid var(--ext-line); border-radius: 10px; padding: 20px 16px 12px; min-width: 0; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; min-width: 780px; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 18px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.ppc { background: var(--accent-soft); border: 1.5px solid var(--accent); }
+.sw.app { background: var(--app); border: 1.5px solid var(--app-line); }
+.sw.ext { background: var(--ext); border: 1.5px dashed var(--ext-line); }
+
+svg .box-ppc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+svg .box-app { fill: var(--app); stroke: var(--app-line); stroke-width: 1.6; }
+svg .box-ext { fill: var(--ext); stroke: var(--ext-line); stroke-width: 1.4; stroke-dasharray: 5 4; }
+svg .band { fill: none; stroke: var(--ext-line); stroke-width: 1; stroke-dasharray: 2 4; }
+svg .t { font: 700 15px var(--display); fill: var(--fg); }
+svg .s { font: 400 12.5px var(--body); fill: var(--muted); }
+svg .n { font: 500 11px var(--mono); fill: var(--accent); }
+svg .lane { font: 600 11px var(--mono); fill: var(--muted); letter-spacing: .1em; }
+svg .arrow { stroke: var(--line); stroke-width: 1.8; fill: none; }
+svg .arrow-ext { stroke: var(--line); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+svg .head { fill: var(--line); }
+svg .chip { fill: var(--surface); stroke: var(--accent); stroke-width: 1.2; }
+svg .ct { font: 600 12.5px var(--body); fill: var(--fg); }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start; }
+ol.steps li::before { content: counter(s); font: 700 15px/34px var(--display); text-align: center; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent); border: 1.5px solid var(--accent); }
+ol.steps b { font-family: var(--display); }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--ext-line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.card p { margin: 6px 0 0; font-size: 15.5px; color: var(--muted); }
+
+table { border-collapse: collapse; width: 100%; font-size: 15.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--ext-line); vertical-align: top; }
+th { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+.tbl { overflow-x: auto; }
+.tbl table { min-width: 640px; }
+.pill { display: inline-block; font: 600 12px/1.5 var(--body); padding: 1px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.none { color: var(--muted); border: 1px solid var(--ext-line); }
+.pill.cr { color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent); }
+.pill.def { color: var(--muted); border: 1px dashed var(--ext-line); }
+.ex { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="col">
+    <div class="eyebrow">Bluemingo MES v2 · Planning module</div>
+    <h1>PPC in plain words</h1>
+    <p class="lede">PPC is the <b>planning office</b> of the steel plant. It takes what customers have ordered and decides <b>what to make, in which mill, in what order and when</b>. It then tells the melt shop what to cast and keeps every billet tied to the order it is meant for, until the steel is shipped.</p>
+    <p class="lede">PPC is <b>its own module</b>. It works beside the two applications the plant already runs, the production-confirmation application and the Allocation application, and uses only the services they already have, so they keep working exactly as they do today.</p>
+  </header>
+
+  <section class="diagram" aria-label="High-level flow of PPC">
+    <div class="scroll">
+      <svg viewBox="0 0 990 560" role="img" aria-labelledby="dt">
+        <title id="dt">PPC flow: orders uploaded in PPC and forwarded, monthly plan, campaigns, casting indent, SMS MES casting, SMS batch arrival, rolling sequence, charging on the existing screen, finishing schedules, dispatch; swaps, holds and job work alongside</title>
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+        <text class="lane" x="20" y="30">1 · DECIDE WHAT TO MAKE</text>
+        <rect class="box-ext" x="20" y="44" width="170" height="88" rx="8"/>
+        <text class="t" x="34" y="72">Customer orders</text><text class="s" x="34" y="94">Excel upload today,</text><text class="s" x="34" y="112">SAP feed later</text>
+
+        <rect class="box-ppc" x="215" y="44" width="170" height="88" rx="8"/>
+        <text class="n" x="229" y="62">A</text><text class="t" x="229" y="80">Order Book</text><text class="s" x="229" y="100">uploaded in PPC,</text><text class="s" x="229" y="117">forwarded automatically</text>
+
+        <rect class="box-ppc" x="410" y="44" width="170" height="88" rx="8"/>
+        <text class="n" x="424" y="62">B</text><text class="t" x="424" y="80">Monthly Plan</text><text class="s" x="424" y="100">tonnage per mill</text><text class="s" x="424" y="117">for the month</text>
+
+        <rect class="box-ppc" x="605" y="44" width="170" height="88" rx="8"/>
+        <text class="n" x="619" y="62">C</text><text class="t" x="619" y="80">Campaign Planning</text><text class="s" x="619" y="100">group similar orders</text><text class="s" x="619" y="117">into runs per mill</text>
+
+        <rect class="box-ppc" x="800" y="44" width="170" height="88" rx="8"/>
+        <text class="n" x="814" y="62">D</text><text class="t" x="814" y="80">Casting Indent</text><text class="s" x="814" y="100">becomes the casting plan,</text><text class="s" x="814" y="117">sent to SMS MES</text>
+
+        <path class="arrow" d="M190 88 H213" marker-end="url(#ah)"/>
+        <path class="arrow" d="M385 88 H408" marker-end="url(#ah)"/>
+        <path class="arrow" d="M580 88 H603" marker-end="url(#ah)"/>
+        <path class="arrow" d="M775 88 H798" marker-end="url(#ah)"/>
+        <path class="arrow-ext" d="M885 132 V222" marker-end="url(#ah)"/>
+
+        <text class="lane" x="20" y="210">2 · MAKE IT</text>
+        <rect class="box-ext" x="800" y="224" width="170" height="88" rx="8"/>
+        <text class="t" x="814" y="252">SMS MES casts</text><text class="s" x="814" y="274">billets and blooms</text><text class="s" x="814" y="292">(interface pending)</text>
+
+        <rect class="box-ppc" x="605" y="224" width="170" height="88" rx="8"/>
+        <text class="n" x="619" y="242">E</text><text class="t" x="619" y="260">SMS Batch Arrival</text><text class="s" x="619" y="280">PPC replays heats and</text><text class="s" x="619" y="297">billets into our MES</text>
+
+        <rect class="box-ppc" x="410" y="224" width="170" height="88" rx="8"/>
+        <text class="n" x="424" y="242">F</text><text class="t" x="424" y="260">Rolling Sequence</text><text class="s" x="424" y="280">Mills propose, PPC accepts;</text><text class="s" x="424" y="297">release goes to the floor</text>
+
+        <rect class="box-app" x="215" y="224" width="170" height="88" rx="8"/>
+        <text class="t" x="229" y="252">Charging</text><text class="s" x="229" y="274">existing screen; only the</text><text class="s" x="229" y="292">billets PPC released</text>
+
+        <rect class="box-ppc" x="20" y="224" width="170" height="88" rx="8"/>
+        <text class="n" x="34" y="242">G</text><text class="t" x="34" y="260">Finishing schedules</text><text class="s" x="34" y="280">grinding, annealing,</text><text class="s" x="34" y="297">GMM, bright bar</text>
+
+        <path class="arrow-ext" d="M800 268 H777" marker-end="url(#ah)"/>
+        <path class="arrow" d="M605 268 H582" marker-end="url(#ah)"/>
+        <path class="arrow" d="M410 268 H387" marker-end="url(#ah)"/>
+        <path class="arrow" d="M215 268 H192" marker-end="url(#ah)"/>
+        <path class="arrow" d="M172 312 V402" marker-end="url(#ah)"/>
+
+        <text class="lane" x="20" y="390">3 · SHIP AND WATCH</text>
+        <rect class="box-app" x="20" y="404" width="170" height="88" rx="8"/>
+        <text class="t" x="34" y="432">Dispatch</text><text class="s" x="34" y="454">existing application;</text><text class="s" x="34" y="472">SAP told later</text>
+
+        <rect class="band" x="215" y="404" width="755" height="142" rx="10"/>
+        <text class="lane" x="231" y="426">RUNNING ALONGSIDE THE WHOLE TIME</text>
+        <rect class="chip" x="231" y="440" width="170" height="40" rx="20"/><text class="ct" x="316" y="465" text-anchor="middle">Swapping</text>
+        <rect class="chip" x="415" y="440" width="170" height="40" rx="20"/><text class="ct" x="500" y="465" text-anchor="middle">Order holds</text>
+        <rect class="chip" x="599" y="440" width="170" height="40" rx="20"/><text class="ct" x="684" y="465" text-anchor="middle">Job work</text>
+        <rect class="chip" x="783" y="440" width="170" height="40" rx="20"/><text class="ct" x="868" y="465" text-anchor="middle">WIP visibility</text>
+        <rect class="chip" x="231" y="490" width="232" height="40" rx="20"/><text class="ct" x="347" y="515" text-anchor="middle">Ferro-alloy plan</text>
+        <rect class="chip" x="477" y="490" width="232" height="40" rx="20"/><text class="ct" x="593" y="515" text-anchor="middle">Dashboard and interfaces</text>
+        <rect class="chip" x="723" y="490" width="230" height="40" rx="20"/><text class="ct" x="838" y="515" text-anchor="middle">Rules and masters</text>
+      </svg>
+    </div>
+    <div class="legend"><span><i class="sw ppc"></i>PPC screens (A–G)</span><span><i class="sw app"></i>Existing applications, unchanged</span><span><i class="sw ext"></i>Waiting for an interface or contract (SAP, SMS MES)</span></div>
+    <p class="note">Behind every box, PPC talks to the production-confirmation application and the Allocation application only through the services they already have. The table further down shows how each hand-off works.</p>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">The journey of an order</div>
+    <h2>Eight steps from order to dispatch</h2>
+    <ol class="steps">
+      <li><div><b>Collect the orders.</b> The planner uploads orders into the <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/order-book.html">Order Book</a> in the same Excel format used today, plus PPC's extra columns such as order category, priority, tolerance and PSN revision. PPC checks them and forwards them automatically to the production-confirmation application; the Allocation application receives its copy as it does today. The Order Book keeps a running count of how much is still to cast, to roll and to dispatch. A direct SAP feed comes later, once its contract exists.</div></li>
+      <li><div><b>Set the month's target.</b> The <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/monthly-plan.html">Monthly Plan</a> says how many tonnes each mill should make this month, and blocks days when a product cannot be rolled, for example during a roll change.</div></li>
+      <li><div><b>Group similar work.</b> Changing a mill from one size to another takes time, so <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/campaign-planning.html">Campaign Planning</a> groups orders into runs called campaigns: by product type for the bar mill, by input size for the blooming mill. It checks capacity and minimum quantities, and uses stock that already exists before asking for new steel.</div></li>
+      <li><div><b>Order the steel.</b> The <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/casting-indent.html">Casting Indent</a> says what to cast: grade, section, length, how many billets per heat, and which lines are top priority. PPC loads it into our MES as the casting plan, which creates the planned heats and their orders, and sends it to SMS MES.</div></li>
+      <li><div><b>Bring in what SMS cast.</b> SMS MES reports each heat it cast and the billets cut from it. <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/batch-allocation.html">SMS Batch Arrival</a> matches each real heat to its planned heat and replays it in our MES, so every billet exists with its heat and its order.</div></li>
+      <li><div><b>Agree the day's order of work.</b> In <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/rolling-sequence.html">Rolling Sequence</a>, the mill team proposes the order of sizes and PPC accepts it, after checking material and rolls. Release sends the rolling programme through the existing upload and saves the running order on the floor.</div></li>
+      <li><div><b>Charge only the right billets.</b> Operators charge on the existing Charging screen. Only the billets PPC released can be charged; for a make-to-order block that means only the billets pegged to that order. Scanning the billet label can be switched on per installation. PPC's <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/charging-scan.html">Charging Pool</a> shows what each block allows.</div></li>
+      <li><div><b>Finish and ship.</b> <a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/downstream-schedule.html">Finishing schedules</a> plan grinding, annealing, GMM and bright-bar work. The bars are dispatched from the production-confirmation application, and SAP is told once its interface exists.</div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Working with what exists</div><h2>How PPC hands over to the existing applications</h2>
+      <p>The production-confirmation application and the Allocation application stay as they are. PPC uses their existing services, the same ones their screens use, and keeps everything new in its own data. Four small changes are requested, and each can stay switched off where it is not needed.</p></div>
+    <div class="card tbl">
+      <table>
+        <thead><tr><th>Hand-off</th><th>How it works</th><th>Change needed</th></tr></thead>
+        <tbody>
+          <tr><td>Orders</td><td>Uploaded in PPC, forwarded through the existing order upload; the Allocation application gets its copy through the existing sync</td><td><span class="pill none">None</span></td></tr>
+          <tr><td>Release to the mill</td><td>PPC builds the rolling-programme sheet, sends it through the existing upload and saves the running order</td><td><span class="pill none">None</span></td></tr>
+          <tr><td>Charging</td><td>Existing Charging screen with "charge only sequenced billets" switched on; PPC's release decides which billets are in the sequence</td><td><span class="pill cr">Scan to charge</span></td></tr>
+          <tr><td>Swaps</td><td>PPC decides and logs; the Allocation application re-allocates the billet; a small bridge moves a billet that is already produced</td><td><span class="pill cr">Swap bridge</span></td></tr>
+          <tr><td>Order holds</td><td>PPC puts each billet of the order on hold with the existing billet hold, and blocks new allocation to the order</td><td><span class="pill none">None</span></td></tr>
+          <tr><td>Casting plan</td><td>The Casting Indent becomes the casting plan through the existing upload; heat size comes from the plan</td><td><span class="pill cr">Read codes from master data</span></td></tr>
+          <tr><td>SMS billets</td><td>PPC replays SMS MES heats and billets through the existing heat, charge and billet-cutting services</td><td><span class="pill cr">Read codes from master data</span> <span class="pill def">SMS MES interface</span></td></tr>
+          <tr><td>Bought billets</td><td>A billet is created from the accepted receipt, and gets its order through the Allocation application</td><td><span class="pill cr">Billet from receipt</span></td></tr>
+          <tr><td>Job work</td><td>Recorded as a production step at a job-work operation; PPC keeps the challan and holds the billets "At vendor" while out</td><td><span class="pill none">None</span></td></tr>
+          <tr><td>SAP</td><td>One PPC outbox for everything SAP must be told, built when the contract exists</td><td><span class="pill def">Deferred</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Helpers</div><h2>What runs alongside</h2></div>
+    <div class="grid2">
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/swapping.html">Swapping</a></h3><p>Moves a billet from one order to another when plans change. PPC checks the rules and keeps the log; the Allocation application does the re-allocation; billets already produced follow through the bridge. Every swap can be reversed.</p></div>
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/order-hold.html">Order holds</a></h3><p>The PPC Super User holds an order, part of it, or a schedule. PPC puts each of its billets on hold with the existing billet hold, so nothing of it can be charged or confirmed.</p></div>
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/job-work.html">Job work</a></h3><p>Sends billets to an outside vendor on a PPC challan, holds them "At vendor", and on return records the vendor's work as a production step, with losses.</p></div>
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/wip-visibility.html">WIP visibility</a></h3><p>Shows where the steel is at every stage, whether each billet is gross, net or ground, what is still arriving, and which orders are about to run short.</p></div>
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/fealloy-plan.html">Ferro-alloy plan</a></h3><p>Works out how much nickel, chrome and other alloys the melt shop needs for the planned grades, and flags any shortfall.</p></div>
+      <div class="card"><h3><a href="https://rakeshpadamshali.github.io/bluemingo-ui/ui/ppc/ppc-dashboard.html">Dashboard and interfaces</a></h3><p>Plan against actual, on-time delivery and balances by stage, plus the state of every hand-off: order forwarding, the last Allocation pull, and the interfaces still waiting.</p></div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">Example</div>
+    <h2>One order, start to finish</h2>
+    <p>A customer orders <span class="ex">480 t</span> of <span class="ex">20MnCr5</span> round bar, <span class="ex">RO 32</span>.</p>
+    <ol class="steps">
+      <li><div>The planner uploads the order in PPC. PPC forwards it, and both applications have it within a minute. The Order Book shows <span class="ex">480 t</span> still to cast, roll and dispatch.</div></li>
+      <li><div>Campaign Planning puts it in a bar-mill campaign of RO 32 sizes, with other orders that share the size.</div></li>
+      <li><div>The Casting Indent asks for square 160 billets, 12 m long: 10 billets and one shorter last piece per 25 t heat. It is loaded as the casting plan and sent to SMS MES.</div></li>
+      <li><div>SMS casts heat <span class="ex">2627-01172</span>. PPC replays it, and its 11 billets now exist in our MES, each tied to the order.</div></li>
+      <li><div>The billets become block 1 of the rolling sequence on 05 Oct, 06:00 to 12:00. Release sends the programme and saves the running order.</div></li>
+      <li><div>Operators charge them on the existing screen, where only these billets are allowed. They are rolled, ground and shipped, and the order's balance drops to zero.</div></li>
+    </ol>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">Who does what</div>
+    <h2>PPC and its neighbours</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Who</th><th>Their part</th></tr></thead>
+      <tbody>
+        <tr><td>PPC</td><td>Plans what to make, where, in what order and when; owns the order book; keeps billets tied to orders. Its own module, with its own data.</td></tr>
+        <tr><td>Production confirmation</td><td>Runs the floor: queues, charging, confirmations, dispatch. Unchanged; PPC uses its existing services.</td></tr>
+        <tr><td>Allocation application</td><td>Decides which billet serves which order; swaps run here. Unchanged.</td></tr>
+        <tr><td>Melt shop (SMS MES)</td><td>Casts the billets and blooms the Casting Indent asks for. Interface details pending.</td></tr>
+        <tr><td>Quality</td><td>Clears the material before it moves on; PPC reads its decisions and locations.</td></tr>
+        <tr><td>SAP</td><td>Will send orders and receive postings through the PPC outbox, once the contract exists.</td></tr>
+        <tr><td>Master Data</td><td>Holds the plant's lists: products, lengths, routes, alloys, hold reasons.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</div>
+</body>
+</html>
