@@ -195,9 +195,407 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../../mdm/ui/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../../../qa-module/ui/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a><a href="../../../qa-module/ui/psn.html"><i class="fa-solid fa-file-signature"></i> PSN</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ppc-hub.html"><i class="fa-solid fa-arrow-left"></i> Planning</a> <span>/</span> <span>Material</span> <span>/</span> <b>Swapping</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-right-left"></i> Swapping</h1><div class="sub">PPC decides the swap — direct, free-batch, partial, ISO-to-order, annealing and GMM swaps, manual or auto, validated by the swap rules, logged and reversible; the Allocation application executes it with its existing steps and, for lots already produced, the swap bridge moves the lot's order. Swaps happen before release — none at the furnace. FG swaps stay in SAP.</div></div><div class="ph-actions"><button class="btn btn-primary btn-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-swap</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-right-left"></i> Manual swap</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-lines"></i> Swap report</button></div></div>
-<div class="grid2"><div class="panel"><h3>New swap <small>DRAFT · SWP-2026-0312</small></h3><div class="mgrid"><div class="fld"><label>Scenario</label><select><option>BATCH_TO_BATCH — direct exchange</option><option selected>CROSS_SO_PARTIAL — split across source orders</option><option>FREE_TO_SO</option><option>ISO_TO_SO</option><option>AS_ROLLED_TO_ANNEALING</option></select></div><div class="fld"><label>Mode</label><select><option selected>AUTO — system proposes donors</option><option>MANUAL</option></select></div><div class="fld"><label>Target order</label><input value="SO-88140 / 20 — ABC Auto 16MnCr5 RO 25"/></div><div class="fld"><label>Required qty (t)</label><input value="50"/></div><div class="fld"><label>Stage</label><select><option selected>SEQUENCING — before release</option><option>WIP</option></select></div><label class="chkfld"><input type="checkbox" checked/> YMS reliability ON — prefer top-layer batches</label></div><h3 style="margin-top:10px">Proposed lines</h3><table class="g"><thead><tr><th class="num"></th><th>Batch</th><th>Heat</th><th>From order</th><th>To order</th><th class="num">Qty t</th><th>Direction</th><th>Compatible</th><th>Yard rank</th></tr></thead><tbody><tr><td class="num">1</td><td>B031102</td><td>2627-01144</td><td>SO-88012 / 10</td><td>SO-88140 / 20</td><td class="num">24.8</td><td>OUT</td><td><span class="badge b-done">YES</span></td><td>1 (top)</td></tr><tr><td class="num">2</td><td>B031105</td><td>2627-01145</td><td>SO-88012 / 10</td><td>SO-88140 / 20</td><td class="num">25.0</td><td>OUT</td><td><span class="badge b-done">YES</span></td><td>2</td></tr><tr><td class="num">3</td><td>B030992</td><td>2627-01120</td><td>SO-88140 / 20</td><td>SO-88012 / 10</td><td class="num">49.6</td><td>IN</td><td><span class="badge b-done">YES</span></td><td>4</td></tr></tbody></table><div class="note"><i class="fa-solid fa-triangle-exclamation"></i> Line 1 fails the length soft rule — needs SWAP_APPROVE with a reason. On execution PPC runs the Allocation application's steps for each line and, for lots of generated heats, the swap bridge; the balances of SO-88012 and SO-88140 recompute.</div><textarea class="cmt" placeholder="Reason / comment…">Length 12,140 mm within crop allowance for RO 25.</textarea><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-check"></i> Validate</button><button class="btn btn-primary btn-sm"><i class="fa-solid fa-bolt"></i> Execute swap</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-trash"></i> Discard</button></div></div><div class="panel"><h3>Rule evaluation — example: B031140 → SO-88140 (refused)</h3><table class="g"><thead><tr><th>Rule</th><th>Attribute</th><th>Mode</th><th>B031140 → SO-88140</th><th>Blocking</th><th>Result</th></tr></thead><tbody><tr class="bad"><td>SWP-PSN</td><td>PSN</td><td>EXACT</td><td>QDQA27_118 vs QDQA27_117</td><td>Yes</td><td><span class="badge b-hold">FAIL — blocked</span></td></tr><tr class="bad"><td>SWP-GRADE</td><td>GRADE</td><td>COMPATIBLE_LIST</td><td>20MnCr5 vs 16MnCr5</td><td>Yes</td><td><span class="badge b-hold">FAIL</span></td></tr><tr class="ok"><td>SWP-SECTION</td><td>SECTION</td><td>EXACT</td><td>SQ 160 vs SQ 160</td><td>Yes</td><td><span class="badge b-done">PASS</span></td></tr><tr class="warn"><td>SWP-LENGTH</td><td>LENGTH</td><td>TOLERANCE ± 100</td><td>12,140 vs 12,000</td><td>No</td><td><span class="badge b-pend">SOFT FAIL — needs SWAP_APPROVE</span></td></tr><tr><td>SWP-CHEM</td><td>CHEMISTRY</td><td>IGNORE</td><td>—</td><td>No</td><td><span class="badge b-draft">SKIPPED</span></td></tr></tbody></table><h3>Swap log</h3><table class="g"><thead><tr><th>Swap no.</th><th>Scenario</th><th>Mode</th><th>Target</th><th class="num">Qty</th><th>Lines</th><th>Status</th><th>By</th><th>At</th><th></th></tr></thead><tbody><tr><td>SWP-2026-0311</td><td>CROSS_SO_PARTIAL</td><td>AUTO</td><td>SO-88140 / 20</td><td class="num">49.8</td><td>2</td><td><span class="badge b-pend">1 LINE AWAITING PLANNER</span></td><td>PPC · S. Iyer</td><td>2026-09-14 15:02</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-left"></i> Reverse</button></td></tr><tr><td>SWP-2026-0309</td><td>ISO_TO_SO</td><td>MANUAL</td><td>SO-90877 / 10</td><td class="num">75.0</td><td>3</td><td><span class="badge b-done">EXECUTED</span></td><td>Mill planner</td><td>2026-09-13 11:20</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-left"></i> Reverse</button></td></tr><tr><td>SWP-2026-0305</td><td>REVERSE</td><td>MANUAL</td><td>SO-88012 / 10</td><td class="num">24.8</td><td>1</td><td><span class="badge b-clr">REVERSED</span></td><td>PPC</td><td>2026-09-12</td><td>—</td></tr><tr><td>SWP-2026-0316</td><td>ISO_TO_SO</td><td>MANUAL</td><td>SO-90877 / 10</td><td class="num">25.0</td><td>1</td><td><span class="badge b-done">EXECUTED</span></td><td>PPC · S. Iyer</td><td>2026-09-15 07:40</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-left"></i> Reverse</button></td></tr></tbody></table></div></div><div class="panel"><h3>Execution in the Allocation application — per swap line <small>Un-Release the batch from the old line → Block it for that line → Run the allocation for the new line → Release when the engine proposed the batch, else the planner accepts the engine's proposal or cancels · then the swap bridge for lots of generated heats · reverse = the same steps the other way</small></h3><table class="g"><thead><tr><th>Swap · line</th><th>Batch · heat</th><th>From → to</th><th>Un-Release</th><th>Block</th><th>Run (new line)</th><th>Release</th><th>Bridge</th><th>Line status</th></tr></thead><tbody><tr class="ok"><td>SWP-2026-0311 · 1</td><td>B031102 · 2627-01144</td><td>SO-88012 / 10 → SO-88140 / 20</td><td><span class="badge b-done">DONE</span></td><td><span class="badge b-done">DONE</span></td><td>run 4472 · proposed B031102</td><td><span class="badge b-done">DONE</span></td><td><span class="badge b-done">APPLIED · audit 88213</span></td><td><span class="badge b-done">EXECUTED</span></td></tr><tr class="warn"><td>SWP-2026-0311 · 2</td><td>B031105 · 2627-01145</td><td>SO-88012 / 10 → SO-88140 / 20</td><td><span class="badge b-done">DONE</span></td><td><span class="badge b-done">DONE</span></td><td>run 4472 · proposed <b>B031188</b> instead</td><td><select><option>Accept B031188</option><option>Cancel the line</option></select></td><td>— after the release</td><td><span class="badge b-pend">PROPOSAL DIFFERS</span></td></tr><tr><td>SWP-2026-0316 · 1</td><td>planned heat PH-0187-47</td><td>ISO-2026-041 / 10 → SO-90877 / 10</td><td><span class="badge b-done">DONE</span></td><td><span class="badge b-done">DONE</span></td><td>run 4475 · proposed it</td><td><span class="badge b-done">DONE</span></td><td>not needed — heat not generated · next pull</td><td><span class="badge b-done">EXECUTED</span></td></tr></tbody></table><div class="note" style="margin:0"><i class="fa-solid fa-link"></i> Swap bridge (production-confirmation application, off by default): after the Allocation application released the batch to the new line, it moves the produced lot's order in one transaction — the old order row deactivated and a new one added (history kept), the lot's remaining schedule allocation and child copy re-pointed, pending recomputed for both lines, the audit written with the swap number. It refuses a lot consumed, dispatched or on hold and a closed target line; whole lots only. A heat not yet generated needs no bridge — the next Allocation pull carries the new order.</div></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.swgrid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:var(--sp3);} .swgrid>div{min-width:0;} .swsrc,.swtw,#swLines,#swRules,#swExec,#swLog{min-width:0;overflow-x:auto;}
+.swf{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin-bottom:10px;}
+.swf .fld label{margin-bottom:3px;}
+.swf select,.swf input[type=number],.swsrc select,.mdl select,.mdl textarea,.lgbar select,.lgbar input{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.swf .chkfld{grid-column:auto;padding-top:20px;}
+.swsrc{border:1px dashed var(--color-border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fbfcfd;}
+.swsrc .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;} .swsrc .row .fld{flex:1;min-width:200px;}
+.swsrc h4{margin:4px 0 6px;font-size:12.5px;font-weight:600;color:var(--color-text-secondary);}
+.swtw{max-height:230px;overflow:auto;border:1px solid #eef0f2;border-radius:6px;margin-bottom:8px;}
+.swtw table.g{margin:0;}
+.swbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+.swmsg{margin-top:8px;font-size:12.5px;} .swmsg.err{color:#c62828;} .swmsg.ok{color:#2e7d32;}
+.tgc dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:0;font-size:13px;} .tgc dt{color:var(--color-text-muted);} .tgc dd{margin:0;font-weight:500;}
+.tgc .refuse{margin-top:8px;background:#ffebee;border:1px solid #ef9a9a;color:#b71c1c;padding:6px 10px;border-radius:6px;font-size:12.5px;}
+.swempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tr.refused td{color:#9e9e9e;} .g td .xbtn{border:0;background:none;color:#c62828;cursor:pointer;font-size:13px;}
+.g td .lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.stchip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.lgbar{display:grid;grid-template-columns:200px 200px 1fr;gap:8px;margin-bottom:8px;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl textarea{min-height:70px;}
+#swToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.k.lnk{cursor:pointer;} .k.lnk:hover{border-color:var(--color-primary);}
+.balt{font-size:13px;margin-top:8px;} .balt b{font-family:Consolas,monospace;}
+</style>    <div class="crumb"><a href="ppc-hub.html"><i class="fa-solid fa-arrow-left"></i> Planning</a> <span>/</span> <span>Material</span> <span>/</span> <b>Swapping</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-right-left"></i> Swapping</h1><div class="sub">PPC decides the swap — six scenarios plus reverse, manual or auto, validated by the swap rules and logged; the Allocation application executes each line with its existing steps and, for lots already produced, the swap bridge moves the lot's order. Swaps happen before release — at sequencing or in WIP; none at the furnace; FG swaps stay in SAP.</div></div><div class="ph-actions"><button class="btn btn-primary btn-sm" onclick="swNewMode('AUTO')"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-swap</button><button class="btn btn-ghost btn-sm" onclick="swNewMode('MANUAL')"><i class="fa-solid fa-right-left"></i> Manual swap</button><button class="btn btn-ghost btn-sm" onclick="swReport()"><i class="fa-solid fa-file-lines"></i> Swap report</button></div></div>
+<div id="swBanner"></div><div class="kpis"><div class="k lnk" onclick="swEntry('free')" title="Attach free batches to an order"><b>310 t</b><span>free batches → attach</span></div><div class="k"><b>5</b><span>swaps this week</span></div><div class="k"><b id="kAppr">0</b><span>approvals given now</span></div><div class="k"><b>1</b><span>reversed (30 d)</span></div></div><div class="mut" style="font-size:11.5px;margin:-4px 0 10px">Prototype on sample data — every control works; a reload resets. Try: Auto-swap for SO-88140/20 (toggle YMS to see the ranking change) · manual cross-order with B031161 (its Release fails and rolls back) · B031165 (the Allocation application proposes another batch) · B031107 (length soft rule → approval) · B031188 or B031190 (blocked) · target SO-90310/10 (held, refused) · Reverse in the log.</div><div class="swgrid"><div><div class="panel" id="swForm"><h3>New swap <small id="swNo">SWP-2026-0312</small></h3><div class="swf"><div class="fld"><label for="swScn">Scenario</label><select id="swScn" onchange="swScnChanged()"><option value="CROSS_SO_PARTIAL">Cross-order partial — batches from one or more orders until the quantity is met</option><option value="BATCH_TO_BATCH">Batch-to-batch — direct exchange between two orders</option><option value="FREE_TO_SO">Free batch → order</option><option value="ISO_TO_SO">ISO batch → customer order</option><option value="AS_ROLLED_TO_ANNEALING">As-rolled batch → annealing order (PPC approval)</option><option value="GMM_DISPATCH">GMM lot → dispatch order</option></select></div><div class="fld"><label for="swMode">Mode</label><select id="swMode" onchange="swChanged()"><option value="AUTO">AUTO — system proposes donors</option><option value="MANUAL">MANUAL — pick the batches</option></select></div><div class="fld"><label for="swStage">Stage</label><select id="swStage" onchange="swChanged()"><option value="SEQUENCING">SEQUENCING — before release</option><option value="WIP">WIP — rolled, at inspection</option><option value="ANNEALING">ANNEALING — as-rolled</option><option value="GMM">GMM</option></select></div><div class="fld" style="grid-column:span 2"><label for="swTgt">Target order line</label><select id="swTgt" onchange="swChanged()"></select></div><div class="fld" id="swQtyF"><label for="swQty">Required qty (t)</label><input id="swQty" type="number" step="0.1" value="50" onchange="swChanged()"/></div><label class="chkfld" id="swYmsF"><input type="checkbox" id="swYms" checked onchange="swRender(true)"/> YMS reliability ON — prefer top-layer batches</label></div><div class="swsrc" id="swSrc"></div><h3>Proposed lines</h3><div id="swLines"></div><div class="swbtns"><button class="btn btn-primary btn-sm" id="swValBtn" onclick="swValidate()"><i class="fa-solid fa-list-check"></i> Validate</button><button class="btn btn-primary btn-sm" id="swExecBtn" onclick="swExecute()"><i class="fa-solid fa-play"></i> Execute swap</button><button class="btn btn-ghost btn-sm" onclick="swDiscard()"><i class="fa-solid fa-trash-can"></i> Discard</button></div><div class="swmsg" id="swMsg"></div></div></div><div><div class="panel tgc"><h3>Target order <small>status checked before anything is proposed</small></h3><div id="swTgtCard"></div></div><div class="panel"><h3>Rule evaluation <small>per line, from the swap rules master</small></h3><div id="swRules"></div></div></div></div><div class="panel"><h3>Execution <small>per line in the Allocation application: Un-Release from the old line → Block it for that line → Run the allocation for the new line → Release — then the swap bridge moves a produced lot's order; a failed step rolls the line back</small></h3><div id="swExec"><div class="swempty">Execution appears here after Execute swap.</div></div><div id="swBal"></div></div><div class="panel"><h3>Swap log <small>every transaction and line — the source of the WIP swapping report</small></h3><div class="lgbar"><select id="lgScn" onchange="swLogF()"></select><select id="lgSt" onchange="swLogF()"><option value="">All statuses</option><option>EXECUTED</option><option>PARTIAL</option><option>REVERSED</option><option>FAILED</option></select><input id="lgQ" placeholder="Search swap no., order or batch" oninput="swLogF()"/></div><div id="swLog"></div></div><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="swToast"></div><script>
+(function(){
+var O = {"SO-88140/20": {"cust": "ABC Auto", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 50.0, "status": "OPEN", "kind": "SO", "due": "25 Oct", "tier": 1}, "SO-88012/10": {"cust": "XYZ Bearings", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 480.0, "status": "OPEN", "kind": "SO", "due": "18 Nov", "tier": 2}, "SO-89555/10": {"cust": "JKL Forgings", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 60.0, "status": "OPEN", "kind": "SO", "due": "24 Oct", "tier": 1}, "SO-89601/10": {"cust": "MNO Steels", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 300.0, "status": "OPEN", "kind": "SO", "due": "30 Nov", "tier": 3}, "SO-88150/10": {"cust": "DEF Auto", "grade": "16MnCr5", "psn": "QDQA27_117", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 120.0, "status": "OPEN", "kind": "SO", "due": "12 Nov", "tier": 2}, "SO-88160/10": {"cust": "PQR Gears", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 63", "input": "SQ 200", "len": 11000, "bal": 200.0, "status": "OPEN", "kind": "SO", "due": "05 Dec", "tier": 3}, "SO-90877/10": {"cust": "UVW Pumps", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "bal": 75.0, "status": "OPEN", "kind": "SO", "due": "08 Nov", "tier": 2}, "SO-90310/10": {"cust": "GHI Tools", "grade": "42CrMo4", "psn": "QDQA33_042", "size": "RO 63", "input": "SQ 200", "len": 11000, "bal": 80.0, "status": "ON HOLD", "kind": "SO", "due": "02 Nov", "tier": 2}, "SO-87655/10": {"cust": "RST Valves", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "bal": 0.0, "status": "SHORT-CLOSED", "kind": "SO", "due": "10 Oct", "tier": 3}, "ISO-2026-041/10": {"cust": "Internal sales order (ISO)", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "bal": 100.0, "status": "OPEN", "kind": "ISO", "due": "\u2014", "tier": 9}, "SO-88201/10": {"cust": "LMN Steels", "grade": "304", "psn": "QDQA06_290", "size": "coil 5.5", "input": "coil 5.5", "len": 0, "bal": 40.0, "status": "OPEN", "kind": "SO", "due": "15 Nov", "tier": 2}, "ANL-2026-015/10": {"cust": "Annealing order for SO-88201/10", "grade": "304", "psn": "QDQA06_290", "size": "coil 5.5", "input": "coil 5.5", "len": 0, "bal": 12.6, "status": "OPEN", "kind": "ANL", "due": "28 Oct", "tier": 2}, "GL-2026-007": {"cust": "GMM common lot (one batch id)", "grade": "B2 balls", "psn": "QDGM01_010", "size": "\u00d8 60", "input": "\u00d8 60", "len": 0, "bal": 0.0, "status": "OPEN", "kind": "LOT", "due": "\u2014", "tier": 9}, "SO-91210/10": {"cust": "XYZ Mining (grinding media)", "grade": "B2 balls", "psn": "QDGM01_010", "size": "\u00d8 60", "input": "\u00d8 60", "len": 0, "bal": 30.0, "status": "OPEN", "kind": "GMMSO", "due": "31 Oct", "tier": 1}}, B = [{"id": "B031102", "heat": "2627-01144", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.8, "stage": "SEQUENCING", "order": "SO-88012/10", "layer": "top", "gen": true}, {"id": "B031105", "heat": "2627-01145", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "SEQUENCING", "order": "SO-88012/10", "layer": "middle", "gen": true}, {"id": "B031107", "heat": "2627-01145", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 11880, "qty": 24.9, "stage": "SEQUENCING", "order": "SO-88012/10", "layer": "bottom", "gen": true}, {"id": "B030992", "heat": "2627-01120", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.8, "stage": "SEQUENCING", "order": "SO-88140/20", "layer": "top", "gen": true}, {"id": "B030995", "heat": "2627-01120", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.1, "stage": "SEQUENCING", "order": "SO-88140/20", "layer": "middle", "gen": true}, {"id": "B031188", "heat": "2627-01180", "grade": "16MnCr5", "psn": "QDQA27_117", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.6, "stage": "SEQUENCING", "order": "SO-88150/10", "layer": "top", "gen": true}, {"id": "B031190", "heat": "2627-01198", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 63", "input": "SQ 200", "len": 11000, "qty": 25.0, "stage": "SEQUENCING", "order": "SO-88160/10", "layer": "top", "gen": true}, {"id": "B031195", "heat": "2627-01199", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.7, "stage": "SEQUENCING", "order": "SO-87655/10", "layer": "top", "gen": true}, {"id": "B031160", "heat": "2627-01186", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.1, "stage": "SEQUENCING", "order": "SO-89601/10", "layer": "top", "gen": true}, {"id": "B031165", "heat": "2627-01187", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "SEQUENCING", "order": "SO-89601/10", "layer": "top", "gen": false, "engine": "B031166"}, {"id": "B031161", "heat": "2627-01186", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.9, "stage": "SEQUENCING", "order": "SO-89601/10", "layer": "middle", "gen": true, "fail": "Release"}, {"id": "B031166", "heat": "2627-01187", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.8, "stage": "SEQUENCING", "order": "SO-89601/10", "layer": "bottom", "gen": false, "hidden": true}, {"id": "B031170", "heat": "2627-01190", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.2, "stage": "SEQUENCING", "order": null, "layer": "middle", "gen": true}, {"id": "B031171", "heat": "2627-01190", "grade": "304L", "psn": "QDQA06_311", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 24.7, "stage": "SEQUENCING", "order": null, "layer": "bottom", "gen": true}, {"id": "B031175", "heat": "2627-01191", "grade": "20MnCr5", "psn": "QDQA27_118", "size": "RO 32", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "SEQUENCING", "order": null, "layer": "middle", "gen": true}, {"id": "B031180", "heat": "2627-01195", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "WIP", "order": "ISO-2026-041/10", "layer": "top", "gen": true}, {"id": "B031181", "heat": "2627-01195", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "WIP", "order": "ISO-2026-041/10", "layer": "middle", "gen": true}, {"id": "B031182", "heat": "2627-01196", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "qty": 24.9, "stage": "WIP", "order": "ISO-2026-041/10", "layer": "bottom", "gen": true}, {"id": "B031185", "heat": "2627-01197", "grade": "304L", "psn": "QDQA06_311", "size": "RO 40", "input": "SQ 160", "len": 12000, "qty": 25.0, "stage": "WIP", "order": "SO-90310/10", "layer": "top", "gen": true}, {"id": "C022010", "heat": "2627-01090", "grade": "304", "psn": "QDQA06_290", "size": "coil 5.5", "input": "coil 5.5", "len": 0, "qty": 2.1, "stage": "ANNEALING", "order": "SO-88201/10", "layer": "\u2014", "gen": true}, {"id": "C022011", "heat": "2627-01090", "grade": "304", "psn": "QDQA06_290", "size": "coil 5.5", "input": "coil 5.5", "len": 0, "qty": 2.1, "stage": "ANNEALING", "order": "SO-88201/10", "layer": "\u2014", "gen": true}, {"id": "C022012", "heat": "2627-01091", "grade": "304", "psn": "QDQA06_290", "size": "coil 5.5", "input": "coil 5.5", "len": 0, "qty": 2.1, "stage": "ANNEALING", "order": "SO-88201/10", "layer": "\u2014", "gen": true}, {"id": "GL-007-01", "heat": "lot of 4 heats", "grade": "B2 balls", "psn": "QDGM01_010", "size": "\u00d8 60", "input": "\u00d8 60", "len": 0, "qty": 10.0, "stage": "GMM", "order": "GL-2026-007", "layer": "\u2014", "gen": true}, {"id": "GL-007-02", "heat": "lot of 4 heats", "grade": "B2 balls", "psn": "QDGM01_010", "size": "\u00d8 60", "input": "\u00d8 60", "len": 0, "qty": 10.0, "stage": "GMM", "order": "GL-2026-007", "layer": "\u2014", "gen": true}, {"id": "GL-007-03", "heat": "lot of 4 heats", "grade": "B2 balls", "psn": "QDGM01_010", "size": "\u00d8 60", "input": "\u00d8 60", "len": 0, "qty": 9.6, "stage": "GMM", "order": "GL-2026-007", "layer": "\u2014", "gen": true}], LOG = [{"no": "SWP-2026-0311", "scn": "CROSS_SO_PARTIAL", "mode": "AUTO", "tgt": "SO-88140/20", "qty": 49.8, "status": "EXECUTED", "by": "K. Nair", "at": "21 Oct 15:20", "lines": [["B031102", "SO-88012/10", "SO-88140/20", 24.8, "EXECUTED \u00b7 bridge applied"], ["B031105", "SO-88012/10", "SO-88140/20", 25.0, "EXECUTED \u00b7 bridge applied"]]}, {"no": "SWP-2026-0309", "scn": "ISO_TO_SO", "mode": "MANUAL", "tgt": "SO-90877/10", "qty": 75.0, "status": "EXECUTED", "by": "S. Iyer", "at": "20 Oct 11:05", "lines": [["B031150", "ISO-2026-041/10", "SO-90877/10", 25.0, "EXECUTED"], ["B031151", "ISO-2026-041/10", "SO-90877/10", 25.0, "EXECUTED"], ["B031152", "ISO-2026-041/10", "SO-90877/10", 25.0, "EXECUTED"]]}, {"no": "SWP-2026-0305", "scn": "REVERSE", "mode": "MANUAL", "tgt": "SO-88012/10", "qty": 24.8, "status": "EXECUTED", "by": "K. Nair", "at": "18 Oct 09:40", "ref": "SWP-2026-0301", "reason": "Customer of SO-88140/20 deferred the call-off", "lines": [["B031099", "SO-88140/20", "SO-88012/10", 24.8, "EXECUTED \u00b7 bridge applied"]]}, {"no": "SWP-2026-0301", "scn": "BATCH_TO_BATCH", "mode": "MANUAL", "tgt": "SO-88140/20", "qty": 24.8, "status": "REVERSED", "by": "K. Nair", "at": "17 Oct 16:15", "lines": [["B031099", "SO-88012/10", "SO-88140/20", 24.8, "EXECUTED"], ["B030990", "SO-88140/20", "SO-88012/10", 24.6, "EXECUTED"]]}, {"no": "SWP-2026-0298", "scn": "AS_ROLLED_TO_ANNEALING", "mode": "MANUAL", "tgt": "ANL-2026-015/10", "qty": 6.3, "status": "EXECUTED", "by": "R. Menon \u00b7 approved PPC-HOD", "at": "16 Oct 12:30", "lines": [["C021990", "SO-88201/10", "ANL-2026-015/10", 2.1, "EXECUTED"], ["C021991", "SO-88201/10", "ANL-2026-015/10", 2.1, "EXECUTED"], ["C021992", "SO-88201/10", "ANL-2026-015/10", 2.1, "EXECUTED"]]}];
+var S = {lines: [], phase: 'DRAFT', rules: {}, next: 312, approvals: 0, picks: {}};
+var LAYER = {top: 1, middle: 2, bottom: 3, '—': 4};
+var STAGE_OF = {CROSS_SO_PARTIAL: 'SEQUENCING', BATCH_TO_BATCH: 'SEQUENCING', FREE_TO_SO: 'SEQUENCING', ISO_TO_SO: 'WIP', AS_ROLLED_TO_ANNEALING: 'ANNEALING', GMM_DISPATCH: 'GMM'};
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function f1(n){ return (Math.round(n * 10) / 10).toFixed(1); }
+function badge(t, c){ return '<span class="badge ' + c + '">' + t + '</span>'; }
+function bat(id){ for (var i = 0; i < B.length; i++) if (B[i].id === id) return B[i]; return null; }
+function toast(t){ var el = $('swToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3200); }
+function scn(){ return $('swScn').value; } function mode(){ return $('swMode').value; } function stage(){ return $('swStage').value; } function tgt(){ return $('swTgt').value; }
+function qty(){ return parseFloat($('swQty').value || '0'); }
+
+function targetsFor(sc){
+  var out = [];
+  for (var k in O){ var o = O[k];
+    if (sc === 'AS_ROLLED_TO_ANNEALING' ? o.kind === 'ANL' : sc === 'GMM_DISPATCH' ? o.kind === 'GMMSO' : o.kind === 'SO') out.push(k); }
+  return out;
+}
+function sourcesFor(sc){
+  var out = [];
+  for (var k in O){ var o = O[k];
+    if (k === tgt()) continue;
+    if (sc === 'ISO_TO_SO' ? o.kind === 'ISO' : sc === 'GMM_DISPATCH' ? o.kind === 'LOT' : sc === 'AS_ROLLED_TO_ANNEALING' ? (o.kind === 'SO' && o.grade === O[tgt()].grade) : o.kind === 'SO') out.push(k); }
+  return out;
+}
+function fillSelect(el, keys, labelFn, keep){
+  var cur = keep ? el.value : null;
+  el.innerHTML = keys.map(function(k){ return '<option value="' + k + '">' + esc(labelFn(k)) + '</option>'; }).join('');
+  if (cur && keys.indexOf(cur) >= 0) el.value = cur;
+}
+function ordLabel(k){ var o = O[k]; return k + ' — ' + o.cust + ' · ' + o.grade + ' · ' + o.size + (o.status !== 'OPEN' ? ' · ' + o.status : ''); }
+
+/* -------- quick compatibility pre-check (the full check is Validate) */
+function precheck(b, recvKey){
+  var r = O[recvKey], why = [];
+  if (b.psn !== r.psn) why.push('PSN'); if (b.grade !== r.grade) why.push('grade');
+  if (b.size !== r.size) why.push('section'); if (b.input !== r.input) why.push('input size');
+  if (b.order && O[b.order] && O[b.order].status !== 'OPEN') why.push('donor ' + O[b.order].status.toLowerCase());
+  if (why.length) return badge('blocked: ' + why.join(', '), 'b-hold');
+  if (r.len && Math.abs(b.len - r.len) > 100) return badge('soft: length', 'b-pend');
+  return badge('compatible', 'b-done');
+}
+
+/* -------- rules (from the swap rules master) */
+function evalRules(line){
+  var b = bat(line.bat), r = O[line.to], d = line.from ? O[line.from] : null, res = [];
+  function add(code, attr, mode, vals, blocking, ok, soft){ res.push({code: code, attr: attr, mode: mode, vals: vals, blocking: blocking, result: ok ? 'PASS' : (soft ? 'SOFT FAIL' : 'FAIL')}); }
+  add('SWP-PSN', 'PSN', 'EXACT', b.psn + ' vs ' + r.psn, true, b.psn === r.psn);
+  add('SWP-GRADE', 'Grade', 'COMPATIBLE_LIST', b.grade + ' vs ' + r.grade, true, b.grade === r.grade);
+  add('SWP-SECTION', 'Section', 'EXACT', b.size + ' vs ' + r.size, true, b.size === r.size);
+  add('SWP-INPUT', 'Input size', 'EXACT', b.input + ' vs ' + r.input, true, b.input === r.input);
+  if (r.len) add('SWP-LENGTH', 'Length', 'TOLERANCE ± 100', b.len.toLocaleString() + ' vs ' + r.len.toLocaleString(), false, Math.abs(b.len - r.len) <= 100, true);
+  res.push({code: 'SWP-CHEM', attr: 'Chemistry', mode: 'IGNORE', vals: 'not compared', blocking: false, result: 'SKIPPED'});
+  var st = r.status === 'OPEN' && (!d || d.status === 'OPEN');
+  add('SWP-STATUS', 'Order status', 'OPEN only', 'to ' + r.status + (d ? ' · from ' + d.status : ' · free batch'), true, st);
+  add('SWP-FG', 'Stage', 'NOT FG', b.stage, true, b.stage !== 'FG');
+  if (scn() === 'AS_ROLLED_TO_ANNEALING') add('SWP-APPROVAL', 'As-rolled → annealing', 'PPC approval', 'always', false, false, true);
+  return res;
+}
+function lineState(i){
+  var rs = S.rules[i]; if (!rs) return 'DRAFT';
+  if (rs.some(function(x){ return x.result === 'FAIL'; })) return 'REFUSED';
+  if (rs.some(function(x){ return x.result === 'SOFT FAIL'; }) && !S.lines[i].approved) return 'NEEDS APPROVAL';
+  return S.lines[i].approved ? 'APPROVED' : 'OK';
+}
+
+/* -------- rendering */
+function renderTarget(){
+  var k = tgt(), o = O[k];
+  var h = '<dl><dt>Order line</dt><dd>' + k + '</dd><dt>Customer</dt><dd>' + esc(o.cust) + '</dd><dt>Grade · PSN</dt><dd>' + o.grade + ' · ' + o.psn + '</dd>' +
+          '<dt>Rolled · input</dt><dd>' + o.size + ' · ' + o.input + (o.len ? ' · ' + o.len.toLocaleString() + ' mm' : '') + '</dd><dt>Balance to roll</dt><dd>' + f1(o.bal) + ' t</dd>' +
+          '<dt>Delivery</dt><dd>' + o.due + '</dd><dt>Status</dt><dd>' + badge(o.status, o.status === 'OPEN' ? 'b-done' : 'b-hold') + '</dd></dl>';
+  if (o.status !== 'OPEN') h += '<div class="refuse"><i class="fa-solid fa-ban"></i> Swaps are refused on a closed or held order (BR-SWP-03). Choose another target.</div>';
+  $('swTgtCard').innerHTML = h;
+}
+function candRows(list, recv, kind){
+  if (!list.length) return '<div class="swempty">No batches at this stage.</div>';
+  var h = '<div class="swtw"><table class="g"><thead><tr><th></th><th>Batch</th><th>Pre-check</th><th class="num">Qty t</th><th>Yard</th><th>Order</th><th>Heat</th><th>Grade · PSN</th><th>Section · input</th><th class="num">Length</th></tr></thead><tbody>';
+  list.forEach(function(b){
+    var inp = kind === 'radio' ? '<input type="radio" name="' + (recv === tgt() ? 'r1' : 'r2') + '" value="' + b.id + '">' : '<input type="checkbox" value="' + b.id + '">';
+    h += '<tr><td>' + inp + '</td><td><b>' + b.id + '</b></td><td>' + precheck(b, recv) + '</td><td class="num">' + f1(b.qty) + '</td><td>' + b.layer + '</td><td>' + (b.order || badge('FREE', 'b-info')) + '</td><td>' + b.heat + '</td><td>' + b.grade + ' · ' + b.psn + '</td><td>' + b.size + ' · ' + b.input + '</td><td class="num">' + (b.len ? b.len.toLocaleString() : '—') + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+function atStage(filter){ return B.filter(function(b){ return !b.hidden && b.stage === stage() && filter(b); }); }
+function inLines(id){ return S.lines.some(function(l){ return l.bat === id; }); }
+function renderSource(){
+  var sc = scn(), m = mode(), h = '';
+  if (m === 'AUTO'){
+    h = '<h4>Auto-swap — the system finds compatible batches across all orders and free stock</h4>' +
+        '<div class="swbtns"><button class="btn btn-primary btn-sm" onclick="swFind()"><i class="fa-solid fa-wand-magic-sparkles"></i> Find donors</button>' +
+        '<span class="mut" style="font-size:12px">ranking: ' + ($('swYms').checked ? 'yard layer (top first) → quantity fit → donor slack' : 'quantity fit → donor slack') + ' · whole batches; a small residual stays open</span></div><div id="swRank"></div>';
+  } else if (sc === 'BATCH_TO_BATCH'){
+    var srcs = sourcesFor(sc);
+    h = '<div class="row"><div class="fld"><label>Source order — gives a batch to the target</label><select id="swSrcOrd" onchange="swRender(true)">' + srcs.map(function(k){ return '<option value="' + k + '">' + esc(ordLabel(k)) + '</option>'; }).join('') + '</select></div></div>';
+    var so = S.picks.src && srcs.indexOf(S.picks.src) >= 0 ? S.picks.src : srcs[0];
+    h = h.replace('value="' + so + '"', 'value="' + so + '" selected');
+    h += '<h4>1 · Batch of ' + so + ' that goes to ' + tgt() + '</h4>' + candRows(atStage(function(b){ return b.order === so && !inLines(b.id); }), tgt(), 'radio');
+    h += '<h4>2 · Batch of ' + tgt() + ' that goes back to ' + so + '</h4>' + candRows(atStage(function(b){ return b.order === tgt() && !inLines(b.id); }), so, 'radio');
+    h += '<div class="swbtns"><button class="btn btn-ghost btn-sm" onclick="swAddExchange()"><i class="fa-solid fa-plus"></i> Add the exchange (two lines)</button></div>';
+  } else if (sc === 'FREE_TO_SO'){
+    h = '<h4>Free batches at ' + stage().toLowerCase() + ' — not allocated to any order</h4>' + candRows(atStage(function(b){ return !b.order && !inLines(b.id); }), tgt(), 'check') +
+        '<div class="swbtns"><button class="btn btn-ghost btn-sm" onclick="swAddChecked()"><i class="fa-solid fa-plus"></i> Add selected</button></div>';
+  } else {
+    var srcs2 = sourcesFor(sc), lab = sc === 'ISO_TO_SO' ? 'ISO order' : sc === 'GMM_DISPATCH' ? 'GMM lot' : 'Source order';
+    var so2 = S.picks.src && srcs2.indexOf(S.picks.src) >= 0 ? S.picks.src : srcs2[0];
+    h = '<div class="row"><div class="fld"><label>' + lab + '</label><select id="swSrcOrd" onchange="swRender(true)">' + srcs2.map(function(k){ return '<option value="' + k + '"' + (k === so2 ? ' selected' : '') + '>' + esc(ordLabel(k)) + '</option>'; }).join('') + '</select></div></div>';
+    h += '<h4>Batches of ' + so2 + ' at ' + stage().toLowerCase() + '</h4>' + candRows(atStage(function(b){ return b.order === so2 && !inLines(b.id); }), tgt(), 'check');
+    h += '<div class="swbtns"><button class="btn btn-ghost btn-sm" onclick="swAddChecked()"><i class="fa-solid fa-plus"></i> Add selected</button>' + (sc === 'CROSS_SO_PARTIAL' ? '<span class="mut" style="font-size:12px">pick another source order to add more</span>' : '') + '</div>';
+  }
+  $('swSrc').innerHTML = h;
+}
+function renderLines(){
+  var h;
+  if (!S.lines.length) h = '<div class="swempty">No lines yet — ' + (mode() === 'AUTO' ? 'press Find donors.' : 'tick batches above and add them.') + '</div>';
+  else {
+    var tot = 0;
+    h = '<table class="g"><thead><tr><th>#</th><th>Batch</th><th>Heat</th><th>From</th><th>To</th><th class="num">Qty t</th><th>Direction</th><th>Yard</th><th>State</th><th></th></tr></thead><tbody>';
+    S.lines.forEach(function(l, i){
+      var b = bat(l.bat), st = lineState(i); if (l.dir === 'OUT') tot += l.qty;
+      var cls = st === 'REFUSED' ? 'refused' : st === 'NEEDS APPROVAL' ? 'warn' : (st === 'OK' || st === 'APPROVED') ? 'ok' : '';
+      var stb = st === 'DRAFT' ? badge('DRAFT', 'b-draft') : st === 'REFUSED' ? badge('REFUSED', 'b-hold') : st === 'NEEDS APPROVAL' ? badge('NEEDS APPROVAL', 'b-pend') : st === 'APPROVED' ? badge('APPROVED', 'b-clr') : badge('OK', 'b-done');
+      h += '<tr class="' + cls + '"><td>' + (i + 1) + '</td><td><b>' + l.bat + '</b></td><td>' + b.heat + '</td><td>' + (l.from || badge('FREE', 'b-info')) + '</td><td>' + l.to + '</td><td class="num">' + f1(l.qty) + '</td><td>' + l.dir + '</td><td>' + b.layer + '</td><td>' + stb + '</td><td>' + (S.phase === 'DRAFT' || S.phase === 'VALIDATED' ? '<button class="xbtn" title="Remove the line" onclick="swDel(' + i + ')"><i class="fa-solid fa-xmark"></i></button>' : '') + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    var need = (scn() === 'CROSS_SO_PARTIAL' || mode() === 'AUTO') ? qty() : 0;
+    if (need) h += '<div class="balt">Drawn <b>' + f1(tot) + ' t</b> of <b>' + f1(need) + ' t</b>' + (need - tot > 0.05 ? ' — <b>' + f1(need - tot) + ' t</b> stays open on ' + tgt() : '') + (tot - need > 0.05 ? ' — <span style="color:#c62828">over by ' + f1(tot - need) + ' t</span>' : '') + '</div>';
+  }
+  $('swLines').innerHTML = h;
+  var hd = {DRAFT: badge('DRAFT', 'b-draft'), VALIDATED: badge('VALIDATED', 'b-info'), EXECUTING: badge('EXECUTING', 'b-pend'), DONE: badge('DONE', 'b-done')}[S.phase];
+  $('swNo').innerHTML = 'SWP-2026-0' + S.next + ' · ' + hd;
+  $('swExecBtn').disabled = S.phase !== 'VALIDATED'; $('swValBtn').disabled = !S.lines.length || S.phase === 'EXECUTING' || S.phase === 'DONE' || O[tgt()].status !== 'OPEN';
+}
+function renderRules(){
+  if (S.phase === 'DRAFT' || !S.lines.length){ $('swRules').innerHTML = '<div class="swempty">Press Validate to check every proposed line against the swap rules.</div>'; return; }
+  var codes = S.rules[0].map(function(r){ return r; });
+  var h = '<table class="g"><thead><tr><th>Rule</th><th>Mode</th>' + S.lines.map(function(l, i){ return '<th>L' + (i + 1) + ' ' + l.bat + '</th>'; }).join('') + '</tr></thead><tbody>';
+  codes.forEach(function(r, ri){
+    h += '<tr><td>' + r.code + ' <span class="mut">' + r.attr + '</span></td><td>' + r.mode + (r.blocking ? ' · blocking' : '') + '</td>';
+    S.lines.forEach(function(l, i){ var x = S.rules[i][ri]; var c = x.result === 'PASS' ? 'b-done' : x.result === 'FAIL' ? 'b-hold' : x.result === 'SOFT FAIL' ? 'b-pend' : 'b-draft';
+      h += '<td title="' + esc(x.vals) + '">' + badge(x.result, c) + '</td>'; });
+    h += '</tr>';
+  });
+  h += '<tr><td><b>Line result</b></td><td></td>' + S.lines.map(function(l, i){ var st = lineState(i);
+    return '<td>' + (st === 'NEEDS APPROVAL' ? '<button class="btn btn-ghost btn-sm" onclick="swApprove(' + i + ')"><i class="fa-solid fa-user-check"></i> Approve…</button>' : st === 'REFUSED' ? badge('REFUSED', 'b-hold') : st === 'APPROVED' ? badge('APPROVED', 'b-clr') : badge('OK', 'b-done')) + '</td>'; }).join('') + '</tr></tbody></table>';
+  h += '<div class="mut" style="font-size:11.5px">Hover a result to see the values compared. Refused lines are left out of the execution.</div>';
+  $('swRules').innerHTML = h;
+}
+window.swRender = function(keepSrc){
+  if (keepSrc && $('swSrcOrd')) S.picks.src = $('swSrcOrd').value;
+  var a = scn() === 'BATCH_TO_BATCH';
+  $('swMode').querySelector('option[value=AUTO]').disabled = a; if (a && mode() === 'AUTO') $('swMode').value = 'MANUAL';
+  $('swQtyF').style.display = (mode() === 'AUTO' || scn() === 'CROSS_SO_PARTIAL') ? '' : 'none';
+  $('swYmsF').style.display = mode() === 'AUTO' ? '' : 'none';
+  renderTarget(); renderSource(); renderLines(); renderRules();
+};
+window.swScnChanged = function(){
+  $('swStage').value = STAGE_OF[scn()];
+  fillSelect($('swTgt'), targetsFor(scn()), ordLabel, true);
+  S.lines = []; S.rules = {}; S.phase = 'DRAFT'; S.picks = {}; $('swExec').innerHTML = '<div class="swempty">Execution appears here after Execute swap.</div>'; $('swBal').innerHTML = '';
+  swRender();
+};
+window.swChanged = function(){ S.lines = []; S.rules = {}; S.phase = 'DRAFT'; S.picks = {}; swRender(); };
+function invalidate(){ if (S.phase === 'VALIDATED'){ S.phase = 'DRAFT'; S.rules = {}; } }
+window.swDel = function(i){ S.lines.splice(i, 1); invalidate(); swRender(true); };
+window.swAddChecked = function(){
+  var boxes = $('swSrc').querySelectorAll('input[type=checkbox]:checked'); if (!boxes.length){ toast('Tick at least one batch first'); return; }
+  boxes.forEach(function(x){ var b = bat(x.value); S.lines.push({bat: b.id, from: b.order, to: tgt(), qty: b.qty, dir: 'OUT'}); });
+  invalidate(); swRender(true);
+};
+window.swAddExchange = function(){
+  var a = $('swSrc').querySelector('input[name=r1]:checked'), c = $('swSrc').querySelector('input[name=r2]:checked');
+  if (!a || !c){ toast('Pick one batch in each list'); return; }
+  var so = $('swSrcOrd').value, b1 = bat(a.value), b2 = bat(c.value);
+  S.lines.push({bat: b1.id, from: so, to: tgt(), qty: b1.qty, dir: 'OUT'}); S.lines.push({bat: b2.id, from: tgt(), to: so, qty: b2.qty, dir: 'IN'});
+  invalidate(); swRender(true);
+};
+window.swFind = function(){
+  var need = qty(); if (!(need > 0)){ toast('Enter the required quantity'); return; }
+  var t = O[tgt()], y = $('swYms').checked;
+  var cand = B.filter(function(b){ return !b.hidden && b.stage === stage() && b.order !== tgt() && (!b.order || O[b.order].status === 'OPEN') &&
+      b.psn === t.psn && b.grade === t.grade && b.size === t.size && b.input === t.input && (scn() !== 'ISO_TO_SO' || (b.order && O[b.order].kind === 'ISO')) && (scn() !== 'FREE_TO_SO' || !b.order); });
+  function slack(b){ return b.order ? (O[b.order].tier || 5) : 99; }
+  var picked = [], sum = 0, rem = need, why = {};
+  var pool = cand.slice();
+  while (pool.length){
+    pool.sort(function(p, q){ if (y && LAYER[p.layer] !== LAYER[q.layer]) return LAYER[p.layer] - LAYER[q.layer];
+      var fp = Math.abs(rem - p.qty), fq = Math.abs(rem - q.qty); if (Math.abs(fp - fq) > 0.05) return fp - fq; return slack(q) - slack(p); });
+    var b = pool.shift();
+    if (sum + b.qty <= need + 0.5){ picked.push(b); sum += b.qty; rem = need - sum; why[b.id] = (y ? b.layer + ' layer · ' : '') + 'fits ' + f1(b.qty) + ' t' + (b.order ? ' · donor ' + b.order + ' (tier ' + O[b.order].tier + ')' : ' · free stock'); }
+    if (rem < 1) break;
+  }
+  S.lines = picked.map(function(b){ return {bat: b.id, from: b.order, to: tgt(), qty: b.qty, dir: 'OUT'}; }); S.rules = {}; S.phase = 'DRAFT';
+  var h = '<div class="swtw" style="max-height:160px"><table class="g"><thead><tr><th>Rank</th><th>Batch</th><th>From</th><th class="num">Qty t</th><th>Why</th></tr></thead><tbody>' +
+      (picked.length ? picked.map(function(b, i){ return '<tr class="ok"><td>' + (i + 1) + '</td><td><b>' + b.id + '</b></td><td>' + (b.order || 'free') + '</td><td class="num">' + f1(b.qty) + '</td><td>' + why[b.id] + '</td></tr>'; }).join('') : '<tr class="empty"><td colspan="5">No compatible batch at this stage.</td></tr>') + '</tbody></table></div>';
+  renderLines(); renderRules(); $('swRank').innerHTML = h;
+  toast(picked.length + ' donor batch(es) proposed — ' + f1(sum) + ' t of ' + f1(need) + ' t');
+};
+window.swValidate = function(){
+  if (!S.lines.length) return;
+  S.rules = {}; S.lines.forEach(function(l, i){ S.rules[i] = evalRules(l); });
+  var ok = S.lines.some(function(l, i){ return lineState(i) !== 'REFUSED'; });
+  S.phase = ok ? 'VALIDATED' : 'DRAFT';
+  renderLines(); renderRules();
+  var na = S.lines.filter(function(l, i){ return lineState(i) === 'NEEDS APPROVAL'; }).length, rf = S.lines.filter(function(l, i){ return lineState(i) === 'REFUSED'; }).length;
+  $('swMsg').className = 'swmsg ' + (rf || na ? 'err' : 'ok');
+  $('swMsg').innerHTML = !ok ? 'Every line is refused — nothing can be executed.' : (rf ? rf + ' line(s) refused and left out. ' : '') + (na ? na + ' line(s) need approval before Execute.' : 'All lines pass — ready to execute.');
+};
+window.swApprove = function(i){
+  var l = S.lines[i], soft = S.rules[i].filter(function(x){ return x.result === 'SOFT FAIL'; }).map(function(x){ return x.code + ' (' + x.vals + ')'; }).join('; ');
+  modal('Approve line ' + (i + 1) + ' — ' + l.bat, '<div class="mdl"><div>Soft failure: <b>' + esc(soft) + '</b></div><div><label for="apBy">Approver (privileged action SWAP_APPROVE)</label><select id="apBy"><option>PPC-HOD · A. Rao</option><option>PPC Super User · K. Nair</option></select></div><div><label for="apWhy">Reason (mandatory)</label><textarea id="apWhy" placeholder="Why this deviation is acceptable"></textarea></div></div>',
+    'Approve', function(){ var w = $('apWhy').value.trim(); if (!w){ $('apWhy').style.borderColor = '#c62828'; return false; }
+      l.approved = {by: $('apBy').value, why: w}; S.approvals++; $('kAppr').textContent = S.approvals; renderLines(); renderRules(); swValidateMsg(); toast('Line ' + (i + 1) + ' approved by ' + l.approved.by); return true; });
+};
+function swValidateMsg(){ var na = S.lines.filter(function(l, i){ return lineState(i) === 'NEEDS APPROVAL'; }).length; if (!na){ $('swMsg').className = 'swmsg ok'; $('swMsg').innerHTML = 'Approvals complete — ready to execute.'; } }
+window.swDiscard = function(){ S.lines = []; S.rules = {}; S.phase = 'DRAFT'; $('swMsg').innerHTML = ''; $('swExec').innerHTML = '<div class="swempty">Execution appears here after Execute swap.</div>'; $('swBal').innerHTML = ''; swRender(true); toast('Draft discarded'); };
+
+/* -------- execution: the Allocation application's steps, then the bridge */
+var STEPS = ['Un-Release', 'Block', 'Run (new line)', 'Release', 'Bridge'];
+window.swExecute = function(){
+  var na = S.lines.filter(function(l, i){ return lineState(i) === 'NEEDS APPROVAL'; }).length;
+  if (na){ $('swMsg').className = 'swmsg err'; $('swMsg').innerHTML = na + ' line(s) still need approval.'; return; }
+  S.phase = 'EXECUTING'; renderLines();
+  var run = S.lines.map(function(l, i){ return {i: i, l: l, st: lineState(i) === 'REFUSED' ? 'REFUSED' : 'WAIT', cells: ['', '', '', '', ''], status: ''}; });
+  S.run = run; S.plan = 4480;
+  drawExec(); nextLine(0);
+};
+function drawExec(){
+  var h = '<table class="g"><thead><tr><th>Line</th><th>Batch · heat</th><th>From → to</th>' + STEPS.map(function(s){ return '<th>' + s + '</th>'; }).join('') + '<th>Line status</th></tr></thead><tbody>';
+  S.run.forEach(function(r){ var b = bat(r.l.bat);
+    var cls = r.status === 'EXECUTED' ? 'ok' : (r.status === 'ROLLED BACK' || r.status === 'CANCELLED' || r.st === 'REFUSED') ? 'bad' : r.status === 'WAITING FOR PLANNER' ? 'warn' : '';
+    h += '<tr class="' + cls + '"><td>' + (r.i + 1) + '</td><td><b>' + r.l.bat + '</b> · ' + b.heat + '</td><td>' + (r.l.from || 'free') + ' → ' + r.l.to + '</td>' +
+         (r.st === 'REFUSED' ? '<td colspan="5" class="mut">refused at validation — not sent</td><td>' + badge('NOT EXECUTED', 'b-draft') + '</td>' : r.cells.map(function(c){ return '<td>' + (c || '<span class="mut">·</span>') + '</td>'; }).join('') + '<td>' + statusBadge(r.status) + '</td>') + '</tr>'; });
+  $('swExec').innerHTML = h + '</tbody></table>';
+}
+function statusBadge(s){ if (!s) return badge('WAITING', 'b-draft'); var c = s === 'EXECUTED' ? 'b-done' : s === 'RUNNING' ? 'b-info' : s === 'WAITING FOR PLANNER' ? 'b-pend' : 'b-hold'; return badge(s, c); }
+function nextLine(k){
+  while (k < S.run.length && S.run[k].st === 'REFUSED') k++;
+  if (k >= S.run.length){ finish(); return; }
+  var r = S.run[k]; r.status = 'RUNNING'; drawExec(); step(r, 0, k);
+}
+function step(r, s, k){
+  setTimeout(function(){
+    var b = bat(r.l.bat);
+    if (s === 0){ r.cells[0] = r.l.from ? badge('DONE', 'b-done') + ' <span class="mut">plan ' + (S.plan - 9) + '</span>' : '<span class="mut">free — none</span>'; }
+    else if (s === 1){ r.cells[1] = r.l.from ? badge('DONE', 'b-done') : '<span class="mut">free — none</span>'; }
+    else if (s === 2){
+      S.plan++;
+      if (b.engine && !r.accepted){
+        r.cells[2] = badge('OTHER PROPOSAL', 'b-pend') + ' <span class="mut">run ' + S.plan + ' proposed <b>' + b.engine + '</b></span><div class="swbtns"><button class="btn btn-primary btn-sm" onclick="swAccept(' + k + ')">Accept ' + b.engine + '</button><button class="btn btn-ghost btn-sm" onclick="swCancel(' + k + ')">Cancel line</button></div>';
+        r.status = 'WAITING FOR PLANNER'; drawExec(); toast('The Allocation application proposed ' + b.engine + ' instead of ' + b.id + ' — accept or cancel'); return;
+      }
+      r.cells[2] = badge('DONE', 'b-done') + ' <span class="mut">run ' + S.plan + ' proposed ' + r.l.bat + '</span>';
+    }
+    else if (s === 3){
+      if (b.fail === 'Release'){
+        r.cells[3] = badge('FAILED', 'b-hold') + ' <span class="mut">plan entry locked by another release</span>';
+        r.cells[4] = '<span class="mut">rollback: unblock ✓ · re-release to ' + r.l.from + ' ✓</span>';
+        r.status = 'ROLLED BACK'; drawExec(); toast('Line ' + (r.i + 1) + ': Release failed — rolled back automatically'); nextLine(k + 1); return;
+      }
+      r.cells[3] = badge('DONE', 'b-done');
+    }
+    else if (s === 4){
+      var bb = bat(r.l.bat);
+      r.cells[4] = bb.gen ? badge('APPLIED', 'b-done') + ' <span class="mut">audit A-' + (77800 + r.i * 7 + S.next) + '</span>' : badge('NOT NEEDED', 'b-draft') + ' <span class="mut">heat not generated — next pull carries it</span>';
+      r.status = 'EXECUTED'; drawExec(); nextLine(k + 1); return;
+    }
+    drawExec(); step(r, s + 1, k);
+  }, 420);
+}
+window.swAccept = function(k){ var r = S.run[k], b = bat(r.l.bat), alt = bat(b.engine); r.accepted = true; r.l.bat = alt.id; r.l.qty = alt.qty;
+  r.cells[2] = badge('ACCEPTED', 'b-clr') + ' <span class="mut">engine proposal ' + alt.id + '</span>'; r.status = 'RUNNING'; drawExec(); step(r, 3, k); };
+window.swCancel = function(k){ var r = S.run[k]; r.cells[2] = badge('CANCELLED', 'b-hold'); r.cells[3] = '<span class="mut">—</span>';
+  r.cells[4] = '<span class="mut">rollback: unblock ✓ · re-release to ' + r.l.from + ' ✓</span>'; r.status = 'CANCELLED'; drawExec(); nextLine(k + 1); };
+function finish(){
+  var ex = S.run.filter(function(r){ return r.status === 'EXECUTED'; });
+  var all = S.run.filter(function(r){ return r.st !== 'REFUSED'; }).length;
+  var st = !ex.length ? 'FAILED' : ex.length === all ? 'EXECUTED' : 'PARTIAL';
+  var before = {}, after = {};
+  ex.forEach(function(r){ var l = r.l; [l.to, l.from].forEach(function(k){ if (k && before[k] == null){ before[k] = O[k].bal; after[k] = O[k].bal; } });
+    after[l.to] = Math.max(0, after[l.to] - l.qty); if (l.from) after[l.from] += l.qty; });
+  for (var k in after) O[k].bal = after[k];
+  var tot = ex.reduce(function(a, r){ return a + (r.l.dir === 'OUT' ? r.l.qty : 0); }, 0);
+  var no = 'SWP-2026-0' + S.next;
+  LOG.unshift({no: no, scn: scn(), mode: mode(), tgt: tgt(), qty: Math.round(tot * 10) / 10, status: st, by: 'you', at: 'just now',
+    lines: S.run.map(function(r){ return [r.l.bat, r.l.from || 'free', r.l.to, r.l.qty, r.st === 'REFUSED' ? 'REFUSED' : r.status]; })});
+  var bh = Object.keys(before).length ? '<div class="balt"><b>Balances recomputed</b> (balance to roll): ' + Object.keys(before).map(function(k){ return k + ' ' + f1(before[k]) + ' → <b>' + f1(after[k]) + ' t</b>'; }).join(' · ') + '</div>' : '';
+  $('swBal').innerHTML = '<div class="banner" style="margin-top:8px">' + no + ' ' + st.toLowerCase() + ' — ' + ex.length + ' of ' + all + ' line(s) moved' + (st === 'PARTIAL' ? '; the others were rolled back or cancelled and keep their old order' : '') + (ex.length ? '. Logged with every step; reversible from the swap log.' : '. Logged with every step; nothing moved, so there is nothing to reverse.') + '</div>' + bh;
+  S.phase = 'DONE'; S.next++; renderLines(); renderLog(); toast(no + ' ' + st.toLowerCase());
+  $('swMsg').innerHTML = '<button class="btn btn-ghost btn-sm" onclick="swNew()"><i class="fa-solid fa-plus"></i> New swap</button>';
+}
+window.swNew = function(){ S.lines = []; S.rules = {}; S.phase = 'DRAFT'; $('swMsg').innerHTML = ''; $('swExec').innerHTML = '<div class="swempty">Execution appears here after Execute swap.</div>'; $('swBal').innerHTML = ''; swRender(true); };
+
+/* -------- swap log: filters, details, reverse */
+function renderLog(){
+  var fs = $('lgScn').value, ft = $('lgSt').value, q = $('lgQ').value.trim().toUpperCase();
+  var rows = LOG.filter(function(r){ return (!fs || r.scn === fs) && (!ft || r.status === ft) && (!q || (r.no + ' ' + r.tgt + ' ' + r.lines.map(function(l){ return l[0] + ' ' + l[1]; }).join(' ')).toUpperCase().indexOf(q) >= 0); });
+  var h = '<table class="g"><thead><tr><th>Swap no.</th><th>Scenario</th><th>Mode</th><th>Target</th><th class="num">Qty t</th><th class="num">Lines</th><th>Status</th><th>By</th><th>At</th><th></th></tr></thead><tbody>';
+  if (!rows.length) h += '<tr class="empty"><td colspan="10">No swap matches the filters.</td></tr>';
+  rows.forEach(function(r){
+    var c = r.status === 'EXECUTED' ? 'b-done' : r.status === 'REVERSED' ? 'b-clr' : r.status === 'PARTIAL' ? 'b-pend' : 'b-hold';
+    h += '<tr><td><span class="lk" onclick="swView(\'' + r.no + '\')">' + r.no + '</span></td><td>' + r.scn + (r.ref ? ' <span class="mut">of ' + r.ref + '</span>' : '') + '</td><td>' + r.mode + '</td><td>' + r.tgt + '</td><td class="num">' + f1(r.qty) + '</td><td class="num">' + r.lines.length + '</td><td>' + badge(r.status, c) + '</td><td>' + esc(r.by) + '</td><td>' + r.at + '</td><td>' +
+         '<button class="btn btn-ghost btn-sm" onclick="swView(\'' + r.no + '\')"><i class="fa-solid fa-eye"></i> View</button> ' +
+         (r.status === 'EXECUTED' || r.status === 'PARTIAL' ? (r.scn === 'REVERSE' ? '' : '<button class="btn btn-ghost btn-sm" onclick="swReverse(\'' + r.no + '\')"><i class="fa-solid fa-rotate-left"></i> Reverse</button>') : '') + '</td></tr>';
+  });
+  $('swLog').innerHTML = h + '</tbody></table>';
+}
+window.swLogF = renderLog;
+function find(no){ for (var i = 0; i < LOG.length; i++) if (LOG[i].no === no) return LOG[i]; }
+window.swView = function(no){ var r = find(no);
+  var h = '<div class="mdl"><div>' + r.scn + ' · ' + r.mode + ' · target ' + r.tgt + ' · ' + r.status + ' · by ' + esc(r.by) + ' · ' + r.at + (r.ref ? '<br>Reverse of ' + r.ref + ' — reason: ' + esc(r.reason || '') : '') + '</div>' +
+    '<table class="g"><thead><tr><th>Batch</th><th>From</th><th>To</th><th class="num">Qty t</th><th>Result</th></tr></thead><tbody>' + r.lines.map(function(l){ return '<tr><td><b>' + l[0] + '</b></td><td>' + l[1] + '</td><td>' + l[2] + '</td><td class="num">' + f1(l[3]) + '</td><td>' + l[4] + '</td></tr>'; }).join('') + '</tbody></table>' +
+    '<div class="mut" style="font-size:12px">Every line keeps its rule results, the Allocation application plan ids for each step, the bridge status and audit reference, user and time (BR-SWP-04).</div></div>';
+  modal(r.no, h, null);
+};
+window.swReverse = function(no){ var r = find(no);
+  modal('Reverse ' + r.no, '<div class="mdl"><div>The same steps run the other way for each executed line (' + r.lines.filter(function(l){ return l[4].indexOf('EXECUTED') === 0; }).length + ' line(s)); the batches go back to their old orders and a new REVERSE swap is logged.</div><div><label for="rvWhy">Reason (mandatory)</label><textarea id="rvWhy" placeholder="Why the swap is reversed"></textarea></div></div>',
+    'Reverse', function(){ var w = $('rvWhy').value.trim(); if (!w){ $('rvWhy').style.borderColor = '#c62828'; return false; }
+      var lines = r.lines.filter(function(l){ return l[4].indexOf('EXECUTED') === 0; }).map(function(l){ return [l[0], l[2], l[1], l[3], 'EXECUTED · bridge applied']; });
+      var nn = 'SWP-2026-0' + S.next; S.next++;
+      LOG.unshift({no: nn, scn: 'REVERSE', mode: 'MANUAL', tgt: r.lines[0][1], qty: r.qty, status: 'EXECUTED', by: 'you', at: 'just now', ref: r.no, reason: w, lines: lines});
+      r.status = 'REVERSED'; renderLog(); renderLines(); toast(r.no + ' reversed by ' + nn); return true; });
+};
+
+/* -------- report */
+window.swReport = function(){
+  var h = '<div class="mdl"><div class="lgbar" style="grid-template-columns:1fr 1fr"><select id="rpPer" onchange="swRep()"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option></select><select id="rpScn" onchange="swRep()"><option value="">All scenarios</option>' +
+    ['CROSS_SO_PARTIAL', 'BATCH_TO_BATCH', 'FREE_TO_SO', 'ISO_TO_SO', 'AS_ROLLED_TO_ANNEALING', 'GMM_DISPATCH', 'REVERSE'].map(function(s){ return '<option>' + s + '</option>'; }).join('') + '</select></div><div id="rpBody"></div>' +
+    '<div class="mut" style="font-size:12px">WIP swapping report (order to order, BRD F7.14-02) from the swap log. The FG swapping report reads SAP, where FG swaps are made — deferred until the SAP contract exists.</div></div>';
+  modal('Swap report — WIP swapping', h, 'Export', function(){ toast('swap-report.xlsx exported (sample — the mock-up writes no file)'); return true; }, 'wide');
+  swRep();
+};
+window.swRep = function(){
+  var fs = $('rpScn').value, rows = [];
+  LOG.forEach(function(r){ if (fs && r.scn !== fs) return; r.lines.forEach(function(l){ rows.push([r.at, r.no, r.scn, l[1] + ' → ' + l[2], l[0], l[3], r.status, r.by]); }); });
+  $('rpBody').innerHTML = '<div class="swtw" style="max-height:300px"><table class="g"><thead><tr><th>At</th><th>Swap</th><th>Scenario</th><th>From → to</th><th>Batch</th><th class="num">Qty t</th><th>Status</th><th>By</th></tr></thead><tbody>' +
+    rows.map(function(x){ return '<tr><td>' + x[0] + '</td><td>' + x[1] + '</td><td>' + x[2] + '</td><td>' + x[3] + '</td><td>' + x[4] + '</td><td class="num">' + f1(x[5]) + '</td><td>' + x[6] + '</td><td>' + esc(x[7]) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<div class="balt">' + rows.length + ' line(s) · ' + f1(rows.reduce(function(a, x){ return a + x[5]; }, 0)) + ' t</div>';
+};
+
+/* -------- generic modal */
+function modal(title, body, okText, onOk, wide){
+  $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+  $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdBox').style.width = wide ? '860px' : '600px';
+  $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+  $('ov').classList.add('open');
+}
+window.closeM = function(){ $('ov').classList.remove('open'); };
+window.swNewMode = function(m){ if (scn() === 'BATCH_TO_BATCH' && m === 'AUTO'){ $('swScn').value = 'CROSS_SO_PARTIAL'; swScnChanged(); } $('swMode').value = m; swChanged(); $('swForm').scrollIntoView({behavior: 'smooth'}); };
+window.swEntry = function(what){
+  if (what === 'free'){ $('swScn').value = 'FREE_TO_SO'; swScnChanged(); $('swMode').value = 'MANUAL'; $('swTgt').value = 'SO-89555/10'; swChanged();
+    $('swBanner').innerHTML = '<div class="banner"><i class="fa-solid fa-circle-info"></i> 310 t of batches are free across the stages (allocated to no order); 74.9 t of it is at sequencing — attach it to an order that needs it.</div>'; }
+};
+
+/* -------- start */
+fillSelect($('swTgt'), targetsFor(scn()), ordLabel);
+$('swTgt').value = 'SO-88140/20';
+$('lgScn').innerHTML = '<option value="">All scenarios</option>' + ['CROSS_SO_PARTIAL', 'BATCH_TO_BATCH', 'FREE_TO_SO', 'ISO_TO_SO', 'AS_ROLLED_TO_ANNEALING', 'GMM_DISPATCH', 'REVERSE'].map(function(s){ return '<option>' + s + '</option>'; }).join('');
+$('ov').addEventListener('click', function(e){ if (e.target === this) closeM(); });
+var hsh = (location.hash || '').replace('#', '');
+if (hsh === 'from-sequence'){
+  $('swScn').value = 'CROSS_SO_PARTIAL'; swScnChanged(); $('swMode').value = 'AUTO'; $('swTgt').value = 'SO-89555/10'; $('swQty').value = '60'; swChanged();
+  $('swBanner').innerHTML = '<div class="banner"><i class="fa-solid fa-list-ol"></i> Opened from Rolling Sequence — Schedule 7, block 2 (RO 32 · 304L · SO-89555/10) is 60 t short of material 12 h before its start. Find donors, validate and execute before the next release.</div>';
+} else if (hsh === 'free-batches'){ swEntry('free'); }
+else { swRender(); }
+renderLog();
+window.addEventListener('hashchange', function(){ location.reload(); });
+})();
+</script>
   </main>
 </div>
 
