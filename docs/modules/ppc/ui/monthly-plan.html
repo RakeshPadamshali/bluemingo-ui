@@ -277,7 +277,7 @@ function renderChecks(lines){ var ck = checks(lines);
   $('mpChk').innerHTML = ck.length ? '<table class="g"><thead><tr><th>Campaign</th><th>' + (S.mill === 'BRM' ? 'Product' : 'Input size') + '</th><th>Period</th><th class="num">t</th><th>Check</th><th>Result</th></tr></thead><tbody>' + ck.map(function(x){ return '<tr class="' + (x.ok ? 'ok' : 'warn') + '"><td><b>' + x.c.id + '</b></td><td>' + x.c.key + '</td><td>' + dd(x.c.f) + '–' + dd(x.c.t) + '</td><td class="num">' + n0(x.c.q) + '</td><td><div style="white-space:normal;max-width:230px">' + x.why + '</div></td><td>' + (x.ok ? B('OK', 'b-done') : B('WARN at finalisation', 'b-pend')) + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="pvempty">No campaign in this month yet.</div>'; }
 window.mpSet = function(i, k, val){ var l = cur().lines[i]; l[k] = k === 't' ? (+val || 0) : val;
   if (k !== 't' && l.bf && l.bt && l.bt < l.bf){ U.toast('Blocked to is before blocked from'); }
-  render(); };
+  setTimeout(render, 0); };
 window.mpDel = function(i){ var l = cur().lines[i]; cur().lines.splice(i, 1); render(); U.toast(l.key + ' removed from the draft'); };
 window.mpAddLine = function(){ cur().lines.push({key: $('mpAdd').value, t: 0, bf: '', bt: '', why: ''}); render(); };
 window.mpView = function(v){ var c = cur(); S.view = v === c.v ? 0 : v; render(); };
