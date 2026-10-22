@@ -591,6 +591,14 @@ if (hsh === 'from-sequence'){
   $('swScn').value = 'CROSS_SO_PARTIAL'; swScnChanged(); $('swMode').value = 'AUTO'; $('swTgt').value = 'SO-89555/10'; $('swQty').value = '60'; swChanged();
   $('swBanner').innerHTML = '<div class="banner"><i class="fa-solid fa-list-ol"></i> Opened from Rolling Sequence — Schedule 7, block 2 (RO 32 · 304L · SO-89555/10) is 60 t short of material 12 h before its start. Find donors, validate and execute before the next release.</div>';
 } else if (hsh === 'free-batches'){ swEntry('free'); }
+else if (hsh.indexOf('attach=') === 0){
+  /* from SMS Batch Arrival: a free lot and the chosen order, pre-filled as a FREE_TO_SO line */
+  var a = JSON.parse(decodeURIComponent(hsh.slice(7)));
+  if (!bat(a.id)) B.push({id: a.id, heat: a.heat, grade: a.grade, psn: a.psn, size: a.size, input: a.input, len: a.len, qty: a.qty, stage: 'SEQUENCING', order: null, layer: 'top', gen: true});
+  $('swScn').value = 'FREE_TO_SO'; swScnChanged(); $('swMode').value = 'MANUAL'; $('swTgt').value = a.to; swChanged();
+  S.lines.push({bat: a.id, from: null, to: a.to, qty: a.qty, dir: 'OUT'}); swRender(true);
+  $('swBanner').innerHTML = '<div class="banner"><i class="fa-solid fa-industry"></i> Opened from SMS Batch Arrival — free lot ' + esc(a.id) + ' (heat ' + esc(a.heat) + ', ' + f1(a.qty) + ' t' + (a.insp ? ', under inspection: it may take the order but is not released or charged until cleared' : '') + ') to ' + esc(a.to) + ', pre-filled. Validate and execute.</div>';
+}
 else { swRender(); }
 renderLog();
 window.addEventListener('hashchange', function(){ location.reload(); });
