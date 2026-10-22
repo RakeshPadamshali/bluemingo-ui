@@ -18,6 +18,7 @@
 **Revised 22-Oct-2026:** `erp_trigger_mode` removed — SAP postings: through the PPC outbox, designed when the contract is available (OPS-R-05 withdrawn).
 
 ### OPS-R-02 — Scan events and charging validation
+*Amended 22-Oct-2026 — aligned with the planning decisions: `deviation_action` values REMOVE / ACCEPT only (no swap at the furnace); the scan box on the Charging screen is planning request PPC-R-33 (installation setting); only sequenced billets are chargeable through the existing setting "charge only sequenced billets".*
 **Date:** 2026-09-15 · **From:** §3 · **Status:** DRAFT `[P4]`
 **Ask:** new `mes_scan_event`; `mes_inventory_charges` + `scan_event_id`, `charge_seq`, `planned_seq`, `sequence_deviation`, `deviation_action`, `psn_check`, `production_order_id`, weights and `weight_source`, `charged_at`, `discharged_at`, `charge_ack_mode`, `hot_out_id`, `status`; `mes_charges` + `production_order_id`, `block_id`, `assigned_pieces`, `overrun_allowance`; the validation order of R-OPS-04 (exists → cleared → code allowed → section limit → PSN match → duplicate → sequence → quantity) with the REMOVE / SWAP / ACCEPT choices and the privileged overrides; manual entry mode with image reference; theoretical weight from `mes_billet_master`.
 **Why:** CHG-001…010, CHG-04…08, BLM-001/002, SEQ-006 — barcode-driven charging with PSN validation, duplicate prevention, sequence alerts, quantity control.
