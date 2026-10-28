@@ -65,10 +65,10 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 ### PPC-R-01 — Order header and line extensions; order categories and SAP order types
 **Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order` and `mes_ppc_order_line` (data model §2.1); orders PPC creates reach `mes_orders` through its forwarding to the existing order upload (§21.7).
 **Date:** 2026-09-15 · **From:** PPC design §2.1, §2.7, §2.8 · **Status:** DRAFT
-**Ask:** `mes_orders` + `order_category`, `sap_order_type`, `sap_order_no`, `sap_status`, `sap_status_at`, `reference_order_id`, `planning_relevant`, `planning_override_by`, `marketing_rank`, `trial_flags_json`, `plant_of_supply`, `job_work_vendor_id`, `received_at`; `mes_order_line_items` + `psn_no`, `section_shape`, `section_size`, `input_section`, `grinding_required`, `length_tolerance_mm`, `release_qty` (+ by / at), `dispatched_qty`, `fgho_qty`, `rejected_qty`, `diverted_qty`, `short_closed_qty`, `hold_status`, `slot_score`, `sla_delivery_date`, `otif_status`, `flags_json`; Orders screen shows category / type / flags; creation of ISO / internal / NCO / trial orders by PPC (with-reference inherits attributes).
+**Ask:** `mes_orders` + `order_category`, `erp_order_type`, `erp_order_no`, `erp_status`, `erp_status_at`, `reference_order_id`, `planning_relevant`, `planning_override_by`, `marketing_rank`, `trial_flags_json`, `plant_of_supply`, `job_work_vendor_id`, `received_at`; `mes_order_line_items` + `psn_no`, `section_shape`, `section_size`, `input_section`, `grinding_required`, `length_tolerance_mm`, `release_qty` (+ by / at), `dispatched_qty`, `fgho_qty`, `rejected_qty`, `diverted_qty`, `short_closed_qty`, `hold_status`, `slot_score`, `sla_delivery_date`, `otif_status`, `flags_json`; Orders screen shows category / type / flags; creation of ISO / internal / NCO / trial orders by PPC (with-reference inherits attributes).
 **Why:** BRD OMB-001…006, 7.1.3, F7.1-07/09 — one order book for planning, balances, allocation and campaigns.
 **Affects:** Orders screen and import; order-data post-process; QA reads `psn_no`.
-**Amended 2026-10-13:** `hold_status` withdrawn — the hold state is the existing line `status` ON_HOLD / BLOCKED (§19.2 R-PPC-57); `sap_status` gains LOCKED; `mes_orders` + `capa_id`.
+**Amended 2026-10-13:** `hold_status` withdrawn — the hold state is the existing line `status` ON_HOLD / BLOCKED (§19.2 R-PPC-57); `erp_status` gains LOCKED; `mes_orders` + `capa_id`.
 
 ### PPC-R-02 — MES production orders split from the SAP order
 **Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_production_order`; the queue link is `mes_ppc_queue_link.production_order_id` (§4.6), no column on `mes_schedule_materials`.
@@ -219,7 +219,7 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 ### PPC-R-27 — Outbound staging, IVL feed, planner variance, interface health
 **Withdrawn 22-Oct-2026** — deferred and PPC-owned — SAP until a contract exists, then one PPC outbox (`mes_ppc_integration_outbound`, §21.9); the IVL and SMS MES feeds with their interface details (§21.11); the views stay in PPC.
 **Date:** 2026-10-13 · **From:** §19.9 R-PPC-91…94 · **Status:** DRAFT `[integration deferred]`
-**Ask:** new `mes_ppc_integration_outbound` (schedule changes to the planner daily, production confirmations to SAP, heat and batch messages to the IVL MES, casting-indent and ferro-alloy issues to the SMS MES); `mes_ppc_sms_batch_feed.source_system` + IVL_MES; views `v_ppc_planner_variance` and `v_ppc_integration_health`; `sap_status` + LOCKED applying an order hold with reason SAP_LOCK.
+**Ask:** new `mes_ppc_integration_outbound` (schedule changes to the planner daily, production confirmations to SAP, heat and batch messages to the IVL MES, casting-indent and ferro-alloy issues to the SMS MES); `mes_ppc_sms_batch_feed.source_system` + IVL_MES; views `v_ppc_planner_variance` and `v_ppc_integration_health`; `erp_status` + LOCKED applying an order hold with reason SAP_LOCK.
 **Why:** points 108, 109, 123, 132, 133.
 **Amended 16-Oct-2026 (§20.4, R-PPC-101):** message types ORDER_BOOK (a line change) and ORDER_BOOK_SNAPSHOT (the full open order book, daily) to SMS_MES — the read-only copy SMS MES works from until it moves to the platform; policies PPC_ORDER_BOOK_SNAPSHOT_TIME (06:00) and ORDER_BOOK_TO_SMS_MES (on).
 
