@@ -134,6 +134,12 @@
 **Why:** checkpoints PPC-01, PPC-06, PPC-10, PPC-19, PPC-53, PPC-95 — settings, not code.
 **Affects:** Order Book Rules, Privileged Actions and Form Conversion Rules screens and uploads.
 
+### MDM-R-21 — Swap rule stage FG and attribute FORM
+**Date:** 2026-10-29 · **From:** §3.9 (raised by the Planning FG allocation, PPC section 25) · **Status:** DRAFT
+**Ask:** `mes_swap_rule.stage_scope` value FG and `attribute_key` value FORM (the lot's material form and condition against the order line's); seed row SW-FG-FORM — scenario FREE_TO_SO, stage FG, attribute FORM, EXACT, blocking, priority 35.
+**Why:** free FG is allocated to open order lines in Swapping at the stage FG; an FG lot must have the order's condition (black, black annealed, peeled …), which no earlier stage needed.
+**Affects:** Swap Rules screen and upload (SWAP_RULE sheet: the stage and attribute lists gain the values).
+
 ### ALC-R-01 — Migrate finished-length vocabulary
 **Date:** 2026-09-12 · **From:** §3.1 · **Status:** DRAFT
 **Ask:** export the 7,835 ranged rows of `Mst_Length_Master` with unit normalisation (values < 1,000 are metres → mm) for loading into QA `mes_qc_length_master` / `mes_length_master.finished_length_mm`; confirm with JSW whether this set is authoritative (open point 1).
