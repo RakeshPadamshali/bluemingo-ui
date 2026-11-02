@@ -63,7 +63,7 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Production-confirmation application items (raised 2026-09-15 … 2026-10-21)**
 
 ### PPC-R-01 — Order header and line extensions; order categories and SAP order types
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order` and `mes_ppc_order_line` (data model §2.1); orders PPC creates reach `mes_orders` through its forwarding to the existing order upload (§21.7).
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_order_ext` and `mes_order_line_ext` (data model §2.1); orders PPC creates reach `mes_orders` through its forwarding to the existing order upload (§21.7).
 **Date:** 2026-09-15 · **From:** PPC design §2.1, §2.7, §2.8 · **Status:** DRAFT
 **Ask:** `mes_orders` + `order_category`, `erp_order_type`, `erp_order_no`, `erp_status`, `erp_status_at`, `reference_order_id`, `planning_relevant`, `planning_override_by`, `marketing_rank`, `trial_flags_json`, `plant_of_supply`, `job_work_vendor_id`, `received_at`; `mes_order_line_items` + `psn_no`, `section_shape`, `section_size`, `input_section`, `grinding_required`, `length_tolerance_mm`, `release_qty` (+ by / at), `dispatched_qty`, `fgho_qty`, `rejected_qty`, `diverted_qty`, `short_closed_qty`, `hold_status`, `slot_score`, `sla_delivery_date`, `otif_status`, `flags_json`; Orders screen shows category / type / flags; creation of ISO / internal / NCO / trial orders by PPC (with-reference inherits attributes).
 **Why:** BRD OMB-001…006, 7.1.3, F7.1-07/09 — one order book for planning, balances, allocation and campaigns.
@@ -71,15 +71,15 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Amended 2026-10-13:** `hold_status` withdrawn — the hold state is the existing line `status` ON_HOLD / BLOCKED (§19.2 R-PPC-57); `erp_status` gains LOCKED; `mes_orders` + `capa_id`.
 
 ### PPC-R-02 — MES production orders split from the SAP order
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_production_order`; the queue link is `mes_ppc_queue_link.production_order_id` (§4.6), no column on `mes_schedule_materials`.
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_production_order`; the queue link is `mes_ppc_queue_link.production_order_id` (§4.6), no column on `mes_schedule_materials`.
 **Date:** 2026-09-15 · **From:** §2.2 · **Status:** DRAFT
-**Ask:** new `mes_ppc_production_order`; `mes_schedule_materials.production_order_id`; the sum of a line's active production orders ≤ `release_qty`; the Confirmation queue keeps reading schedules.
+**Ask:** new `mes_production_order`; `mes_schedule_materials.production_order_id`; the sum of a line's active production orders ≤ `release_qty`; the Confirmation queue keeps reading schedules.
 **Why:** BRM-011 — partial release and separate MES production orders per unit.
 
 ### PPC-R-03 — Stage balances (BTC / BTR / BTP / BTD / OTIF) as a computed snapshot
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order_stage_balance` and `mes_ppc_order_link`; the per-shift job runs in PPC's own backend.
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_order_stage_balance` and `mes_order_link`; the per-shift job runs in PPC's own backend.
 **Date:** 2026-09-15 · **From:** §2.3, §3.4 · **Status:** DRAFT
-**Ask:** new `mes_ppc_order_stage_balance` and `mes_ppc_order_link`; a per-shift scheduled job (the application has no scheduler today — add one) plus event triggers on confirmation, usage decision, swap, amendment and inter-plant receipt; yields resolved from `mes_yield_master` (MDM-R-04); OTIF from the order-book rules; dependent-demand links per upstream unit.
+**Ask:** new `mes_order_stage_balance` and `mes_order_link`; a per-shift scheduled job (the application has no scheduler today — add one) plus event triggers on confirmation, usage decision, swap, amendment and inter-plant receipt; yields resolved from `mes_yield_master` (MDM-R-04); OTIF from the order-book rules; dependent-demand links per upstream unit.
 **Why:** OMB-007…011, BRM-010, F7.11-01, F7.10-01 — every screen and report reads one balance.
 
 ### PPC-R-04 — Inbound order staging and SAP status guard (MES side only)
@@ -89,17 +89,17 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Why:** OMB-001, F7.1-08, SWP-009/010.
 
 ### PPC-R-05 — Amendments, tolerance matrix, short-close
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order_amendment`; an amendment the order upload refuses for a released order stays in PPC, "not applied — order released" (§21.7).
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_order_amendment`; an amendment the order upload refuses for a released order stays in PPC, "not applied — order released" (§21.7).
 **Date:** 2026-09-15 · **From:** §2.5 · **Status:** DRAFT
-**Ask:** new `mes_ppc_order_amendment`; order-book rule type TOLERANCE_MATRIX with bands (MDM-R-11); approval actions ORDER_AMEND_APPROVE / TOLERANCE_OVERRUN_APPROVE on the privileged-action master (content; enforcement deferred); rejections at UD reduce the balance without an amendment.
+**Ask:** new `mes_order_amendment`; order-book rule type TOLERANCE_MATRIX with bands (MDM-R-11); approval actions ORDER_AMEND_APPROVE / TOLERANCE_OVERRUN_APPROVE on the privileged-action master (content; enforcement deferred); rejections at UD reduce the balance without an amendment.
 **Why:** OMB-012…016, F7.1-02/05/06.
 
 ### PPC-R-06 — Order holds, single and mass
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order_hold` and `mes_ppc_hold_lot` — an order hold is applied as lot holds through the existing service and the order's plan entries are blocked in the Allocation application (§21.4).
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_order_hold` and `mes_ppc_hold_lot` — an order hold is applied as lot holds through the existing service and the order's plan entries are blocked in the Allocation application (§21.4).
 **Date:** 2026-09-15 · **From:** §2.6 · **Status:** DRAFT
-**Ask:** new `mes_ppc_order_hold`; held lines excluded from every scheduling screen; SAP / SFDC holds applied automatically; mass actions gated by ORDER_MASS_HOLD / RELEASE (MDM-R-02).
+**Ask:** new `mes_order_hold`; held lines excluded from every scheduling screen; SAP / SFDC holds applied automatically; mass actions gated by ORDER_MASS_HOLD / RELEASE (MDM-R-02).
 **Why:** OMB-015, F7.1-03.
-**Amended 2026-10-13:** held lines are those with the existing line status ON_HOLD / BLOCKED; `mes_ppc_order_hold` is the history; a SAP lock applies a hold with reason SAP_LOCK (§19.2, §19.9).
+**Amended 2026-10-13:** held lines are those with the existing line status ON_HOLD / BLOCKED; `mes_order_hold` is the history; a SAP lock applies a hold with reason SAP_LOCK (§19.2, §19.9).
 
 ### PPC-R-07 — SMS → Mills batch feed as a scheduled job
 **Withdrawn 22-Oct-2026** — replaced by SMS batch arrival, Route B (§21.11): the actual heats are replayed through existing services; no scheduled pull (ALC-R-07 dropped).
@@ -120,9 +120,9 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Why:** 7.2.2, SWP-002…013, MAT-006/007, F7.12-02 — no swap object exists.
 
 ### PPC-R-10 — Order links: dependent demand, GMM two-order model
-**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_ppc_order_link`.
+**Withdrawn 22-Oct-2026** — moved into the PPC module: `mes_order_link`.
 **Date:** 2026-09-15 · **From:** §3.4, §6.2 · **Status:** DRAFT
-**Ask:** new `mes_ppc_order_link` (DEPENDENT_DEMAND / GMM_PRODUCTION / GMM_DISPATCH / ANNEALING_SUPPLY / ISO_REFERENCE) created by the balance job and by PPC.
+**Ask:** new `mes_order_link` (DEPENDENT_DEMAND / GMM_PRODUCTION / GMM_DISPATCH / ANNEALING_SUPPLY / ISO_REFERENCE) created by the balance job and by PPC.
 **Why:** F7.10-01, F7.7-01.
 
 ### PPC-R-11 — Campaign planning, constraints, review loop, rolling schedule, release into the queue, casting indent
@@ -171,14 +171,14 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Affects:** Material Charging, Production Confirmation (open-stock children), inventory upload, allocation and swap services.
 
 ### PPC-R-20 — Schedule hold enforced
-**Withdrawn 22-Oct-2026** — replaced by lot holds through the existing service — scope SCHEDULE of `mes_ppc_order_hold` (§21.4).
+**Withdrawn 22-Oct-2026** — replaced by lot holds through the existing service — scope SCHEDULE of `mes_order_hold` (§21.4).
 **Date:** 2026-10-13 · **From:** §19.2 R-PPC-58 · **Status:** DRAFT
 **Ask:** `mes_schedules` + `hold_reason_id`, `hold_note`, `held_by`, `held_at`; a held schedule is hidden from the operator queue and refused at charging and confirmation; hold and release need a reason (hold-reason master, applied at Schedule); releases in the audit log.
 **Why:** `is_hold` is stored and set today but read by nothing — a held schedule is still listed and chargeable (point 21).
 **Affects:** schedule screen, work queue, Material Charging, Production Confirmation eligibility.
 
 ### PPC-R-21 — Campaign and sequence additions
-**Withdrawn 22-Oct-2026** — moved into the PPC module; `over_attach_pct` on `mes_ppc_order_line`.
+**Withdrawn 22-Oct-2026** — moved into the PPC module; `over_attach_pct` on `mes_order_line_ext`.
 **Date:** 2026-10-13 · **From:** §19.3 · **Status:** DRAFT
 **Ask:** `mes_ppc_scheduling_constraint` + `equipment_id`, `tolerance_pct`, `exempt_json` (constraint type LOT_HEATS added); `mes_ppc_campaign_order` + `wip_cover_json`; `mes_order_line_items` + `over_attach_pct`; `mes_ppc_rolling_schedule` + `family_id`, `schedule_seq_no`, `product_form`, `sequence_template_id`, `monthly_plan_id`; `mes_ppc_rolling_schedule_block` + `planned_hours`, `planned_output_t`, `pass_schedule_id`; new `mes_ppc_sequence_template`, `mes_ppc_sequence_template_rule`, `mes_ppc_monthly_plan`, `mes_ppc_monthly_plan_line`; view `v_ppc_day_timeline`; MoQ evaluated in MES at equipment level (the planner run keeps `moqProduction` off); wider WIP netting; schedule numbering per mill and family with one product form per schedule; the block calculator; the setup sheet printed from the Process Control setup sheet of the block.
 **Why:** points 50, 53, 61, 67, 126–130; MoQ ownership (closes OPEN-PPC-1).
@@ -214,7 +214,7 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Ask:** when the Quality module accepts a raw-material receipt of form billet or bloom, create the lot at the mill's charging stage from the batch the receipt creates, with the supplier heat and the certificate chemistry, free for allocation or pegged to the order named on the purchase order.
 **Why:** BRD v5.0 additional requirement 2 (point 5); the receipt and its inspection exist in the Quality design.
 **Affects:** inventory creation; Quality raw-material receipt (reads, no change to its screens).
-**Amended 16-Oct-2026 (§20.3, R-PPC-100):** the lot is pegged to the receipt's order line (`mes_qc_rm_receipt.for_order_line_id`, entered at receipt until the SAP purchase-order message exists) and reduces that line's balance to cast through `mes_ppc_order_stage_balance.purchased_qty`; expected PO and STO material is listed by the view `v_ppc_incoming` and counted only under the order-book rule INCOMING_COVER.
+**Amended 16-Oct-2026 (§20.3, R-PPC-100):** the lot is pegged to the receipt's order line (`mes_qc_rm_receipt.for_order_line_id`, entered at receipt until the SAP purchase-order message exists) and reduces that line's balance to cast through `mes_order_stage_balance.purchased_qty`; expected PO and STO material is listed by the view `v_ppc_incoming` and counted only under the order-book rule INCOMING_COVER.
 
 ### PPC-R-27 — Outbound staging, IVL feed, planner variance, interface health
 **Withdrawn 22-Oct-2026** — deferred and PPC-owned — SAP until a contract exists, then one PPC outbox (`mes_ppc_integration_outbound`, §21.9); the IVL and SMS MES feeds with their interface details (§21.11); the views stay in PPC.
@@ -231,9 +231,9 @@ Every request below was withdrawn on 22-Oct-2026 when PPC became a separate modu
 **Affects:** Campaign Planning, Rolling Sequence, casting-plan heat generation, WIP Visibility, Roll Management (roll requirements).
 
 ### PPC-R-29 — Order book: part hold, planning override, saved views, dummy orders, Quality pre-release, bought material
-**Withdrawn 22-Oct-2026** — moved into the PPC module (`mes_ppc_order`, `mes_ppc_order_line`, `mes_ppc_order_hold`, `mes_ppc_saved_view`).
+**Withdrawn 22-Oct-2026** — moved into the PPC module (`mes_order_ext`, `mes_order_line_ext`, `mes_order_hold`, `mes_ppc_saved_view`).
 **Date:** 2026-10-16 · **From:** §20.3, §20.5, §20.6, §20.7 (R-PPC-100, R-PPC-102 … R-PPC-108) · **Status:** DRAFT
-**Ask:** `mes_ppc_order_hold` + `hold_scope`, `held_qty` (a held balance cannot be released or the release quantity raised); `mes_order_line_items` + `planning_override`, `planning_override_reason`, `planning_override_by`, `planning_override_at`, `qa_pre_release_status`, `qa_pre_release_by`, `qa_pre_release_at`, `qa_pre_release_note`; `mes_orders` + `approval_status`, `dummy_reason`, `approved_by`, `approved_at`, `linked_order_id`; `mes_ppc_order_stage_balance` + `purchased_qty` (the balance formula subtracts it); new `mes_ppc_saved_view`; view `v_ppc_incoming`; hold and release, dummy-order approval and Quality pre-release checked against their privileged actions (MDM-R-20); AWAITING and RETURNED lines kept out of Campaign Planning and the casting indent; order types in or out of planning read from the order-book rule ORDER_TYPE_PLANNING, with a line override both ways.
+**Ask:** `mes_order_hold` + `hold_scope`, `held_qty` (a held balance cannot be released or the release quantity raised); `mes_order_line_items` + `planning_override`, `planning_override_reason`, `planning_override_by`, `planning_override_at`, `qa_pre_release_status`, `qa_pre_release_by`, `qa_pre_release_at`, `qa_pre_release_note`; `mes_orders` + `approval_status`, `dummy_reason`, `approved_by`, `approved_at`, `linked_order_id`; `mes_order_stage_balance` + `purchased_qty` (the balance formula subtracts it); new `mes_ppc_saved_view`; view `v_ppc_incoming`; hold and release, dummy-order approval and Quality pre-release checked against their privileged actions (MDM-R-20); AWAITING and RETURNED lines kept out of Campaign Planning and the casting indent; order types in or out of planning read from the order-book rule ORDER_TYPE_PLANNING, with a line override both ways.
 **Why:** checkpoints PPC-06, PPC-10, PPC-12, PPC-16, PPC-19 (conflict), PPC-24, PPC-95.
 **Affects:** Order Book, Order Hold & Release, Campaign Planning, Casting Indent, order upload (pre-release status on arrival).
 
