@@ -208,9 +208,221 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../ppc/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../mdm/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../qa/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Hot-Out &amp; Re-roll</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-rotate-left"></i> Hot-Out &amp; Re-roll</h1><div class="sub">Direct hot-out (charged, not rolled → back to charging), indirect hot-out (partially rolled → cut 2–6 pieces, re-measure, classify rollable / non-rollable, re-declare, re-sequence), overstay (Quality decision before re-roll); re-weigh on re-charge, loss booked once, excluded from the bundle weight.</div></div><div class="ph-actions"><button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Declare hot-out</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-list-ol"></i> Re-sequence rollable pieces</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-book"></i> Shift log</button></div></div>
-<div class="kpis"><div class="k"><b>3</b><span>events today</span></div><div class="k"><b>1</b><span>awaiting Quality</span></div><div class="k"><b>378 kg</b><span>hot-out loss today</span></div><div class="k"><b>2</b><span>pieces to re-sequence</span></div><div class="k"><b>12.4 %</b><span>indirect share (30 d)</span></div></div><div class="panel"><h3>Hot-out events</h3><table class="g"><thead><tr><th>Event</th><th>Type</th><th>Batch</th><th>Section</th><th>Station</th><th>Declared</th><th>Reason</th><th class="num">Input kg</th><th class="num">Re-weigh kg</th><th class="num">Loss kg</th><th>Quality decision</th><th>Disposition</th><th>Status</th></tr></thead><tbody><tr class="on"><td>HO-2026-0187</td><td><span class="badge b-pend">INDIRECT</span></td><td>B031140</td><td>165 × 165 → 100 × 100</td><td>Roughing</td><td>15-09 10:58</td><td>Continuous mill stop (DT-0912)</td><td class="num">1,260</td><td class="num">882</td><td class="num">378</td><td>—</td><td>cut 3 · re-sequence 2</td><td><span class="badge b-info">MEASURED</span></td></tr><tr class="warn"><td>HO-2026-0186</td><td><span class="badge b-info">DIRECT</span></td><td>B031127</td><td>160 sq</td><td>Furnace</td><td>15-09 10:40</td><td>Overstay 271 min</td><td class="num">1,258</td><td class="num">—</td><td class="num">—</td><td><span class="badge b-hold">PENDING</span></td><td>—</td><td><span class="badge b-hold">DECIDED?</span></td></tr><tr class="ok"><td>HO-2026-0185</td><td><span class="badge b-info">DIRECT</span></td><td>B031102</td><td>160 sq</td><td>Charging</td><td>14-09 22:15</td><td>Mill stop</td><td class="num">1,261</td><td class="num">1,249</td><td class="num">12</td><td><span class="badge b-done">RE_ROLL_OK</span> <span class="mut">next: charging</span></td><td>returned to stock · re-sequenced</td><td><span class="badge b-done">CLOSED</span></td></tr></tbody></table></div><div class="panel"><h3>HO-2026-0187 — pieces after cutting (batch split, parent-suffix numbering, measured weights) <small>derivation rule SPLIT · re-measured lengths</small></h3><table class="g"><thead><tr><th>Piece</th><th>New id</th><th class="num">Length m</th><th class="num">Weight kg</th><th>Classification</th><th>Reason</th><th>Disposition</th><th></th></tr></thead><tbody><tr><td>1</td><td>B031140-01</td><td class="num">4.1</td><td class="num">320</td><td><span class="badge b-done">ROLLABLE</span></td><td>—</td><td>RE_ROLL → re-sequence</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-tag"></i> Label</button></td></tr><tr><td>2</td><td>B031140-02</td><td class="num">4.0</td><td class="num">312</td><td><span class="badge b-done">ROLLABLE</span></td><td>—</td><td>RE_ROLL → re-sequence</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-tag"></i> Label</button></td></tr><tr class="bad"><td>3</td><td>B031140-03</td><td class="num">3.2</td><td class="num">250</td><td><span class="badge b-hold">NON_ROLLABLE</span></td><td>double-heating decarburisation</td><td>SCRAP (input consumed, output 0)</td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-trash"></i> Scrap</button></td></tr></tbody></table></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script><style>.ph-actions{flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;max-width:54%;} .ph-actions .btn{white-space:nowrap;} #hoDt input.bad,#hoDt select.bad{border-color:#c62828!important;background:#fff6f6;} #hoDt b.bad{color:#c62828;} #hoEv tr.sel td{background:#e3f2fd!important;} #hoEv td{white-space:normal;} #hoEv td .badge,#hoEv td:first-child,#hoEv td:nth-child(6){white-space:nowrap;} #hoDt .pv input[type=number],#hoDt .pv input[type=text]{padding:4px 6px;}</style>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Hot-Out &amp; Re-roll</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-rotate-left"></i> Hot-Out &amp; Re-roll</h1><div class="sub">Direct hot-out (charged, not rolled → back to charging), indirect hot-out (partially rolled → cut 2–6 pieces, re-measure, classify rollable / non-rollable, re-declare, re-sequence), overstay (Quality decision before re-roll); re-weigh on re-charge, loss booked once, excluded from the bundle weight.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="hoRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="hoRole" onchange="hoRoleCh()" style="width:auto"><option value="OP">Mill operator</option><option value="QA">Quality</option></select></span><button class="btn btn-primary btn-sm" id="hoDecB" onclick="hoDeclare()"><i class="fa-solid fa-plus"></i> Declare hot-out</button><button class="btn btn-ghost btn-sm" id="hoReseqB" onclick="hoReseq()"><i class="fa-solid fa-list-ol"></i> Re-sequence rollable pieces</button><button class="btn btn-ghost btn-sm" id="hoLogB" onclick="hoLog()"><i class="fa-solid fa-book"></i> Shift log</button></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets. Try: HO-2026-0187 — act as Quality and decide piece B031140-02 REWORK to the grinding line (code kept), Scrap piece 3, then Re-sequence rollable pieces (the event closes) · <span class="lk" onclick="hoPick('HO-2026-0186')">HO-2026-0186</span> overstay — Re-charge is refused until Quality decides RE_ROLL_OK, then re-weigh books the loss once · <span class="lk" onclick="hoPick('HO-2026-0185')">HO-2026-0185</span> — a second re-weigh is refused · Declare hot-out: B031139 indirect → cut into pieces, edit lengths / weights (loss recomputes), classify, save; B031143 or a wrong type is refused.</div><div class="kpis" id="hoK"></div><div class="panel"><h3>Hot-out events <small>click an event to work it below</small></h3><div id="hoEv"></div></div><div class="panel" id="hoDt"></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, n0 = U.n0, f1 = U.f1, esc = U.esc;
+var EV = [{"no": "HO-2026-0187", "type": "INDIRECT", "b": "B031140", "sec": "165 \u00d7 165 \u2192 100 \u00d7 100", "stn": "Roughing", "at": "15-09 10:58", "why": "Continuous mill stop (DT-0912)", "inp": 1260, "st": "MEASURED", "src": "Scale WS-BRM-02", "rw": 882, "loss": 378, "qa": null, "pieces": [{"n": 1, "id": "B031140-01", "len": 4.1, "w": 320, "cls": "ROLLABLE", "why": "", "disp": "", "qa": null, "nxt": "", "keep": false, "lab": 0}, {"n": 2, "id": "B031140-02", "len": 4.0, "w": 312, "cls": "ROLLABLE", "why": "", "disp": "", "qa": null, "nxt": "", "keep": false, "lab": 0}, {"n": 3, "id": "B031140-03", "len": 3.2, "w": 250, "cls": "NON_ROLLABLE", "why": "double-heating decarburisation", "disp": "", "qa": null, "nxt": "", "keep": false, "lab": 0}]}, {"no": "HO-2026-0186", "type": "OVERSTAY", "b": "B031127", "sec": "160 sq", "stn": "Furnace", "at": "15-09 10:40", "why": "Overstay 271 min", "inp": 1258, "st": "OPEN", "rw": null, "loss": null, "qa": null, "pieces": []}, {"no": "HO-2026-0185", "type": "DIRECT", "b": "B031102", "sec": "160 sq", "stn": "Charging", "at": "14-09 22:15", "why": "Mill stop", "inp": 1261, "rw": 1249, "loss": 12, "qa": "RE_ROLL_OK", "st": "CLOSED", "src": "Scale WS-BRM-01", "disp": "returned to stock \u00b7 re-sequenced", "pieces": []}], CAND = {"B031141": {"at": "Furnace", "state": "CHARGED", "sec": "160 sq", "w": 1258, "dwell": 14, "txt": "charged at the furnace \u00b7 dwell 14 min"}, "B031131": {"at": "Furnace", "state": "CHARGED", "sec": "160 sq", "w": 1259, "dwell": 124, "txt": "charged at the furnace \u00b7 dwell 124 min (limit 120)"}, "B031139": {"at": "Roughing", "state": "PARTLY_ROLLED", "sec": "160 sq \u2192 100 \u00d7 100", "w": 1259, "dwell": 0, "txt": "partly rolled \u00b7 stopped at Roughing"}, "B031143": {"at": "Charging queue", "state": "QUEUED", "sec": "160 sq", "w": 1261, "dwell": 0, "txt": "in the charging queue \u00b7 not charged"}};
+var S = {role: 'OP', sel: 'HO-2026-0187', hon: 188, t0: Date.now(), base: 39900, slog: [["10:58", "HOT_OUT", "Indirect hot-out B031140 \u2192 3 pieces, 1 non-rollable", "HO-2026-0187", "system"], ["10:40", "HOT_OUT", "B031127 overstay 271 min \u2014 Quality decision requested", "HO-2026-0186", "system"], ["22:15 (14-09)", "HOT_OUT", "Direct hot-out B031102 at charging \u2014 mill stop; re-charged 23:05, loss 12 kg", "HO-2026-0185", "system"]], done: {}, ind30: 11, all30: 89};
+var WHO = {OP: 'op. D. Sharma', QA: 'Quality · A. Rao'};
+var NEXT_OPS = ['Grinding line', 'Annealing and pickling', 'Bright bar line', 'Cooling bed (cut to length)'];
+function p2(n){ return ('0' + n).slice(-2); }
+function hm(){ var s = S.base + Math.floor((Date.now() - S.t0) / 1000); return p2(Math.floor(s / 3600) % 24) + ':' + p2(Math.floor(s / 60) % 60); }
+function ev(no){ for (var i = 0; i < EV.length; i++) if (EV[i].no === no) return EV[i]; return null; }
+function cur(){ return ev(S.sel); }
+function slog(type, text, ref){ S.slog.unshift([hm(), type, text, ref, WHO[S.role]]); }
+function pc(e, n){ for (var i = 0; i < e.pieces.length; i++) if (e.pieces[i].n === n) return e.pieces[i]; return null; }
+function final(p){ return p.disp === 'RESEQ' || p.disp === 'SCRAP' || p.disp === 'TO_OP'; }
+function toReseq(e){ return e.type === 'INDIRECT' && e.st !== 'CLOSED' ? e.pieces.filter(function(p){ return p.cls === 'ROLLABLE' && !final(p) && p.qa !== 'HOLD'; }) : []; }
+function needQa(e){ return e.type === 'OVERSTAY' && (!e.qa || e.qa === 'HOLD') && e.st !== 'CLOSED'; }
+function closeIfDone(e){ if (e.type === 'INDIRECT' && e.pieces.length && e.pieces.every(final)){ e.st = 'CLOSED'; slog('HOT_OUT_CLOSED', e.no + ' closed — every piece has its disposition', e.no); return true; } return false; }
+function disp(e){
+  if (e.type === 'INDIRECT'){ if (!e.pieces.length) return '—';
+    var r = e.pieces.filter(function(p){ return p.disp === 'RESEQ'; }).length, s = e.pieces.filter(function(p){ return p.disp === 'SCRAP'; }).length, o = e.pieces.filter(function(p){ return p.disp === 'TO_OP'; }).length, rl = e.pieces.filter(function(p){ return p.cls === 'ROLLABLE'; }).length;
+    if (!r && !s && !o) return 'cut ' + e.pieces.length + ' · re-sequence ' + rl;
+    return [r ? r + ' re-sequenced' : '', s ? s + ' scrapped' : '', o ? o + ' to rework / divert' : ''].filter(Boolean).join(' · '); }
+  if (e.disp) return e.disp;
+  if (e.qa === 'HOLD') return 'on hold with Quality';
+  return e.type === 'DIRECT' ? 'back in stock — chargeable again' : '—'; }
+function stBadge(e){ if (needQa(e)) return B('AWAITING QUALITY', 'b-hold'); return B(e.st, {OPEN: 'b-info', CUT: 'b-pend', MEASURED: 'b-info', DECIDED: 'b-clr', CLOSED: 'b-done'}[e.st]); }
+function qaTxt(e){ if (e.type === 'INDIRECT'){ var d = e.pieces.filter(function(p){ return p.qa; }); return d.length ? d.map(function(p){ return p.id.slice(-2) + ' ' + p.qa; }).join(', ') : '—'; }
+  if (e.qa) return B(e.qa, e.qa === 'RE_ROLL_OK' ? 'b-done' : e.qa === 'HOLD' ? 'b-pend' : 'b-hold') + (e.qaNext ? ' <span class="mut">→ ' + e.qaNext + (e.keep ? ', code kept' : '') + '</span>' : e.qa === 'RE_ROLL_OK' && e.st !== 'CLOSED' ? ' <span class="mut">next: charging</span>' : '');
+  return e.type === 'OVERSTAY' ? B('PENDING', 'b-hold') : '—'; }
+window.hoPick = function(no){ S.sel = no; render(); };
+window.hoRoleCh = function(){ S.role = $('hoRole').value; render(); U.toast(S.role === 'QA' ? 'Acting as Quality — records the hot-out decision (re-roll, rework, scrap, divert, hold)' : 'Acting as the mill operator'); };
+// ---- declare
+window.hoDeclare = function(){ var ids = Object.keys(CAND).filter(function(k){ return !S.done[k]; });
+  if (!ids.length){ U.toast('No more sample pieces to declare — reload to start again'); return; }
+  U.modal('Declare hot-out', '<div class="mdl"><div class="hint">Direct: charged, not rolled → back to charging (chargeable again). Indirect: partly rolled → cut into 2–6 pieces. Overstay: beyond the dwell limit → the Quality decision comes before any re-roll. The type is checked against where the piece is.</div>'
+    + '<div><label for="dcB">Batch</label><select id="dcB">' + ids.map(function(k){ return '<option value="' + k + '">' + k + ' — ' + CAND[k].txt + ' · ' + n0(CAND[k].w) + ' kg</option>'; }).join('') + '</select></div>'
+    + '<div class="two"><div><label for="dcT">Type</label><select id="dcT"><option>DIRECT</option><option>INDIRECT</option><option>OVERSTAY</option></select></div><div><label for="dcW">Reason</label><select id="dcW"><option value="">— choose —</option><option>Mill stop</option><option>Continuous mill stop</option><option>Cobble downstream</option><option>Furnace overstay</option><option>Wrong billet charged</option></select></div></div></div>', 'Declare', function(){
+    if (!U.req(['dcW'])) return false;
+    var id = $('dcB').value, t = $('dcT').value, c = CAND[id], why = '';
+    if (c.state === 'QUEUED') why = id + ' is not charged — a hot-out needs a charged or partly rolled piece';
+    else if (t === 'DIRECT' && c.state === 'PARTLY_ROLLED') why = id + ' is partly rolled (' + c.at + ') — that is an indirect hot-out';
+    else if (t === 'INDIRECT' && c.state === 'CHARGED') why = id + ' is not rolled yet — that is a direct hot-out';
+    else if (t === 'OVERSTAY' && (c.state !== 'CHARGED' || c.dwell <= 120)) why = c.state !== 'CHARGED' ? id + ' is not in the furnace — not an overstay' : id + ' dwell ' + c.dwell + ' min is within the limit of 120 min — not an overstay';
+    else if (t === 'DIRECT' && c.dwell > 120) why = id + ' dwell ' + c.dwell + ' min is beyond the limit of 120 — declare it as an overstay (Quality decides before re-roll)';
+    if (why){ U.toast('Not declared — ' + why); return false; }
+    var no = 'HO-2026-0' + (S.hon++), e = {no: no, type: t, b: id, sec: c.sec, stn: c.at, at: '15-09 ' + hm(), why: t === 'OVERSTAY' ? 'Overstay ' + c.dwell + ' min' : $('dcW').value, inp: c.w, st: 'OPEN', rw: null, loss: null, qa: null, pieces: [], src: ''};
+    EV.unshift(e); S.done[id] = true; S.sel = no; S.all30++; if (t === 'INDIRECT') S.ind30++;
+    slog('HOT_OUT', (t === 'INDIRECT' ? 'Indirect' : t === 'OVERSTAY' ? 'Overstay' : 'Direct') + ' hot-out ' + id + ' at ' + c.at + ' — ' + e.why, no); render();
+    U.toast(no + ' declared (OPS_HOT_OUT_DECLARED) — ' + (t === 'DIRECT' ? 'charge line HOT_OUT, ' + id + ' back to AVAILABLE at charging; excluded from the bundle weight' : t === 'INDIRECT' ? 'cut it into pieces below' : 'OPS_HOT_OUT_DECISION_REQUESTED to Quality')); return true; }); };
+// ---- indirect: cut, measure, classify
+window.hoCut = function(){ var e = cur(); if (!e || e.type !== 'INDIRECT' || e.st !== 'OPEN'){ U.toast('Cutting applies to an open indirect hot-out'); return; }
+  U.modal('Cut into pieces — ' + e.no + ' · ' + e.b, '<div class="mdl"><div class="hint">Batch split by the derivation rule SPLIT: the pieces take the parent id with a suffix (' + e.b + '-01 …) and inherit its route and stage position. Lengths and weights are pre-filled from the theoretical split — re-measure them.</div><div><label for="cutN">Number of pieces (2–6)</label><input type="number" id="cutN" value="3"/></div></div>', 'Cut', function(){
+    if (!U.req(['cutN'])) return false; var n = Math.round(+$('cutN').value);
+    if (n < 2 || n > 6){ $('cutN').classList.add('bad'); U.toast('An indirect hot-out is cut into 2 to 6 pieces'); return false; }
+    var L = e.inp / 79, pieces = [];  // 100 × 100 at 79 kg/m
+    for (var i = 1; i <= n; i++) pieces.push({n: i, id: e.b + '-' + p2(i), len: Math.round(L / n * 10) / 10, w: Math.round(e.inp * 0.95 / n), cls: 'ROLLABLE', why: '', disp: '', qa: null, nxt: '', keep: false, lab: 0, theo: true});
+    e.pieces = pieces; e.st = 'CUT'; slog('HOT_OUT_CUT', e.b + ' cut into ' + n + ' pieces (' + pieces[0].id + ' … ' + pieces[n - 1].id + ')', e.no); render();
+    U.toast(e.b + ' split into ' + n + ' pieces — re-measure, classify and save'); return true; }); };
+function readPieces(e){ var out = [], bad = '';
+  e.pieces.forEach(function(p){ if (final(p)){ out.push(null); return; }
+    var l = $('pl' + p.n), w = $('pw' + p.n), c = $('pc' + p.n), r = $('pr' + p.n);
+    var v = {len: +l.value, w: +w.value, cls: c.value, why: r.value.trim()};
+    l.classList.toggle('bad', !(v.len > 0)); w.classList.toggle('bad', !(v.w > 0)); r.classList.toggle('bad', v.cls === 'NON_ROLLABLE' && !v.why);
+    if (!(v.len > 0) || !(v.w > 0)) bad = bad || 'every piece needs a measured length and weight';
+    if (v.cls === 'NON_ROLLABLE' && !v.why) bad = bad || p.id + ' is non-rollable — give the reason';
+    out.push(v); });
+  return {v: out, bad: bad}; }
+function sumW(e, vals){ var s = 0; e.pieces.forEach(function(p, i){ s += vals && vals[i] ? vals[i].w : p.w; }); return s; }
+window.hoCalc = function(){ var e = cur(); if (!e) return; var s = 0;
+  e.pieces.forEach(function(p){ var w = $('pw' + p.n); s += w ? (+w.value || 0) : p.w; });
+  $('hoCalcL').innerHTML = calcTxt(e, s); };
+function calcTxt(e, s){ var loss = e.inp - s; return 'Input <b>' + n0(e.inp) + ' kg</b> − re-weigh Σ pieces <b>' + n0(s) + ' kg</b> = hot-out loss <b' + (loss < 0 ? ' class="bad"' : '') + '>' + n0(loss) + ' kg</b>' + (loss < 0 ? ' — pieces weigh more than the input: re-weigh' : '') + (e.loss != null ? ' <span class="mut">(booked ' + n0(e.loss) + ' kg — one booking per event)</span>' : ' <span class="mut">(booked on Save)</span>'); }
+window.hoSave = function(){ var e = cur(); if (!e || e.type !== 'INDIRECT' || (e.st !== 'CUT' && e.st !== 'MEASURED')){ U.toast('Measurements are saved on a cut indirect hot-out'); return; }
+  var r = readPieces(e); if (r.bad){ U.toast('Not saved — ' + r.bad); return; }
+  var s = sumW(e, r.v); if (s > e.inp){ U.toast('Not saved — the pieces weigh ' + n0(s) + ' kg, more than the input ' + n0(e.inp) + ' kg: re-weigh'); return; }
+  e.pieces.forEach(function(p, i){ var v = r.v[i]; if (!v) return; p.len = v.len; p.w = v.w; p.cls = v.cls; p.why = v.cls === 'NON_ROLLABLE' ? v.why : ''; p.theo = false; });
+  var old = e.loss; e.rw = s; e.loss = e.inp - s; e.src = $('hoSrc').value; e.st = 'MEASURED';
+  slog('HOT_OUT_MEASURED', e.b + ' pieces re-measured (' + e.src + ') — re-weigh ' + n0(s) + ' kg, loss ' + n0(e.loss) + ' kg' + (old != null && old !== e.loss ? ' (booking corrected from ' + n0(old) + ')' : ''), e.no); render();
+  U.toast('Measured and classified — loss ' + n0(e.loss) + ' kg ' + (old == null ? 'booked' : old === e.loss ? 'unchanged (booked once)' : 'booking corrected (still one booking)') + '; ' + e.pieces.filter(function(p){ return p.cls === 'ROLLABLE' && !final(p); }).length + ' rollable to re-sequence'); };
+window.hoScrap = function(n){ var e = cur(), p = pc(e, n); if (!p || final(p)) return;
+  if (e.st !== 'MEASURED'){ U.toast('Save the measurements first — scrap books the measured weight'); return; }
+  if (p.cls !== 'NON_ROLLABLE'){ U.toast(p.id + ' is rollable — it is re-sequenced, not scrapped (Quality may decide SCRAP)'); return; }
+  p.disp = 'SCRAP'; slog('SCRAP', p.id + ' non-rollable (' + p.why + ') — confirmation with input consumed, output zero (' + n0(p.w) + ' kg); SAP scrap posting through the PPC outbox (deferred)', e.no);
+  closeIfDone(e); render(); U.toast(p.id + ' scrapped — input consumed, output zero (' + n0(p.w) + ' kg)'); };
+window.hoLabel = function(n){ var e = cur(), p = pc(e, n); if (!p) return; p.lab++; slog('LABEL', p.id + ' label ' + (p.lab > 1 ? 'reprinted' : 'printed') + ' (piece label template)', e.no); render(); U.toast('Label ' + (p.lab > 1 ? 'reprinted' : 'printed') + ' for ' + p.id); };
+window.hoReseq = function(){ var e = cur(); if (!e) return;
+  if (e.type !== 'INDIRECT'){ U.toast(e.type === 'DIRECT' || e.type === 'OVERSTAY' ? 'A ' + e.type.toLowerCase() + ' hot-out returns the billet itself to charging — use Re-charge (re-weigh)' : ''); return; }
+  if (e.st === 'OPEN' || e.st === 'CUT'){ U.toast('Re-measure and classify the pieces first (Save measurements)'); return; }
+  var r = toReseq(e), held = e.pieces.filter(function(p){ return p.qa === 'HOLD' && !final(p); });
+  if (!r.length){ U.toast('No rollable pieces left to re-sequence' + (held.length ? ' — ' + held.map(function(p){ return p.id; }).join(', ') + ' on hold with Quality' : '')); return; }
+  r.forEach(function(p){ p.disp = 'RESEQ'; });
+  slog('RESEQUENCE', r.map(function(p){ return p.id; }).join(', ') + ' into manual sequencing (new material numbers, Planning)', e.no);
+  var closed = closeIfDone(e); render();
+  U.toast(r.map(function(p){ return p.id; }).join(', ') + ' re-sequenced — Planning places them in the next release' + (held.length ? '; on hold: ' + held.map(function(p){ return p.id; }).join(', ') : '') + (closed ? '; ' + e.no + ' closed' : '')); };
+// ---- direct / overstay: re-charge with re-weigh, loss booked once
+window.hoRecharge = function(){ var e = cur(); if (!e) return;
+  if (e.type === 'INDIRECT'){ U.toast('An indirect hot-out re-charges its rollable pieces — use Re-sequence rollable pieces'); return; }
+  if (e.loss != null){ U.toast('Refused — the loss of ' + e.no + ' is already booked (' + n0(e.loss) + ' kg); it is booked once and never double-counted'); return; }
+  if (e.st === 'CLOSED'){ U.toast(e.no + ' is closed — ' + disp(e)); return; }
+  if (needQa(e)){ U.toast('Re-rolling waits for the Quality decision on this overstay' + (e.qa === 'HOLD' ? ' (on hold)' : '')); return; }
+  U.modal('Re-charge with re-weigh — ' + e.b, '<div class="mdl"><div class="hint">The billet is weighed again on re-charge; the hot-out loss = input ' + n0(e.inp) + ' kg − re-weigh, booked once on this event. The billet stays excluded from the bundle weight of its first production order.</div>'
+    + '<div class="two"><div><label for="rwS">Source</label><select id="rwS"><option>Scale WS-BRM-01</option><option>Manual entry</option></select></div><div><label for="rwW">Re-weigh (kg)</label><input type="number" id="rwW" value="' + (e.inp - 8) + '"/></div></div></div>', 'Re-charge', function(){
+    if (!U.req(['rwW'])) return false; var w = +$('rwW').value;
+    if (w <= 0 || w > e.inp){ $('rwW').classList.add('bad'); U.toast('Re-weigh must be above 0 and not above the input ' + n0(e.inp) + ' kg — check the scale'); return false; }
+    e.rw = w; e.loss = e.inp - w; e.src = $('rwS').value; e.st = 'CLOSED'; e.disp = 'returned to stock · re-sequenced · re-charged';
+    slog('RE_CHARGE', e.b + ' re-charged — re-weigh ' + n0(w) + ' kg (' + e.src + '), loss ' + n0(e.loss) + ' kg booked once', e.no); render();
+    U.toast(e.b + ' re-charged — loss ' + n0(e.loss) + ' kg booked once; ' + e.no + ' closed'); return true; }); };
+// ---- Quality decision
+window.hoQaDec = function(){ var d = $('qdD').value, need = d === 'REWORK' || d === 'DIVERT'; $('qdN').disabled = !need; if (!need) $('qdN').value = ''; };
+window.hoQa = function(){ var e = cur(); if (!e) return;
+  if (S.role !== 'QA'){ U.toast('The hot-out decision belongs to Quality (hot-out clearance in the Quality module) — switch "Acting as" to Quality'); return; }
+  if (e.st === 'CLOSED'){ U.toast(e.no + ' is closed'); return; }
+  var ind = e.type === 'INDIRECT';
+  if (ind && e.st !== 'MEASURED'){ U.toast('Quality decides on measured and classified pieces — save the measurements first'); return; }
+  var open = ind ? e.pieces.filter(function(p){ return !final(p); }) : [];
+  if (ind && !open.length){ U.toast('Every piece already has its disposition'); return; }
+  U.modal('Quality decision — ' + e.no + ' · ' + e.b, '<div class="mdl"><div class="hint">' + (e.type === 'OVERSTAY' ? 'Overstay — re-rolling waits for this decision. ' : '') + 'Re-roll, rework, scrap, divert or hold; rework and divert name the operation the material goes to, with the keep-code flag telling that operation to skip the form conversion.</div>'
+    + (ind ? '<div><label for="qdP">Piece</label><select id="qdP">' + open.map(function(p){ return '<option value="' + p.n + '">' + p.id + ' · ' + f1(p.len) + ' m · ' + n0(p.w) + ' kg · ' + p.cls + '</option>'; }).join('') + '</select></div>' : '')
+    + '<div class="two"><div><label for="qdD">Decision</label><select id="qdD" onchange="hoQaDec()"><option>RE_ROLL_OK</option><option>REWORK</option><option>SCRAP</option><option>DIVERT</option><option>HOLD</option></select></div>'
+    + '<div><label for="qdN">Next operation (rework / divert)</label><select id="qdN" disabled><option value="">—</option>' + NEXT_OPS.map(function(o){ return '<option>' + o + '</option>'; }).join('') + '</select></div></div>'
+    + '<div><label style="font-weight:400"><input type="checkbox" id="qdK"/> code kept (the next operation skips the form conversion)</label></div><div><label for="qdR">Remark (mandatory)</label><input type="text" id="qdR"/></div></div>', 'Record decision', function(){
+    var d = $('qdD').value, need = d === 'REWORK' || d === 'DIVERT';
+    if (!U.req(need ? ['qdR', 'qdN'] : ['qdR'])) return false;
+    var nx = need ? $('qdN').value : '', keep = need && $('qdK').checked, txt;
+    if (ind){ var p = pc(e, +$('qdP').value);
+      if (d === 'RE_ROLL_OK' && p.cls === 'NON_ROLLABLE'){ U.toast(p.id + ' is classified non-rollable — re-roll is not possible; choose scrap, rework, divert or hold'); return false; }
+      p.qa = d; p.nxt = nx; p.keep = keep; if (need) p.disp = 'TO_OP'; if (d === 'SCRAP') p.disp = 'SCRAP';
+      txt = p.id + ' → ' + d + (nx ? ' (' + nx + (keep ? ', code kept' : '') + ')' : ''); }
+    else { e.qa = d; e.qaNext = nx; e.keep = keep;
+      if (d === 'RE_ROLL_OK') e.st = 'DECIDED';
+      else if (need){ e.st = 'CLOSED'; e.disp = 'to ' + nx + (keep ? ' (code kept)' : ''); }
+      else if (d === 'SCRAP'){ e.st = 'CLOSED'; e.disp = 'scrapped — input consumed, output zero (' + n0(e.inp) + ' kg)'; }
+      txt = e.b + ' → ' + d + (nx ? ' (' + nx + (keep ? ', code kept' : '') + ')' : ''); }
+    slog('QA_DECISION', txt + ' — ' + $('qdR').value, e.no); if (ind) closeIfDone(e); render();
+    U.toast('Quality decision recorded: ' + txt + (d === 'RE_ROLL_OK' && !ind ? ' — re-charge it with a re-weigh' : '')); return true; }); };
+window.hoLog = function(){ U.modal('Shift log — hot-out entries', '<table class="g"><thead><tr><th>Time</th><th>Type</th><th>Entry</th><th>Ref</th><th>By</th></tr></thead><tbody>' + S.slog.map(function(r){ return '<tr><td>' + r[0] + '</td><td>' + B(r[1], /SCRAP|HOT_OUT$/.test(r[1]) ? 'b-hold' : 'b-info') + '</td><td>' + esc(r[2]) + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>'; }).join('') + '</tbody></table>', null, null, true); };
+// ---- render
+function render(){
+  var today = EV.filter(function(e){ return e.at.indexOf('15-09') === 0; });
+  $('hoK').innerHTML = [[EV.length, 'events today'], [EV.filter(needQa).length, 'awaiting Quality'], [n0(today.reduce(function(s, e){ return s + (e.loss || 0); }, 0)) + ' kg', 'hot-out loss today'],
+    [EV.reduce(function(s, e){ return s + toReseq(e).filter(function(p){ return e.st === 'MEASURED'; }).length; }, 0), 'pieces to re-sequence'], [f1(S.ind30 / S.all30 * 100) + ' %', 'indirect share (30 d)']]
+    .map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('hoEv').innerHTML = '<table class="g"><thead><tr><th>Event</th><th>Type</th><th>Batch</th><th>Section</th><th>Station</th><th>Declared</th><th>Reason</th><th class="num">Input kg</th><th class="num">Re-weigh kg</th><th class="num">Loss kg</th><th>Quality decision</th><th>Disposition</th><th>Status</th></tr></thead><tbody>'
+    + EV.map(function(e){ var cls = e.st === 'CLOSED' ? 'ok' : needQa(e) ? 'warn' : '';
+      return '<tr class="clk ' + cls + (e.no === S.sel ? ' sel' : '') + '" data-no="' + e.no + '" onclick="hoPick(\'' + e.no + '\')"><td><b>' + e.no + '</b></td><td>' + B(e.type, e.type === 'INDIRECT' ? 'b-pend' : e.type === 'OVERSTAY' ? 'b-hold' : 'b-info') + '</td><td>' + e.b + '</td><td>' + e.sec + '</td><td>' + e.stn + '</td><td>' + e.at + '</td><td>' + esc(e.why) + '</td>'
+        + '<td class="num">' + n0(e.inp) + '</td><td class="num">' + (e.rw != null ? n0(e.rw) : '—') + '</td><td class="num">' + (e.loss != null ? n0(e.loss) : '—') + '</td><td>' + qaTxt(e) + '</td><td>' + disp(e) + '</td><td>' + stBadge(e) + '</td></tr>'; }).join('') + '</tbody></table>';
+  var e = cur(); $('hoDt').innerHTML = e ? detail(e) : '<div class="pvempty">Click an event above.</div>';
+}
+function detail(e){
+  var head = '<h3>' + e.no + ' — ' + (e.type === 'INDIRECT' ? 'pieces after cutting (batch split, parent-suffix numbering, measured weights)' : e.type === 'OVERSTAY' ? 'overstay — Quality decision, then re-charge with re-weigh' : 'direct hot-out — back to charging, re-weigh on re-charge') + ' <small>' + e.b + ' · ' + e.sec + ' · input ' + n0(e.inp) + ' kg</small></h3>';
+  var qaB = '<button class="btn btn-ghost btn-sm" id="hoQaB" onclick="hoQa()"><i class="fa-solid fa-flask"></i> Quality decision</button>';
+  if (e.type !== 'INDIRECT'){
+    var steps = [['ok', 'Declared ' + e.at + ' at ' + e.stn + ' — ' + esc(e.why) + '; excluded from the bundle weight of its production order (input −' + n0(e.inp) + ' kg)'],
+      [e.qa && e.qa !== 'HOLD' ? 'ok' : e.type === 'OVERSTAY' ? 'bad' : 'wn', 'Quality decision — ' + (e.qa ? e.qa + (e.qaNext ? ' → ' + e.qaNext + (e.keep ? ' (code kept)' : '') : '') : e.type === 'OVERSTAY' ? 'pending: re-rolling waits for it' : 'not required for a direct hot-out (recorded when given)')],
+      [e.loss != null ? 'ok' : 'wn', 'Re-charge with re-weigh — ' + (e.rw != null ? n0(e.rw) + ' kg (' + e.src + '), loss ' + n0(e.loss) + ' kg booked once' : 'not yet')],
+      [e.st === 'CLOSED' ? 'ok' : 'wn', e.st === 'CLOSED' ? 'Closed — ' + disp(e) : 'Open']];
+    return head + '<ul class="chk">' + steps.map(function(s){ return '<li><i class="fa-solid ' + (s[0] === 'ok' ? 'fa-check ok' : s[0] === 'bad' ? 'fa-xmark bad' : 'fa-triangle-exclamation wn') + '"></i>' + s[1] + '</li>'; }).join('') + '</ul>'
+      + '<div style="display:flex;gap:8px;margin-top:10px">' + qaB + '<button class="btn btn-primary btn-sm" id="hoRcB" onclick="hoRecharge()"><i class="fa-solid fa-scale-balanced"></i> Re-charge (re-weigh)</button></div>'; }
+  if (e.st === 'OPEN') return head + '<div class="pvempty">Not cut yet — cut the partly rolled piece into 2–6 pieces.</div><button class="btn btn-primary btn-sm" id="hoCutB" onclick="hoCut()"><i class="fa-solid fa-scissors"></i> Cut into pieces</button>';
+  var edit = e.st !== 'CLOSED';
+  var rows = e.pieces.map(function(p){ var fin = final(p), ed = edit && !fin;
+    var dp = p.disp === 'RESEQ' ? B('RE_ROLL', 'b-done') + ' in manual sequencing (Planning)' : p.disp === 'SCRAP' ? B('SCRAP', 'b-hold') + ' input consumed, output 0' : p.disp === 'TO_OP' ? B(p.qa, 'b-clr') + ' → ' + p.nxt + (p.keep ? ' (code kept)' : '') : p.qa === 'HOLD' ? B('HOLD', 'b-pend') + ' with Quality' : p.cls === 'ROLLABLE' ? 'RE_ROLL → re-sequence' : 'SCRAP (input consumed, output 0)';
+    return '<tr class="' + (p.cls === 'NON_ROLLABLE' ? 'bad' : fin ? 'ok' : '') + '" data-p="' + p.n + '"><td>' + p.n + '</td><td><b>' + p.id + '</b></td>'
+      + '<td class="num">' + (ed ? '<input type="number" step="0.1" id="pl' + p.n + '" value="' + p.len + '" style="width:80px"/>' : f1(p.len)) + '</td>'
+      + '<td class="num">' + (ed ? '<input type="number" id="pw' + p.n + '" value="' + p.w + '" style="width:90px" oninput="hoCalc()"/>' : n0(p.w)) + (p.theo ? ' <span class="mut" title="theoretical — re-measure">th.</span>' : '') + '</td>'
+      + '<td>' + (ed ? '<select id="pc' + p.n + '" style="width:auto"><option' + (p.cls === 'ROLLABLE' ? ' selected' : '') + '>ROLLABLE</option><option' + (p.cls === 'NON_ROLLABLE' ? ' selected' : '') + '>NON_ROLLABLE</option></select>' : B(p.cls, p.cls === 'ROLLABLE' ? 'b-done' : 'b-hold')) + '</td>'
+      + '<td>' + (ed ? '<input type="text" id="pr' + p.n + '" value="' + esc(p.why) + '" placeholder="reason if non-rollable"/>' : esc(p.why) || '—') + '</td>'
+      + '<td>' + (p.qa ? B(p.qa, p.qa === 'RE_ROLL_OK' ? 'b-done' : 'b-pend') : '—') + '</td><td>' + dp + '</td>'
+      + '<td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="hoLabel(' + p.n + ')"><i class="fa-solid fa-tag"></i> ' + (p.lab ? 'Reprint' : 'Label') + '</button>' + (p.cls === 'NON_ROLLABLE' && !fin ? ' <button class="btn btn-ghost btn-sm" onclick="hoScrap(' + p.n + ')"><i class="fa-solid fa-trash"></i> Scrap</button>' : '') + '</td></tr>'; }).join('');
+  return head + '<table class="g pv"><thead><tr><th>Piece</th><th>New id</th><th class="num">Length m</th><th class="num">Weight kg</th><th>Classification</th><th>Reason</th><th>Quality</th><th>Disposition</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
+    + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px"><span id="hoCalcL">' + calcTxt(e, sumW(e)) + '</span>'
+    + (edit ? '<span class="pv" style="display:inline-flex;gap:6px;align-items:center"><label for="hoSrc" style="font-size:12px">Re-weigh source</label><select id="hoSrc" style="width:auto"><option' + (e.src === 'Scale WS-BRM-02' ? ' selected' : '') + '>Scale WS-BRM-02</option><option' + (e.src === 'Manual entry' ? ' selected' : '') + '>Manual entry</option></select></span>'
+      + '<button class="btn btn-primary btn-sm" id="hoSaveB" onclick="hoSave()"><i class="fa-solid fa-floppy-disk"></i> Save measurements</button>' + qaB : '') + '</div>';
+}
+render();
+})();
+</script>
   </main>
 </div>
 

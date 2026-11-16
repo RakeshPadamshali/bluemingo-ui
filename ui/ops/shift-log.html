@@ -208,9 +208,134 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../ppc/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../mdm/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../qa/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Shift</span> <span>/</span> <b>Shift Log</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-book"></i> Digital Shift Log — BRM · 15 Sep · Shift A</h1><div class="sub">The paper log book replaced: hand-over, instructions, incidents; hot-out, downtime, route deviations and Quality holds post their own entries; the hand-over must be acknowledged by the incoming shift (alert after 30 min); searchable by batch, heat, equipment and period.</div></div><div class="ph-actions"><button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> New entry</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-check"></i> Acknowledge hand-over (shift B)</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-print"></i> Print shift report</button></div></div>
-<div class="panel"><h3>New entry</h3><div class="mgrid" style="grid-template-columns:140px 1fr 160px 120px"><div class="fld"><label>Type</label><select><option>NOTE</option><option>HANDOVER</option><option>INSTRUCTION</option><option>INCIDENT</option><option>SAFETY</option></select></div><div class="fld"><label>Text</label><input placeholder="…"/></div><div class="fld"><label>Batch / heat / equipment</label><input placeholder="optional"/></div><div class="fld"><label>Ack required</label><select><option>no</option><option>yes</option></select></div></div></div><div class="panel"><h3>Entries</h3><table class="g"><thead><tr><th>Time</th><th>Unit</th><th>Type</th><th>Entry</th><th>Ref</th><th>By</th><th>Ack required</th><th>Acknowledged</th></tr></thead><tbody><tr class="warn"><td>13:55</td><td>BRM</td><td><span class="badge b-clr">HANDOVER</span></td><td>Cobble stand 14 cleared 11:03; guides stand 15 changed; RO 32 block resumes at #8; B031127 overstay awaiting Quality</td><td>—</td><td>Shift A in-charge</td><td>yes</td><td><span class="badge b-pend">PENDING — shift B</span></td></tr><tr><td>10:58</td><td>BRM</td><td><span class="badge b-hold">HOT_OUT</span></td><td>Indirect hot-out B031140 → 3 pieces, 1 non-rollable</td><td>HO-2026-0187</td><td>system</td><td>no</td><td>—</td></tr><tr><td>10:22</td><td>BRM</td><td><span class="badge b-hold">DOWNTIME</span></td><td>Cobble stand 14 — continuous mill stopped</td><td>DT-0912</td><td>system</td><td>no</td><td>—</td></tr><tr><td>09:40</td><td>BLM</td><td><span class="badge b-info">QUALITY</span></td><td>BL-24110 slow-cooling box overdue — Quality informed</td><td>SC-BOX-05</td><td>op. M. Das</td><td>no</td><td>—</td></tr><tr><td>06:05</td><td>BRM</td><td><span class="badge b-info">INSTRUCTION</span></td><td>Descaler pressure to be kept ≥ 180 bar for 304L RO 32 (CAPA-2026-031)</td><td>CAPA-2026-031</td><td>Shift A in-charge</td><td>yes</td><td><span class="badge b-done">ack 06:05</span></td></tr></tbody></table></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script><style>.page-head .ph-actions .btn{white-space:nowrap} #slForm .bad{border-color:#c62828!important;background:#fff6f6;color:inherit} #slForm input[type=checkbox]{width:auto;margin-right:4px}</style>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Shift</span> <span>/</span> <b>Shift Log</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-book"></i> Digital Shift Log — BRM · 15 Sep · Shift A</h1><div class="sub">The paper log book replaced: hand-over, instructions, incidents; hot-out, downtime, route deviations and Quality holds post their own entries; the hand-over must be acknowledged by the incoming shift (alert after 30 min); searchable by batch, heat, equipment and period.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="slRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="slRole" onchange="slRole()" style="width:auto"><option value="A">Shift A in-charge</option><option value="B">Shift B in-charge</option><option value="OP">Operator</option></select></span><button class="btn btn-primary btn-sm" id="slNewB" onclick="slNew()"><i class="fa-solid fa-plus"></i> New entry</button><button class="btn btn-ghost btn-sm" id="slAckB" onclick="slAckH()"><i class="fa-solid fa-check"></i> Acknowledge hand-over (shift B)</button><button class="btn btn-ghost btn-sm" id="slPrintB" onclick="slPrint()"><i class="fa-solid fa-print"></i> Print shift report</button></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets. Try: +15 min twice (hand-over not acknowledged after 30 min → alert) · Acknowledge hand-over as shift A's in-charge (refused) then as shift B's (open items carried over to shift B) · add an entry (text mandatory; a hand-over or instruction as an operator is refused) · Sign off shift A (then its log is locked) · Simulate an automatic entry · Close an open item · acknowledge an instruction (not its author) · search a batch (B031140) · Print shift report.</div><div class="pv" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:12.5px"><span style="color:var(--color-text-muted)">Sample clock · 15 Sep</span> <b id="slClk"></b><button class="btn btn-ghost btn-sm" id="slClockB" onclick="slClock()"><i class="fa-solid fa-forward"></i> +15 min</button><button class="btn btn-ghost btn-sm" id="slSimB" onclick="slSim()"><i class="fa-solid fa-robot"></i> Simulate an automatic entry</button><button class="btn btn-ghost btn-sm" id="slSignB" onclick="slSign()"></button><span id="slSt" style="margin-left:6px"></span></div><div class="kpis" id="slK"></div><div id="slAl"></div><div class="panel" id="slForm"><h3>New entry <small id="slFormNote"></small></h3><div class="mgrid" style="grid-template-columns:140px 1fr 170px 90px 100px 110px auto;align-items:end"><div class="fld"><label for="slType">Type</label><select id="slType"><option>NOTE</option><option>HANDOVER</option><option>INSTRUCTION</option><option>INCIDENT</option><option>SAFETY</option></select></div><div class="fld"><label for="slText">Text</label><input id="slText" placeholder="…"/></div><div class="fld"><label for="slRef">Batch / heat / equipment</label><input id="slRef" placeholder="optional"/></div><div class="fld"><label for="slUnit">Unit</label><select id="slUnit"><option>BRM</option><option>BLM</option></select></div><div class="fld"><label for="slAck">Ack required</label><select id="slAck"><option>no</option><option>yes</option></select></div><div class="fld"><label><input type="checkbox" id="slOpen"/> open item</label></div><div class="fld"><button class="btn btn-primary btn-sm" id="slAddB" onclick="slAdd()"><i class="fa-solid fa-plus"></i> Add entry</button></div></div></div><div class="panel"><h3>Entries</h3><div class="pv" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><div class="tabs2" id="slTabs" style="margin:0"></div><select id="slUnitF" onchange="slUnit()" style="width:auto"><option value="ALL">All units</option><option>BRM</option><option>BLM</option></select><select id="slTypeF" onchange="slType()" style="width:auto"><option value="ALL">All types</option><option>HANDOVER</option><option>INSTRUCTION</option><option>INCIDENT</option><option>HOT_OUT</option><option>DOWNTIME</option><option>QUALITY</option><option>SAFETY</option><option>NOTE</option></select><input type="text" id="slQ" placeholder="Search batch, heat, equipment, text…" oninput="slQ()" style="width:260px"/></div><table class="g" id="slTb"><thead><tr><th>Time</th><th>Unit</th><th>Type</th><th>Entry</th><th>Ref</th><th>By</th><th>Ack required</th><th>Acknowledged</th><th></th></tr></thead><tbody></tbody></table></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, esc = U.esc;
+var E = [{"id": 5, "sh": "A", "t": 835, "u": "BRM", "ty": "HANDOVER", "tx": "Cobble stand 14 cleared 11:03; guides stand 15 changed; RO 32 block resumes at #8; B031127 overstay awaiting Quality", "ref": "\u2014", "by": "Shift A in-charge", "ack": true, "ackBy": "", "ackAt": null, "open": false}, {"id": 4, "sh": "A", "t": 658, "u": "BRM", "ty": "HOT_OUT", "tx": "Indirect hot-out B031140 \u2192 3 pieces, 1 non-rollable", "ref": "HO-2026-0187", "by": "system", "ack": false, "ackBy": "", "ackAt": null, "open": true}, {"id": 3, "sh": "A", "t": 622, "u": "BRM", "ty": "DOWNTIME", "tx": "Cobble stand 14 \u2014 continuous mill stopped", "ref": "DT-0912", "by": "system", "ack": false, "ackBy": "", "ackAt": null, "open": false}, {"id": 2, "sh": "A", "t": 580, "u": "BLM", "ty": "QUALITY", "tx": "BL-24110 slow-cooling box overdue \u2014 Quality informed", "ref": "SC-BOX-05", "by": "op. M. Das", "ack": false, "ackBy": "", "ackAt": null, "open": true}, {"id": 1, "sh": "A", "t": 365, "u": "BRM", "ty": "INSTRUCTION", "tx": "Descaler pressure to be kept \u2265 180 bar for 304L RO 32 (CAPA-2026-031)", "ref": "CAPA-2026-031", "by": "Shift A in-charge", "ack": true, "ackBy": "op. R. Kumar", "ackAt": 365, "open": false}], SIMS = [{"ty": "DOWNTIME", "u": "BRM", "tx": "Continuous mill resumed \u2014 DT-0912 closed: Breakdown \u2192 Cobble, 41 min", "ref": "DT-0912", "open": false}, {"ty": "QUALITY", "u": "BRM", "tx": "Heat 2627-01172 put on hold by Quality \u2014 chemistry re-check", "ref": "QH-2026-0412", "open": true}, {"ty": "HOT_OUT", "u": "BRM", "tx": "Direct hot-out B031141 \u2014 back to stock, chargeable again", "ref": "HO-2026-0188", "open": false}, {"ty": "NOTE", "u": "BRM", "tx": "Route deviation \u2014 B031092 routed to ABGM-1 instead of ABGM-2 (approved by the shift supervisor)", "ref": "RD-2026-0044", "open": false}];
+var S = {role: 'A', now: 845, view: 'A', unit: 'ALL', type: 'ALL', q: '', signed: {}, sim: 0, alerted: {}, id: 6};
+var WHO = {OP: 'op. M. Das', A: 'Shift A in-charge', B: 'Shift B in-charge'}, SH = {A: [360, 840], B: [840, 1320]}, NEXT = {A: 'B', B: 'C'};
+var TB = {HANDOVER: 'b-clr', HOT_OUT: 'b-hold', DOWNTIME: 'b-hold', QUALITY: 'b-info', INSTRUCTION: 'b-info', INCIDENT: 'b-pend', SAFETY: 'b-hold', NOTE: 'b-draft'};
+function p2(n){ return ('0' + n).slice(-2); }
+function hm(t){ return p2(Math.floor(t / 60)) + ':' + p2(t % 60); }
+function curShift(){ return S.now < SH.A[1] ? 'A' : 'B'; }
+function byId(id){ for (var i = 0; i < E.length; i++) if (E[i].id === id) return E[i]; return null; }
+function pendHO(sh){ return E.filter(function(e){ return e.sh === sh && e.ty === 'HANDOVER' && e.ack && !e.ackBy; }); }
+function late(e){ return e.ty === 'HANDOVER' && e.ack && !e.ackBy && S.now - e.t >= 30; }
+function vis(e){ if (e.sh !== S.view) return false; if (S.unit !== 'ALL' && e.u !== S.unit) return false; if (S.type !== 'ALL' && e.ty !== S.type) return false;
+  if (S.q && (e.tx + ' ' + e.ref + ' ' + e.u + ' ' + e.by + ' ' + e.ty).toLowerCase().indexOf(S.q) < 0) return false; return true; }
+function checkAlerts(){ var out = []; E.forEach(function(e){ if (late(e) && !S.alerted[e.id]){ S.alerted[e.id] = 1; out.push(e); } }); return out; }
+window.slRole = function(){ S.role = $('slRole').value; render(); U.toast({OP: 'Acting as an operator — notes, incidents, safety; acknowledges instructions', A: 'Acting as shift A\'s in-charge (outgoing) — writes the hand-over and signs off shift A', B: 'Acting as shift B\'s in-charge (incoming) — acknowledges the hand-over'}[S.role]); };
+window.slView = function(sh){ S.view = sh; render(); };
+window.slUnit = function(){ S.unit = $('slUnitF').value; render(); };
+window.slType = function(){ S.type = $('slTypeF').value; render(); };
+window.slQ = function(){ S.q = ($('slQ').value || '').trim().toLowerCase(); render(); };
+window.slNew = function(){ var f = $('slForm'); if (f && f.scrollIntoView) f.scrollIntoView({block: 'center'}); $('slText').focus(); U.toast('New entry for shift ' + S.view + '\'s log — type, text, reference, then Add entry'); };
+window.slAdd = function(){ var sh = S.view, ty = $('slType').value;
+  if (S.signed[sh]){ U.toast('Refused — shift ' + sh + ' was signed off at ' + hm(S.signed[sh]) + '; its log is locked'); return; }
+  if ((S.role === 'A' || S.role === 'B') && S.role !== sh){ U.toast('Refused — shift ' + sh + '\'s log is written by shift ' + sh + '; you are acting as shift ' + S.role + '\'s in-charge'); return; }
+  if ((ty === 'HANDOVER' || ty === 'INSTRUCTION') && S.role === 'OP'){ U.toast('Refused — a hand-over or an instruction is entered by the shift-in-charge'); return; }
+  if (!U.req(['slText'])){ U.toast('The entry text is mandatory'); return; }
+  var e = {id: S.id++, sh: sh, t: S.now, u: $('slUnit').value, ty: ty, tx: $('slText').value.trim(), ref: $('slRef').value.trim() || '—', by: WHO[S.role], ack: ty === 'HANDOVER' || $('slAck').value === 'yes', ackBy: '', ackAt: null, open: $('slOpen').checked};
+  E.unshift(e); $('slText').value = ''; $('slRef').value = ''; $('slOpen').checked = false; $('slAck').value = 'no'; render();
+  U.toast('Entry added to shift ' + sh + '\'s log' + (ty === 'HANDOVER' ? ' — the incoming shift must acknowledge it (alert after 30 min)' : e.ack ? ' — acknowledgement required' : '') + (e.open ? '; open item until closed' : '')); };
+window.slAckH = function(){ var sh = S.view === 'B' ? 'A' : S.view, ho = pendHO('A');
+  if (!ho.length){ U.toast('No hand-over is waiting for an acknowledgement'); return; }
+  if (S.role !== 'B'){ U.toast('The hand-over is acknowledged by the incoming shift-in-charge (shift B) — switch "Acting as"'); return; }
+  var items = E.filter(function(e){ return e.sh === 'A' && e.open; });
+  U.modal('Acknowledge hand-over — shift A → shift B', '<div class="mdl">' + ho.map(function(h){ return '<div class="banner"><b>' + hm(h.t) + ' · ' + h.u + '</b> — ' + esc(h.tx) + '</div>'; }).join('')
+    + '<div><b>Open items carried over to shift B (' + items.length + ')</b>' + (items.length ? '<ul class="timeline" style="margin-top:6px">' + items.map(function(e){ return '<li>' + e.ty + ' · ' + esc(e.tx) + ' <small>(' + e.ref + ')</small></li>'; }).join('') + '</ul>' : '<div class="hint">none</div>') + '</div>'
+    + '<div><label><input type="checkbox" id="slRead"/> I have read the hand-over and take over the open items (mandatory)</label></div><div><label for="slRem">Remark</label><input type="text" id="slRem"/></div></div>', 'Acknowledge', function(){
+    if (!$('slRead').checked){ U.toast('Tick that you have read the hand-over first'); return false; }
+    ho.forEach(function(h){ h.ackBy = WHO.B; h.ackAt = S.now; h.rem = $('slRem').value; });
+    items.forEach(function(e){ e.open = false; e.carried = true; E.unshift({id: S.id++, sh: 'B', t: S.now, u: e.u, ty: e.ty, tx: e.tx, ref: e.ref, by: 'carried over from shift A', ack: false, ackBy: '', ackAt: null, open: true, from: e.id}); });
+    S.view = 'B'; render(); U.toast('Hand-over acknowledged by shift B\'s in-charge at ' + hm(S.now) + ' — ' + items.length + ' open item(s) carried over into shift B\'s log'); return true; }, true); };
+window.slAckE = function(id){ var e = byId(id); if (!e || !e.ack || e.ackBy) return;
+  if (e.ty === 'HANDOVER'){ slAckH(); return; }
+  if (WHO[S.role] === e.by){ U.toast('Refused — the author does not acknowledge their own entry; the reader does'); return; }
+  e.ackBy = WHO[S.role]; e.ackAt = S.now; render(); U.toast(e.ty.toLowerCase() + ' acknowledged by ' + WHO[S.role] + ' at ' + hm(S.now)); };
+window.slClose = function(id){ var e = byId(id); if (!e || !e.open) return;
+  U.modal('Close open item', '<div class="mdl"><div class="banner">' + e.ty + ' · ' + esc(e.tx) + ' (' + e.ref + ')</div><div><label for="slCl">How it was closed (mandatory)</label><textarea id="slCl"></textarea></div></div>', 'Close item', function(){
+    if (!U.req(['slCl'])) return false; e.open = false; e.closedAt = S.now; e.closedBy = WHO[S.role]; e.closeNote = $('slCl').value;
+    if (e.from){ var o = byId(e.from); if (o) o.closedIn = 'B'; }
+    render(); U.toast('Open item closed by ' + WHO[S.role] + ' — ' + e.ref); return true; }); };
+window.slSign = function(){ var sh = S.view;
+  if (S.signed[sh]){ U.toast('Shift ' + sh + ' was already signed off at ' + hm(S.signed[sh])); return; }
+  if (S.role !== sh){ U.toast('Signing off shift ' + sh + ' is shift ' + sh + '\'s in-charge\'s — switch "Acting as"'); return; }
+  if (!E.some(function(e){ return e.sh === sh && e.ty === 'HANDOVER'; })){ U.toast('Refused — write the hand-over entry before signing off shift ' + sh); return; }
+  var open = E.filter(function(e){ return e.sh === sh && e.open; }).length, n = E.filter(function(e){ return e.sh === sh; }).length;
+  U.modal('Sign off shift ' + sh, '<div class="mdl"><div class="hint">' + n + ' entries · ' + open + ' open item(s) — they carry over when the incoming shift acknowledges the hand-over. Signing off locks shift ' + sh + '\'s log.</div></div>', 'Sign off', function(){
+    S.signed[sh] = S.now; render(); U.toast('Shift ' + sh + ' signed off at ' + hm(S.now) + ' by ' + WHO[S.role] + ' — its log is locked'); return true; }); };
+window.slSim = function(){ var s = SIMS[S.sim % SIMS.length], sh = curShift(); S.sim++;
+  E.unshift({id: S.id++, sh: sh, t: S.now, u: s.u, ty: s.ty, tx: s.tx, ref: s.ref, by: 'system', ack: false, ackBy: '', ackAt: null, open: s.open});
+  S.view = sh; render(); U.toast('Automatic entry posted to shift ' + sh + '\'s log — ' + s.ty + ' · ' + s.ref); };
+window.slClock = function(){ S.now += 15; var a = checkAlerts(); render();
+  U.toast(a.length ? 'OPS_HANDOVER_UNACKNOWLEDGED — shift B has not acknowledged the hand-over of ' + hm(a[0].t) + ' for ' + (S.now - a[0].t) + ' min; the shift manager is alerted' : 'Sample clock +15 min — ' + hm(S.now)); };
+window.slPrint = function(){ var sh = S.view, es = E.filter(function(e){ return e.sh === sh; }), cnt = {};
+  es.forEach(function(e){ cnt[e.ty] = (cnt[e.ty] || 0) + 1; });
+  var ho = es.filter(function(e){ return e.ty === 'HANDOVER'; });
+  U.modal('Shift report — 15 Sep · shift ' + sh + ' (' + hm(SH[sh][0]) + '–' + hm(SH[sh][1]) + ')', '<div class="mdl"><div class="hint">' + Object.keys(cnt).map(function(k){ return k + ' ' + cnt[k]; }).join(' · ') + '</div>'
+    + '<table class="g"><thead><tr><th>Time</th><th>Unit</th><th>Type</th><th>Entry</th><th>Ref</th><th>By</th></tr></thead><tbody>' + es.map(function(e){ return '<tr><td>' + hm(e.t) + '</td><td>' + e.u + '</td><td>' + e.ty + '</td><td>' + esc(e.tx) + '</td><td>' + e.ref + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') + '</tbody></table>'
+    + '<div class="hint">Hand-over: ' + (ho.length ? ho.map(function(h){ return hm(h.t) + (h.ackBy ? ' acknowledged ' + hm(h.ackAt) + ' by ' + h.ackBy : ' not yet acknowledged'); }).join('; ') : 'none') + ' · Sign-off: ' + (S.signed[sh] ? hm(S.signed[sh]) : 'not yet') + ' · Open items: ' + es.filter(function(e){ return e.open; }).length + '</div></div>', 'Print', function(){
+    U.toast('Shift report of shift ' + sh + ' sent to the printer — ' + es.length + ' entries (sample)'); return true; }, 'xl'); };
+function render(){
+  var sh = S.view, mine = E.filter(function(e){ return e.sh === sh; }), cur = curShift();
+  document.querySelector('.page-head h1').innerHTML = '<i class="fa-solid fa-book"></i> Digital Shift Log — BRM · 15 Sep · Shift ' + sh;
+  $('slClk').textContent = hm(S.now) + ' (shift ' + cur + ')';
+  $('slTabs').innerHTML = ['A', 'B'].map(function(x){ return '<span class="' + (sh === x ? 'on' : '') + '" onclick="slView(\'' + x + '\')">Shift ' + x + ' · ' + hm(SH[x][0]) + '–' + hm(SH[x][1]) + (x === cur ? ' (current)' : x === 'A' && cur === 'B' ? ' (outgoing)' : '') + (S.signed[x] ? ' · signed off' : '') + '</span>'; }).join('');
+  var lt = E.filter(late);
+  $('slAl').innerHTML = lt.length ? '<div class="note" style="background:#ffebee;border-color:#ef9a9a;color:#b71c1c"><i class="fa-solid fa-bell"></i> <b>OPS_HANDOVER_UNACKNOWLEDGED</b> — the hand-over of ' + lt.map(function(e){ return hm(e.t) + ' (' + e.u + ')'; }).join(', ') + ' is not acknowledged after ' + (S.now - lt[0].t) + ' min; the shift manager is alerted.</div>' : '';
+  $('slSt').innerHTML = 'Shift ' + sh + ': ' + (S.signed[sh] ? B('signed off ' + hm(S.signed[sh]), 'b-done') : B('not signed off', 'b-draft')) + ' · hand-over ' + (function(){ var h = E.filter(function(e){ return e.sh === sh && e.ty === 'HANDOVER'; }); if (!h.length) return B('not written', 'b-draft'); return h.every(function(x){ return x.ackBy; }) ? B('acknowledged', 'b-done') : B('pending — shift ' + NEXT[sh], 'b-pend'); })();
+  $('slK').innerHTML = [[mine.length, 'entries — shift ' + sh], [E.filter(function(e){ return e.ack && !e.ackBy; }).length, 'awaiting acknowledgement'], [E.filter(function(e){ return e.open; }).length, 'open items'], [mine.filter(function(e){ return e.by === 'system'; }).length, 'automatic entries']].map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  var rows = E.filter(vis).map(function(e){
+    var ackc = !e.ack ? '—' : e.ackBy ? B('ack ' + hm(e.ackAt) + (e.ty === 'HANDOVER' ? ' · shift B' : ''), 'b-done') : B('PENDING — ' + (e.ty === 'HANDOVER' ? 'shift ' + NEXT[e.sh] : 'reader'), 'b-pend') + (late(e) ? ' ' + B('> 30 min', 'b-hold') : '');
+    var tag = e.open ? ' ' + B('open item', 'b-pend') : e.carried ? ' ' + B(e.closedIn ? 'carried over · closed in shift B' : 'carried over → shift B', 'b-info') : e.closedAt ? ' ' + B('closed ' + hm(e.closedAt), 'b-done') : '';
+    var act = (e.ack && !e.ackBy ? '<button class="btn btn-primary btn-sm" onclick="slAckE(' + e.id + ')"><i class="fa-solid fa-check"></i> Acknowledge</button> ' : '') + (e.open ? '<button class="btn btn-ghost btn-sm" onclick="slClose(' + e.id + ')">Close item</button>' : '');
+    return '<tr class="' + (e.ty === 'HANDOVER' && !e.ackBy ? 'warn' : e.open ? 'warn' : '') + '" data-id="' + e.id + '"><td>' + hm(e.t) + '</td><td>' + e.u + '</td><td>' + B(e.ty, TB[e.ty]) + '</td><td>' + esc(e.tx) + tag + '</td><td>' + esc(e.ref) + '</td><td>' + esc(e.by) + '</td><td>' + (e.ack ? 'yes' : 'no') + '</td><td>' + ackc + '</td><td style="white-space:nowrap">' + (act || '—') + '</td></tr>'; }).join('');
+  $('slTb').querySelector('tbody').innerHTML = rows || '<tr class="empty"><td colspan="9">' + (sh === 'B' && !mine.length ? 'No entries yet in shift B\'s log — the open items arrive when the hand-over is acknowledged.' : 'No entry matches the filter.') + '</td></tr>';
+  $('slSignB').innerHTML = '<i class="fa-solid fa-signature"></i> Sign off shift ' + sh;
+  var lock = S.signed[sh]; $('slAddB').disabled = !!lock; $('slFormNote').textContent = lock ? 'Shift ' + sh + ' is signed off — its log is locked.' : 'Writing into shift ' + sh + '\'s log as ' + WHO[S.role] + '.';
+}
+render();
+})();
+</script>
   </main>
 </div>
 

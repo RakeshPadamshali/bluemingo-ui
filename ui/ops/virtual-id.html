@@ -208,9 +208,193 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../ppc/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../mdm/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../qa/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Identity & posting</span> <span>/</span> <b>Virtual ID Register</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-id-badge"></i> Virtual ID Register &amp; reconciliation</h1><div class="sub">Production continues when a billet is physically present but its batch id is not yet in the system: a super-user creates a virtual id (the heat's planned number when known), the material charges and rolls normally, Level 2 receives the virtual number; when the actual id arrives an authorised user reconciles (SAP postings: deferred — PPC outbox).</div></div><div class="ph-actions"><button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Create virtual id (super-user)</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Missing-number check</button></div></div>
-<div class="kpis"><div class="k"><b>2</b><span>open</span></div><div class="k"><b>1</b><span>overdue (> 2 d)</span></div><div class="k"><b>7</b><span>reconciled (30 d)</span></div><div class="k"><b>100 %</b><span>closed the loop</span></div></div><div class="panel"><h3>Register</h3><table class="g"><thead><tr><th>Virtual no</th><th>Reason</th><th>Heat</th><th>Planned no</th><th>Unit</th><th>Created</th><th>By (auth.)</th><th class="num">Weight kg</th><th>L2 push</th><th>Status</th><th></th></tr></thead><tbody><tr class="warn"><td>V-2627-01172-07</td><td>ERP_DELAYED</td><td>2627-01172</td><td>B031142 (planned)</td><td>BRM</td><td>15-09 09:58</td><td>S. Iyer (super-user)</td><td class="num">1,258 (theoretical)</td><td>09:58 ✓</td><td><span class="badge b-pend">OPEN</span></td><td><button class="btn btn-primary btn-sm"><i class="fa-solid fa-link"></i> Reconcile</button></td></tr><tr class="warn"><td>VID-BLM-20260914-003</td><td>HOT_CHARGE_GAP</td><td>—</td><td>—</td><td>BLM</td><td>14-09 23:40</td><td>S. Iyer</td><td class="num">2,410 (scale)</td><td>23:41 ✓</td><td><span class="badge b-pend">OPEN</span></td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-link"></i> Reconcile</button></td></tr><tr class="ok"><td>V-2627-01169-03</td><td>MISSING_IN_HEAT</td><td>2627-01169</td><td>B031120</td><td>BRM</td><td>13-09 07:15</td><td>S. Iyer</td><td class="num">1,260</td><td>swap 08:02</td><td><span class="badge b-done">RECONCILED</span></td><td>—</td></tr></tbody></table></div><div class="panel"><h3>Reconcile V-2627-01172-07</h3><div class="mgrid" style="grid-template-columns:repeat(3,1fr)"><div class="fld"><label>Virtual number</label><input value="V-2627-01172-07"/></div><div class="fld"><label>Actual batch (from batch feed / ERP stock)</label><select><option>B031142 · 2627-01172 · 1,258 kg · arrived 11:20</option></select></div><div class="fld"><label>Authorised by</label><input value="S. Iyer (VIRTUAL_ID_CREATE)"/></div></div><ul class="chk"><li><i class="fa-solid fa-check ok "></i>Rename cascade: inventory, schedule children, charge line, confirmation PC-4471, bundles → B031142</li><li><i class="fa-solid fa-check ok "></i>Level-2 VIRTUAL_SWAP message queued</li><li><i class="fa-solid fa-triangle-exclamation wn "></i>Weight difference 1,258 theoretical vs 1,255 actual (batch feed)</li></ul><div style="margin-top:8px"><button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Reconcile and release postings</button></div></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Identity & posting</span> <span>/</span> <b>Virtual ID Register</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-id-badge"></i> Virtual ID Register &amp; reconciliation</h1><div class="sub">Production continues when a billet is physically present but its batch id is not yet in the system: a super-user creates a virtual id (the heat's planned number when known), the material charges and rolls normally, Level 2 receives the virtual number; when the actual id arrives an authorised user reconciles (SAP postings: deferred — PPC outbox).</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="viRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="viRole" onchange="viRole()" style="width:auto"><option value="OP">Charging operator</option><option value="SU">Super-user</option></select></span><button class="btn btn-primary btn-sm" id="viNewB" onclick="viCreate()"><i class="fa-solid fa-plus"></i> Create virtual id (super-user)</button><button class="btn btn-ghost btn-sm" id="viMnB" onclick="viMissing()"><i class="fa-solid fa-magnifying-glass"></i> Missing-number check</button></div></div>
+<style>.page-head .ph-actions .btn{white-space:nowrap}</style><div class="pvhint">Prototype on sample data — every control works; a reload resets. Try: as Super-user, Reconcile V-2627-01172-07 (B031142 arrived) — first pick the B031148 decoy (another heat, refused) · Missing-number check on heat 2627-01173 → create V-2627-01173-08 for B031146 · a known heat with no gap (2627-01171) is refused as a duplicate · Confirm production under the virtual id (postings held) → Simulate batch arrival → Reconcile (postings released) · Level 2 offline → create → Push / back online · +1 day twice → overdue alert · Cancel / scrap · filter by status · the charging operator is refused the privileged steps.</div><div class="pv" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:12.5px"><span style="color:var(--color-text-muted)">Sample clock</span> <b id="viClock"></b> <button class="btn btn-ghost btn-sm" id="viDayB" onclick="viDay()"><i class="fa-solid fa-forward"></i> +1 day</button><span style="color:var(--color-text-muted);margin-left:10px">Overdue alert after 2 days</span><span style="color:var(--color-text-muted);margin-left:10px">Level-2 link</span> <button class="btn btn-sm" id="viL2B" onclick="viL2()"></button></div><div class="kpis" id="viK"></div><div id="viAl"></div><div class="panel"><h3>Register <small>click a row to see its reconciliation and held postings</small></h3><div class="pv" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><div class="tabs2" id="viTabs" style="margin:0"></div><input type="text" id="viQ" placeholder="Search number, heat, batch…" oninput="viQ()" style="width:240px"/></div><table class="g" id="viReg"><thead><tr><th>Virtual no</th><th>Reason</th><th>Heat</th><th>Planned no</th><th>Unit</th><th>Created</th><th>By (auth.)</th><th class="num">Weight kg</th><th>L2 push</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div><div class="grid2"><div class="panel" id="viRecP"><h3 id="viRecT"></h3><div id="viRec"></div></div><div class="panel"><h3 id="viPostT"></h3><div id="viPost"></div></div></div><div class="panel"><h3>Audit trail</h3><table class="g" id="viTrail"><thead><tr><th>At</th><th>Virtual no</th><th>Action</th><th>By</th><th>Detail</th></tr></thead><tbody></tbody></table></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, n0 = U.n0, esc = U.esc;
+var V = [{"v": "V-2627-01172-07", "reason": "ERP_DELAYED", "heat": "2627-01172", "planned": "B031142", "unit": "BRM", "created": 20758, "by": "S. Iyer (super-user)", "w": 1258, "ws": "theoretical", "grade": "304L", "sec": "SQ 160", "len": "12.0", "l2": 20758, "st": "OPEN", "act": "", "rt": null, "recs": ["inventory", "schedule children", "charge line", "confirmation PC-4471", "bundles"], "post": [["Production confirmation", "PC-4471", "101", 20800, "HELD"], ["Scrap (end cut)", "PC-4471", "551", 20800, "HELD"], ["Bundle stock", "BD-77812, BD-77813", "\u2014", 20812, "HELD"]]}, {"v": "VID-BLM-20260914-003", "reason": "HOT_CHARGE_GAP", "heat": "", "planned": "", "unit": "BLM", "created": 20140, "by": "S. Iyer", "w": 2410, "ws": "scale", "grade": "316L", "sec": "SQ 250", "len": "4.2", "l2": 20141, "st": "OPEN", "act": "", "rt": null, "recs": ["inventory", "charge line", "confirmation PC-4439"], "post": [["Production confirmation", "PC-4439", "101", 20158, "HELD"]]}, {"v": "V-2627-01169-03", "reason": "MISSING_IN_HEAT", "heat": "2627-01169", "planned": "B031120", "unit": "BRM", "created": 17715, "by": "S. Iyer", "w": 1260, "ws": "", "grade": "304L", "sec": "SQ 160", "len": "12.0", "l2": 17715, "st": "RECONCILED", "act": "B031120", "rt": 17762, "recs": ["inventory", "charge line", "confirmation PC-4402"], "post": [["Production confirmation", "PC-4402", "101", 17750, "RELEASED"]]}], ARR = [{"b": "B031142", "heat": "2627-01172", "w": 1255, "unit": "BRM", "at": 20840, "used": ""}, {"b": "B031148", "heat": "2627-01174", "w": 1261, "unit": "BRM", "at": 20865, "used": ""}], PL = {"2627-01171": [["B031136", 1], ["B031137", 1], ["B031138", 1], ["B031139", 1]], "2627-01172": [["B031140", 1], ["B031141", 1], ["B031142", 0]], "2627-01173": [["B031143", 1], ["B031144", 1], ["B031145", 1], ["B031146", 0], ["B031177", 1]]}, HEATS = {"2627-01171": ["BRM", "304L", "SQ 160", 1260], "2627-01172": ["BRM", "304L", "SQ 160", 1260], "2627-01173": ["BRM", "304L", "SQ 160", 1260]};
+var S = {role: 'OP', now: 20880, l2: true, f: 0, q: '', sel: 0, act: {}, vno: 8, vidno: 4, pc: 4480, trail: [["15-09 09:58", "V-2627-01172-07", "CREATED", "S. Iyer (super-user)", "ERP_DELAYED \u00b7 heat 2627-01172 \u00b7 planned B031142 \u00b7 pushed to Level 2"], ["14-09 23:40", "VID-BLM-20260914-003", "CREATED", "S. Iyer (super-user)", "HOT_CHARGE_GAP \u00b7 no heat \u2014 VID series \u00b7 pushed to Level 2"], ["13-09 08:02", "V-2627-01169-03", "RECONCILED", "S. Iyer (super-user)", "\u2192 B031120 \u00b7 rename cascade \u00b7 VIRTUAL_SWAP \u00b7 1 posting released"]]};
+var WHO = {OP: 'op. R. Kumar', SU: 'S. Iyer (super-user)'}, ALERT_D = 2;
+var FILT = [['ALL', 'All'], ['OPEN', 'Open'], ['OVERDUE', 'Overdue'], ['RECONCILED', 'Reconciled'], ['CLOSED', 'Scrapped / cancelled']];
+var REASONS = ['ERP_DELAYED', 'HOT_CHARGE_GAP', 'MISSING_IN_HEAT', 'SENSOR_GAP', 'OTHER'];
+function p2(n){ return ('0' + n).slice(-2); }
+function fmt(t){ var d = Math.floor(t / 1440) + 1, r = t % 1440; return p2(d) + '-09 ' + p2(Math.floor(r / 60)) + ':' + p2(r % 60); }
+function hm(t){ return fmt(t).slice(6); }
+function overdue(v){ return v.st === 'OPEN' && S.now - v.created > ALERT_D * 1440; }
+function su(what){ if (S.role === 'SU') return true; U.toast(what + ' is a super-user action (privilege VIRTUAL_ID_CREATE) — switch "Acting as" to Super-user'); return false; }
+function log(v, a, d){ S.trail.unshift([fmt(S.now), v, a, WHO[S.role], d]); }
+function covered(no){ for (var i = 0; i < V.length; i++) if (V[i].planned === no && (V[i].st === 'OPEN' || V[i].st === 'RECONCILED')) return V[i]; return null; }
+function gap(heat){ var p = PL[heat] || []; for (var i = 0; i < p.length; i++) if (!p[i][1] && !covered(p[i][0])) return p[i][0]; return null; }
+function arrivals(v){ return ARR.filter(function(a){ return a.unit === v.unit && !a.used; }); }
+function curArr(v){ var list = arrivals(v), k = S.act[v.v], i;
+  if (k === '') return null;
+  if (k) for (i = 0; i < list.length; i++) if (list[i].b === k) return list[i];
+  for (i = 0; i < list.length; i++) if (!v.heat || list[i].heat === v.heat) return list[i];
+  return null; }
+function chk(items){ return '<ul class="chk">' + items.map(function(s){ return '<li><i class="fa-solid ' + (s[0] === 'ok' ? 'fa-check ok' : s[0] === 'bad' ? 'fa-xmark bad' : 'fa-triangle-exclamation wn') + '"></i>' + esc(s[1]) + '</li>'; }).join('') + '</ul>'; }
+function vis(v){ var f = FILT[S.f][0];
+  if (f === 'OPEN' && v.st !== 'OPEN') return false;
+  if (f === 'OVERDUE' && !overdue(v)) return false;
+  if (f === 'RECONCILED' && v.st !== 'RECONCILED') return false;
+  if (f === 'CLOSED' && v.st !== 'SCRAPPED' && v.st !== 'CANCELLED') return false;
+  if (S.q && (v.v + ' ' + v.heat + ' ' + v.planned + ' ' + v.act + ' ' + v.reason + ' ' + v.unit).toLowerCase().indexOf(S.q) < 0) return false;
+  return true; }
+function count(f){ var o = S.f; S.f = f; var q = S.q; S.q = ''; var n = V.filter(vis).length; S.f = o; S.q = q; return n; }
+function stB(v){ return v.st === 'OPEN' ? B('OPEN', 'b-pend') + (overdue(v) ? ' ' + B('OVERDUE', 'b-hold') : '') : v.st === 'RECONCILED' ? B('RECONCILED', 'b-done') : v.st === 'SCRAPPED' ? B('SCRAPPED', 'b-hold') : B('CANCELLED', 'b-draft'); }
+function l2c(v, i){ if (v.st === 'RECONCILED') return 'swap ' + hm(v.rt) + (v.swapPend ? ' ' + B('QUEUED', 'b-pend') : '');
+  if (v.st !== 'OPEN') return v.l2 ? hm(v.l2) + ' ✓' : '—';
+  return v.l2 ? hm(v.l2) + ' ✓' : B('PENDING', 'b-pend') + ' <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();viPush(' + i + ')">Push</button>'; }
+function held(v){ return v.post.filter(function(p){ return p[4] === 'HELD'; }).length; }
+
+window.viSel = function(i){ S.sel = i; render(); };
+window.viPick = function(i){ S.sel = i; render(); var p = $('viRecP'); if (p && p.scrollIntoView) p.scrollIntoView({block: 'start'}); };
+window.viF = function(f){ S.f = f; render(); };
+window.viQ = function(){ S.q = ($('viQ').value || '').trim().toLowerCase(); render(); };
+window.viAct = function(){ S.act[V[S.sel].v] = $('viAct').value; render(); };
+window.viRole = function(){ S.role = $('viRole').value; render(); U.toast(S.role === 'SU' ? 'Acting as a super-user — creates, reconciles, cancels and scraps virtual ids' : 'Acting as the charging operator — sees the register; the privileged steps are refused'); };
+window.viL2 = function(){ S.l2 = !S.l2; var n = 0;
+  if (S.l2){ V.forEach(function(v){ if (v.st === 'OPEN' && !v.l2){ v.l2 = S.now; n++; log(v.v, 'L2_PUSH', 'virtual number pushed after the link came back'); } if (v.swapPend){ v.swapPend = false; n++; log(v.v, 'L2_SWAP', 'VIRTUAL_SWAP sent after the link came back'); } }); }
+  render(); U.toast(S.l2 ? 'Level 2 link back' + (n ? ' — ' + n + ' pending message(s) sent' : '') : 'Level 2 link down — new virtual numbers wait as PENDING'); };
+window.viPush = function(i){ var v = V[i]; if (!S.l2){ U.toast('Level 2 is offline — the push waits until the link is back'); return; }
+  v.l2 = S.now; log(v.v, 'L2_PUSH', 'virtual number pushed to Level 2'); render(); U.toast(v.v + ' pushed to Level 2 — it tracks the piece under the virtual number'); };
+window.viDay = function(){ var before = V.filter(overdue).map(function(v){ return v.v; }); S.now += 1440;
+  var nw = V.filter(overdue).map(function(v){ return v.v; }).filter(function(x){ return before.indexOf(x) < 0; });
+  nw.forEach(function(x){ S.trail.unshift([fmt(S.now), x, 'OVERDUE', 'system', 'OPS_VIRTUAL_ID_OVERDUE — open beyond ' + ALERT_D + ' days']); });
+  render(); U.toast(nw.length ? 'OPS_VIRTUAL_ID_OVERDUE — ' + nw.join(', ') + ' open beyond ' + ALERT_D + ' days; the super-user is alerted' : 'Sample clock ' + fmt(S.now) + ' — nothing newly overdue (alert after ' + ALERT_D + ' days)'); };
+window.viProd = function(){ var v = V[S.sel]; if (v.st !== 'OPEN') return; var pc = 'PC-' + (++S.pc);
+  v.post.push(['Production confirmation', pc, '101', S.now, 'HELD']); v.post.push(['Scrap (end cut)', pc, '551', S.now, 'HELD']); v.recs.push('confirmation ' + pc);
+  log(v.v, 'CONFIRMED', pc + ' under the virtual number · 2 postings held'); render();
+  U.toast(pc + ' confirmed under ' + v.v + ' — production continues; its postings are held while the id is virtual (PPC outbox, SAP deferred)'); };
+window.viArrive = function(){ var v = V[S.sel]; if (v.st !== 'OPEN') return;
+  var b = v.planned || (v.unit === 'BLM' ? 'BL-' + (24109 + ARR.length) : 'B0312' + p2(ARR.length + 10));
+  for (var i = 0; i < ARR.length; i++) if (ARR[i].b === b && !ARR[i].used){ S.act[v.v] = b; render(); U.toast(b + ' is already in the batch feed — select it and reconcile'); return; }
+  var a = {b: b, heat: v.heat || '2627-01158', w: v.w - (v.ws === 'scale' ? 8 : 3), unit: v.unit, at: S.now, used: ''};
+  ARR.push(a); S.act[v.v] = b; render(); U.toast('Batch feed: ' + b + ' (heat ' + a.heat + ', ' + n0(a.w) + ' kg) posted to stock — ready to reconcile ' + v.v); };
+window.viRec = function(){ var v = V[S.sel]; if (v.st !== 'OPEN') return; if (!su('Reconciling a virtual id')) return;
+  var a = curArr(v); if (!a){ U.toast('Refused — the actual batch has not arrived in the batch feed yet; reconcile when it does'); return; }
+  if (v.heat && a.heat !== v.heat){ U.toast('Refused — ' + a.b + ' is of heat ' + a.heat + ', the virtual id is of heat ' + v.heat + ': not this billet'); return; }
+  var h = 0; v.post.forEach(function(p){ if (p[4] === 'HELD'){ p[4] = 'RELEASED'; h++; } });
+  v.st = 'RECONCILED'; v.act = a.b; v.rt = S.now; v.heat = v.heat || a.heat; v.w = a.w; v.ws = ''; a.used = v.v; v.swapPend = !S.l2;
+  log(v.v, 'RECONCILED', '→ ' + a.b + ' · rename cascade · VIRTUAL_SWAP ' + (S.l2 ? 'sent' : 'queued') + ' · ' + h + ' posting(s) released');
+  render(); U.toast(v.v + ' reconciled to ' + a.b + ' — renamed in ' + v.recs.join(', ') + '; VIRTUAL_SWAP ' + (S.l2 ? 'sent to' : 'queued for') + ' Level 2; ' + h + ' held posting(s) released in order (PPC outbox, SAP deferred)'); };
+window.viCancel = function(i){ var v = V[i]; if (v.st !== 'OPEN') return; S.sel = i; render(); if (!su('Cancelling or scrapping a virtual id')) return;
+  U.modal('Cancel or scrap — ' + v.v, '<div class="mdl"><div class="hint">Scrapped: the material was scrapped. Cancelled: a duplicate or created in error. Either way its held postings are cancelled (PPC outbox, deferred) and an audit entry is written.</div><div><label for="vxSt">Outcome</label><select id="vxSt"><option value="SCRAPPED">Scrapped — material scrapped</option><option value="CANCELLED">Cancelled — duplicate or in error</option></select></div><div><label for="vxWhy">Reason (mandatory)</label><textarea id="vxWhy"></textarea></div></div>', 'Confirm', function(){
+    if (!U.req(['vxWhy'])) return false; v.st = $('vxSt').value; var n = 0; v.post.forEach(function(p){ if (p[4] === 'HELD'){ p[4] = 'CANCELLED'; n++; } });
+    log(v.v, v.st, $('vxWhy').value + ' · ' + n + ' held posting(s) cancelled'); render(); U.toast(v.v + ' ' + v.st.toLowerCase() + ' — ' + n + ' held posting(s) cancelled; audit written'); return true; }); };
+window.viPrev = function(fill){ var heat = $('vcHeat').value, h = HEATS[heat], g = heat ? gap(heat) : null, el = $('vcPrev'), unit = $('vcUnit').value;
+  if (fill && h){ $('vcUnit').value = h[0]; $('vcG').value = h[1]; $('vcSec').value = h[2]; $('vcW').value = h[3]; $('vcWs').value = 'theoretical'; unit = h[0]; }
+  if (heat && !g){ var c = null; (PL[heat] || []).forEach(function(r){ if (!r[1] && covered(r[0])) c = covered(r[0]); });
+    el.className = 'banner'; el.style.cssText = 'background:#ffebee;border-color:#ef9a9a;color:#b71c1c';
+    el.innerHTML = '<b>No missing planned number in heat ' + heat + '</b> — ' + (c ? c.planned + ' is already held by ' + c.v : 'every planned number has been produced') + '; a virtual id here would duplicate a billet. Check the scan.'; return; }
+  el.className = 'banner'; el.style.cssText = '';
+  el.innerHTML = heat ? 'Virtual number <b>V-' + heat + '-' + p2(S.vno) + '</b> · planned number <b>' + g + '</b> (the heat\'s missing number)' : 'Virtual number <b>VID-' + unit + '-202609' + p2(Math.floor(S.now / 1440) + 1) + '-' + ('00' + S.vidno).slice(-3) + '</b> — VID series (heat not known)'; };
+window.viCreate = function(pre){ if (!su('Creating a virtual id')) return false; pre = pre || {};
+  var hOpts = '<option value="">— heat not known —</option>' + Object.keys(HEATS).map(function(h){ return '<option' + (h === pre.heat ? ' selected' : '') + '>' + h + '</option>'; }).join('');
+  U.modal('Create virtual id', '<div class="mdl"><div class="hint">The billet is physically here but its id is not in the system. With a known heat the virtual number takes the heat\'s missing planned number; without one it is a VID series number. The material charges and rolls normally; its postings stay held until it is reconciled.</div>'
+    + '<div class="three"><div><label for="vcUnit">Unit</label><select id="vcUnit" onchange="viPrev()"><option>BRM</option><option>BLM</option></select></div><div><label for="vcHeat">Heat</label><select id="vcHeat" onchange="viPrev(1)">' + hOpts + '</select></div><div><label for="vcReason">Reason</label><select id="vcReason">' + REASONS.map(function(r){ return '<option' + (r === (pre.reason || 'ERP_DELAYED') ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></div></div>'
+    + '<div class="three"><div><label for="vcW">Weight kg (mandatory)</label><input type="number" id="vcW"/></div><div><label for="vcWs">Weight source</label><select id="vcWs"><option>theoretical</option><option>scale</option></select></div><div><label for="vcLen">Length m</label><input type="number" id="vcLen" value="12.0"/></div></div>'
+    + '<div class="two"><div><label for="vcG">Grade</label><input type="text" id="vcG"/></div><div><label for="vcSec">Section</label><input type="text" id="vcSec"/></div></div>'
+    + '<div><label for="vcWhy">Reason note (mandatory)</label><input type="text" id="vcWhy"/></div><div id="vcPrev" class="banner"></div></div>', 'Create', function(){
+    if (!U.req(['vcW', 'vcWhy'])) return false;
+    var heat = $('vcHeat').value, unit = $('vcUnit').value, g = heat ? gap(heat) : null;
+    if (heat && !g){ U.toast('Refused — heat ' + heat + ' has no missing planned number; a virtual id would duplicate a billet'); return false; }
+    var no = heat ? 'V-' + heat + '-' + p2(S.vno++) : 'VID-' + unit + '-202609' + p2(Math.floor(S.now / 1440) + 1) + '-' + ('00' + (S.vidno++)).slice(-3);
+    var v = {v: no, reason: $('vcReason').value, heat: heat, planned: g || '', unit: unit, created: S.now, by: WHO.SU, w: +$('vcW').value, ws: $('vcWs').value, grade: $('vcG').value || '—', sec: $('vcSec').value || '—', len: $('vcLen').value || '—', l2: S.l2 ? S.now : null, st: 'OPEN', act: '', rt: null, recs: ['inventory (placeholder)', 'charge line'], post: []};
+    V.unshift(v); S.sel = 0; S.f = 0; S.q = ''; $('viQ').value = '';
+    log(no, 'CREATED', v.reason + ' · ' + (heat ? 'heat ' + heat + ' · planned ' + g : 'no heat — VID series') + ' · ' + $('vcWhy').value + (S.l2 ? ' · pushed to Level 2' : ' · Level 2 push pending'));
+    render(); U.toast(no + ' created (OPS_VIRTUAL_ID_CREATED) — ' + (S.l2 ? 'Level 2 received the virtual number' : 'Level 2 offline: push pending') + '; postings for this material stay held until it is reconciled'); return true; }, true);
+  viPrev(1); return false; };
+window.viMn = function(){ var h = $('mnHeat').value, p = PL[h], g = gap(h);
+  $('mnRes').innerHTML = '<table class="g"><thead><tr><th>Planned number</th><th>State</th></tr></thead><tbody>' + p.map(function(r){ var c = covered(r[0]);
+    return '<tr class="' + (r[1] ? '' : c ? 'warn' : 'bad') + '"><td><b>' + r[0] + '</b></td><td>' + (r[1] ? B('PRODUCED', 'b-done') : c ? B('HELD BY ' + c.v, 'b-pend') : B('MISSING — PROPOSED', 'b-hold')) + '</td></tr>'; }).join('') + '</tbody></table>'
+    + '<div class="hint" style="margin-top:6px">' + (g ? 'Gap found: <b>' + g + '</b> → a virtual id V-' + h + '-' + p2(S.vno) + ' would take it.' : 'No gap — every planned number is produced or already held by a virtual id.') + '</div>'; };
+window.viMissing = function(){
+  U.modal('Missing-number check', '<div class="mdl"><div class="hint">Planned numbers of the heat (from heat generation) minus the numbers produced or held by a virtual id — the gap is proposed as the planned number of the virtual id.</div><div><label for="mnHeat">Heat</label><select id="mnHeat" onchange="viMn()">' + Object.keys(PL).map(function(h){ return '<option' + (h === '2627-01173' ? ' selected' : '') + '>' + h + '</option>'; }).join('') + '</select></div><div id="mnRes"></div></div>', 'Create virtual id for the gap', function(){
+    var h = $('mnHeat').value; if (!gap(h)){ U.toast('No gap in heat ' + h + ' — nothing to create'); return false; }
+    return viCreate({heat: h, reason: 'MISSING_IN_HEAT'}); });
+  viMn(); };
+function renderRec(){ var v = V[S.sel], el = $('viRec');
+  $('viRecT').textContent = (v.st === 'OPEN' ? 'Reconcile ' : '') + v.v;
+  if (v.st !== 'OPEN'){ el.innerHTML = '<div class="pvempty">' + (v.st === 'RECONCILED' ? v.v + ' was reconciled to ' + v.act + ' on ' + fmt(v.rt) + ' — VIRTUAL_SWAP to Level 2, the held postings followed ' + v.act + '.' : v.v + ' is ' + v.st.toLowerCase() + ' — its held postings were cancelled.') + '</div>'; return; }
+  var list = arrivals(v), a = curArr(v), ch = [];
+  var opts = (a ? '' : '<option value="" selected>— no batch' + (v.heat ? ' of heat ' + v.heat : '') + ' has arrived yet —</option>') + list.map(function(x){ return '<option value="' + x.b + '"' + (a && a.b === x.b ? ' selected' : '') + '>' + x.b + ' · ' + x.heat + ' · ' + n0(x.w) + ' kg · arrived ' + hm(x.at) + '</option>'; }).join('');
+  if (!a) ch.push(['wn', 'The actual batch has not arrived in the batch feed yet — reconcile when it does']);
+  else {
+    if (v.heat && a.heat !== v.heat) ch.push(['bad', 'Heat ' + a.heat + ' ≠ heat ' + v.heat + ' of the virtual id — not this billet']);
+    else ch.push(['ok', v.heat ? 'Heat ' + a.heat + ' = heat of the virtual id' : 'Heat ' + a.heat + ' taken from the actual batch (the virtual id had none)']);
+    if (v.planned && a.b !== v.planned) ch.push(['wn', 'Actual id ' + a.b + ' is not the planned number ' + v.planned]);
+    ch.push(['ok', 'Rename cascade: ' + v.recs.join(', ') + ' → ' + a.b]);
+    ch.push(['ok', 'Level-2 VIRTUAL_SWAP message ' + (S.l2 ? 'queued' : 'waits for the link') + ' (' + v.v + ' → ' + a.b + ')']);
+    var d = a.w - v.w; ch.push([d ? 'wn' : 'ok', d ? 'Weight difference ' + n0(v.w) + ' ' + v.ws + ' vs ' + n0(a.w) + ' actual (batch feed) — the actual weight is kept' : 'Weight ' + n0(a.w) + ' kg matches']);
+    var h = held(v); ch.push(['ok', h ? h + ' held posting(s) follow ' + a.b + ' in dependency order — PPC outbox (SAP deferred)' : 'No posting held yet']);
+  }
+  el.innerHTML = '<div class="mgrid" style="grid-template-columns:repeat(3,1fr)"><div class="fld"><label>Virtual number</label><input value="' + esc(v.v) + '" readonly/></div><div class="fld"><label for="viAct">Actual batch (from batch feed / ERP stock)</label><select id="viAct" onchange="viAct()">' + opts + '</select></div><div class="fld"><label>Authorised by</label><input id="viAuth" readonly value="' + (S.role === 'SU' ? 'S. Iyer (VIRTUAL_ID_CREATE)' : '— needs a super-user') + '"/></div></div>'
+    + '<div style="margin-top:8px">' + chk(ch) + '</div><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="viRecB" onclick="viRec()"><i class="fa-solid fa-check"></i> Reconcile and release postings</button><button class="btn btn-ghost btn-sm" id="viArrB" onclick="viArrive()"><i class="fa-solid fa-inbox"></i> Simulate batch arrival</button></div>'; }
+function renderPost(){ var v = V[S.sel];
+  $('viPostT').textContent = 'Held postings — ' + v.v;
+  var rows = v.post.length ? v.post.map(function(p){ var st = p[4] === 'HELD' ? B('HELD — VIRTUAL ID', 'b-hold') : p[4] === 'RELEASED' ? B('RELEASED → ' + v.act, 'b-done') : B('CANCELLED', 'b-draft');
+    return '<tr><td>' + p[0] + '</td><td>' + p[1] + '</td><td>' + p[2] + '</td><td>' + fmt(p[3]) + '</td><td>' + st + '</td></tr>'; }).join('') : '<tr class="empty"><td colspan="5">No posting yet — the material has not been confirmed.</td></tr>';
+  $('viPost').innerHTML = '<div style="font-size:12.5px;margin-bottom:6px">Captured parameters: <b>' + n0(v.w) + ' kg</b> (' + (v.ws || 'final weight') + ') · ' + v.len + ' m · ' + v.grade + ' · ' + v.sec + (v.ws ? ' — kept until the final weight' : '') + '</div>'
+    + '<table class="g" id="viPostTb"><thead><tr><th>Posting</th><th>Ref</th><th>Mvt</th><th>At</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>'
+    + '<div style="font-size:12px;color:var(--color-text-muted);margin:6px 0">While the id is virtual nothing is posted for this material; SAP postings go through the PPC outbox (deferred) and follow the actual id after reconciliation.</div>'
+    + (v.st === 'OPEN' ? '<button class="btn btn-ghost btn-sm" id="viProdB" onclick="viProd()"><i class="fa-solid fa-industry"></i> Confirm production under the virtual id (sample)</button>' : ''); }
+function render(){
+  var open = V.filter(function(v){ return v.st === 'OPEN'; }).length, od = V.filter(overdue), rec = 6 + V.filter(function(v){ return v.st === 'RECONCILED'; }).length,
+      cl = V.filter(function(v){ return v.st === 'SCRAPPED' || v.st === 'CANCELLED'; }).length, hp = V.reduce(function(a, v){ return a + held(v); }, 0);
+  $('viK').innerHTML = [[open, 'open'], [od.length, 'overdue (> ' + ALERT_D + ' d)'], [rec, 'reconciled (30 d)'], [Math.round(rec / (rec + cl) * 100) + ' %', 'closed the loop'], [hp, 'postings held']].map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('viAl').innerHTML = od.length ? '<div class="note" style="background:#ffebee;border-color:#ef9a9a;color:#b71c1c"><i class="fa-solid fa-bell"></i> <b>OPS_VIRTUAL_ID_OVERDUE</b> — ' + od.map(function(v){ return v.v + ' (open since ' + fmt(v.created) + ')'; }).join(', ') + ' — open beyond ' + ALERT_D + ' days; reconcile, scrap or cancel.</div>' : '';
+  $('viClock').textContent = fmt(S.now);
+  $('viL2B').innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> ' + (S.l2 ? 'online — click to take it offline' : 'offline — click to bring it back');
+  $('viL2B').className = 'btn btn-sm ' + (S.l2 ? 'btn-ghost' : 'btn-primary');
+  $('viTabs').innerHTML = FILT.map(function(f, j){ return '<span class="' + (S.f === j ? 'on' : '') + '" onclick="viF(' + j + ')">' + f[1] + ' (' + count(j) + ')</span>'; }).join('');
+  var rows = V.map(function(v, i){ if (!vis(v)) return '';
+    var cls = (overdue(v) ? 'bad' : v.st === 'OPEN' ? 'warn' : v.st === 'RECONCILED' ? 'ok' : '') + ' clk' + (i === S.sel ? ' sel' : '');
+    var act = v.st === 'OPEN' ? '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();viPick(' + i + ')"><i class="fa-solid fa-link"></i> Reconcile</button> <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();viCancel(' + i + ')">Cancel / scrap</button>' : '—';
+    return '<tr class="' + cls + '" data-v="' + esc(v.v) + '" onclick="viSel(' + i + ')"><td><b>' + esc(v.v) + '</b></td><td>' + v.reason + '</td><td>' + (v.heat || '—') + '</td><td>' + (v.st === 'RECONCILED' ? v.act : v.planned ? v.planned + ' (planned)' : '—') + '</td><td>' + v.unit + '</td><td>' + fmt(v.created) + '</td><td>' + esc(v.by) + '</td><td class="num">' + n0(v.w) + (v.ws ? ' (' + v.ws + ')' : '') + '</td><td>' + l2c(v, i) + '</td><td>' + stB(v) + '</td><td style="white-space:nowrap">' + act + '</td></tr>'; }).join('');
+  $('viReg').querySelector('tbody').innerHTML = rows || '<tr class="empty"><td colspan="11">No virtual id matches the filter.</td></tr>';
+  renderRec(); renderPost();
+  $('viTrail').querySelector('tbody').innerHTML = S.trail.map(function(t){ return '<tr><td>' + t[0] + '</td><td><b>' + esc(t[1]) + '</b></td><td>' + B(t[2], t[2] === 'RECONCILED' ? 'b-done' : t[2] === 'OVERDUE' || t[2] === 'SCRAPPED' ? 'b-hold' : t[2] === 'CREATED' ? 'b-pend' : 'b-info') + '</td><td>' + esc(t[3]) + '</td><td>' + esc(t[4]) + '</td></tr>'; }).join('');
+}
+render();
+})();
+</script>
   </main>
 </div>
 

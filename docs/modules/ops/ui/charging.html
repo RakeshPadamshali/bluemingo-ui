@@ -208,32 +208,154 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../../ppc/ui/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../../mdm/ui/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../../../qa-module/ui/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Charging</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-barcode"></i> Charging — BRM furnace</h1><div class="sub">Single-action charging screen driven by the barcode: the operator scans the label in the scan box (scan to charge — switched on per installation); only the billets in today's released sequence can be charged, any other scan is refused with the reason; validation in order (exists, cleared, code, PSN, duplicate, sequence, quantity + 1); a sequence deviation offers remove or accept; there is no swap at the furnace — the planner swaps in PPC before the next release; manual entry with image for damaged stickers; weights from scale, ERP or theoretical.</div></div><div class="ph-actions"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-list-ol"></i> Sequencing</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-list"></i> Scan trail</button></div></div>
-<div class="hmi"><div class="big"><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:16px">BRM · Furnace charging · Block 2 — RO 32 · 304L · PO-88012/10-B</b><div class="sub">Rolling schedule RS-BRM-2026-0412 v2 · sequence position 7 of 24 · assigned 240 pcs + 1 overrun</div></div><span class="badge b-clr">HMI MODE</span></div><div class="scanbox"><label for="scanIn"><i class="fa-solid fa-barcode"></i> Scan to charge</label><input id="scanIn" placeholder="Scan the billet label or type the id, then Enter" autocomplete="off" onkeydown="if(event.key==='Enter')doScan()"/><button class="btn btn-primary" onclick="doScan()"><i class="fa-solid fa-barcode"></i> Scan</button><span class="mut" style="font-size:11.5px">installation setting · try B031141 (next in sequence), B031150, B031188, B031138, B030871</span></div><div id="scanRes" class="scanres ok"><b>B031140 — chargeable</b> · in block 2 of today's release · planned position 9, charging at 7 → supervisor accepts the deviation or removes it</div><div class="scan" id="scanShow"><i class="fa-solid fa-barcode"></i> <span id="scanId">B031140</span> <span style="font-size:13px;font-weight:400;color:#666" id="scanMeta">scanned 10:41:07 · scanner SC-BRM-01</span></div><div class="grid2" id="chkBlk"><div><ul class="chk"><li><i class="fa-solid fa-check ok "></i>Exists · heat 2627-01172 · SQ 160 · 12.0 m · 1,260 kg (ERP weight)</li><li><i class="fa-solid fa-check ok "></i>Cleared — inward released, UD APPROVED, chemistry pass</li><li><i class="fa-solid fa-check ok "></i>Code S_NBLTW allowed at BRM charging</li><li><i class="fa-solid fa-check ok "></i>PSN QDQA06_311 r2 = production order PSN</li><li><i class="fa-solid fa-check ok "></i>Not charged before</li><li><i class="fa-solid fa-triangle-exclamation wn "></i>Sequence — planned position 9, charging at 7 (deviation)</li><li><i class="fa-solid fa-check ok "></i>Quantity 186 / 240 (+1) charged for this production order</li></ul></div><div><div class="panel"><h3>Notes for this PSN <span class="chip">2</span></h3><ul class="timeline"><li><b>CAPA-2026-031</b> · surface seams on RO 32 304L last campaign — check descaler pressure ≥ 180 bar</li><li><b>Last campaign</b> · RO 32 finishing speed reduced 5 % on stand 15</li></ul></div></div></div><div style="display:flex;gap:10px"><button class="go" id="goBtn"><i class="fa-solid fa-fire"></i> CHARGE (accept deviation — supervisor)</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-minus"></i> Remove from queue</button><button class="btn btn-ghost btn-sm" onclick="manualMode()"><i class="fa-solid fa-keyboard"></i> Manual id entry</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-rotate-left"></i> Direct hot-out</button></div></div><div><div class="panel"><h3>Queue — released block, in sequence <small>delete only · additions in Sequencing</small></h3><div class="q"><div class="it"><span>5</span><b>B031138</b><span>2627-01171</span><span>1,262 kg</span><span class="sp"><span class="badge b-done">CHARGED</span> 10:12</span></div><div class="it"><span>6</span><b>B031139</b><span>2627-01171</span><span>1,259 kg</span><span class="sp"><span class="badge b-done">CHARGED</span> 10:27</span></div><div class="it on"><span>7</span><b>B031140</b><span>2627-01172</span><span>1,260 kg</span><span class="sp"><span class="badge b-pend">SCANNED</span></span></div><div class="it"><span>8</span><b>B031141</b><span>2627-01172</span><span>1,258 kg</span><span class="sp"><span class="badge b-info">QUEUED</span></span></div><div class="it"><span>9</span><b>B031142</b><span>2627-01172</span><span>—</span><span class="sp"><span class="badge b-hold">VIRTUAL</span> V-2627-01172-07</span></div><div class="it"><span>10</span><b>B031143</b><span>2627-01173</span><span>1,261 kg</span><span class="sp"><span class="badge b-info">QUEUED</span></span></div></div></div><div class="panel"><h3>Weights</h3><table class="g"><thead><tr><th>Source</th><th>Value</th><th>Used</th></tr></thead><tbody><tr><td>Scale WS-BRM-01</td><td>—</td><td><span class="badge b-hold">offline</span></td></tr><tr><td>ERP-declared (batch feed)</td><td>1,260 kg</td><td><span class="badge b-done">USED</span></td></tr><tr><td>Theoretical 12.0 m × 105 kg/m</td><td>1,260 kg</td><td>fallback</td></tr></tbody></table></div></div></div><div style="height:12px"></div><div class="panel"><h3>Scan events — validation trail</h3><table class="g" id="trail"><thead><tr><th>Time</th><th>Code</th><th>Mode</th><th>Result</th><th>Action</th><th>By</th></tr></thead><tbody><tr class="warn"><td>10:41:07</td><td>B031140</td><td>SCAN</td><td><span class="badge b-pend">OUT_OF_SEQUENCE</span></td><td>—</td><td>op. R. Kumar</td></tr><tr class="ok"><td>10:27:40</td><td>B031139</td><td>SCAN</td><td><span class="badge b-done">OK</span></td><td>CHARGED</td><td>op. R. Kumar</td></tr><tr class="bad"><td>10:20:11</td><td>B031139</td><td>SCAN</td><td><span class="badge b-hold">DUPLICATE</span></td><td>REJECTED</td><td>op. R. Kumar</td></tr><tr class="ok"><td>10:12:02</td><td>B031138</td><td>MANUAL</td><td><span class="badge b-done">OK</span></td><td>CHARGED · image kept</td><td>op. R. Kumar</td></tr><tr class="warn"><td>09:58:30</td><td>B031142</td><td>SCAN</td><td><span class="badge b-hold">NOT_FOUND</span></td><td>VIRTUAL_CREATED (super-user)</td><td>S. Iyer</td></tr></tbody></table></div><script>
-var SCAN = {
- 'B031140': ['ok', 'B031140 — chargeable', 'in block 2 of today\'s release · planned position 9, charging at 7 → supervisor accepts the deviation or removes it', 'OUT_OF_SEQUENCE'],
- 'B031141': ['ok', 'B031141 — chargeable', 'next in the sequence of block 2 · heat 2627-01172 · 1,258 kg · charge as today', 'OK'],
- 'B031150': ['bad', 'B031150 — not chargeable', 'not in today\'s sequence (block 2 release) · ask the planner to swap it in PPC and release again; there is no swap at the furnace', 'NOT_IN_SEQUENCE'],
- 'B031188': ['bad', 'B031188 — not chargeable', 'not cleared by Quality · usage decision pending for heat 2627-01180', 'NOT_CLEARED'],
- 'B031138': ['bad', 'B031138 — not chargeable', 'already charged at 10:12 by op. R. Kumar', 'ALREADY_CHARGED'],
- 'B030871': ['bad', 'B030871 — not chargeable', 'not at this mill · routed to ABGM-1 for grinding', 'NOT_AT_THIS_MILL']
-};
-function doScan(){
- var el=document.getElementById('scanIn'); var id=(el.value||'').trim().toUpperCase(); if(!id){el.focus();return;}
- var r=SCAN[id]||['bad', id+' — not found', 'no lot with this id · use manual id entry, or a super-user creates a virtual id', 'NOT_FOUND'];
- var box=document.getElementById('scanRes'); box.className='scanres '+r[0]; box.innerHTML='<b>'+r[1]+'</b> · '+r[2];
- var t=new Date(); var hh=('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2);
- document.getElementById('scanId').textContent=id; document.getElementById('scanMeta').textContent='scanned '+hh+' · scanner SC-BRM-01';
- document.getElementById('chkBlk').style.display = (r[0]==='ok') ? '' : 'none';
- var W={'B031140':'1,260 kg','B031141':'1,258 kg'};
- document.querySelectorAll('#chkBlk .chk li').forEach(function(li){var t=li.textContent;if(t.indexOf('Exists')===0){li.innerHTML='<i class="fa-solid fa-check ok"></i>Exists · heat 2627-01172 · SQ 160 · 12.0 m · '+(W[id]||'')+' (ERP weight)';}if(t.indexOf('Sequence')===0){li.innerHTML=(r[3]==='OUT_OF_SEQUENCE')?'<i class="fa-solid fa-triangle-exclamation wn"></i>Sequence — planned position 9, charging at 7 (deviation)':'<i class="fa-solid fa-check ok"></i>Sequence — next in sequence (position 8)';}});
- var g=document.getElementById('goBtn'); if(r[0]==='ok'){g.disabled=false;g.style.opacity=1;g.style.cursor='pointer';g.innerHTML='<i class="fa-solid fa-fire"></i> '+(r[3]==='OUT_OF_SEQUENCE'?'CHARGE (accept deviation — supervisor)':'CHARGE');}else{g.disabled=true;g.style.opacity=.45;g.style.cursor='not-allowed';g.innerHTML='<i class="fa-solid fa-ban"></i> CHARGE — not allowed';}
- var tb=document.querySelector('#trail tbody'); if(tb){var tr=document.createElement('tr'); tr.className=(r[0]==='ok')?'ok':'bad';
-  tr.innerHTML='<td>'+hh+'</td><td>'+id+'</td><td>SCAN</td><td><span class="badge '+(r[0]==='ok'?'b-done':'b-hold')+'">'+r[3]+'</span></td><td>'+(r[0]==='ok'?'—':'REFUSED')+'</td><td>op. R. Kumar</td>'; tb.insertBefore(tr, tb.firstChild);}
- el.value=''; el.focus();
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Charging</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-barcode"></i> Charging — BRM furnace</h1><div class="sub">Single-action charging screen driven by the barcode: the operator scans the label (scan to charge — an installation setting); only the billets in today's released sequence can be charged and any other scan is refused with the reason; validation in a fixed order (exists, cleared, code, PSN, not charged before, sequence, quantity + 1); a sequence deviation offers remove or accept; there is no swap at the furnace — the planner swaps in PPC before the next release; manual entry with an image for damaged labels; weights from the scale, the ERP or the theoretical weight.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="chRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="chRole" onchange="chRole()" style="width:auto"><option value="OP">Charging operator</option><option value="SUP">Shift supervisor</option><option value="SU">Super-user</option></select></span><a class="btn btn-ghost btn-sm" style="text-decoration:none" href="../../ppc/ui/rolling-sequence.html"><i class="fa-solid fa-list-ol"></i> Sequencing</a></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets. Try: <span class="lk" onclick="chTry('B031141')">B031141</span> (next — Charge) · <span class="lk" onclick="chTry('B031140')">B031140</span> (out of sequence — remove, or accept as supervisor) · <span class="lk" onclick="chTry('B031177')">B031177</span> (PSN mismatch — supervisor override) · <span class="lk" onclick="chTry('B031150')">B031150</span> (not in sequence) · <span class="lk" onclick="chTry('B031188')">B031188</span> (not cleared) · <span class="lk" onclick="chTry('B031138')">B031138</span> (already charged) · <span class="lk" onclick="chTry('B030871')">B030871</span> (not at this mill) · <span class="lk" onclick="chTry('X99001')">X99001</span> (not found — super-user virtual id) · Manual id entry · Scale online · Hot-out on a charged billet.</div><div class="kpis" id="chK"></div><div class="hmi"><div class="big"><div style="display:flex;justify-content:space-between;align-items:center"><div id="chHead"></div><span class="badge b-clr">HMI MODE</span></div><div class="scanbox"><label for="scanIn"><i class="fa-solid fa-barcode"></i> Scan to charge</label><input id="scanIn" autocomplete="off" onkeydown="if(event.key==='Enter')chScan()"/><button class="btn btn-primary" onclick="chScan()"><i class="fa-solid fa-barcode"></i> Scan</button><button class="btn btn-ghost btn-sm" id="chManBtn" onclick="chManual()"></button><span id="chMan"></span></div><div id="scanRes" class="scanres"></div><div class="scan"><i class="fa-solid fa-barcode"></i> <span id="scanId">—</span> <span style="font-size:13px;font-weight:400;color:#666" id="scanMeta"></span></div><div class="grid2"><div><div id="chChk"></div><div style="margin-top:8px;font-size:12.5px">Weight used: <span id="chW">—</span></div></div><div><div class="panel"><h3>Notes for this PSN <span class="chip">2</span></h3><ul class="timeline"><li><b>CAPA-2026-031</b> · surface seams on RO 32 304L last campaign — check descaler pressure ≥ 180 bar</li><li><b>Last campaign</b> · RO 32 finishing speed reduced 5 % on stand 15</li></ul></div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="go" id="goBtn" onclick="chCharge()"></button><button class="btn btn-ghost btn-sm" id="chRm" onclick="chRemove()"><i class="fa-solid fa-minus"></i> Remove from queue</button><button class="btn btn-ghost btn-sm" id="chPsnB" onclick="chPsn()"><i class="fa-solid fa-user-shield"></i> Override PSN</button><button class="btn btn-ghost btn-sm" id="chVirt" onclick="chVirtual()"><i class="fa-solid fa-id-badge"></i> Create virtual id</button></div></div><div><div class="panel"><h3>Queue — released block, in sequence <small>delete only · additions in sequencing</small></h3><div class="q" id="chQ"></div></div><div class="panel"><h3>Weights <button class="btn btn-ghost btn-sm" id="chScaleB" onclick="chScale()" style="float:right"></button></h3><div id="chWt"></div></div></div></div><div style="height:12px"></div><div class="panel"><h3>Scan events — validation trail</h3><table class="g" id="trail"><thead><tr><th>Time</th><th>Code</th><th>Mode</th><th>Result</th><th>Action</th><th>By</th></tr></thead><tbody></tbody></table></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, n0 = U.n0, esc = U.esc;
+var BL = {"mill": "BRM", "block": "Block 2 \u2014 RO 32 \u00b7 304L", "po": "PO-88012/10-B", "sched": "Schedule 7 v2", "psn": "QDQA06_311 r2", "assigned": 240, "overrun": 1, "charged": 186}, Q = [[5, "B031138", "2627-01171", 1262, "CHARGED", "10:12"], [6, "B031139", "2627-01171", 1259, "CHARGED", "10:27"], [7, "B031141", "2627-01172", 1258, "QUEUED", ""], [8, "B031143", "2627-01173", 1261, "QUEUED", ""], [9, "B031140", "2627-01172", 1260, "QUEUED", ""], [10, "B031177", "2627-01173", 1259, "QUEUED", ""], [11, "B031144", "2627-01173", 1257, "QUEUED", ""], [12, "B031145", "2627-01173", 1263, "QUEUED", ""]], OTHER = {"B031150": ["NOT_IN_SEQUENCE", "not in today's released sequence (block 2) \u2014 the planner swaps it in PPC and releases again; there is no swap at the furnace", "cleared"], "B031188": ["NOT_CLEARED", "not cleared by Quality \u2014 usage decision pending for heat 2627-01180", "cleared"], "B030871": ["NOT_AT_THIS_MILL", "not at this mill \u2014 routed to ABGM-1 for grinding", "exists"]}, PSN_OF = {"B031177": "QDQA06_290 r1"};
+var S = {role: 'OP', scale: false, manual: false, cur: null, vno: 8, trail: [
+  ['10:27:40', 'B031139', 'SCAN', 'OK', 'CHARGED', 'op. R. Kumar'], ['10:20:11', 'B031139', 'SCAN', 'DUPLICATE', 'REJECTED', 'op. R. Kumar'],
+  ['10:12:02', 'B031138', 'MANUAL', 'OK', 'CHARGED · image kept', 'op. R. Kumar']]};
+var WHO = {OP: 'op. R. Kumar', SUP: 'sup. S. Iyer', SU: 'super-user A. Rao'};
+function now(){ var t = new Date(); return ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + ':' + ('0' + t.getSeconds()).slice(-2); }
+function q(id){ for (var i = 0; i < Q.length; i++) if (Q[i][1] === id) return Q[i]; return null; }
+function nextPos(){ for (var i = 0; i < Q.length; i++) if (Q[i][4] === 'QUEUED') return Q[i][0]; return null; }
+function charged(){ return BL.charged; }
+function weight(row){ if (!row) return ['—', '—'];
+  if (row[1].indexOf('V-') === 0) return [n0(1260) + ' kg', 'theoretical 12.0 m × 105 kg/m'];
+  if (S.scale) return [n0(row[3] + 2) + ' kg', 'scale WS-BRM-01'];
+  return [n0(row[3]) + ' kg', 'ERP-declared (batch feed)']; }
+// ---- validation in the BR-CHG-01 order; stops at the first failure
+function validate(id){
+  var row = q(id), o = OTHER[id], steps = [], res = null, why = '';
+  function step(st, t){ steps.push([st, t]); }
+  if (!row && !o){ step('bad', 'Exists — no lot with this id'); return {res: 'NOT_FOUND', why: 'no lot with this id — manual id entry, or a super-user creates a virtual id', steps: steps, row: null}; }
+  var heat = row ? row[2] : (id === 'B031188' ? '2627-01180' : id === 'B030871' ? '2526-16783' : '2627-01175');
+  step('ok', 'Exists · heat ' + heat + ' · SQ 160 · 12.0 m');
+  if (o && o[0] === 'NOT_CLEARED'){ step('bad', 'Cleared — usage decision pending'); return {res: o[0], why: o[1], steps: steps, row: null}; }
+  step('ok', 'Cleared — inward released, usage decision approved, chemistry pass');
+  if (o && o[0] === 'NOT_AT_THIS_MILL'){ step('bad', 'Code allowed at BRM charging — routed to ABGM-1'); return {res: o[0], why: o[1], steps: steps, row: null}; }
+  step('ok', 'Code S_NBLTW allowed at BRM charging');
+  if (o && o[0] === 'NOT_IN_SEQUENCE'){ step('bad', 'In today\'s released sequence — no'); return {res: o[0], why: o[1], steps: steps, row: null}; }
+  var psn = PSN_OF[id];
+  if (psn && !row.psnOk){ step('bad', 'PSN ' + psn + ' ≠ production order PSN ' + BL.psn); return {res: 'PSN_MISMATCH', why: 'the batch PSN differs from the PSN pinned on the production order — the shift supervisor may override with a reason', steps: steps, row: row}; }
+  step('ok', 'PSN ' + (psn && row.psnOk ? psn + ' — override by supervisor' : BL.psn) + ' = production order PSN');
+  if (row[4] === 'CHARGED'){ step('bad', 'Not charged before — charged at ' + row[5]); return {res: 'ALREADY_CHARGED', why: 'already charged at ' + row[5] + ' — a hot-out-returned billet would be chargeable again', steps: steps, row: row}; }
+  if (row[4] === 'REMOVED'){ step('bad', 'In the queue — removed, back in sequencing'); return {res: 'NOT_IN_SEQUENCE', why: 'removed from the queue — it returns through sequencing in PPC', steps: steps, row: row}; }
+  step('ok', 'Not charged before' + (row[4] === 'HOT_OUT' ? ' (returned by a direct hot-out — chargeable again)' : ''));
+  var np = nextPos();
+  if (row[0] !== np && row[4] !== 'HOT_OUT'){ step('wn', 'Sequence — planned position ' + row[0] + ', next to charge is ' + np + ' (deviation)'); res = 'OUT_OF_SEQUENCE'; why = 'planned position ' + row[0] + ', charging at ' + np + ' — remove it from the queue, or the shift supervisor accepts the deviation'; }
+  else step('ok', 'Sequence — next in sequence (position ' + row[0] + ')');
+  var lim = BL.assigned + BL.overrun;
+  if (charged() + 1 > lim){ step('bad', 'Quantity ' + (charged() + 1) + ' > ' + lim); return {res: 'QUANTITY_EXCEEDED', why: 'assigned ' + BL.assigned + ' + ' + BL.overrun + ' reached', steps: steps, row: row}; }
+  step('ok', 'Quantity ' + (charged() + 1) + ' / ' + BL.assigned + ' (+' + BL.overrun + ') for this production order');
+  return {res: res || 'OK', why: why || 'next in the sequence of block 2 · heat ' + row[2] + ' · charge as today', steps: steps, row: row};
 }
-function manualMode(){var el=document.getElementById('scanIn'); el.placeholder='Manual id entry — type the id, attach a photo of the damaged label, then Enter'; el.focus();}
+function trail(code, mode, res, act){ S.trail.unshift([now(), code, mode, res, act, WHO[S.role]]); }
+window.chScan = function(){
+  var el = $('scanIn'), id = (el.value || '').trim().toUpperCase(); if (!id){ el.focus(); return; }
+  if (S.manual && !$('chPhoto').checked){ U.toast('Manual id entry needs a photo of the damaged label — tick "photo attached" first'); return; }
+  var v = validate(id); S.cur = {id: id, v: v, mode: S.manual ? 'MANUAL' : 'SCAN'};
+  var ok = v.res === 'OK' || v.res === 'OUT_OF_SEQUENCE' || v.res === 'PSN_MISMATCH';
+  trail(id, S.cur.mode, v.res, ok ? '—' : 'REFUSED');
+  el.value = ''; el.focus(); render();
+  U.toast(v.res === 'OK' ? id + ' — chargeable' : ok ? id + ' — ' + v.res.replace(/_/g, ' ').toLowerCase() + ': action needed' : id + ' — refused: ' + v.res); };
+window.chCharge = function(){ var c = S.cur; if (!c || !c.v.row) return; var v = c.v, row = v.row;
+  if (v.res === 'OUT_OF_SEQUENCE' && S.role !== 'SUP'){ U.toast('Accepting a sequence deviation is the shift supervisor\'s — switch "Acting as"'); return; }
+  if (v.res === 'PSN_MISMATCH'){ U.toast('Override the PSN first (shift supervisor)'); return; }
+  if (v.res !== 'OK' && v.res !== 'OUT_OF_SEQUENCE') return;
+  var w = weight(row);
+  row[4] = 'CHARGED'; row[5] = now().slice(0, 5); BL.charged++;
+  trail(row[1], c.mode, v.res === 'OUT_OF_SEQUENCE' ? 'DEVIATION_ACCEPTED' : 'OK', 'CHARGED · ' + w[0] + ' (' + w[1].split(' (')[0] + ')' + (c.mode === 'MANUAL' ? ' · image kept' : ''));
+  S.cur = null; S.manual = false; render();
+  U.toast(row[1] + ' charged — ' + w[0] + ' from ' + w[1] + '; PDI sent to Level 2' + (v.res === 'OUT_OF_SEQUENCE' ? '; OPS_SEQUENCE_DEVIATION raised' : '')); };
+window.chRemove = function(){ var c = S.cur; if (!c || !c.v.row || c.v.row[4] !== 'QUEUED') return;
+  c.v.row[4] = 'REMOVED'; trail(c.id, c.mode, 'OUT_OF_SEQUENCE', 'REMOVED → sequencing'); S.cur = null; render();
+  U.toast(c.id + ' removed from the queue — it returns to sequencing in PPC; nothing is added here'); };
+window.chPsn = function(){ var c = S.cur; if (!c || c.v.res !== 'PSN_MISMATCH') return;
+  if (S.role !== 'SUP'){ U.toast('The PSN override is the shift supervisor\'s — switch "Acting as"'); return; }
+  U.modal('Override PSN — ' + c.id, '<div class="mdl"><div class="hint">Batch PSN ' + PSN_OF[c.id] + ' differs from the production order\'s ' + BL.psn + '. A privileged action, recorded on the scan event.</div><div><label for="psnWhy">Reason (mandatory)</label><textarea id="psnWhy"></textarea></div></div>', 'Override', function(){
+    if (!U.req(['psnWhy'])) return false; c.v.row.psnOk = true; trail(c.id, c.mode, 'PSN_OVERRIDE', 'override — ' + $('psnWhy').value);
+    S.cur = {id: c.id, v: validate(c.id), mode: c.mode}; render(); U.toast('PSN override recorded — validation continues'); return true; }); };
+window.chVirtual = function(){ var c = S.cur; if (!c || c.v.res !== 'NOT_FOUND') return;
+  if (S.role !== 'SU'){ U.toast('Creating a virtual id is a super-user action — switch "Acting as"'); return; }
+  U.modal('Create virtual id', '<div class="mdl"><div class="hint">The billet is physically here but has no record (label lost before generation). The virtual id comes from the planned number of a known heat; postings stay held until it is reconciled in the Virtual ID Register.</div><div><label for="vHeat">Heat</label><select id="vHeat"><option>2627-01172</option><option>2627-01173</option></select></div><div><label for="vWhy">Reason (mandatory)</label><input type="text" id="vWhy" value=""/></div></div>', 'Create', function(){
+    if (!U.req(['vWhy'])) return false; var vid = 'V-' + $('vHeat').value + '-' + ('0' + (++S.vno)).slice(-2);
+    var np = nextPos(), row = [np, vid, $('vHeat').value, 1260, 'QUEUED', '']; for (var i = 0; i < Q.length; i++) if (Q[i][0] === np){ Q.splice(i, 0, row); break; }
+    Q.forEach(function(r, k){ if (k > 0 && r[0] <= Q[k - 1][0]) r[0] = Q[k - 1][0] + 1; });
+    trail(c.id, c.mode, 'NOT_FOUND', 'VIRTUAL_CREATED ' + vid); S.cur = {id: vid, v: validate(vid), mode: c.mode}; render();
+    U.toast(vid + ' created (OPS_VIRTUAL_ID_CREATED) — chargeable at the next position; its posting is held until reconciled'); return true; }); };
+window.chManual = function(){ S.manual = !S.manual; render(); $('scanIn').focus(); };
+window.chScale = function(){ S.scale = !S.scale; render(); U.toast('Scale WS-BRM-01 ' + (S.scale ? 'online — scale weight used' : 'offline — ERP-declared weight used')); };
+window.chHotOut = function(id){ var row = q(id); if (!row || row[4] !== 'CHARGED') return;
+  U.modal('Direct hot-out — ' + id, '<div class="mdl"><div class="hint">Charged but not rolled: the billet comes back out of the furnace and returns to stock — it is chargeable again. The event opens on the Hot-Out screen.</div><div><label for="hoWhy">Reason</label><select id="hoWhy"><option>Mill stop</option><option>Furnace overstay</option><option>Wrong billet charged</option></select></div></div>', 'Declare', function(){
+    row[4] = 'HOT_OUT'; BL.charged--; trail(id, 'ACTION', 'HOT_OUT_DIRECT', 'back to stock — ' + $('hoWhy').value); render();
+    U.toast(id + ' — direct hot-out declared (OPS_HOT_OUT_DECLARED); see Hot-Out & Re-roll'); return true; }); };
+window.chRole = function(){ S.role = $('chRole').value; render(); U.toast({OP: 'Acting as the charging operator', SUP: 'Acting as the shift supervisor — accepts deviations, overrides the PSN', SU: 'Acting as a super-user — creates virtual ids'}[S.role]); };
+window.chTry = function(id){ $('scanIn').value = id; chScan(); };
+function render(){
+  var c = S.cur, v = c && c.v, row = v && v.row;
+  $('chHead').innerHTML = '<b style="font-size:16px">' + BL.mill + ' · Furnace charging · ' + BL.block + ' · ' + BL.po + '</b><div class="sub">' + BL.sched + ' · next position ' + (nextPos() || '—') + ' · charged ' + BL.charged + ' of ' + BL.assigned + ' + ' + BL.overrun + ' overrun</div>';
+  $('scanIn').placeholder = S.manual ? 'Manual id entry — type the id, attach the photo, then Enter' : 'Scan the billet label or type the id, then Enter';
+  $('chMan').innerHTML = S.manual ? '<label style="font-size:12.5px;font-weight:400"><input type="checkbox" id="chPhoto"/> photo of the damaged label attached</label>' : '';
+  $('chManBtn').innerHTML = '<i class="fa-solid fa-keyboard"></i> ' + (S.manual ? 'Back to scanning' : 'Manual id entry');
+  var okRes = v && (v.res === 'OK' || v.res === 'OUT_OF_SEQUENCE' || v.res === 'PSN_MISMATCH');
+  $('scanRes').className = 'scanres ' + (!v ? '' : v.res === 'OK' ? 'ok' : 'bad'); $('scanRes').style.display = v ? '' : 'none';
+  if (v) $('scanRes').innerHTML = '<b>' + esc(c.id) + ' — ' + (v.res === 'OK' ? 'chargeable' : okRes ? v.res.replace(/_/g, ' ').toLowerCase() : 'not chargeable') + '</b> · ' + esc(v.why) + ' <span class="badge ' + (v.res === 'OK' ? 'b-done' : okRes ? 'b-pend' : 'b-hold') + '">' + v.res + '</span>';
+  $('scanId').textContent = c ? c.id : '—'; $('scanMeta').textContent = c ? (c.mode === 'MANUAL' ? 'manual entry · image kept' : 'scanned · scanner SC-BRM-01') : 'waiting for a scan';
+  $('chChk').innerHTML = v ? '<ul class="chk">' + v.steps.map(function(s){ return '<li><i class="fa-solid ' + (s[0] === 'ok' ? 'fa-check ok' : s[0] === 'bad' ? 'fa-xmark bad' : 'fa-triangle-exclamation wn') + '"></i>' + esc(s[1]) + '</li>'; }).join('') + '</ul>' : '<div class="pvempty">Scan a billet — the checks run in order: exists, cleared, code allowed, PSN, not charged before, sequence, quantity.</div>';
+  var w = weight(row); $('chW').innerHTML = row ? '<b>' + w[0] + '</b> · ' + w[1] : '—';
+  var go = $('goBtn'), can = v && (v.res === 'OK' || v.res === 'OUT_OF_SEQUENCE');
+  go.disabled = !can; go.innerHTML = can ? '<i class="fa-solid fa-fire"></i> CHARGE' + (v.res === 'OUT_OF_SEQUENCE' ? ' (accept deviation — supervisor)' : '') : '<i class="fa-solid fa-ban"></i> CHARGE — ' + (v ? 'not allowed' : 'scan first');
+  go.style.opacity = can ? 1 : .45; go.style.cursor = can ? 'pointer' : 'not-allowed';
+  $('chRm').disabled = !(v && v.res === 'OUT_OF_SEQUENCE'); $('chPsnB').style.display = v && v.res === 'PSN_MISMATCH' ? '' : 'none'; $('chVirt').style.display = v && v.res === 'NOT_FOUND' ? '' : 'none';
+  $('chQ').innerHTML = Q.map(function(r){ var st = {CHARGED: B('CHARGED', 'b-done') + ' ' + r[5], QUEUED: r[0] === nextPos() ? B('NEXT', 'b-info') : B('QUEUED'), REMOVED: B('REMOVED', 'b-hold'), HOT_OUT: B('HOT-OUT · back in stock', 'b-pend')}[r[4]];
+    return '<div class="it' + (c && c.id === r[1] ? ' on' : '') + '"><span>' + r[0] + '</span><b>' + r[1] + '</b><span>' + r[2] + '</span><span>' + (r[1].indexOf('V-') === 0 ? 'theoretical' : n0(r[3]) + ' kg') + '</span><span class="sp">' + st + (r[4] === 'CHARGED' ? ' <button class="btn btn-ghost btn-sm" onclick="chHotOut(\'' + r[1] + '\')" title="Direct hot-out">Hot-out</button>' : '') + '</span></div>'; }).join('');
+  $('chWt').innerHTML = '<table class="g"><thead><tr><th>Source</th><th>Value</th><th>Used</th></tr></thead><tbody><tr><td>Scale WS-BRM-01</td><td>' + (S.scale && row ? weight(row)[0] : '—') + '</td><td>' + (S.scale ? B('ONLINE · USED', 'b-done') : B('offline', 'b-hold')) + '</td></tr><tr><td>ERP-declared (batch feed)</td><td>' + (row ? n0(row[3]) + ' kg' : '—') + '</td><td>' + (!S.scale ? B('USED', 'b-done') : 'fallback') + '</td></tr><tr><td>Theoretical 12.0 m × 105 kg/m</td><td>1,260 kg</td><td>last fallback</td></tr></tbody></table>';
+  $('chScaleB').innerHTML = '<i class="fa-solid fa-scale-balanced"></i> Scale ' + (S.scale ? 'offline' : 'online');
+  $('chK').innerHTML = [[BL.charged + ' / ' + BL.assigned, 'charged / assigned (+' + BL.overrun + ')'], [Q.filter(function(r){ return r[4] === 'QUEUED'; }).length, 'in the queue'], [S.trail.filter(function(t){ return t[4] === 'REFUSED'; }).length, 'refused scans'], [S.scale ? 'scale' : 'ERP', 'weight source']].map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('trail').querySelector('tbody').innerHTML = S.trail.map(function(t){ var good = t[3] === 'OK' || t[3] === 'DEVIATION_ACCEPTED' || t[3] === 'PSN_OVERRIDE';
+    return '<tr class="' + (t[4] === 'REFUSED' || t[3] === 'DUPLICATE' ? 'bad' : good ? 'ok' : 'warn') + '"><td>' + t[0] + '</td><td>' + esc(t[1]) + '</td><td>' + t[2] + '</td><td>' + B(t[3], good ? 'b-done' : t[4] === 'REFUSED' ? 'b-hold' : 'b-pend') + '</td><td>' + esc(t[4]) + '</td><td>' + t[5] + '</td></tr>'; }).join('');
+}
+render();
+})();
 </script>
   </main>
 </div>

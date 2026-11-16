@@ -208,9 +208,222 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../../ppc/ui/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../../mdm/ui/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../../../qa-module/ui/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Furnace</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-fire"></i> Furnace — RHF BRM · PSN QDQA06_311 r2 (304L · SQ 160 → RO 32)</h1><div class="sub">Reheating furnace pulpit: zone set-points and heating parameters resolved from the process-parameter master by PSN / grade family / size family; actuals from Level 2 or manual; dwell versus limits; discharge confirmation (or at the rolling pulpit); overstay opens a hot-out event for the Quality decision.</div></div><div class="ph-actions"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-upload"></i> Push set-points to L2</button><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-stopwatch"></i> Log downtime</button><button class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right"></i> Discharge selected</button></div></div>
-<div class="kpis"><div class="k"><b>12</b><span>billets in furnace</span></div><div class="k"><b>88 min</b><span>avg dwell</span></div><div class="k"><b>1 · 176 bar</b><span>deviation (descaler)</span></div><div class="k"><b>1</b><span>overstay</span></div><div class="k"><b><span class="badge b-done">L2 ONLINE</span></b><span>furnace automation</span></div><div class="k"><b>SOP-RHF-304L-160</b><span>parameter set</span></div></div><div class="panel"><h3>Zone temperatures (°C) — set-point · band · actual <small>red = above band (WARN)</small></h3><div class="zones"><div class="z ok">Zone 1 pre-heat<b>842</b><span>set 850 · 800–900</span></div><div class="z ok">Zone 2 heating<b>1,118</b><span>set 1,120 · 1,080–1,160</span></div><div class="z hi">Zone 3 heating<b>1,181</b><span>set 1,160 · 1,120–1,180</span></div><div class="z ok">Zone 4 soak<b>1,152</b><span>set 1,150 · 1,120–1,170</span></div><div class="z ok">Zone 5 soak<b>1,149</b><span>set 1,150 · 1,120–1,170</span></div></div></div><div class="grid2"><div class="panel"><h3>SOP parameters resolved for this PSN</h3><table class="g"><thead><tr><th>Parameter</th><th>Group</th><th class="num">Target</th><th class="num">Min</th><th class="num">Max</th><th class="num">Actual</th><th>Source</th><th>Mode</th><th>Status</th></tr></thead><tbody><tr><td>Air-fuel ratio</td><td>HEATING</td><td class="num">1.05</td><td class="num">1.00</td><td class="num">1.10</td><td class="num">1.06</td><td>L2</td><td>WARN</td><td><span class="badge b-done">OK</span></td></tr><tr><td>Furnace pressure (mbar)</td><td>HEATING</td><td class="num">0.8</td><td class="num">0.5</td><td class="num">1.2</td><td class="num">0.9</td><td>L2</td><td>WARN</td><td><span class="badge b-done">OK</span></td></tr><tr><td>Dwell time (min)</td><td>HEATING</td><td class="num">95</td><td class="num">80</td><td class="num">120</td><td class="num">88 (running)</td><td>system</td><td>BLOCK</td><td><span class="badge b-done">OK</span></td></tr><tr><td>Descaler pressure (bar)</td><td>DESCALING</td><td class="num">190</td><td class="num">180</td><td class="num">210</td><td class="num">176</td><td>MANUAL</td><td>DEVIATION</td><td><span class="badge b-hold">DEVIATION</span></td></tr><tr><td>HMD count</td><td>DESCALING</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">12</td><td>L2</td><td>NONE</td><td>—</td></tr></tbody></table></div><div class="panel"><h3>Residency and discharge</h3><table class="g"><thead><tr><th>Pos</th><th>Batch</th><th>Heat</th><th>Charged</th><th>Dwell</th><th class="num">Max</th><th>Status</th><th></th></tr></thead><tbody><tr class="warn"><td>1</td><td>B031131</td><td>2627-01170</td><td>08:52</td><td>109 min</td><td class="num">120</td><td><span class="badge b-pend">DISCHARGE DUE</span></td><td><button class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right"></i> Discharge</button></td></tr><tr><td>2</td><td>B031132</td><td>2627-01170</td><td>09:04</td><td>97 min</td><td class="num">120</td><td><span class="badge b-done">SOAKING</span></td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-right"></i> Discharge</button></td></tr><tr><td>3</td><td>B031133</td><td>2627-01170</td><td>09:20</td><td>81 min</td><td class="num">120</td><td><span class="badge b-info">HEATING</span></td><td>—</td></tr><tr class="bad"><td>—</td><td>B031127</td><td>2627-01169</td><td>06:10</td><td>271 min</td><td class="num">120</td><td><span class="badge b-hold">OVERSTAY → HOT-OUT</span></td><td><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-flask"></i> Quality decision pending</button></td></tr></tbody></table></div></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script><style>.ph-actions{flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;max-width:54%;} .ph-actions .btn{white-space:nowrap;}</style>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Mill execution</span> <span>/</span> <b>Furnace</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-fire"></i> Furnace — RHF BRM · PSN QDQA06_311 r2 (304L · SQ 160 → RO 32)</h1><div class="sub">Reheating furnace pulpit: zone set-points and heating parameters resolved from the process-parameter master by PSN / grade family / size family; actuals from Level 2 or manual, validated per the row's mode; dwell versus limits; discharge confirmation (or at the rolling pulpit); overstay opens a hot-out event for the Quality decision.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="fuRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="fuRole" onchange="fuRoleCh()" style="width:auto"><option value="OP">Furnace operator</option><option value="SUP">Shift supervisor</option><option value="QA">Quality</option></select></span><button class="btn btn-ghost btn-sm" id="fuPushB" onclick="fuPush()"><i class="fa-solid fa-upload"></i> Push set-points to L2</button><button class="btn btn-ghost btn-sm" id="fuDownB" onclick="fuDown()"></button><button class="btn btn-primary btn-sm" id="fuDisSelB" onclick="fuDisSel()"><i class="fa-solid fa-arrow-right"></i> Discharge selected</button></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets. Try: ▲ on a zone (out of band → warning) · <span class="lk" onclick="fuZone(2)">Zone 3 heating</span> → trim to 1,150 as shift supervisor, then Push set-points to L2 and +15 min (back in the band) · <span class="lk" onclick="fuDis('B031131')">Discharge B031131</span> · <span class="lk" onclick="fuDis('B031139')">Discharge B031139</span> (below the minimum — blocked) · <span class="lk" onclick="fuRec('desc')">Record descaler pressure</span> (below 180 → deviation to Quality) · <span class="lk" onclick="fuFast()">+15 min</span> until a billet overstays → Declare overstay hot-out → Quality decision (act as Quality) · Log downtime · Take Level 2 offline and push.</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px"><span id="fuClock"></span><button class="btn btn-ghost btn-sm" id="fuLiveB" onclick="fuLive()"></button><button class="btn btn-ghost btn-sm" id="fuFastB" onclick="fuFast()"><i class="fa-solid fa-forward"></i> +15 min</button><span class="mut" style="font-size:12px">Parameter set <span class="lk" onclick="fuRes()">SOP-RHF-304L-160</span> · PSN QDQA06_311 r2 · grade family austenitic (304L) · size family SQ 150–170</span></div><div class="kpis" id="fuK"></div><div class="panel"><h3>Zone temperatures (°C) — set-point · band · actual <button class="btn btn-ghost btn-sm" id="fuL2B" onclick="fuL2()" style="margin-left:auto"></button> <small>red = outside the band (WARN) · click a zone name for its set-point</small></h3><div class="zones" id="fuZones"></div></div><div class="panel"><h3>Residency and discharge <small>dwell = now − charge time · minimum 80 (BLOCK) · maximum 120 · tick billets for Discharge selected</small></h3><div id="fuDwell"></div></div><div class="panel"><h3>SOP parameters resolved for this PSN <small>Record = manual actual (MANUAL rows, or any row while Level 2 is offline)</small></h3><div id="fuSop"></div></div><div class="panel"><h3>Furnace events <small>latest first</small></h3><div id="fuEv"></div></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, n0 = U.n0, esc = U.esc;
+var HD = {"furnace": "RHF BRM", "psn": "QDQA06_311 r2", "grade": "304L", "sec": "SQ 160", "size": "RO 32", "sop": "SOP-RHF-304L-160", "gfam": "austenitic (304L)", "sfam": "SQ 150\u2013170"}, Z = [{"name": "Zone 1 pre-heat", "a": 842, "sp": 850, "lo": 800, "hi": 900, "bias": -8}, {"name": "Zone 2 heating", "a": 1118, "sp": 1120, "lo": 1080, "hi": 1160, "bias": -2}, {"name": "Zone 3 heating", "a": 1181, "sp": 1160, "lo": 1120, "hi": 1180, "bias": 26}, {"name": "Zone 4 soak", "a": 1152, "sp": 1150, "lo": 1120, "hi": 1170, "bias": 2}, {"name": "Zone 5 soak", "a": 1149, "sp": 1150, "lo": 1120, "hi": 1170, "bias": -1}], P = [{"k": "afr", "name": "Air-fuel ratio", "grp": "HEATING", "t": 1.05, "lo": 1.0, "hi": 1.1, "a": 1.06, "src": "L2", "mode": "WARN", "dec": 2}, {"k": "prs", "name": "Furnace pressure (mbar)", "grp": "HEATING", "t": 0.8, "lo": 0.5, "hi": 1.2, "a": 0.9, "src": "L2", "mode": "WARN", "dec": 1}, {"k": "dwell", "name": "Dwell time (min)", "grp": "HEATING", "t": 95, "lo": 80, "hi": 120, "a": null, "src": "system", "mode": "BLOCK", "dec": 0}, {"k": "desc", "name": "Descaler pressure (bar)", "grp": "DESCALING", "t": 190, "lo": 180, "hi": 210, "a": 176, "src": "MANUAL", "mode": "DEVIATION", "dec": 0, "dev": "DEV-2026-0412"}, {"k": "hmd", "name": "HMD count", "grp": "DESCALING", "t": null, "lo": null, "hi": null, "a": 12, "src": "L2", "mode": "NONE", "dec": 0}], BL = [{"b": "B031131", "heat": "2627-01170", "ch": 532, "st": "IN"}, {"b": "B031132", "heat": "2627-01170", "ch": 544, "st": "IN"}, {"b": "B031133", "heat": "2627-01170", "ch": 560, "st": "IN"}, {"b": "B031134", "heat": "2627-01170", "ch": 573, "st": "IN"}, {"b": "B031135", "heat": "2627-01170", "ch": 586, "st": "IN"}, {"b": "B031138", "heat": "2627-01171", "ch": 612, "st": "IN"}, {"b": "B031139", "heat": "2627-01171", "ch": 627, "st": "IN"}, {"b": "B031127", "heat": "2627-01169", "ch": 370, "st": "HO", "out": 641, "ho": "HO-2026-0186", "qa": null}];
+var S = {role: 'OP', t: 641, live: true, l2: true, dt: null, dtn: 913, hon: 188, msg: 3127, dev: 413, sel: {}, ev: [["10:40", "HOT_OUT_DECLARED", "B031127 overstay 271 min \u2014 HO-2026-0186 opened, Quality decision requested", "op. K. Menon"], ["10:36", "ZONE_WARN", "Zone 3 heating 1,181 \u00b0C outside the band 1,120\u20131,180 (mode WARN)", "system"], ["10:27", "CHARGED", "B031139 charged (Charging screen)", "op. R. Kumar"], ["10:05", "DEVIATION", "Descaler pressure 176 bar below 180 \u2014 DEV-2026-0412 sent to Quality (mode DEVIATION)", "op. K. Menon"]]};
+var WHO = {OP: 'op. K. Menon', SUP: 'sup. S. Iyer', QA: 'Quality · A. Rao'};
+var SOAK = 85, DUE = 105;   // shown as HEATING below 85 min, DISCHARGE DUE from 105 min (15 min before the maximum)
+Z.forEach(function(z){ z.spL2 = z.sp; z.src = 'L2'; z.alarm = z.a > z.hi || z.a < z.lo; });
+function hm(t){ t = ((t % 1440) + 1440) % 1440; return ('0' + Math.floor(t / 60)).slice(-2) + ':' + ('0' + (t % 60)).slice(-2); }
+function fx(p, v){ return v == null ? '—' : (+v).toFixed(p.dec); }
+function pr(k){ for (var i = 0; i < P.length; i++) if (P[i].k === k) return P[i]; return null; }
+function bl(id){ for (var i = 0; i < BL.length; i++) if (BL[i].b === id) return BL[i]; return null; }
+function lim(){ var d = pr('dwell'); return {min: d.lo, max: d.hi}; }
+function dw(b){ return (b.out != null ? b.out : S.t) - b.ch; }
+function inF(){ return BL.filter(function(b){ return b.st === 'IN'; }).sort(function(a, c){ return a.ch - c.ch; }); }
+function avg(){ var a = inF(); return a.length ? Math.round(a.reduce(function(s, b){ return s + dw(b); }, 0) / a.length) : 0; }
+function pOut(p){ return p.lo != null && p.a != null && (p.a > p.hi || p.a < p.lo); }
+function log(type, detail){ S.ev.unshift([hm(S.t), type, detail, WHO[S.role]]); }
+function sys(type, detail){ S.ev.unshift([hm(S.t), type, detail, 'system']); }
+function bst(b){ var d = dw(b), L = lim(); if (b.st === 'OUT') return 'DISCHARGED'; if (b.st === 'HO') return 'OVERSTAY → HOT-OUT'; if (b.st === 'DEC') return 'DECIDED';
+  if (d > L.max) return 'OVERSTAY'; if (d >= DUE) return 'DISCHARGE DUE'; if (d >= SOAK) return 'SOAKING'; return 'HEATING'; }
+// ---- alarms with a 2 °C hysteresis so a zone hovering on the limit does not flicker
+function check(quiet){
+  Z.forEach(function(z){ var out = z.a > z.hi || z.a < z.lo, back = z.a <= z.hi - 2 && z.a >= z.lo + 2;
+    if (!z.alarm && out){ z.alarm = true; sys('ZONE_WARN', z.name + ' ' + n0(z.a) + ' °C outside the band ' + n0(z.lo) + '–' + n0(z.hi) + ' (mode WARN)');
+      if (!quiet) U.toast('Warning — ' + z.name + ' at ' + n0(z.a) + ' °C is ' + (z.a > z.hi ? 'above' : 'below') + ' the band ' + n0(z.lo) + '–' + n0(z.hi) + ' °C (validation mode WARN)'); }
+    else if (z.alarm && back){ z.alarm = false; sys('ZONE_OK', z.name + ' back in the band at ' + n0(z.a) + ' °C'); } });
+  BL.forEach(function(b){ if (b.st === 'IN' && dw(b) > lim().max && !b.osFlag){ b.osFlag = true;
+    sys('OVERSTAY', b.b + ' dwell ' + dw(b) + ' min > maximum ' + lim().max + ' — declare the overstay hot-out for the Quality decision');
+    if (!quiet) U.toast(b.b + ' has overstayed (' + dw(b) + ' min > ' + lim().max + ') — it cannot be rolled: declare the overstay hot-out'); } });
+}
+function step(){ S.t++;
+  if (!S.l2) return;
+  Z.forEach(function(z){ var tgt = z.spL2 + z.bias; z.a = Math.round(z.a + (tgt - z.a) * 0.35 + (Math.random() - 0.5) * 3); z.src = 'L2'; });
+  var a = pr('afr'), p = pr('prs');
+  if (a.src === 'L2' || a.msrc === 'MANUAL') { a.a = +(1.06 + (Math.random() - 0.5) * 0.03).toFixed(2); a.msrc = ''; }
+  if (p.src === 'L2' || p.msrc === 'MANUAL') { p.a = +(0.9 + (Math.random() - 0.5) * 0.1).toFixed(1); p.msrc = ''; }
+}
+setInterval(function(){ if (!S.live) return; step(); check(); render(); }, 4000);
+window.fuLive = function(){ S.live = !S.live; render(); U.toast(S.live ? 'Feed running — one mill minute every 4 s' : 'Feed paused — the clock and the zone actuals hold'); };
+window.fuFast = function(){ for (var i = 0; i < 15; i++){ step(); check(true); } check(); render(); U.toast('Mill clock +15 min → ' + hm(S.t) + (S.l2 ? ' · Level-2 actuals updated' : ' · Level 2 offline — actuals stale')); };
+window.fuRoleCh = function(){ S.role = $('fuRole').value; render(); U.toast({OP: 'Acting as the furnace operator', SUP: 'Acting as the shift supervisor — trims set-points within the band', QA: 'Acting as Quality — records the hot-out decision'}[S.role]); };
+// ---- zones
+window.fuNudge = function(i, d){ var z = Z[i]; z.a += d; z.bias += d; z.src = S.l2 ? 'L2' : 'MANUAL'; check(); render(); };
+window.fuZone = function(i){ var z = Z[i];
+  var body = '<div class="mdl"><div class="hint">Band ' + n0(z.lo) + '–' + n0(z.hi) + ' °C from parameter set ' + HD.sop + ' (validation mode WARN). Actual ' + n0(z.a) + ' °C · ' + (S.l2 ? 'from Level 2' : 'Level 2 offline — manual entry allowed') + '. Level 2 runs on ' + n0(z.spL2) + ' °C.</div>'
+    + '<div class="two"><div><label for="zSp">Set-point °C (shift supervisor; within the band)</label><input type="number" id="zSp" value="' + z.sp + '"/></div>'
+    + '<div><label for="zAct">Manual actual °C (only without Level 2)</label><input type="number" id="zAct" value=""' + (S.l2 ? ' disabled placeholder="Level 2 is sending"' : '') + '/></div></div></div>';
+  U.modal(z.name, body, 'Apply', function(){
+    if (!U.req(['zSp'])) return false;
+    var sp = +$('zSp').value, act = $('zAct').value, msg = [];
+    if (sp !== z.sp){
+      if (S.role !== 'SUP'){ U.toast('Trimming a set-point is the shift supervisor\'s — switch "Acting as"'); return false; }
+      if (sp < z.lo || sp > z.hi){ $('zSp').classList.add('bad'); U.toast('Set-point ' + n0(sp) + ' is outside the band ' + n0(z.lo) + '–' + n0(z.hi) + ' — the band belongs to the parameter master'); return false; }
+      log('SETPOINT_TRIM', z.name + ' ' + n0(z.sp) + ' → ' + n0(sp) + ' °C — not yet at Level 2'); z.sp = sp; msg.push('set-point ' + n0(sp) + ' °C — push it to Level 2 to apply');
+    }
+    if (act !== '' && !S.l2){ z.a = +act; z.src = 'MANUAL'; log('ACTUAL_MANUAL', z.name + ' ' + n0(z.a) + ' °C recorded manually (Level 2 offline)'); msg.push('manual actual ' + n0(z.a) + ' °C'); }
+    check(); render(); U.toast(msg.length ? z.name + ': ' + msg.join(' · ') : 'Nothing changed'); return true; }); };
+window.fuPush = function(){ var no = 'L2M-' + (S.msg++), ch = Z.filter(function(z){ return z.sp !== z.spL2; });
+  if (!S.l2){ log('PARAMETER_SET', no + ' FAILED — Level 2 not reachable · OPS_L2_MESSAGE_FAILED raised'); render();
+    U.toast('Push failed — Level 2 offline: OPS_L2_MESSAGE_FAILED raised; the furnace keeps its old set-points'); return; }
+  Z.forEach(function(z){ z.spL2 = z.sp; });
+  log('PARAMETER_SET', no + ' sent — 5 zone set-points' + (ch.length ? ' (' + ch.map(function(z){ return z.name + ' ' + n0(z.sp); }).join(', ') + ')' : ', no change') + ' · acknowledged by Level 2');
+  render(); U.toast('PARAMETER_SET ' + no + ' acknowledged by Level 2' + (ch.length ? ' — the zone follows the new set-point over the next minutes' : '')); };
+window.fuL2 = function(){ S.l2 = !S.l2; sys(S.l2 ? 'L2_ONLINE' : 'L2_OFFLINE', S.l2 ? 'furnace automation link restored' : 'furnace automation link lost — actuals stale, manual entry allowed');
+  if (!S.l2) Z.forEach(function(z){ z.src = 'L2 · stale'; }); render();
+  U.toast(S.l2 ? 'Level 2 online — actuals flow again' : 'Level 2 offline — actuals freeze; record manual actuals; pushes fail'); };
+// ---- SOP parameters
+window.fuRec = function(k){ var p = pr(k);
+  if (p.src === 'system'){ U.toast('Dwell is computed by the system from the charge time — nothing to record'); return; }
+  if (p.src === 'L2' && S.l2){ U.toast(p.name + ' comes from Level 2 — a manual actual is recorded only when there is no Level-2 value (take Level 2 offline to try)'); return; }
+  var band = p.lo != null ? 'Band ' + fx(p, p.lo) + ' – ' + fx(p, p.hi) + ' · target ' + fx(p, p.t) + ' · ' : '';
+  U.modal('Record actual — ' + p.name, '<div class="mdl"><div class="hint">' + band + 'validation mode ' + p.mode + ' · source MANUAL.</div><div><label for="raV">Actual</label><input type="number" step="any" id="raV"/></div></div>', 'Record', function(){
+    if (!U.req(['raV'])) return false; p.a = +$('raV').value; p.msrc = 'MANUAL';
+    var out = pOut(p), r = '';
+    if (out && p.mode === 'DEVIATION'){ p.dev = 'DEV-2026-0' + (S.dev++); r = ' — outside the band: deviation ' + p.dev + ' sent to Quality'; }
+    else if (out && p.mode === 'WARN') r = ' — outside the band: warning (mode WARN)';
+    else if (!out && p.dev){ r = ' — back in the band (' + p.dev + ' stays on record with Quality)'; p.dev = ''; }
+    log(out && p.mode === 'DEVIATION' ? 'DEVIATION' : 'ACTUAL_MANUAL', p.name + ' ' + fx(p, p.a) + ' recorded (MANUAL)' + r);
+    render(); U.toast(p.name + ' ' + fx(p, p.a) + r); return true; }); };
+// ---- residency and discharge
+function canDis(b){ var d = dw(b), L = lim();
+  if (!b || b.st !== 'IN') return 'not in the furnace';
+  if (S.dt) return 'the furnace is stopped — downtime ' + S.dt.no + ' is open; end it first';
+  if (d > L.max) return b.b + ' is an overstay (' + d + ' min > ' + L.max + ') — declare the overstay hot-out; Quality decides before it is rolled';
+  if (d < L.min) return b.b + ' dwell ' + d + ' min is below the minimum ' + L.min + ' min (dwell validation mode BLOCK)';
+  return ''; }
+function discharge(b){ b.st = 'OUT'; b.out = S.t; delete S.sel[b.b]; pr('hmd').a++; log('DISCHARGED', b.b + ' · dwell ' + dw(b) + ' min · entry activated at the Roughing pulpit'); }
+window.fuSel = function(id, on){ S.sel[id] = on; render(); };
+window.fuDis = function(id){ var b = bl(id), w = canDis(b); if (w){ U.toast('Discharge refused — ' + w); return; }
+  discharge(b); render(); U.toast(id + ' discharged at ' + hm(S.t) + ' after ' + dw(b) + ' min — now in the Roughing pulpit queue'); };
+window.fuDisSel = function(){ var ids = Object.keys(S.sel).filter(function(k){ return S.sel[k]; });
+  if (!ids.length){ U.toast('Tick the billets to discharge first — or use Discharge on a row'); return; }
+  var ok = [], no = []; ids.forEach(function(id){ var b = bl(id), w = canDis(b); if (w) no.push(w); else { discharge(b); ok.push(id); } });
+  render(); U.toast((ok.length ? 'Discharged ' + ok.join(', ') + ' → Roughing' : 'Nothing discharged') + (no.length ? ' · refused: ' + no.join(' · ') : '')); };
+window.fuOver = function(id){ var b = bl(id);
+  if (!b || b.st !== 'IN' || dw(b) <= lim().max){ U.toast('Only a billet beyond the maximum dwell is declared an overstay'); return; }
+  U.modal('Declare overstay hot-out — ' + id, '<div class="mdl"><div class="hint">Dwell ' + dw(b) + ' min is beyond the maximum ' + lim().max + ' min. The billet is not rolled: it is taken out as a hot-out of type OVERSTAY and waits for the Quality decision (re-roll, rework, scrap, divert or hold). The event opens on Hot-Out & Re-roll.</div>'
+    + '<div class="two"><div><label for="osCause">What held the billet</label><select id="osCause"><option>Mill stop</option><option>Cobble downstream</option><option>Roll change</option><option>Other</option></select></div><div><label for="osRem">Remark (mandatory)</label><input type="text" id="osRem"/></div></div></div>', 'Declare', function(){
+    if (!U.req(['osRem'])) return false;
+    b.st = 'HO'; b.out = S.t; b.ho = 'HO-2026-0' + (S.hon++); b.qa = null; delete S.sel[id];
+    log('HOT_OUT_DECLARED', id + ' overstay ' + dw(b) + ' min (' + $('osCause').value + ') — ' + b.ho + ' opened, OPS_HOT_OUT_DECISION_REQUESTED');
+    render(); U.toast(b.ho + ' — OVERSTAY hot-out opened for ' + id + '; Quality decision requested (OPS_HOT_OUT_DECISION_REQUESTED)'); return true; }); };
+window.fuQaDec = function(){ var d = $('qaDec').value, need = d === 'REWORK' || d === 'DIVERT'; $('qaNext').disabled = !need; if (!need) $('qaNext').value = ''; };
+window.fuQa = function(id){ var b = bl(id); if (!b || b.st !== 'HO') return;
+  if (S.role !== 'QA'){ U.toast('The hot-out decision is Quality\'s (worklist in the Quality module) — switch "Acting as" to Quality'); return; }
+  U.modal('Quality decision — ' + b.ho + ' · ' + id, '<div class="mdl"><div class="hint">Overstay ' + dw(b) + ' min against a maximum of ' + lim().max + ' min (heat ' + b.heat + ', ' + HD.grade + '). Re-rolling waits for this decision. Rework and divert name the operation the billet goes to.</div>'
+    + '<div class="two"><div><label for="qaDec">Decision</label><select id="qaDec" onchange="fuQaDec()"><option>RE_ROLL_OK</option><option>REWORK</option><option>SCRAP</option><option>DIVERT</option><option>HOLD</option></select></div>'
+    + '<div><label for="qaNext">Next operation (rework / divert)</label><select id="qaNext" disabled><option value="">—</option><option>Grinding line</option><option>Annealing and pickling</option><option>Bright bar line</option></select></div></div>'
+    + '<div><label style="font-weight:400"><input type="checkbox" id="qaKeep"/> code kept (the next operation skips the form conversion)</label></div><div><label for="qaRem">Remark (mandatory)</label><input type="text" id="qaRem"/></div></div>', 'Record decision', function(){
+    var d = $('qaDec').value, need = d === 'REWORK' || d === 'DIVERT';
+    if (!U.req(need ? ['qaRem', 'qaNext'] : ['qaRem'])) return false;
+    b.qa = d; b.qaNext = need ? $('qaNext').value : ''; b.keep = need && $('qaKeep').checked; if (d !== 'HOLD') b.st = 'DEC';
+    log('QA_DECISION', b.ho + ' · ' + id + ' → ' + d + (b.qaNext ? ' (' + b.qaNext + (b.keep ? ', code kept' : '') + ')' : '') + ' — ' + $('qaRem').value);
+    render(); U.toast(id + ' — ' + d + ': ' + disp(b)); return true; }); };
+function disp(b){ return {RE_ROLL_OK: 'back to charging stock, re-weighed on re-charge', REWORK: 'to ' + b.qaNext + (b.keep ? ' (code kept)' : ''), DIVERT: 'diverted to ' + b.qaNext + (b.keep ? ' (code kept)' : ''), SCRAP: 'scrapped — input consumed, output zero', HOLD: 'on hold with Quality'}[b.qa] || ''; }
+// ---- downtime
+function reasons(){ return '<option value="">— choose —</option><option>Breakdown → Burner trip</option><option>Breakdown → Walking beam / pusher</option><option>Process → Mill stop downstream</option><option>Utilities → Fuel pressure low</option><option>Planned → Scheduled maintenance</option>'; }
+window.fuDown = function(){
+  if (S.dt){ var d = S.dt;
+    U.modal('End downtime ' + d.no, '<div class="mdl"><div class="hint">Started ' + hm(d.start) + ' · ' + (S.t - d.start) + ' min so far · ' + d.cls + ' · ' + esc(d.why) + '</div><div><label for="dtRem">Closing remark (mandatory)</label><input type="text" id="dtRem"/></div></div>', 'End downtime', function(){
+      if (!U.req(['dtRem'])) return false; log('DOWNTIME_END', d.no + ' closed after ' + (S.t - d.start) + ' min — ' + $('dtRem').value); S.dt = null; render(); U.toast(d.no + ' closed — discharging is possible again'); return true; }); return; }
+  U.modal('Log downtime — reheating furnace', '<div class="mdl"><div class="hint">Opens a downtime event for the furnace with the billets in process (shown on Downtime & OEE). Discharge is held while it is open — the billets keep soaking, so watch the dwell.</div>'
+    + '<div class="two"><div><label for="dtCls">Class</label><select id="dtCls"><option>UNPLANNED</option><option>PLANNED</option></select></div><div><label for="dtWhy">Reason (category → sub-reason)</label><select id="dtWhy">' + reasons() + '</select></div></div></div>', 'Start downtime', function(){
+    if (!U.req(['dtWhy'])) return false; S.dt = {no: 'DT-0' + (S.dtn++), start: S.t, cls: $('dtCls').value, why: $('dtWhy').value};
+    log('DOWNTIME_START', S.dt.no + ' · reheating furnace · ' + S.dt.cls + ' · ' + S.dt.why + ' · ' + inF().length + ' billets in process'); render();
+    U.toast(S.dt.no + ' opened for the reheating furnace — discharge held until it is ended'); return true; }); };
+window.fuRes = function(){
+  U.modal('Parameter set resolution — ' + HD.furnace, '<div class="mdl"><div class="hint">The parameter set resolves on furnace equipment, PSN, grade family and size family — the most specific match wins. Several SOPs coexist as rows; heating parameters are master rows referenced by the PSN, never stored on it.</div>'
+    + '<table class="g"><thead><tr><th>Parameter set</th><th>Scope</th><th>Match</th><th>Result</th></tr></thead><tbody>'
+    + '<tr class="ok"><td>' + HD.sop + '</td><td>' + HD.furnace + ' · PSN ' + HD.psn + '</td><td>equipment + PSN</td><td>' + B('USED · MOST SPECIFIC', 'b-done') + '</td></tr>'
+    + '<tr><td>SOP-RHF-AUS-160</td><td>' + HD.furnace + ' · grade family ' + HD.gfam + ' · size family ' + HD.sfam + '</td><td>equipment + grade family + size family</td><td>' + B('NOT USED') + '</td></tr>'
+    + '<tr><td>SOP-RHF-STD</td><td>' + HD.furnace + '</td><td>equipment only</td><td>' + B('FALLBACK', 'b-draft') + '</td></tr></tbody></table></div>', null, null, true); };
+// ---- render
+function render(){
+  $('fuClock').innerHTML = '<b>Mill clock ' + hm(S.t) + '</b> · Level-2 feed ' + (S.live ? B('LIVE', 'b-done') : B('PAUSED', 'b-pend'));
+  $('fuLiveB').innerHTML = '<i class="fa-solid ' + (S.live ? 'fa-pause' : 'fa-play') + '"></i> ' + (S.live ? 'Pause feed' : 'Resume feed');
+  $('fuDownB').innerHTML = '<i class="fa-solid fa-stopwatch"></i> ' + (S.dt ? 'End downtime ' + S.dt.no : 'Log downtime');
+  $('fuL2B').innerHTML = '<i class="fa-solid fa-plug"></i> ' + (S.l2 ? 'Take Level 2 offline' : 'Bring Level 2 online');
+  var dev = P.filter(function(p){ return p.mode === 'DEVIATION' && pOut(p); });
+  var ov = BL.filter(function(b){ return (b.st === 'IN' && dw(b) > lim().max) || b.st === 'HO'; }).length;
+  $('fuK').innerHTML = [[inF().length, 'billets in furnace'], [avg() + ' min', 'avg dwell'], [dev.length ? dev.length + ' · ' + fx(dev[0], dev[0].a) + ' bar' : '0', 'deviation (descaler)'], [ov, 'overstay'],
+    [S.l2 ? B('L2 ONLINE', 'b-done') : B('L2 OFFLINE', 'b-hold'), 'furnace automation'], [S.dt ? '<span class="st stop"></span>' + S.dt.no + ' · ' + (S.t - S.dt.start) + ' min' : '<span class="st run"></span>RUNNING', 'furnace state'], [HD.sop, 'parameter set']]
+    .map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('fuZones').innerHTML = Z.map(function(z, i){ var pend = z.sp !== z.spL2;
+    return '<div class="z ' + (z.alarm ? 'hi' : 'ok') + '"><span class="lk" onclick="fuZone(' + i + ')" title="Set-point / manual actual">' + z.name + '</span><b>' + n0(z.a) + '</b><span>set ' + n0(z.sp) + (pend ? ' <span class="chip" title="changed, not pushed">not pushed</span>' : '') + ' · ' + n0(z.lo) + '–' + n0(z.hi) + '</span>'
+      + '<div style="font-size:10.5px;color:#6b7280;margin-top:3px">' + esc(z.src) + ' <button class="btn btn-ghost btn-sm" style="padding:0 6px" onclick="fuNudge(' + i + ',10)" title="Simulate the zone running 10 °C hotter">▲</button><button class="btn btn-ghost btn-sm" style="padding:0 6px" onclick="fuNudge(' + i + ',-10)" title="Simulate the zone running 10 °C colder">▼</button></div></div>'; }).join('');
+  var dRow = pr('dwell'); dRow.a = avg();
+  $('fuSop').innerHTML = '<table class="g"><thead><tr><th>Parameter</th><th>Group</th><th class="num">Target</th><th class="num">Min</th><th class="num">Max</th><th class="num">Actual</th><th>Source</th><th>Mode</th><th>Status</th><th></th></tr></thead><tbody>' + P.map(function(p){
+      var out = p.k === 'dwell' ? ov > 0 : pOut(p), st;
+      if (p.mode === 'NONE') st = '—';
+      else if (!out) st = B('OK', 'b-done');
+      else st = p.k === 'dwell' ? B('OVERSTAY ' + ov, 'b-hold') : p.mode === 'DEVIATION' ? B('DEVIATION', 'b-hold') + (p.dev ? ' <span class="mut">' + p.dev + '</span>' : '') : B('WARN', 'b-pend');
+      var src = p.k === 'dwell' ? 'system' : p.msrc === 'MANUAL' || p.src === 'MANUAL' ? 'MANUAL' : S.l2 ? 'L2' : 'L2 · stale';
+      var act = p.k === 'dwell' ? avg() + ' (running)' : fx(p, p.a);
+      return '<tr class="' + (out && p.mode !== 'NONE' ? (p.mode === 'WARN' ? 'warn' : 'bad') : '') + '"><td>' + p.name + '</td><td>' + p.grp + '</td><td class="num">' + fx(p, p.t) + '</td><td class="num">' + fx(p, p.lo) + '</td><td class="num">' + fx(p, p.hi) + '</td><td class="num">' + act + '</td><td>' + src + '</td><td>' + p.mode + '</td><td>' + st + '</td>'
+        + '<td>' + (p.k === 'dwell' ? '' : '<button class="btn btn-ghost btn-sm" onclick="fuRec(\'' + p.k + '\')">Record</button>') + '</td></tr>'; }).join('') + '</tbody></table>';
+  var L = lim(), ins = inF(), rest = BL.filter(function(b){ return b.st !== 'IN'; }).sort(function(a, c){ var o = {HO: 0, DEC: 1, OUT: 2}; return (o[a.st] - o[c.st]) || (c.out - a.out); });
+  $('fuDwell').innerHTML = '<table class="g"><thead><tr><th></th><th>Pos</th><th>Batch</th><th>Heat</th><th>Charged</th><th>Dwell</th><th class="num">Max</th><th>Status</th><th></th></tr></thead><tbody>'
+    + ins.map(function(b, i){ var s = bst(b), d = dw(b);
+      var cls = s === 'OVERSTAY' ? 'bad' : s === 'DISCHARGE DUE' ? 'warn' : '';
+      var badge = {OVERSTAY: B('OVERSTAY', 'b-hold'), 'DISCHARGE DUE': B('DISCHARGE DUE', 'b-pend'), SOAKING: B('SOAKING', 'b-done'), HEATING: B('HEATING')}[s];
+      var act = s === 'OVERSTAY' ? '<button class="btn btn-ghost btn-sm" onclick="fuOver(\'' + b.b + '\')"><i class="fa-solid fa-rotate-left"></i> Declare overstay hot-out</button>'
+        : '<button class="btn ' + (s === 'DISCHARGE DUE' ? 'btn-primary' : 'btn-ghost') + ' btn-sm" onclick="fuDis(\'' + b.b + '\')"><i class="fa-solid fa-arrow-right"></i> Discharge</button>';
+      return '<tr class="' + cls + '" data-b="' + b.b + '"><td><input type="checkbox"' + (S.sel[b.b] ? ' checked' : '') + ' onchange="fuSel(\'' + b.b + '\',this.checked)"/></td><td>' + (i + 1) + '</td><td><b>' + b.b + '</b></td><td>' + b.heat + '</td><td>' + hm(b.ch) + '</td><td>' + d + ' min</td><td class="num">' + L.max + '</td><td>' + badge + '</td><td>' + act + '</td></tr>'; }).join('')
+    + rest.map(function(b){ var row;
+      if (b.st === 'HO') row = ['bad', B('OVERSTAY → HOT-OUT', 'b-hold') + ' <span class="mut">' + b.ho + (b.qa === 'HOLD' ? ' · on hold' : '') + '</span>', '<button class="btn btn-ghost btn-sm" onclick="fuQa(\'' + b.b + '\')"><i class="fa-solid fa-flask"></i> ' + (b.qa === 'HOLD' ? 'Quality decision (on hold)' : 'Quality decision pending') + '</button>'];
+      else if (b.st === 'DEC') row = ['', B(b.qa, b.qa === 'RE_ROLL_OK' ? 'b-done' : b.qa === 'SCRAP' ? 'b-hold' : 'b-pend') + ' <span class="mut">' + b.ho + '</span>', '<span class="mut">' + disp(b) + '</span>'];
+      else row = ['ok', B('DISCHARGED', 'b-done') + ' ' + hm(b.out), '<span class="mut">→ Roughing pulpit</span>'];
+      return '<tr class="' + row[0] + '" data-b="' + b.b + '"><td></td><td>—</td><td><b>' + b.b + '</b></td><td>' + b.heat + '</td><td>' + hm(b.ch) + '</td><td>' + dw(b) + ' min</td><td class="num">' + L.max + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td></tr>'; }).join('')
+    + '</tbody></table>';
+  $('fuEv').innerHTML = '<table class="g"><thead><tr><th>Time</th><th>Event</th><th>Detail</th><th>By</th></tr></thead><tbody>' + S.ev.slice(0, 14).map(function(e){
+    var bad = /WARN|DEVIATION|FAILED|OVERSTAY|HOT_OUT|DOWNTIME_START/.test(e[1] + ' ' + e[2]);
+    return '<tr class="' + (bad ? 'warn' : '') + '"><td>' + e[0] + '</td><td>' + B(e[1], bad ? 'b-pend' : 'b-info') + '</td><td>' + esc(e[2]) + '</td><td>' + e[3] + '</td></tr>'; }).join('') + '</tbody></table>';
+}
+render();
+})();
+</script>
   </main>
 </div>
 

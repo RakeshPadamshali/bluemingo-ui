@@ -208,9 +208,278 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../ppc/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../mdm/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../qa/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Masters</span> <span>/</span> <b>Pulpit Notes</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-note-sticky"></i> Pulpit Notes</h1><div class="sub">Instructions, CAPA actions, last-campaign corrections, SOP links and the grade-change separation instruction raised at the cooling bed, shown on the pulpit screens, scoped by pulpit, unit, equipment, product, grade, customer and PSN; validity, display mode and acknowledgement.</div></div><div class="ph-actions"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-arrow-up"></i> Upload</button><button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add note</button></div></div>
-<div class="card"><div class="tbl-wrap"><table class="g"><thead><tr><th>Type</th><th>Pulpit</th><th>Scope</th><th>Title</th><th>Source</th><th>Valid</th><th>Display</th><th>Ack</th><th>Priority</th></tr></thead><tbody><tr><td>GRADE_CHANGE</td><td>COOLING BED</td><td>BRM · change of grade (basis: grade; grade series and PSN also possible)</td><td>Grade change {from} → {to}: leave 3 empty notches and chalk-mark the first bar · Quality check on the first bars: off</td><td>raised by the system at each grade change on the bed</td><td>auto (per change)</td><td>POPUP_ACK</td><td>yes · blocks the next confirmation</td><td>1</td></tr><tr><td>QA_FEEDBACK</td><td>CASTER CCM-1 · CCM-2</td><td>SMS · all grades</td><td>Online inspection finding at the caster (heat, strand, value vs limit)</td><td>Quality module — online inspection</td><td>auto (per finding)</td><td>POPUP_ACK</td><td>yes · non-blocking</td><td>5</td></tr><tr><td>CAPA</td><td>ROUGHING · FINISHING</td><td>BRM · 304L · RO 32</td><td>Descaler pressure ≥ 180 bar (surface seams)</td><td>CAPA-2026-031</td><td>2026-09-01 → 2026-12-31</td><td>PANEL</td><td>yes</td><td>10</td></tr><tr><td>INSTRUCTION</td><td>ROUGHING</td><td>BRM · RO 32</td><td>Pass schedule R-32-B, 11 passes</td><td>Process control</td><td>—</td><td>POPUP_ACK</td><td>yes</td><td>20</td></tr><tr><td>LAST_CAMPAIGN</td><td>FINISHING</td><td>PSN QDQA06_311</td><td>Stand 15 speed −5 % (campaign CMP-BRM-2026-35)</td><td>CMP-BRM-2026-35</td><td>auto (last 3 campaigns)</td><td>PANEL</td><td>no</td><td>30</td></tr><tr><td>SOP_LINK</td><td>FURNACE</td><td>PSN QDQA06_311</td><td>Heating SOP SOP-RHF-304L-160</td><td>process-parameter master</td><td>—</td><td>BANNER</td><td>no</td><td>40</td></tr></tbody></table></div></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script><style>
+#pnG td{white-space:normal;}
+.pnscr{border:2px solid #37474f;border-radius:10px;background:#fafafa;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.pnscr .pvh{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;}
+.pnscr select,.pnscr input[type=text]{padding:6px 8px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;}
+.pnscr input[type=text]{flex:1;min-width:220px;} .pnscr .bad{border-color:#c62828;background:#fff6f6;}
+.pnpop{border:2px solid #d97706;background:#fffaf0;border-radius:8px;padding:10px 12px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.12);}
+.pnpop h4{margin:0 0 6px;color:#b45309;font-size:13.5px;} .pnpop h4 small{font-weight:400;color:#8d6e63;margin-left:8px;}
+.pnpop.done{border-color:#a5d6a7;background:#f1f8e9;box-shadow:none;} .pnpop.done h4{color:#2e7d32;}
+.pnpop .ackrow{display:flex;gap:8px;margin-top:8px;align-items:center;} .pnpop .ackd{margin-top:6px;color:#2e7d32;font-size:12.5px;}
+.pnpan{background:#fff;border:1px solid var(--color-border);border-radius:8px;padding:8px 12px;font-size:13px;}
+.pncf{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px dashed #cfd8dc;padding-top:10px;}
+</style>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Masters</span> <span>/</span> <b>Pulpit Notes</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-note-sticky"></i> Pulpit Notes</h1><div class="sub">Instructions, CAPA actions, last-campaign corrections, SOP links and the grade-change separation instruction raised at the cooling bed, shown on the pulpit screens, scoped by pulpit, unit, equipment, product, grade, customer and PSN; validity, display mode and acknowledgement.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="pnRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="pnRole" onchange="pnRole()" style="width:auto"><option value="PC">Process control</option><option value="OP">Pulpit operator</option></select></span><button class="btn btn-ghost btn-sm" id="pnGenB" onclick="pnGen()" style="white-space:nowrap"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate last-campaign notes</button><button class="btn btn-ghost btn-sm" id="pnUpB" onclick="pnUpload()"><i class="fa-solid fa-file-arrow-up"></i> Upload</button><button class="btn btn-primary btn-sm" id="pnAddB" onclick="pnAdd()" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> Add note</button></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets; dates are judged against the demo date 2026-10-05. Try: <span class="lk" onclick="pnTry('ROUGHING','B031138','OP')">Roughing as the pulpit operator</span> — Confirm is blocked by the pass-schedule pop-up → Acknowledge → Confirm; pick B031190 (RO 40) and the RO 32 notes drop out · <span class="lk" onclick="pnTry('COOLING_BED','','OP')">Cooling bed</span> — B031162 arrives (304L → 304) → acknowledge with a remark → Confirm; edit the grade-change note to basis GRADE_SERIES and the same arrival raises nothing · <span class="lk" onclick="pnTry('CASTER_CCM1','2526-16866','OP')">Caster CCM-1</span> — Simulate a Quality finding (needs a remark, never blocks) · New shift · as process control: Add note without a title, with valid-to before valid-from, a CAPA with CAPA-2026-099, or a second GRADE_CHANGE for the bed (all refused) · Edit the QA_FEEDBACK row (refused) · Deactivate / Reactivate · Generate last-campaign notes (CMP-BRM-2026-36 still running — refused) · Upload · filters.</div><div class="kpis" id="pnK"></div><div class="panel"><h3>Notes <small>one row per note · lower priority shows first · blank scope keys mean all</small></h3><div class="pv" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap"><input type="text" id="fQ" placeholder="Title / source / scope…" oninput="pnFilter()" style="width:200px"/><select id="fU" onchange="pnFilter()" style="width:120px"><option value="">All units</option><option>SMS</option><option>BRM</option></select><select id="fP" onchange="pnFilter()" style="width:150px"><option value="">All pulpits</option><option value="CASTER_CCM1">Caster CCM-1</option><option value="CASTER_CCM2">Caster CCM-2</option><option value="FURNACE">Furnace</option><option value="ROUGHING">Roughing</option><option value="FINISHING">Finishing</option><option value="GAS_CUTTING">Gas cutting</option><option value="COOLING_BED">Cooling bed</option></select><select id="fT" onchange="pnFilter()" style="width:160px"><option value="">All note types</option><option>CAPA</option><option>INSTRUCTION</option><option>LAST_CAMPAIGN</option><option>DEVIATION</option><option>SOP_LINK</option><option>ALERT</option><option>QA_FEEDBACK</option><option>GRADE_CHANGE</option></select><select id="fM" onchange="pnFilter()" style="width:150px"><option value="">Any display mode</option><option>BANNER</option><option>PANEL</option><option>POPUP_ACK</option></select><select id="fS" onchange="pnFilter()" style="width:130px"><option value="">Any status</option><option>ACTIVE</option><option>SCHEDULED</option><option>EXPIRED</option><option>INACTIVE</option></select><span id="pnCnt" style="margin-left:auto;font-size:12px;color:var(--color-text-muted)"></span></div><div id="pnG"></div></div><div class="panel"><h3>Pulpit preview <small>how the notes appear for the batch on screen — resolved by pulpit, scope and validity, in priority order</small></h3><div class="tabs2" id="pvTabs"></div><div class="pnscr" id="pvScr"></div></div><div class="grid2"><div class="panel"><h3>Acknowledgements <small>per user · the Quality module reads back the Quality feedback remarks</small></h3><div id="pnLog"></div></div><div class="panel"><h3>Audit</h3><div id="pnA"></div></div></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, esc = U.esc;
+var TODAY = "2026-10-05", N = [{"id": 1, "type": "GRADE_CHANGE", "pulpits": ["COOLING_BED"], "title": "Grade change {from} → {to}: leave 3 empty notches and chalk-mark the first bar", "body": "Separate the grades on the bed: leave 3 notches empty after the last bar of the old grade and chalk-mark the first bar of the new grade.", "src": "raised by the system at each grade change on the bed", "mode": "POPUP_ACK", "ack": true, "blocks": true, "prio": 1, "unit": "BRM", "grade": "", "series": "", "shape": "", "size": "", "psn": "", "eq": "", "cust": "", "to": "", "auto": "per change", "basis": "GRADE", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": ""}, {"id": 2, "type": "QA_FEEDBACK", "pulpits": ["CASTER_CCM1", "CASTER_CCM2"], "title": "Online inspection finding at the caster (heat, strand, value vs limit)", "body": "Written by the Quality module when SMS QA records an online inspection finding; acknowledged with a remark that Quality reads back.", "src": "Quality module — online inspection", "mode": "POPUP_ACK", "ack": true, "blocks": false, "prio": 5, "unit": "SMS", "grade": "", "series": "", "shape": "", "size": "", "psn": "", "eq": "", "cust": "", "to": "", "auto": "per finding", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": true, "from": ""}, {"id": 3, "type": "CAPA", "pulpits": ["ROUGHING", "FINISHING"], "title": "Descaler pressure ≥ 180 bar (surface seams)", "body": "Surface seams on RO 32 304L in the last campaign — check the descaler pressure is at least 180 bar before the first bar.", "src": "CAPA-2026-031", "mode": "PANEL", "ack": true, "blocks": false, "prio": 10, "unit": "BRM", "grade": "304L", "series": "", "shape": "RO", "size": "32", "psn": "", "eq": "", "cust": "", "to": "2026-12-31", "auto": "", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": "2026-09-01"}, {"id": 4, "type": "INSTRUCTION", "pulpits": ["ROUGHING"], "title": "Pass schedule R-32-B, 11 passes", "body": "Roll RO 32 with pass schedule R-32-B (11 passes) — check the stand set-up before the first bar of the shift.", "src": "Process control", "mode": "POPUP_ACK", "ack": true, "blocks": true, "prio": 20, "unit": "BRM", "grade": "", "series": "", "shape": "RO", "size": "32", "psn": "", "eq": "", "cust": "", "to": "", "auto": "", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": ""}, {"id": 5, "type": "LAST_CAMPAIGN", "pulpits": ["FINISHING"], "title": "Stand 15 speed −5 % (campaign CMP-BRM-2026-35)", "body": "Last campaign of this PSN: stand 15 speed reduced 5 % to hold the size tolerance.", "src": "CMP-BRM-2026-35", "mode": "PANEL", "ack": false, "blocks": false, "prio": 30, "unit": "", "grade": "", "series": "", "shape": "", "size": "", "psn": "QDQA06_311", "eq": "", "cust": "", "to": "", "auto": "last 3 campaigns", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": ""}, {"id": 6, "type": "SOP_LINK", "pulpits": ["FURNACE"], "title": "Heating SOP SOP-RHF-304L-160", "body": "Heating curve and soak time for 304L SQ 160 — open SOP-RHF-304L-160.", "src": "process-parameter master", "mode": "BANNER", "ack": false, "blocks": false, "prio": 40, "unit": "", "grade": "", "series": "", "shape": "", "size": "", "psn": "QDQA06_311", "eq": "", "cust": "", "to": "", "auto": "", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": ""}, {"id": 7, "type": "DEVIATION", "pulpits": ["ROUGHING"], "title": "Stand 3 gap corrected +0.4 mm", "body": "Process-control deviation PCD-2026-0830: stand 3 gap set +0.4 mm after the size drift of the last campaign.", "src": "PCD-2026-0830", "mode": "PANEL", "ack": false, "blocks": false, "prio": 35, "unit": "BRM", "grade": "", "series": "", "shape": "", "size": "", "psn": "QDQA06_311", "eq": "", "cust": "", "to": "2026-10-31", "auto": "", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": "2026-08-30"}, {"id": 8, "type": "ALERT", "pulpits": ["FINISHING"], "title": "Roll change on stand 7 — visual check of the first 5 bars", "body": "New rolls on stand 7 — visual check of the first 5 bars after the change.", "src": "Roll shop", "mode": "BANNER", "ack": false, "blocks": false, "prio": 15, "unit": "BRM", "grade": "", "series": "", "shape": "", "size": "", "psn": "", "eq": "", "cust": "", "to": "2026-09-27", "auto": "", "basis": "", "qa": false, "qaBars": 0, "active": true, "sys": false, "from": "2026-09-20"}], PUL = [["CASTER_CCM1", "Caster CCM-1", "SMS", "CCM-1"], ["CASTER_CCM2", "Caster CCM-2", "SMS", "CCM-2"], ["FURNACE", "Furnace", "BRM", "RHF"], ["ROUGHING", "Roughing", "BRM", "Roughing stands"], ["FINISHING", "Finishing", "BRM", "Finishing stands"], ["GAS_CUTTING", "Gas cutting", "BRM", "Gas cutter"], ["COOLING_BED", "Cooling bed", "BRM", "Cooling bed"]], BAT = {"B031138": {"unit": "BRM", "grade": "304L", "series": "300 series", "shape": "RO", "size": "32", "psn": "QDQA06_311", "heat": "2627-01171", "cust": ""}, "B031139": {"unit": "BRM", "grade": "304L", "series": "300 series", "shape": "RO", "size": "32", "psn": "QDQA06_311", "heat": "2627-01171", "cust": ""}, "B031141": {"unit": "BRM", "grade": "304L", "series": "300 series", "shape": "RO", "size": "32", "psn": "QDQA06_311", "heat": "2627-01172", "cust": ""}, "B031190": {"unit": "BRM", "grade": "304", "series": "300 series", "shape": "RO", "size": "40", "psn": "QDQA06_290", "heat": "2627-01176", "cust": ""}, "B031137": {"unit": "BRM", "grade": "304L", "series": "300 series", "shape": "RO", "size": "32", "psn": "QDQA06_311", "heat": "2627-01171", "cust": ""}, "B031162": {"unit": "BRM", "grade": "304", "series": "300 series", "shape": "RO", "size": "40", "psn": "QDQA06_290", "heat": "2627-01190", "cust": ""}, "B031170": {"unit": "BRM", "grade": "410", "series": "400 series", "shape": "RO", "size": "40", "psn": "QDQB04_120", "heat": "2627-01194", "cust": ""}, "2526-16866": {"unit": "SMS", "grade": "304L", "series": "300 series", "shape": "SQ", "size": "160", "psn": "", "heat": "2526-16866", "cust": ""}, "2526-16870": {"unit": "SMS", "grade": "316L", "series": "300 series", "shape": "SQ", "size": "160", "psn": "", "heat": "2526-16870", "cust": ""}}, ONS = {"CASTER_CCM1": ["2526-16866"], "CASTER_CCM2": ["2526-16870"], "FURNACE": ["B031141", "B031190"], "ROUGHING": ["B031138", "B031190"], "FINISHING": ["B031138", "B031190"], "GAS_CUTTING": ["B031137"], "COOLING_BED": ["B031139", "B031162", "B031170"]}, CAPAS = ["CAPA-2026-029", "CAPA-2026-031", "CAPA-2026-034"], CMP = [{"code": "CMP-BRM-2026-33", "psn": "QDQA06_311", "status": "CLOSED", "closed": "2026-08-12", "items": [["FINISHING", "Cooling water on stands 13–15 +8 % to hold the surface"]]}, {"code": "CMP-BRM-2026-34", "psn": "QDQA06_311", "status": "CLOSED", "closed": "2026-08-29", "items": [["ROUGHING", "Descaler header 2 nozzles replaced — check the spray pattern at the start"]]}, {"code": "CMP-BRM-2026-35", "psn": "QDQA06_311", "status": "CLOSED", "closed": "2026-09-24", "items": [["FINISHING", "Stand 15 speed −5 %"]]}, {"code": "CMP-BRM-2026-36", "psn": "QDQA06_311", "status": "RUNNING", "closed": "", "items": []}, {"code": "CMP-BRM-2026-32", "psn": "QDQA06_290", "status": "CLOSED", "closed": "2026-08-05", "items": [["COOLING_BED", "Cooling-bed water box 2 flow +10 %"]]}], FIND = [["CASTER_CCM1", "2526-16866", 3, "rhomboidity 6.2 mm (max 5.0)", "check mould alignment and foot rolls on strand 3", "INS-2526-0031"], ["CASTER_CCM1", "2526-16866", 2, "surface scale — MAJOR", "clean the spray header of strand 2", "INS-2526-0032"], ["CASTER_CCM2", "2526-16870", 1, "off-corner crack 4 mm (max 2)", "check the mould taper and the secondary cooling of strand 1", "INS-2526-0033"]], L = {"grades": ["304L", "304", "316L", "410"], "series": ["300 series", "400 series"], "psns": ["QDQA06_311", "QDQA06_290", "QDQB04_120"], "cust": ["C-1042 · export", "C-2210 · domestic"], "shapes": ["RO", "SQ", "HEX", "FLAT"]};
+var TYPES = ['CAPA', 'INSTRUCTION', 'LAST_CAMPAIGN', 'DEVIATION', 'SOP_LINK', 'ALERT', 'QA_FEEDBACK', 'GRADE_CHANGE'];
+var WHO = {PC: 'Process control · P. Nair', OP: 'op. R. Kumar'};
+var S = {role: 'PC', pp: 'ROUGHING', pb: 'B031138', shift: 'A', acks: {}, fb: [], fbn: 0, bed: {last: 'B031138', next: '', gc: null}, nid: 100, conf: 0, log: [],
+  audit: [['2026-10-01 09:12', WHO.PC, 'ADD', 'CAPA · Descaler pressure ≥ 180 bar — Roughing · Finishing'], ['2026-09-24 18:40', 'system', 'GENERATE', 'LAST_CAMPAIGN · Stand 15 speed −5 % from CMP-BRM-2026-35']]};
+function now(){ var t = new Date(); return ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2); }
+function addD(d, k){ var x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); }
+function pul(c){ for (var i = 0; i < PUL.length; i++) if (PUL[i][0] === c) return PUL[i]; return [c, c, '', '']; }
+function unitOf(n){ return n.unit || pul(n.pulpits[0])[2]; }
+function byPrio(a, b){ return a.prio - b.prio; }
+function status(n){ if (!n.active) return 'INACTIVE'; if (n.to && n.to < TODAY) return 'EXPIRED'; if (n.from && n.from > TODAY) return 'SCHEDULED'; return 'ACTIVE'; }
+function stB(s){ return B(s, {ACTIVE: 'b-done', SCHEDULED: 'b-info', EXPIRED: 'b-draft', INACTIVE: 'b-hold'}[s]); }
+function tyB(t){ return B(t, {GRADE_CHANGE: 'b-clr', QA_FEEDBACK: 'b-pend', CAPA: 'b-hold', ALERT: 'b-hold', DEVIATION: 'b-pend', SOP_LINK: 'b-draft'}[t] || 'b-info'); }
+function scope(n){
+  if (n.type === 'GRADE_CHANGE') return (n.unit || 'all units') + ' · change of grade (basis: ' + n.basis.toLowerCase().replace('_', ' ') + ')';
+  var p = []; if (n.unit) p.push(n.unit); if (n.eq) p.push(n.eq); if (n.grade) p.push(n.grade); if (n.series) p.push(n.series);
+  if (n.shape || n.size) p.push(((n.shape || '') + ' ' + (n.size || '')).trim()); if (n.psn) p.push('PSN ' + n.psn); if (n.cust) p.push(n.cust);
+  if (!n.eq && !n.grade && !n.series && !n.shape && !n.size && !n.psn && !n.cust) p.push('all grades');
+  return p.join(' · '); }
+function validTxt(n){ if (n.auto && !n.from && !n.to) return 'auto (' + n.auto + ')'; if (!n.from && !n.to) return '—'; return (n.from || '…') + ' → ' + (n.to || ''); }
+function ackTxt(n){ if (!n.ack) return 'no'; if (n.mode !== 'POPUP_ACK') return 'yes'; return 'yes · ' + (!n.blocks ? 'non-blocking' : n.type === 'GRADE_CHANGE' ? 'blocks the next confirmation' : 'blocks the first confirmation of the shift'); }
+function titleTxt(n){ return n.title + (n.type === 'GRADE_CHANGE' ? ' · Quality check on the first bars: ' + (n.qa ? n.qaBars + ' bars' : 'off') : ''); }
+function audit(act, t){ S.audit.unshift(['2026-10-05 ' + now(), WHO[S.role], act, t]); }
+function isPC(what){ if (S.role === 'PC') return true; U.toast(what + ' is for process control — switch "Acting as"'); return false; }
+function ovl(a1, a2, b1, b2){ return (!a2 || !b1 || b1 <= a2) && (!b2 || !a1 || a1 <= b2); }
+function gcClash(o){ var x = N.filter(function(n){ return n.id !== o.id && n.active && n.type === 'GRADE_CHANGE' && (n.unit || '') === (o.unit || '') && n.pulpits.some(function(p){ return o.pulpits.indexOf(p) >= 0; }) && ovl(n.from, n.to, o.from, o.to); })[0];
+  return x ? 'note #' + x.id + ' (' + (x.unit || 'all units') + ' cooling bed, ' + (x.to ? 'valid to ' + x.to : 'open-ended') + ')' : ''; }
+// ---- resolution (BR-PNT-01): pulpit + validity + every non-blank scope key equals the batch on screen
+function match(n, p, b){ return ['unit', 'grade', 'series', 'shape', 'size', 'psn', 'cust'].every(function(k){ return !n[k] || n[k] === b[k]; }) && (!n.eq || n.eq === pul(p)[3]); }
+function resolved(p, b){ return N.filter(function(n){ return status(n) === 'ACTIVE' && n.pulpits.indexOf(p) >= 0 && n.type !== 'GRADE_CHANGE' && n.type !== 'QA_FEEDBACK' && match(n, p, b); }).sort(byPrio); }
+function curBatch(){ return S.pp === 'COOLING_BED' ? S.bed.next : S.pb; }
+function items(){
+  var p = S.pp, bid = curBatch(), b = BAT[bid], out = [];
+  if (p === 'COOLING_BED' && S.bed.gc){ var g = S.bed.gc, lb = BAT[S.bed.last], nb = BAT[g.batch];
+    out.push({k: 'g', type: 'GRADE_CHANGE', mode: 'POPUP_ACK', blocks: true, ack: true, remark: true, title: g.note.title.replace('{from}', g.from).replace('{to}', g.to),
+      body: 'Last on the bed ' + S.bed.last + ' · ' + lb.grade + ' · heat ' + lb.heat + ' → next ' + g.batch + ' · ' + nb.grade + ' · ' + nb.shape + ' ' + nb.size + ' · heat ' + nb.heat + ' · change by ' + g.note.basis.toLowerCase().replace('_', ' ') + '. ' + g.note.body, a: g.ack}); }
+  var qn = N.filter(function(n){ return n.type === 'QA_FEEDBACK' && status(n) === 'ACTIVE' && n.pulpits.indexOf(p) >= 0; })[0];
+  if (qn) S.fb.filter(function(f){ return f.pulpit === p; }).forEach(function(f){ out.push({k: 'f' + f.no, type: 'QA_FEEDBACK', mode: qn.mode, blocks: false, ack: true, remark: true, f: f,
+    title: 'Heat ' + f.heat + ' · strand ' + f.strand + ' · ' + f.text, body: 'Online inspection ' + f.ins + ' · SMS QA · sent ' + f.at + ' · suggested action: ' + f.act + '.', a: f.ack}); });
+  if (b) resolved(p, b).forEach(function(n){ out.push({k: 'n' + n.id, type: n.type, mode: n.mode, blocks: n.blocks, ack: n.ack, remark: false, title: n.title, body: n.body, src: n.src, a: S.acks['n' + n.id + '|' + S.shift]}); });
+  return out; }
+function pending(){ return items().filter(function(it){ return it.mode === 'POPUP_ACK' && it.blocks && !it.a; }); }
+// ---- list
+function rTable(){
+  var fu = $('fU').value, fp = $('fP').value, ft = $('fT').value, fm = $('fM').value, fs = $('fS').value, q = $('fQ').value.trim().toUpperCase();
+  var rows = N.filter(function(n){ return (!fu || unitOf(n) === fu) && (!fp || n.pulpits.indexOf(fp) >= 0) && (!ft || n.type === ft) && (!fm || n.mode === fm) && (!fs || status(n) === fs) && (!q || (n.title + ' ' + n.src + ' ' + scope(n)).toUpperCase().indexOf(q) >= 0); }).sort(byPrio);
+  var h = '<table class="g"><thead><tr><th>Type</th><th>Pulpit</th><th>Scope</th><th>Title</th><th>Source</th><th>Valid</th><th>Display</th><th>Ack</th><th class="num">Priority</th><th>Status</th><th></th></tr></thead><tbody>';
+  if (!rows.length) h += '<tr class="empty"><td colspan="11">No note matches the filters.</td></tr>';
+  rows.forEach(function(n){ var st = status(n);
+    h += '<tr class="' + (st === 'INACTIVE' || st === 'EXPIRED' ? 'drop' : '') + '" data-id="' + n.id + '"><td>' + tyB(n.type) + '</td><td>' + n.pulpits.map(function(c){ return pul(c)[1].toUpperCase(); }).join(' · ') + '</td><td>' + esc(scope(n)) + '</td><td>' + esc(titleTxt(n)) + '</td><td>' + esc(n.src) + '</td><td>' + validTxt(n) + '</td><td>' + n.mode + '</td><td>' + ackTxt(n) + '</td><td class="num">' + n.prio + '</td><td>' + stB(st) + '</td>'
+      + '<td><div style="display:flex;gap:3px;white-space:nowrap"><button class="btn btn-ghost btn-sm" title="Preview" onclick="pnPrev(' + n.id + ')"><i class="fa-solid fa-eye"></i></button><button class="btn btn-ghost btn-sm" title="Edit" onclick="pnEdit(' + n.id + ')"><i class="fa-solid fa-pen"></i></button>'
+      + (n.active ? '<button class="btn btn-ghost btn-sm" title="Deactivate" onclick="pnDeact(' + n.id + ')"><i class="fa-solid fa-ban"></i></button>' : '<button class="btn btn-ghost btn-sm" title="Reactivate" onclick="pnReact(' + n.id + ')"><i class="fa-solid fa-rotate-left"></i></button>') + '</div></td></tr>'; });
+  $('pnG').innerHTML = h + '</tbody></table>';
+  $('pnCnt').textContent = rows.length + ' of ' + N.length + ' notes';
+}
+// ---- pulpit preview
+function rPrev(){
+  var p = S.pp, P = pul(p), bed = p === 'COOLING_BED', cast = p.indexOf('CASTER') === 0, bid = curBatch(), b = BAT[bid];
+  $('pvTabs').innerHTML = PUL.map(function(x){ return '<span class="' + (x[0] === p ? 'on' : '') + '" onclick="pnPul(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('');
+  var h = '<div class="pvh"><b>' + P[2] + ' · ' + P[1] + ' pulpit</b><span>shift ' + S.shift + '</span>';
+  if (bed){ var lb = BAT[S.bed.last];
+    h += '<span>Last confirmed on the bed: <b>' + S.bed.last + '</b> · ' + lb.grade + ' · ' + lb.shape + ' ' + lb.size + ' · PSN ' + lb.psn + '</span></div><div class="pvh">'
+      + (S.bed.next ? '<span>On the bed now: <b>' + S.bed.next + '</b> · ' + b.grade + ' · ' + b.series + ' · ' + b.shape + ' ' + b.size + ' · PSN ' + b.psn + ' · heat ' + b.heat + '</span>'
+        : '<label for="pvN">Next batch arriving</label><select id="pvN">' + ONS[p].filter(function(x){ return x !== S.bed.last; }).map(function(x){ var y = BAT[x]; return '<option value="' + x + '">' + x + ' · ' + y.grade + ' · ' + y.shape + ' ' + y.size + ' · PSN ' + y.psn + '</option>'; }).join('') + '</select><button class="btn btn-ghost btn-sm" id="pvArr" onclick="pnArrive()"><i class="fa-solid fa-right-to-bracket"></i> Arrives</button>');
+  } else {
+    h += '<label for="pvB">' + (cast ? 'Heat on the strand' : 'Batch on screen') + '</label><select id="pvB" onchange="pnBat()">' + ONS[p].map(function(x){ var y = BAT[x]; return '<option value="' + x + '"' + (x === S.pb ? ' selected' : '') + '>' + x + ' · ' + y.grade + ' · ' + y.shape + ' ' + y.size + (y.psn ? ' · PSN ' + y.psn : '') + '</option>'; }).join('') + '</select>'
+      + (cast ? '<button class="btn btn-ghost btn-sm" id="pvFind" onclick="pnFind()"><i class="fa-solid fa-flask-vial"></i> Simulate a Quality finding</button>' : '');
+  }
+  h += '<span style="margin-left:auto"></span><button class="btn btn-ghost btn-sm" id="pvShift" onclick="pnShift()"><i class="fa-solid fa-clock-rotate-left"></i> New shift</button></div>';
+  var its = items(), bn = its.filter(function(i){ return i.mode === 'BANNER'; }), pp = its.filter(function(i){ return i.mode === 'POPUP_ACK'; }), pn = its.filter(function(i){ return i.mode === 'PANEL'; });
+  bn.forEach(function(i){ h += '<div class="banner" style="margin:0"><i class="fa-solid fa-book-open"></i> <b>' + i.type + '</b> · ' + esc(i.title) + ' — ' + esc(i.body) + '</div>'; });
+  pp.forEach(function(i){ var a = i.a;
+    h += '<div class="pnpop' + (a ? ' done' : '') + '" data-k="' + i.k + '"><h4><i class="fa-solid ' + (a ? 'fa-circle-check' : 'fa-triangle-exclamation') + '"></i> ' + i.type.replace('_', ' ') + ' — ' + (a ? 'acknowledged' : 'acknowledge to continue') + '<small>pop-up · ' + (i.blocks ? 'blocks the confirmation' : 'never blocks a confirmation') + '</small></h4><div><b>' + esc(i.title) + '</b><br/>' + esc(i.body) + '</div>'
+      + (a ? '<div class="ackd"><i class="fa-solid fa-user-check"></i> ' + a.at + ' · ' + a.by + (a.remark ? ' — “' + esc(a.remark) + '”' : '') + '</div>'
+        : '<div class="ackrow">' + (i.remark ? '<input type="text" id="rm_' + i.k + '" placeholder="Remark — what was done (mandatory)"/>' : '') + '<button class="btn btn-primary btn-sm" id="ak_' + i.k + '" onclick="pnAck(\'' + i.k + '\')"><i class="fa-solid fa-check"></i> Acknowledge</button></div>') + '</div>'; });
+  if (pn.length) h += '<div class="pnpan"><b><i class="fa-solid fa-note-sticky"></i> Notes for this batch</b><ul class="timeline" style="margin-top:6px">' + pn.map(function(i){ return '<li><b>' + i.type + '</b> · ' + esc(i.title) + ' <small style="color:var(--color-text-muted)">' + esc(i.src || '') + '</small><br/>' + esc(i.body)
+      + (i.ack ? (i.a ? ' <span class="badge b-done">acknowledged ' + i.a.at + '</span>' : ' <button class="btn btn-ghost btn-sm" id="ak_' + i.k + '" onclick="pnAck(\'' + i.k + '\')">Acknowledge</button>') : '') + '</li>'; }).join('') + '</ul></div>';
+  if (!its.length) h += '<div class="pvempty">' + (b ? 'No note resolves for ' + bid + ' at this pulpit — the scope keys or the validity leave every note out.' : bed ? 'Pick the next batch and press Arrives — the grade-change note is raised when its grade differs from the last batch on the bed.' : 'Nothing on screen.') + '</div>';
+  var pend = pending();
+  h += '<div class="pncf"><button class="btn btn-primary" id="pvConf" onclick="pnConfirm()"' + (bid ? '' : ' disabled') + '><i class="fa-solid fa-check-double"></i> Confirm ' + (bid || '—') + ' at ' + P[1] + '</button><span id="pvState">'
+    + (!bid ? '' : pend.length ? B(pend.length + ' blocking pop-up' + (pend.length > 1 ? 's' : '') + ' to acknowledge', 'b-hold') : B('ready to confirm', 'b-done')) + '</span><small style="color:var(--color-text-muted)">confirmed this session: ' + S.conf + '</small></div>';
+  $('pvScr').innerHTML = h;
+  $('pnLog').innerHTML = S.log.length ? '<table class="g"><thead><tr><th>Time</th><th>Note</th><th>Pulpit</th><th>Batch</th><th>By</th><th>Remark</th></tr></thead><tbody>' + S.log.map(function(l){ return '<tr><td>' + l[0] + '</td><td>' + esc(l[1]) + '</td><td>' + l[2] + '</td><td>' + l[3] + '</td><td>' + l[4] + '</td><td>' + esc(l[5]) + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="pvempty">No acknowledgement yet — act as the pulpit operator and acknowledge a pop-up in the preview.</div>';
+}
+function render(){
+  rTable(); rPrev();
+  var act = N.filter(function(n){ return status(n) === 'ACTIVE'; });
+  $('pnK').innerHTML = [[act.length, 'active notes'], [act.filter(function(n){ return n.mode === 'POPUP_ACK'; }).length, 'pop-ups (ack)'], [act.filter(function(n){ return n.blocks; }).length, 'blocking'],
+    [act.filter(function(n){ return n.to && n.to <= addD(TODAY, 30); }).length, 'expire within 30 days'], [N.filter(function(n){ var s = status(n); return s === 'EXPIRED' || s === 'INACTIVE'; }).length, 'expired / inactive'], [S.log.length, 'acknowledgements']].map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('pnA').innerHTML = '<ul class="timeline">' + S.audit.map(function(a){ return '<li>' + a[0] + ' · ' + a[1] + ' · <b>' + a[2] + '</b> · ' + esc(a[3]) + '</li>'; }).join('') + '</ul>';
+}
+window.pnFilter = rTable;
+// ---- add / edit
+function opts(list, v, blank){ return (blank != null ? '<option value="">' + blank + '</option>' : '') + list.map(function(o){ return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join(''); }
+var HINT = {GRADE_CHANGE: 'Raised by the system at each grade change on the cooling bed — the title needs the placeholders {from} and {to}; the change basis says what counts as a change; one grade-change note per bed at a time.',
+  CAPA: 'The source reference is an open CAPA of the Quality module: ' + CAPAS.join(', ') + '.', QA_FEEDBACK: 'Quality feedback notes are written by the Quality module when an online inspection records a finding — they are not added by hand.',
+  LAST_CAMPAIGN: 'Usually generated from the closed campaigns of the PSN — see Generate last-campaign notes.'};
+function dlg(n, isNew){
+  var body = '<div class="mdl">'
+   + '<div class="three"><div><label for="dT">Note type</label><select id="dT" onchange="pnSync(1)">' + opts(TYPES, n.type) + '</select></div><div><label for="dM">Display mode</label><select id="dM" onchange="pnSync(2)">' + opts(['BANNER', 'PANEL', 'POPUP_ACK'], n.mode) + '</select></div><div><label for="dPr">Priority (1 = shown first)</label><input type="number" id="dPr" value="' + n.prio + '"/></div></div>'
+   + '<div><label>Pulpits</label><div id="dPu" style="display:flex;flex-wrap:wrap;gap:4px 14px">' + PUL.map(function(p){ return '<label style="font-weight:400;margin:0;font-size:12.5px"><input type="checkbox" value="' + p[0] + '"' + (n.pulpits.indexOf(p[0]) >= 0 ? ' checked' : '') + '/> ' + p[2] + ' · ' + p[1] + '</label>'; }).join('') + '</div></div>'
+   + '<div class="three"><div><label for="dU">Unit</label><select id="dU">' + opts(['SMS', 'BRM'], n.unit, 'all units') + '</select></div><div><label for="dE">Equipment</label><select id="dE">' + opts(PUL.map(function(p){ return p[3]; }), n.eq, 'all equipment') + '</select></div><div><label for="dC">Customer</label><select id="dC">' + opts(L.cust, n.cust, 'all customers') + '</select></div></div>'
+   + '<div class="three"><div><label for="dG">Grade</label><select id="dG">' + opts(L.grades, n.grade, 'all grades') + '</select></div><div><label for="dS">Grade series</label><select id="dS">' + opts(L.series, n.series, 'all series') + '</select></div><div><label for="dPs">PSN</label><select id="dPs">' + opts(L.psns, n.psn, 'all PSNs') + '</select></div></div>'
+   + '<div class="three"><div><label for="dSh">Product shape</label><select id="dSh">' + opts(L.shapes, n.shape, 'all shapes') + '</select></div><div><label for="dSz">Size</label><input type="text" id="dSz" value="' + esc(n.size) + '" placeholder="e.g. 32 — blank = all"/></div><div><label for="dSr">Source reference</label><input type="text" id="dSr" value="' + esc(n.src) + '" placeholder="CAPA, campaign, SOP, deviation…"/></div></div>'
+   + '<div><label for="dTi">Title (mandatory)</label><input type="text" id="dTi" value="' + esc(n.title) + '"/></div>'
+   + '<div><label for="dB">Text shown on the pulpit (mandatory)</label><textarea id="dB">' + esc(n.body) + '</textarea></div>'
+   + '<div class="three"><div><label for="dF">Valid from</label><input type="date" id="dF" value="' + (n.from || '') + '"/></div><div><label for="dTo">Valid to</label><input type="date" id="dTo" value="' + (n.to || '') + '"/></div><div><label>Acknowledgement</label><label style="font-weight:400;margin:0"><input type="checkbox" id="dA"' + (n.ack ? ' checked' : '') + '/> required</label><label style="font-weight:400;margin:0"><input type="checkbox" id="dBl"' + (n.blocks ? ' checked' : '') + '/> blocks the confirmation</label></div></div>'
+   + '<div id="dGC" class="three" style="background:#ede7f6;padding:8px;border-radius:6px"><div><label for="dBa">Change basis</label><select id="dBa">' + opts(['GRADE', 'GRADE_SERIES', 'PSN'], n.basis || 'GRADE') + '</select></div><div><label>Quality check</label><label style="font-weight:400;margin:0"><input type="checkbox" id="dQ"' + (n.qa ? ' checked' : '') + '/> on the first bars of the new grade</label></div><div><label for="dQb">Bars</label><input type="number" id="dQb" value="' + (n.qaBars || '') + '"/></div></div>'
+   + '<div class="hint" id="dHint"></div></div>';
+  U.modal(isNew ? 'Add pulpit note' : 'Edit note #' + n.id + ' — ' + n.type, body, isNew ? 'Add note' : 'Save', function(){ return save(n, isNew); }, true);
+  pnSync(0);
+}
+window.pnSync = function(why){ var t = $('dT').value, m = $('dM').value;
+  if (why === 1 && t === 'GRADE_CHANGE'){ $('dM').value = m = 'POPUP_ACK'; $('dU').value = 'BRM'; $('dPu').querySelectorAll('input').forEach(function(c){ c.checked = c.value === 'COOLING_BED'; }); why = 2; }
+  if (why === 2){ $('dA').checked = m === 'POPUP_ACK'; $('dBl').checked = m === 'POPUP_ACK' && t !== 'QA_FEEDBACK'; }
+  $('dA').disabled = m !== 'PANEL'; if (m === 'BANNER') $('dA').checked = false; if (m === 'POPUP_ACK') $('dA').checked = true;
+  $('dBl').disabled = m !== 'POPUP_ACK'; if (m !== 'POPUP_ACK') $('dBl').checked = false;
+  $('dGC').style.display = t === 'GRADE_CHANGE' ? '' : 'none';
+  $('dHint').textContent = (HINT[t] || 'Notes resolve by pulpit and scope with the batch on screen; a blank scope key means all. ') + ' Pop-ups always need an acknowledgement; banners never do.'; };
+function save(n, isNew){
+  var t = $('dT').value, m = $('dM').value, pu = [].slice.call($('dPu').querySelectorAll('input:checked')).map(function(c){ return c.value; });
+  if (t === 'QA_FEEDBACK'){ U.toast('Refused — Quality feedback notes are written by the Quality module when an online inspection records a finding, not maintained by hand'); return false; }
+  if (!U.req(['dTi', 'dB'])){ U.toast('Refused — the title and the text are mandatory'); return false; }
+  if (!pu.length){ U.toast('Refused — pick at least one pulpit'); return false; }
+  var f = $('dF').value, to = $('dTo').value, pr = +$('dPr').value, src = $('dSr').value.trim(), title = $('dTi').value.trim();
+  if (f && to && to < f){ $('dTo').classList.add('bad'); U.toast('Refused — valid to ' + to + ' is before valid from ' + f); return false; }
+  if (!(pr >= 1 && pr <= 99)){ $('dPr').classList.add('bad'); U.toast('Refused — priority 1 to 99'); return false; }
+  if (t === 'CAPA' && CAPAS.indexOf(src.toUpperCase()) < 0){ $('dSr').classList.add('bad'); U.toast('Refused — ' + (src || 'the source reference') + ' is not an open CAPA in the Quality module (' + CAPAS.join(', ') + ')'); return false; }
+  if (t === 'GRADE_CHANGE'){
+    if (pu.some(function(p){ return p !== 'COOLING_BED'; })){ U.toast('Refused — a grade-change note belongs to the cooling-bed pulpit only'); return false; }
+    if (m !== 'POPUP_ACK'){ U.toast('Refused — the grade-change note is a pop-up that blocks the next confirmation'); return false; }
+    if (title.indexOf('{from}') < 0 || title.indexOf('{to}') < 0){ $('dTi').classList.add('bad'); U.toast('Refused — the grade-change title needs the placeholders {from} and {to}'); return false; }
+    if ($('dQ').checked && !(+$('dQb').value >= 1)){ $('dQb').classList.add('bad'); U.toast('Refused — Quality check on: how many first bars?'); return false; }
+    var c = gcClash({id: n.id, unit: $('dU').value, pulpits: pu, from: f, to: to});
+    if (c){ U.toast('Refused — overlapping validity: ' + c + ' is already the grade-change note of this bed; deactivate it or end its validity first'); return false; } }
+  var o = {type: t, mode: m, prio: pr, pulpits: pu, unit: $('dU').value, eq: $('dE').value, cust: $('dC').value, grade: $('dG').value, series: $('dS').value, psn: $('dPs').value,
+    shape: $('dSh').value, size: $('dSz').value.trim(), src: src, title: title, body: $('dB').value.trim(), from: f, to: to, ack: m === 'POPUP_ACK' ? true : m === 'BANNER' ? false : $('dA').checked,
+    blocks: m === 'POPUP_ACK' && $('dBl').checked, basis: t === 'GRADE_CHANGE' ? $('dBa').value : '', qa: t === 'GRADE_CHANGE' && $('dQ').checked, qaBars: t === 'GRADE_CHANGE' && $('dQ').checked ? +$('dQb').value : 0};
+  if (isNew){ o.id = ++S.nid; o.active = true; o.sys = false; o.auto = t === 'GRADE_CHANGE' ? 'per change' : ''; N.push(o); audit('ADD', t + ' · ' + title + ' — ' + pu.map(function(p){ return pul(p)[1]; }).join(' · '));
+    render(); U.toast('Note #' + o.id + ' added — ' + status(o).toLowerCase() + '; Preview shows where it appears'); return true; }
+  var diff = Object.keys(o).filter(function(k){ return JSON.stringify(o[k]) !== JSON.stringify(n[k]); });
+  if (!diff.length){ U.toast('Nothing changed'); return false; }
+  Object.keys(o).forEach(function(k){ n[k] = o[k]; }); audit('EDIT', '#' + n.id + ' ' + t + ' — ' + diff.join(', ') + ' changed');
+  render(); U.toast('Note #' + n.id + ' saved — ' + diff.join(', ') + ' changed'); return true; }
+function byId(id){ return N.filter(function(n){ return n.id === id; })[0]; }
+window.pnAdd = function(){ if (!isPC('Adding a note')) return; dlg({type: 'INSTRUCTION', mode: 'PANEL', prio: 20, pulpits: [], unit: 'BRM', eq: '', cust: '', grade: '', series: '', psn: '', shape: '', size: '', src: '', title: '', body: '', from: TODAY, to: '', ack: false, blocks: false, basis: 'GRADE', qa: false, qaBars: 0}, true); };
+window.pnEdit = function(id){ var n = byId(id); if (!isPC('Editing a note')) return;
+  if (n.sys){ U.toast('Refused — Quality feedback notes come from the Quality module (online inspection); they are not maintained by hand'); return; } dlg(n, false); };
+window.pnDeact = function(id){ var n = byId(id); if (!isPC('Deactivating a note')) return;
+  if (n.sys){ U.toast('Refused — the Quality feedback note cannot be switched off here; it is written by the Quality module'); return; }
+  U.modal('Deactivate note #' + n.id + ' — ' + n.type, '<div class="mdl"><div class="hint">' + esc(titleTxt(n)) + '<br/>The note stops resolving on the pulpits at once; it stays in the list and can be reactivated.</div><div><label for="dWhy">Reason (mandatory)</label><input type="text" id="dWhy"/></div></div>', 'Deactivate', function(){
+    if (!U.req(['dWhy'])) return false; n.active = false; audit('DEACTIVATE', '#' + n.id + ' ' + n.type + ' — ' + $('dWhy').value); render(); U.toast('Note #' + n.id + ' deactivated — no longer shown on ' + n.pulpits.map(function(p){ return pul(p)[1]; }).join(' · ')); return true; }); };
+window.pnReact = function(id){ var n = byId(id); if (!isPC('Reactivating a note')) return;
+  if (n.type === 'GRADE_CHANGE'){ var c = gcClash(n); if (c){ U.toast('Refused — overlapping validity: ' + c + ' is active for this bed'); return; } }
+  n.active = true; audit('REACTIVATE', '#' + n.id + ' ' + n.type); render(); U.toast('Note #' + n.id + ' reactivated — ' + status(n).toLowerCase()); };
+// ---- generate last-campaign notes, upload
+window.pnGen = function(){ if (!isPC('Generating last-campaign notes')) return;
+  U.modal('Generate last-campaign notes', '<div class="mdl"><div class="hint">When a campaign closes, the deviations and corrections of the last three closed campaigns of the same PSN become LAST_CAMPAIGN notes (panel, priority 30) on the pulpit where they were made.</div><div><label for="gC">Campaign</label><select id="gC" onchange="pnGenShow()">' + CMP.map(function(c){ return '<option value="' + c.code + '">' + c.code + ' · PSN ' + c.psn + ' · ' + (c.status === 'CLOSED' ? 'closed ' + c.closed : 'still running') + '</option>'; }).join('') + '</select></div><div id="gOut"></div></div>', 'Generate', function(){
+    var c = CMP.filter(function(x){ return x.code === $('gC').value; })[0];
+    if (c.status !== 'CLOSED'){ U.toast('Refused — ' + c.code + ' is still running; last-campaign notes are generated when the campaign closes'); return false; }
+    var mk = genList(c), add = mk.filter(function(x){ return !x.dup; });
+    add.forEach(function(x){ N.push({id: ++S.nid, type: 'LAST_CAMPAIGN', pulpits: [x.p], title: x.title, body: 'Last campaigns of this PSN: ' + x.t + '.', src: x.c, mode: 'PANEL', ack: false, blocks: false, prio: 30, unit: '', grade: '', series: '', shape: '', size: '', psn: c.psn, eq: '', cust: '', from: '', to: '', auto: 'last 3 campaigns', basis: '', qa: false, qaBars: 0, active: true, sys: false}); });
+    audit('GENERATE', add.length + ' LAST_CAMPAIGN notes for PSN ' + c.psn + ' up to ' + c.code); render();
+    U.toast(add.length + ' note' + (add.length === 1 ? '' : 's') + ' generated for PSN ' + c.psn + (mk.length - add.length ? ' — ' + (mk.length - add.length) + ' already a note, skipped' : '')); return true; }, true);
+  $('gC').value = 'CMP-BRM-2026-35'; pnGenShow(); };
+function genList(c){ var last = CMP.filter(function(x){ return x.psn === c.psn && x.status === 'CLOSED' && x.closed <= c.closed; }).sort(function(a, b){ return a.closed < b.closed ? 1 : -1; }).slice(0, 3), out = [];
+  last.forEach(function(x){ x.items.forEach(function(it){ var title = it[1] + ' (campaign ' + x.code + ')'; out.push({c: x.code, p: it[0], t: it[1], title: title, dup: N.some(function(n){ return n.title === title && n.active; })}); }); }); return out; }
+window.pnGenShow = function(){ var c = CMP.filter(function(x){ return x.code === $('gC').value; })[0];
+  if (c.status !== 'CLOSED'){ $('gOut').innerHTML = '<div class="note" style="margin:0">' + c.code + ' is still running — nothing to generate until it closes.</div>'; return; }
+  $('gOut').innerHTML = '<table class="g"><thead><tr><th>Campaign</th><th>Pulpit</th><th>Deviation / correction</th><th>Result</th></tr></thead><tbody>' + genList(c).map(function(x){ return '<tr class="' + (x.dup ? 'drop' : 'ok') + '"><td>' + x.c + '</td><td>' + pul(x.p)[1] + '</td><td>' + esc(x.t) + '</td><td>' + (x.dup ? 'already a note' : B('NEW NOTE', 'b-done')) + '</td></tr>'; }).join('') + '</tbody></table>'; };
+window.pnUpload = function(){ if (!isPC('Uploading notes')) return;
+  U.modal('Upload — sheet PULPIT_NOTE', '<div class="mdl"><table class="g"><thead><tr><th>Row</th><th>Note</th><th>Result</th></tr></thead><tbody><tr class="ok"><td>2</td><td>INSTRUCTION · Finishing · BRM · RO 40 · “Pass schedule F-40-A, 9 passes” · pop-up</td><td>' + B('OK', 'b-done') + '</td></tr>'
+    + '<tr class="bad"><td>3</td><td>QA_FEEDBACK · Caster CCM-1 · “strand 4 bulging”</td><td>' + B('REJECTED', 'b-hold') + ' <small>written by the Quality module</small></td></tr><tr class="bad"><td>4</td><td>CAPA · Roughing · source CAPA-2026-099</td><td>' + B('REJECTED', 'b-hold') + ' <small>not an open CAPA in Quality</small></td></tr></tbody></table></div>', 'Load', function(){
+    if (!N.some(function(n){ return n.title === 'Pass schedule F-40-A, 9 passes'; })) N.push({id: ++S.nid, type: 'INSTRUCTION', pulpits: ['FINISHING'], title: 'Pass schedule F-40-A, 9 passes', body: 'Roll RO 40 with pass schedule F-40-A (9 passes).', src: 'Process control', mode: 'POPUP_ACK', ack: true, blocks: true, prio: 20, unit: 'BRM', grade: '', series: '', shape: 'RO', size: '40', psn: '', eq: '', cust: '', from: TODAY, to: '', auto: '', basis: '', qa: false, qaBars: 0, active: true, sys: false});
+    audit('UPLOAD', '1 row loaded, 2 rejected'); render(); U.toast('1 note loaded; 2 rows rejected with the reason'); return true; }); };
+// ---- preview actions
+window.pnPul = function(c){ S.pp = c; S.pb = c === 'COOLING_BED' ? '' : ONS[c][0]; render(); };
+window.pnBat = function(){ S.pb = $('pvB').value; render(); };
+window.pnPrev = function(id){ var n = byId(id), p = n.pulpits[0]; S.pp = p;
+  if (p !== 'COOLING_BED'){ var hit = ONS[p].filter(function(x){ return match(n, p, BAT[x]); })[0]; S.pb = hit || ONS[p][0]; }
+  render(); $('pvScr').scrollIntoView({block: 'nearest'});
+  var st = status(n); U.toast(n.type === 'GRADE_CHANGE' ? 'Cooling bed — pick a next batch of another grade and press Arrives' : n.type === 'QA_FEEDBACK' ? 'Caster — press Simulate a Quality finding' : st !== 'ACTIVE' ? 'Note #' + n.id + ' is ' + st.toLowerCase() + ' — it does not resolve on the pulpit' : !hit ? 'No sample batch at ' + pul(p)[1] + ' matches the scope of note #' + n.id : 'Previewing ' + pul(p)[1] + ' with ' + S.pb); };
+window.pnShift = function(){ S.shift = String.fromCharCode(S.shift.charCodeAt(0) === 67 ? 65 : S.shift.charCodeAt(0) + 1); render(); U.toast('Shift ' + S.shift + ' — pop-up notes need acknowledging again before the first confirmation of the shift'); };
+window.pnFind = function(){ var f = FIND[S.fbn % FIND.length]; S.fbn++;
+  var rec = {no: S.fbn, pulpit: f[0], heat: f[1], strand: f[2], text: f[3], act: f[4], ins: f[5], at: now(), ack: null}; S.fb.push(rec); S.pp = f[0]; S.pb = f[1];
+  audit('QA_FEEDBACK', 'written by the Quality module — ' + f[5] + ' · heat ' + f[1] + ' strand ' + f[2]); render();
+  U.toast('Quality module: ' + f[5] + ' — pop-up at ' + pul(f[0])[1] + ' for heat ' + f[1] + '; needs a remark, never blocks'); };
+window.pnArrive = function(){ var nb = $('pvN').value, b = BAT[nb], lb = BAT[S.bed.last];
+  var g = N.filter(function(n){ return n.type === 'GRADE_CHANGE' && status(n) === 'ACTIVE' && n.pulpits.indexOf('COOLING_BED') >= 0 && (!n.unit || n.unit === b.unit); }).sort(byPrio)[0];
+  S.bed.next = nb; S.bed.gc = null;
+  if (!g){ render(); U.toast(nb + ' arrived — no active grade-change note for this bed, nothing is raised'); return; }
+  var k = {GRADE: 'grade', GRADE_SERIES: 'series', PSN: 'psn'}[g.basis], w = g.basis.toLowerCase().replace('_', ' ');
+  if (b[k] === lb[k]){ render(); U.toast(nb + ' arrived — same ' + w + ' as ' + S.bed.last + ' (' + b[k] + '): no grade change, no note'); return; }
+  S.bed.gc = {note: g, from: lb.grade, to: b.grade, batch: nb, ack: null}; render();
+  U.toast('Grade change ' + lb.grade + ' → ' + b.grade + ' (by ' + w + ') — the pop-up blocks ' + nb + ' until the separation is acknowledged'); };
+window.pnAck = function(k){
+  if (S.role !== 'OP'){ U.toast('Acknowledgements are recorded per user of the pulpit crew — switch "Acting as" to the pulpit operator'); return; }
+  var it = items().filter(function(i){ return i.k === k; })[0]; if (!it) return;
+  var rm = $('rm_' + k), r = rm ? rm.value.trim() : '';
+  if (it.remark && !r){ rm.classList.add('bad'); U.toast('A remark is mandatory — say what was done'); return; }
+  var rec = {by: WHO.OP, at: now(), remark: r}, bid = curBatch();
+  if (k === 'g') S.bed.gc.ack = rec; else if (it.f) it.f.ack = rec; else S.acks[k + '|' + S.shift] = rec;
+  S.log.unshift([rec.at, it.type + ' · ' + it.title, pul(S.pp)[1], it.f ? 'heat ' + it.f.heat : bid, WHO.OP, r || '—']); render();
+  U.toast(k === 'g' ? 'Separation acknowledged — recorded against ' + bid + ', the first batch of the new grade' : it.f ? 'Acknowledged — the remark goes back to the Quality module against ' + it.f.ins : 'Acknowledged by ' + WHO.OP + ' for shift ' + S.shift); };
+window.pnConfirm = function(){
+  if (S.role !== 'OP'){ U.toast('Confirming at the pulpit is the pulpit crew\'s — switch "Acting as" to the pulpit operator'); return; }
+  var bid = curBatch(), bed = S.pp === 'COOLING_BED'; if (!bid) return;
+  var pend = pending();
+  if (pend.length){ U.toast('Confirmation blocked — acknowledge first: ' + pend.map(function(i){ return i.type + ' “' + i.title.slice(0, 48) + '”'; }).join(' · ')); return; }
+  var openQ = items().filter(function(i){ return i.type === 'QA_FEEDBACK' && !i.a; }).length;
+  S.conf++;
+  if (bed){ var g = S.bed.gc; S.bed.last = bid; S.bed.next = ''; S.bed.gc = null; render();
+    U.toast(bid + ' confirmed on the bed' + (g ? ' — GRADE_SEPARATED recorded on ' + bid + (g.note.qa ? '; its first ' + g.note.qaBars + ' bars flagged for a Quality check' : '') : '')); return; }
+  render(); U.toast(bid + ' confirmed at ' + pul(S.pp)[1] + (openQ ? ' — the Quality feedback is still open but never blocks; casting runs on' : ' — handed over to the next pulpit')); };
+window.pnRole = function(){ S.role = $('pnRole').value; render(); U.toast(S.role === 'PC' ? 'Acting as process control — adds, edits, deactivates and generates notes' : 'Acting as the pulpit operator — acknowledges pop-ups and confirms in the preview'); };
+window.pnTry = function(p, b, role){ if (role){ $('pnRole').value = role; S.role = role; } S.pp = p; S.pb = b || (p === 'COOLING_BED' ? '' : ONS[p][0]); render(); $('pvScr').scrollIntoView({block: 'nearest'}); };
+render();
+})();
+</script>
   </main>
 </div>
 

@@ -208,9 +208,238 @@ table.g{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin-bottom
 </div></div>
 <div class="navgrp" data-g="Other modules"><div class="s-group" onclick="grpToggle(this)">Other modules<i class="fa-solid fa-chevron-down gchev"></i></div><div class="grp-items"><a href="../ppc/ppc-hub.html"><i class="fa-solid fa-compass"></i> Planning</a><a href="../mdm/mdm-hub.html"><i class="fa-solid fa-sliders"></i> Master Data</a><a href="../qa/dashboard.html"><i class="fa-solid fa-flask-vial"></i> Quality</a></div></div></nav>  <main class="content">
     <div class="tabbar" id="tabbar"></div>
-    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Masters</span> <span>/</span> <b>Label Templates</b></div>
-    <div class="page-head"><div><h1><i class="fa-solid fa-tag"></i> Label Templates</h1><div class="sub">Label content and format per label type and station; the barcode carries the id only — every attribute is fetched by id; reprints need a reason.</div></div><div class="ph-actions"><button class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-arrow-up"></i> Upload</button><button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Add template</button></div></div>
-<div class="card"><div class="tbl-wrap"><table class="g"><thead><tr><th>Code</th><th>Type</th><th>Unit</th><th>Symbology</th><th>Size mm</th><th>Content</th><th>Copies</th><th>Effective</th></tr></thead><tbody><tr><td>LBL-BRM-BUNDLE</td><td>BUNDLE</td><td>BRM cooling bed</td><td>CODE128 + QR</td><td>100 × 60</td><td>bundle no, batch, heat, grade, PSN, size, length, pieces, weight, order, colour code</td><td>2</td><td>2026-10-01 →</td></tr><tr><td>LBL-BLM-TAG</td><td>TAG</td><td>BLM cooling bed</td><td>CODE128</td><td>80 × 40 (metallic)</td><td>batch, heat, grade, size</td><td>1</td><td>2026-10-01 →</td></tr><tr><td>LBL-COIL</td><td>COIL</td><td>Garrett coiler</td><td>QR</td><td>120 × 80</td><td>coil no, batch, heat, grade, PSN, weight, order</td><td>1</td><td>2026-10-01 →</td></tr><tr><td>LBL-SAMPLE</td><td>SAMPLE</td><td>all mills</td><td>CODE128</td><td>60 × 30</td><td>sample id, batch, station, sample position</td><td>1</td><td>2026-10-01 →</td></tr><tr><td>LBL-GMM-BAG</td><td>BAG</td><td>GMM packing</td><td>QR</td><td>100 × 100</td><td>bag no, size, net weight, heats, order</td><td>2</td><td>2026-10-01 →</td></tr></tbody></table></div></div>
+<style>
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.pv select,.pv input[type=text],.pv input[type=number],.pv input[type=date],.pv textarea,.mdl select,.mdl input[type=text],.mdl input[type=number],.mdl input[type=date],.mdl textarea{width:100%;padding:7px 9px;border:1px solid var(--color-border);border-radius:6px;font:inherit;font-size:13px;background:#fff;box-sizing:border-box;}
+.mdl{display:grid;gap:10px;} .mdl label{font-size:12.5px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.mdl .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .mdl .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mdl textarea{min-height:64px;} .mdl .bad{border-color:#c62828!important;background:#fff6f6;}
+.mdl .hint{font-size:12px;color:var(--color-text-muted);}
+#uiToast{position:fixed;right:22px;bottom:22px;background:#263238;color:#fff;padding:10px 16px;border-radius:6px;display:none;z-index:1100;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:520px;}
+.banner{background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;}
+.pvempty{color:var(--color-text-hint);font-style:italic;font-size:12.5px;padding:8px 2px;}
+.g tbody tr.sel td{background:#e3f2fd!important;} .g tbody tr.clk{cursor:pointer;} .g tbody tr.clk:hover td{background:#f5fbff;}
+.lk{color:var(--color-primary);cursor:pointer;text-decoration:underline;}
+.pvhint{font-size:11.5px;color:var(--color-text-muted);margin:-4px 0 10px;}
+.prog{height:8px;border-radius:4px;background:#eceff1;overflow:hidden;margin:8px 0;} .prog i{display:block;height:100%;width:0;background:var(--color-primary);transition:width .25s;}
+</style><div class="overlay" id="ov"><div class="modal" id="mdBox"><div class="modal-head"><span id="mdTitle"></span> <span class="x" onclick="UI.closeM()"><i class="fa-solid fa-xmark"></i></span></div><div class="modal-body" id="mdBody"></div><div class="modal-foot"><button class="btn btn-ghost" id="mdCancel" onclick="UI.closeM()">Close</button><button class="btn btn-primary" id="mdOk">OK</button></div></div></div><div id="uiToast"></div><script>
+window.UI = (function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function f1(n){ return (Math.round((+n) * 10) / 10).toFixed(1); }
+  function n0(n){ return Math.round(+n).toLocaleString('en-IN'); }
+  function badge(t, c){ return '<span class="badge ' + (c || 'b-info') + '">' + t + '</span>'; }
+  function toast(t){ var el = $('uiToast'); el.textContent = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(function(){ el.style.display = 'none'; }, 3400); }
+  function modal(title, body, okText, onOk, wide){
+    $('mdTitle').textContent = title; $('mdBody').innerHTML = body;
+    $('mdOk').style.display = okText ? '' : 'none'; $('mdOk').textContent = okText || ''; $('mdCancel').textContent = okText ? 'Cancel' : 'Close';
+    $('mdBox').style.width = wide === 'xl' ? '980px' : wide ? '820px' : '600px';
+    $('mdOk').onclick = function(){ if (!onOk || onOk() !== false) closeM(); };
+    $('ov').classList.add('open');
+    var f = $('mdBody').querySelector('input,select,textarea'); if (f) setTimeout(function(){ f.focus(); }, 30);
+  }
+  function closeM(){ $('ov').classList.remove('open'); }
+  function req(ids){ var ok = true; ids.forEach(function(id){ var el = $(id); if (!el) return; var v = (el.value || '').trim(); el.classList.toggle('bad', !v); if (!v) ok = false; }); return ok; }
+  document.addEventListener('DOMContentLoaded', function(){ var ov = $('ov'); if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); }); });
+  window.addEventListener('hashchange', function(){ location.reload(); });
+  return {$: $, esc: esc, f1: f1, n0: n0, badge: badge, toast: toast, modal: modal, closeM: closeM, req: req};
+})();
+</script><style>
+#lbG td{white-space:normal;}
+.lbprops{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;margin-bottom:8px;} .lbprops label{display:inline-flex;gap:5px;align-items:center;}
+.lbprops input,#lbF input[type=number],#lbF select,#lbNf,.lbrs select{padding:4px 6px;border:1px solid var(--color-border);border-radius:5px;font:inherit;font-size:12.5px;background:#fff;}
+.lbprops input:disabled,#lbF input:disabled,#lbF select:disabled{background:#f5f5f5;color:#777;}
+.lbwrap{display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#f3f5f7,#f3f5f7 8px,#eceff1 8px,#eceff1 16px);border-radius:8px;padding:18px;min-height:200px;}
+.lbl{position:relative;background:#fff;border:1px solid #90a4ae;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15);overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#111;}
+.lbl .lf{position:absolute;white-space:nowrap;line-height:1.05;} .lbl .lf small{font-size:.62em;color:#555;text-transform:uppercase;letter-spacing:.2px;}
+.lbl .lc{position:absolute;display:flex;flex-direction:column;align-items:center;} .lbl .bct{font-family:Consolas,monospace;line-height:1;margin-top:1px;}
+.lbl .oob{outline:2px dashed #c62828;background:rgba(198,40,40,.08);}
+.lbrs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;} .lbrs .bad{color:#c62828;}
+</style>    <div class="crumb"><a href="ops-hub.html"><i class="fa-solid fa-arrow-left"></i> Operations</a> <span>/</span> <span>Masters</span> <span>/</span> <b>Label Templates</b></div>
+    <div class="page-head"><div><h1><i class="fa-solid fa-tag"></i> Label Templates</h1><div class="sub">Label content and format per label type and station; the barcode carries the id only — every attribute is fetched by id; reprints need a reason.</div></div><div class="ph-actions"><span class="pv" style="display:inline-flex;align-items:center;gap:6px;margin-right:6px"><label for="lbRole" style="font-size:11.5px;white-space:nowrap;color:var(--color-text-muted)">Acting as</label><select id="lbRole" onchange="lbRole()" style="width:auto"><option value="ADM">Label administrator</option><option value="OP">Shift operator</option></select></span><button class="btn btn-ghost btn-sm" id="lbUpB" onclick="lbUpload()"><i class="fa-solid fa-file-arrow-up"></i> Upload</button><button class="btn btn-primary btn-sm" id="lbAddB" onclick="lbAdd()" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> Add template</button></div></div>
+<div class="pvhint">Prototype on sample data — every control works; a reload resets; demo date 2026-10-05. Try: click a template — the preview draws it with sample data · <span class="lk" onclick="lbTry('LBL-BRM-BUNDLE')">LBL-BRM-BUNDLE</span>: New version → move a field (y 80 — outside, Activate refused) → Auto-arrange → add “customer” → Activate from a date before 2026-10-01 (overlap — refused), then 2026-10-05 · switch the barcode to “+ heat + grade + weight” (refused — id only) · Test print (PR-CB-01 → PRINTED) · <span class="lk" onclick="lbTry('LBL-SAMPLE')">LBL-SAMPLE</span> Test print on PR-LAB-01 (offline → FAILED) · <span class="lk" onclick="lbTry('LBL-GMM-BAG')">LBL-GMM-BAG</span> Test print (no printer at GMM packing — refused) · Reprint P-10232 (reason needed) · Which template prints? · Add template (duplicate code or a second BUNDLE for the BRM cooling bed — refused) · Upload · act as the shift operator (editing refused).</div><div class="kpis" id="lbK"></div><div class="panel"><h3>Templates <small>one in force per label type and station · click a row to edit or preview</small></h3><div class="pv" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap"><input type="text" id="fQ" placeholder="Code / content field…" oninput="lbFilter()" style="width:200px"/><select id="fT" onchange="lbFilter()" style="width:140px"><option value="">All label types</option><option>BUNDLE</option><option>TAG</option><option>COIL</option><option>SAMPLE</option><option>BAG</option><option>BATCH</option><option>PACK</option></select><select id="fSt" onchange="lbFilter()" style="width:170px"><option value="">All stations</option><option>BRM cooling bed</option><option>BLM cooling bed</option><option>Garrett coiler</option><option>all mills</option><option>GMM packing</option><option>ABGM packing</option></select></div><div id="lbG"></div></div><div class="grid2"><div class="panel"><h3 id="lbEdH"></h3><div class="pvhint" id="lbState" style="margin:0"></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px"><button class="btn btn-ghost btn-sm" id="lbNewB" onclick="lbNew()"><i class="fa-solid fa-code-branch"></i> New version</button><button class="btn btn-primary btn-sm" id="lbActB" onclick="lbAct()"><i class="fa-solid fa-circle-check"></i> Activate</button><button class="btn btn-ghost btn-sm" id="lbDiscB" onclick="lbDisc()"><i class="fa-solid fa-trash"></i> Discard draft</button><button class="btn btn-ghost btn-sm" id="lbTestB" onclick="lbTest()"><i class="fa-solid fa-print"></i> Test print</button></div><div id="lbEd"></div></div><div class="panel"><h3>Live preview <small>sample data · barcodes drawn as stand-ins</small></h3><div class="lbwrap" id="lbPv"></div></div></div><div class="panel"><h3>Print log <small>QUEUED → PRINTED / FAILED · a reprint keeps the original print and its reason</small></h3><div id="lbLog"></div></div><div class="grid2"><div class="panel"><h3>Which template prints? <small>by label type and station</small></h3><div class="lbrs"><select id="rsT" style="width:auto"><option>BUNDLE</option><option>TAG</option><option>COIL</option><option>SAMPLE</option><option>BAG</option><option>BATCH</option><option>PACK</option></select><select id="rsS" style="width:auto"><option>BRM cooling bed</option><option>BLM cooling bed</option><option>Garrett coiler</option><option>all mills</option><option>GMM packing</option><option>ABGM packing</option></select><button class="btn btn-ghost btn-sm" id="rsB" onclick="lbResolve()">Resolve</button><span id="rsOut"></span></div></div><div class="panel"><h3>Audit</h3><div id="lbA"></div></div></div><script>
+(function(){
+var U = UI, $ = U.$, B = U.badge, esc = U.esc;
+var TODAY = "2026-10-05", T = [{"code": "LBL-BRM-BUNDLE", "type": "BUNDLE", "station": "BRM cooling bed", "media": "paper", "ref": "bundle_100x60.zpl", "versions": [{"v": 1, "from": "2026-10-01", "to": "", "syms": ["CODE128", "QR"], "w": 100, "h": 60, "copies": 2, "fields": ["bundle no", "batch", "heat", "grade", "PSN", "size", "length", "pieces", "weight", "order", "colour code"], "codes": []}]}, {"code": "LBL-BLM-TAG", "type": "TAG", "station": "BLM cooling bed", "media": "metallic", "ref": "tag_80x40_metal.zpl", "versions": [{"v": 1, "from": "2026-10-01", "to": "", "syms": ["CODE128"], "w": 80, "h": 40, "copies": 1, "fields": ["batch", "heat", "grade", "size"], "codes": []}]}, {"code": "LBL-COIL", "type": "COIL", "station": "Garrett coiler", "media": "paper", "ref": "coil_120x80.zpl", "versions": [{"v": 1, "from": "2026-10-01", "to": "", "syms": ["QR"], "w": 120, "h": 80, "copies": 1, "fields": ["coil no", "batch", "heat", "grade", "PSN", "weight", "order"], "codes": []}]}, {"code": "LBL-SAMPLE", "type": "SAMPLE", "station": "all mills", "media": "paper", "ref": "sample_60x30.zpl", "versions": [{"v": 1, "from": "2026-10-01", "to": "", "syms": ["CODE128"], "w": 60, "h": 30, "copies": 1, "fields": ["sample id", "batch", "station", "sample position"], "codes": []}]}, {"code": "LBL-GMM-BAG", "type": "BAG", "station": "GMM packing", "media": "paper", "ref": "bag_100x100.zpl", "versions": [{"v": 1, "from": "2026-10-01", "to": "", "syms": ["QR"], "w": 100, "h": 100, "copies": 2, "fields": ["bag no", "size", "net weight", "heats", "order"], "codes": []}]}], PR = [["PR-CB-01", "BRM cooling bed", "ONLINE"], ["PR-BLM-01", "BLM cooling bed", "ONLINE"], ["PR-GAR-01", "Garrett coiler", "ONLINE"], ["PR-LAB-01", "all mills", "OFFLINE"]], FL = {"BUNDLE": ["bundle no", "batch", "heat", "grade", "PSN", "size", "length", "pieces", "weight", "order", "colour code", "customer"], "TAG": ["batch", "heat", "grade", "size", "PSN"], "COIL": ["coil no", "batch", "heat", "grade", "PSN", "size", "weight", "order"], "SAMPLE": ["sample id", "batch", "heat", "grade", "station", "sample position"], "BAG": ["bag no", "size", "net weight", "heats", "order", "grade"], "BATCH": ["batch", "heat", "grade", "PSN", "size", "weight"], "PACK": ["pack no", "batch", "heat", "grade", "size", "pieces", "weight", "order", "customer"]}, IDF = {"BUNDLE": "bundle no", "TAG": "batch", "COIL": "coil no", "SAMPLE": "sample id", "BAG": "bag no", "BATCH": "batch", "PACK": "pack no"}, VAL = {"bundle no": "B031138-B02", "batch": "B031138", "heat": "2627-01171", "grade": "304L", "PSN": "QDQA06_311", "size": "RO 32", "length": "6.0 m", "pieces": "61", "weight": "2,315 kg", "order": "SO-91002/10", "colour code": "blue · white", "customer": "C-1042", "coil no": "B031201-C01", "sample id": "SMP-2627-01544", "station": "BRM cooling bed", "sample position": "head end", "bag no": "BAG-60-26-08812", "net weight": "1,000 kg", "heats": "2627-01122 · 01119 · 01117", "pack no": "PK-2627-00417"}, VALT = {"BAG": {"size": "60 mm", "grade": "G9F"}, "TAG": {"batch": "B031002", "heat": "2627-01150", "size": "SQ 160"}, "COIL": {"batch": "B031201", "size": "WR 5.5", "weight": "1,980 kg"}}, ST = ["BRM cooling bed", "BLM cooling bed", "Garrett coiler", "all mills", "GMM packing", "ABGM packing"];
+var WHO = {ADM: 'Label admin · K. Shah', OP: 'op. R. Kumar'};
+var S = {role: 'ADM', sel: 0, ver: 1, pn: 10233, log: [{"id": "P-10233", "at": "10:58", "tpl": "LBL-SAMPLE v1", "val": "SMP-2627-01543", "printer": "PR-LAB-01", "copies": 1, "status": "FAILED", "test": false, "of": "", "why": "", "by": "op. R. Kumar"}, {"id": "P-10232", "at": "10:52", "tpl": "LBL-BRM-BUNDLE v1", "val": "B031138-B02", "printer": "PR-CB-01", "copies": 2, "status": "PRINTED", "test": false, "of": "", "why": "", "by": "op. R. Kumar"}, {"id": "P-10231", "at": "10:40", "tpl": "LBL-BRM-BUNDLE v1", "val": "B031138-B01", "printer": "PR-CB-01", "copies": 2, "status": "PRINTED", "test": false, "of": "", "why": "", "by": "op. R. Kumar"}], audit: [['2026-09-28 16:05', WHO.ADM, 'ACTIVATE', 'all five templates v1 effective from 2026-10-01']]};
+function now(){ var t = new Date(); return ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2); }
+function addD(d, k){ var x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); }
+function r1(x){ return Math.round(x * 10) / 10; }
+function ovl(a1, a2, b1, b2){ return (!a2 || !b1 || b1 <= a2) && (!b2 || !a1 || a1 <= b2); }
+function vst(v){ if (!v.from) return 'DRAFT'; if (v.from > TODAY) return 'SCHEDULED'; if (v.to && v.to < TODAY) return 'SUPERSEDED'; return 'ACTIVE'; }
+function vB(s){ return B(s, {DRAFT: 'b-draft', SCHEDULED: 'b-info', ACTIVE: 'b-done', SUPERSEDED: 'b-draft'}[s]); }
+function live(t){ return t.versions.filter(function(v){ return vst(v) === 'ACTIVE'; })[0]; }
+function sched(t){ return t.versions.filter(function(v){ return vst(v) === 'SCHEDULED'; })[0]; }
+function draft(t){ return t.versions.filter(function(v){ return !v.from; })[0]; }
+function headV(t){ return live(t) || sched(t) || t.versions[t.versions.length - 1]; }
+function val(type, f){ return (VALT[type] && VALT[type][f]) || VAL[f] || '—'; }
+function idVal(t){ return val(t.type, IDF[t.type]); }
+function curT(){ return T[S.sel]; }
+function curV(){ var t = curT(); return t.versions.filter(function(v){ return v.v === S.ver; })[0] || headV(t); }
+function audit(a, x){ S.audit.unshift(['2026-10-05 ' + now(), WHO[S.role], a, x]); }
+function isAdm(what){ if (S.role === 'ADM') return true; U.toast(what + ' is for the label administrator — switch "Acting as"'); return false; }
+function printersOf(t){ return PR.filter(function(p){ return t.station === 'all mills' || p[1] === t.station; }); }
+function pStat(c){ var p = PR.filter(function(x){ return x[0] === c; })[0]; return p ? p[2] : 'UNKNOWN'; }
+// ---- layout: 2D code top-right, CODE128 along the bottom, fields in one or two columns in what is left
+function arrange(t, v){
+  var W = v.w, H = v.h, m = 3, ax = m, ay = m, aw = W - 2 * m, ah = H - 2 * m, d2 = v.syms.filter(function(s){ return s !== 'CODE128'; })[0], d1 = v.syms.indexOf('CODE128') >= 0;
+  var bh = d1 ? Math.max(8, Math.round(H * 0.24)) : 0; v.codes = [];
+  if (d2){ var s = r1(Math.min(H - 2 * m - (d1 ? bh + 2 : 0), W * 0.3)); v.codes.push({sym: d2, x: r1(W - m - s), y: m, w: s, h: s}); aw -= s + 2; }
+  if (d1){ v.codes.push({sym: 'CODE128', x: m, y: H - m - bh, w: W - 2 * m, h: bh}); ah -= bh + 2; }
+  var n = v.fields.length || 1, cols = n > 5 && aw > 50 ? 2 : 1, rows = Math.ceil(n / cols), rh = ah / rows, cw = aw / cols;
+  var mc = Math.max.apply(null, v.fields.map(function(f){ return f.f.length * 0.62 + val(t.type, f.f).length + 1; }).concat([8]));
+  var fs = r1(Math.max(1.8, Math.min(rh * 0.6, cw / (mc * 0.55), 4.5)));
+  v.fields.forEach(function(f, i){ var c = Math.floor(i / rows), r = i % rows; f.x = r1(ax + c * cw); f.y = r1(ay + r * rh); f.s = fs; }); }
+function oobF(f, v){ return f.x < 0 || f.y < 0 || f.x > v.w - 4 || f.y + f.s > v.h + 0.01; }
+function oobC(c, v){ return c.x < 0 || c.y < 0 || c.x + c.w > v.w + 0.01 || c.y + c.h > v.h + 0.01; }
+function oobList(v){ return v.fields.filter(function(f){ return oobF(f, v); }).map(function(f){ return f.f; }).concat(v.codes.filter(function(c){ return oobC(c, v); }).map(function(c){ return c.sym; })); }
+// ---- barcode pictures (stand-ins: drawn from the value, not scannable)
+function hsh(s){ var h = 2166136261; for (var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h || 1; }
+function rnd(seed){ var x = seed; return function(){ x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; }
+function code(sym, v, px){
+  var r = rnd(hsh(v + sym)), s = '';
+  if (sym === 'CODE128'){ var x = 0; while (x < 120){ var bw = 1 + Math.floor(r() * 3); s += '<rect x="' + x + '" y="0" width="' + bw + '" height="10"/>'; x += bw + 1 + Math.floor(r() * 3); }
+    return '<svg viewBox="0 0 ' + x + ' 10" preserveAspectRatio="none" style="flex:1;width:100%">' + s + '</svg><div class="bct" style="font-size:' + Math.max(7, Math.min(12, px * 0.16)) + 'px">' + esc(v) + '</div>'; }
+  var N = sym === 'QR' ? 21 : 18;
+  for (var y = 0; y < N; y++) for (var c = 0; c < N; c++){ var on;
+    if (sym === 'QR'){ var fx = c < 7 ? c : c >= N - 7 ? c - N + 7 : -1, fy = y < 7 ? y : y >= N - 7 ? y - N + 7 : -1;
+      if (fx >= 0 && fy >= 0 && !(c >= N - 7 && y >= N - 7)){ var mm = Math.max(Math.abs(fx - 3), Math.abs(fy - 3)); on = mm === 3 || mm <= 1; } else on = r() > 0.5; }
+    else on = c === 0 || y === N - 1 ? true : y === 0 ? c % 2 === 0 : c === N - 1 ? y % 2 === 1 : r() > 0.5;
+    if (on) s += '<rect x="' + c + '" y="' + y + '" width="1" height="1"/>'; }
+  return '<svg viewBox="0 0 ' + N + ' ' + N + '" shape-rendering="crispEdges" style="width:100%;height:100%">' + s + '</svg>'; }
+function label(t, v){
+  var sc = Math.min(4.4, 440 / v.w, 320 / v.h), h = '<div class="lbl" id="lbPic" style="width:' + r1(v.w * sc) + 'px;height:' + r1(v.h * sc) + 'px' + (t.media === 'metallic' ? ';background:linear-gradient(135deg,#eceff1,#b0bec5)' : '') + '">';
+  v.codes.forEach(function(c){ h += '<div class="lc' + (oobC(c, v) ? ' oob' : '') + '" style="left:' + r1(c.x * sc) + 'px;top:' + r1(c.y * sc) + 'px;width:' + r1(c.w * sc) + 'px;height:' + r1(c.h * sc) + 'px">' + code(c.sym, idVal(t), c.h * sc) + '</div>'; });
+  v.fields.forEach(function(f){ h += '<div class="lf' + (oobF(f, v) ? ' oob' : '') + '" style="left:' + r1(f.x * sc) + 'px;top:' + r1(f.y * sc) + 'px;font-size:' + r1(f.s * sc) + 'px' + (f.b ? ';font-weight:700' : '') + '"><small>' + esc(f.f) + '</small> ' + esc(val(t.type, f.f)) + '</div>'; });
+  return h + '</div>'; }
+// ---- render
+function rList(){
+  var ft = $('fT').value, fs = $('fSt').value, q = $('fQ').value.trim().toUpperCase();
+  var h = '<table class="g"><thead><tr><th>Code</th><th>Type</th><th>Unit</th><th>Symbology</th><th>Size mm</th><th>Content</th><th class="num">Copies</th><th>Effective</th><th>Version</th></tr></thead><tbody>', k = 0;
+  T.forEach(function(t, i){ var v = headV(t);
+    if ((ft && t.type !== ft) || (fs && t.station !== fs) || (q && (t.code + ' ' + v.fields.map(function(f){ return f.f; }).join(' ')).toUpperCase().indexOf(q) < 0)) return; k++;
+    var other = t.versions.filter(function(x){ return x !== v && vst(x) !== 'SUPERSEDED'; }).map(function(x){ return ' ' + B('v' + x.v + ' ' + vst(x).toLowerCase(), vst(x) === 'SCHEDULED' ? 'b-info' : 'b-draft'); }).join('');
+    h += '<tr class="clk' + (i === S.sel ? ' sel' : '') + '" data-code="' + t.code + '" onclick="lbSel(' + i + ')"><td><b>' + t.code + '</b></td><td>' + t.type + '</td><td>' + esc(t.station) + '</td><td>' + v.syms.join(' + ') + '</td><td>' + v.w + ' × ' + v.h + (t.media === 'metallic' ? ' (metallic)' : '') + '</td><td><div style="white-space:normal;max-width:320px">' + v.fields.map(function(f){ return f.f; }).join(', ') + '</div></td><td class="num">' + v.copies + '</td><td>' + (v.from ? v.from + ' →' + (v.to ? ' ' + v.to : '') : '—') + '</td><td>v' + v.v + ' ' + vB(vst(v)) + other + '</td></tr>'; });
+  if (!k) h += '<tr class="empty"><td colspan="9">No template matches the filters.</td></tr>';
+  $('lbG').innerHTML = h + '</tbody></table>'; }
+function rEd(){
+  var t = curT(), v = curV(), st = vst(v), can = st === 'DRAFT' && S.role === 'ADM', dis = can ? '' : ' disabled', bad = oobList(v);
+  $('lbEdH').innerHTML = '<b>' + t.code + '</b> · ' + t.type + ' · ' + esc(t.station) + ' <select id="lbVer" onchange="lbVerSel()" style="width:auto;padding:3px 6px">' + t.versions.map(function(x){ return '<option value="' + x.v + '"' + (x === v ? ' selected' : '') + '>v' + x.v + ' · ' + vst(x).toLowerCase() + '</option>'; }).join('') + '</select> ' + vB(st);
+  $('lbState').innerHTML = st === 'DRAFT' ? (can ? 'Draft — place the fields and set the size, then Activate with an effective date.' : 'Draft — only the label administrator edits it.') : 'v' + v.v + ' is ' + st.toLowerCase() + (v.from ? ' (from ' + v.from + (v.to ? ' to ' + v.to : '') + ')' : '') + ' — read-only; make a New version to change it.';
+  var nb = function(id, k, x, w){ return '<input type="number" step="0.5" id="' + id + '" value="' + x + '" style="width:' + (w || 64) + 'px" onchange="lbProp(\'' + k + '\',this.value)"' + dis + '/>'; };
+  var h = '<div class="lbprops"><label>Width mm ' + nb('lbW', 'w', v.w) + '</label><label>Height mm ' + nb('lbH', 'h', v.h) + '</label><label>Copies ' + nb('lbCp', 'copies', v.copies, 50) + '</label>'
+    + '<label>Template file <input type="text" id="lbRef" value="' + esc(t.ref) + '" style="width:150px" onchange="lbProp(\'ref\',this.value)"' + dis + '/></label><span>Symbology '
+    + ['CODE128', 'QR', 'DATAMATRIX'].map(function(s){ return '<label style="font-weight:400"><input type="checkbox" id="sy_' + s + '"' + (v.syms.indexOf(s) >= 0 ? ' checked' : '') + ' onchange="lbSym(\'' + s + '\',this.checked)"' + dis + '/> ' + s + '</label>'; }).join(' ') + '</span></div>';
+  h += '<table class="g" id="lbF"><thead><tr><th>On the label</th><th class="num">x mm</th><th class="num">y mm</th><th class="num">Size mm</th><th>Bold / carries</th><th></th></tr></thead><tbody>';
+  v.codes.forEach(function(c, i){ var o = oobC(c, v), n = function(k){ return '<input type="number" step="0.5" value="' + c[k] + '" style="width:58px" onchange="lbSet(\'c\',' + i + ',\'' + k + '\',this.value)"' + dis + '/>'; };
+    h += '<tr class="' + (o ? 'bad' : '') + '"><td><i class="fa-solid fa-barcode"></i> <b>' + c.sym + '</b> barcode</td><td class="num">' + n('x') + '</td><td class="num">' + n('y') + '</td><td class="num">' + n('w') + ' × ' + n('h') + '</td><td><select id="lbCar' + i + '" onchange="lbCarry(this)" style="width:auto"' + dis + '><option value="id">' + IDF[t.type] + ' only</option><option value="all">' + IDF[t.type] + ' + heat + grade + weight</option></select></td><td></td></tr>'; });
+  v.fields.forEach(function(f, i){ var o = oobF(f, v), n = function(k){ return '<input type="number" step="0.5" value="' + f[k] + '" style="width:58px" onchange="lbSet(\'f\',' + i + ',\'' + k + '\',this.value)"' + dis + '/>'; };
+    h += '<tr class="' + (o ? 'bad' : '') + '" data-f="' + esc(f.f) + '"><td>' + esc(f.f) + (f.f === IDF[t.type] ? ' <small>(id)</small>' : '') + (o ? ' ' + B('outside', 'b-hold') : '') + '</td><td class="num">' + n('x') + '</td><td class="num">' + n('y') + '</td><td class="num">' + n('s') + '</td><td><input type="checkbox"' + (f.b ? ' checked' : '') + ' onchange="lbSet(\'f\',' + i + ',\'b\',this.checked)"' + dis + '/></td><td><button class="btn btn-ghost btn-sm" title="Remove field" onclick="lbRmF(' + i + ')"' + dis + '>✕</button></td></tr>'; });
+  var free = FL[t.type].filter(function(f){ return !v.fields.some(function(x){ return x.f === f; }); });
+  h += '</tbody></table><div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap"><select id="lbNf" style="width:auto"' + dis + '>' + (free.length ? free.map(function(f){ return '<option>' + f + '</option>'; }).join('') : '<option value="">all fields placed</option>') + '</select><button class="btn btn-ghost btn-sm" id="lbAddF" onclick="lbAddF()"' + dis + '><i class="fa-solid fa-plus"></i> Add field</button><button class="btn btn-ghost btn-sm" id="lbAuto" onclick="lbAuto()"' + dis + '><i class="fa-solid fa-table-cells"></i> Auto-arrange</button>'
+    + (bad.length ? '<span class="badge b-hold">outside the label: ' + bad.join(', ') + '</span>' : '') + '</div>';
+  $('lbEd').innerHTML = h;
+  $('lbPv').innerHTML = label(t, v) + '<div class="pvhint" style="margin:8px 0 0">' + v.w + ' × ' + v.h + ' mm · ' + v.syms.join(' + ') + ' · ' + v.copies + ' cop' + (v.copies === 1 ? 'y' : 'ies') + ' · sample ' + t.type.toLowerCase() + ' ' + idVal(t) + ' — every barcode carries <b>' + esc(idVal(t)) + '</b> only; the rest is fetched by id.</div>'; }
+function rLog(){
+  $('lbLog').innerHTML = '<table class="g"><thead><tr><th>Print</th><th>Time</th><th>Template</th><th>Barcode value</th><th>Printer</th><th class="num">Copies</th><th>Status</th><th>Reprint of · reason</th><th>By</th><th></th></tr></thead><tbody>' + S.log.map(function(l){
+    return '<tr class="' + (l.status === 'FAILED' ? 'bad' : l.status === 'QUEUED' ? 'warn' : '') + '" data-id="' + l.id + '"><td>' + l.id + (l.test ? ' ' + B('TEST', 'b-info') : '') + '</td><td>' + l.at + '</td><td>' + l.tpl + '</td><td><b>' + esc(l.val) + '</b></td><td>' + l.printer + '</td><td class="num">' + l.copies + '</td><td>' + B(l.status, l.status === 'PRINTED' ? 'b-done' : l.status === 'FAILED' ? 'b-hold' : 'b-pend') + (l.status === 'FAILED' ? ' <small>OPS_LABEL_FAILED</small>' : '') + '</td><td>' + (l.of ? l.of + ' · ' + esc(l.why) : '—') + '</td><td>' + l.by + '</td><td>' + (!l.test ? '<button class="btn btn-ghost btn-sm" onclick="lbReprint(\'' + l.id + '\')">Reprint</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table>'; }
+function render(){
+  rList(); rEd(); rLog();
+  var all = T.map(function(t){ return t.versions; }).reduce(function(a, b){ return a.concat(b); }, []);
+  $('lbK').innerHTML = [[T.length, 'templates'], [T.filter(function(t){ return live(t); }).length, 'active'], [all.filter(function(v){ return vst(v) === 'DRAFT'; }).length, 'drafts'], [all.filter(function(v){ return vst(v) === 'SCHEDULED'; }).length, 'scheduled'],
+    [S.log.filter(function(l){ return l.status === 'PRINTED'; }).length, 'printed'], [S.log.filter(function(l){ return l.status === 'FAILED'; }).length, 'failed'], [S.log.filter(function(l){ return l.of; }).length, 'reprints']].map(function(k){ return '<div class="k"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  $('lbA').innerHTML = '<ul class="timeline">' + S.audit.map(function(a){ return '<li>' + a[0] + ' · ' + a[1] + ' · <b>' + a[2] + '</b> · ' + esc(a[3]) + '</li>'; }).join('') + '</ul>'; }
+window.lbFilter = rList;
+window.lbSel = function(i){ S.sel = i; var t = T[i]; S.ver = (draft(t) || headV(t)).v; render(); };
+window.lbVerSel = function(){ S.ver = +$('lbVer').value; render(); };
+// ---- edit a draft
+function canEdit(){ var v = curV(); if (S.role !== 'ADM'){ U.toast('Only the label administrator edits templates — switch "Acting as"'); return false; }
+  if (vst(v) !== 'DRAFT'){ U.toast('v' + v.v + ' is ' + vst(v).toLowerCase() + ' — read-only; make a New version to change it'); return false; } return true; }
+window.lbSet = function(k, i, p, x){ if (!canEdit()){ render(); return; } var v = curV(), o = k === 'f' ? v.fields[i] : v.codes[i];
+  if (p === 'b') o.b = !!x; else { var n = +x; if (isNaN(n) || (p !== 'x' && p !== 'y' && n <= 0)){ U.toast('Enter a positive number'); render(); return; } o[p] = r1(n); }
+  render(); var out = k === 'f' ? oobF(o, v) : oobC(o, v); if (out) U.toast((o.f || o.sym) + ' now lies outside the ' + v.w + ' × ' + v.h + ' label — it cannot be activated like this'); };
+window.lbProp = function(k, x){ if (!canEdit()){ render(); return; } var t = curT(), v = curV();
+  if (k === 'ref'){ t.ref = x; render(); U.toast('Template file set to ' + x); return; }
+  var n = +x; if (k === 'copies' ? !(n >= 1 && n <= 9) : !(n >= 20 && n <= 200)){ U.toast(k === 'copies' ? 'Copies 1 to 9' : 'Label size 20 to 200 mm'); render(); return; }
+  v[k] = k === 'copies' ? Math.round(n) : r1(n); render();
+  var bad = oobList(v); U.toast(k === 'copies' ? 'Copies ' + v.copies : 'Label ' + v.w + ' × ' + v.h + ' mm' + (bad.length ? ' — outside now: ' + bad.join(', ') + ' (Auto-arrange)' : '')); };
+window.lbSym = function(s, on){ if (!canEdit()){ render(); return; } var t = curT(), v = curV();
+  if (!on && v.syms.length === 1){ U.toast('A label keeps at least one barcode'); render(); return; }
+  if (on && s !== 'CODE128'){ v.syms = v.syms.filter(function(x){ return x === 'CODE128'; }); } v.syms = on ? v.syms.concat([s]) : v.syms.filter(function(x){ return x !== s; });
+  arrange(t, v); render(); U.toast('Symbology ' + v.syms.join(' + ') + ' — layout re-arranged' + (on && s !== 'CODE128' ? ' (one 2D code per label)' : '')); };
+window.lbCarry = function(el){ var t = curT(); if (el.value === 'id') return; el.value = 'id';
+  U.toast('Refused — the barcode carries the ' + IDF[t.type] + ' only; heat, grade, weight and every other attribute are fetched by id (BR-LBL-01)'); };
+window.lbAddF = function(){ if (!canEdit()) return; var t = curT(), v = curV(), f = $('lbNf').value; if (!f){ U.toast('Every field of a ' + t.type + ' label is already placed'); return; }
+  v.fields.push({f: f, b: false, x: 0, y: 0, s: 3}); arrange(t, v); render(); U.toast(f + ' added — layout re-arranged; adjust x / y if you like'); };
+window.lbRmF = function(i){ if (!canEdit()) return; var t = curT(), v = curV(), f = v.fields[i];
+  if (f.f === IDF[t.type]){ U.toast('Refused — the ' + f.f + ' stays on the label in plain text; it is what the barcode carries'); return; }
+  v.fields.splice(i, 1); render(); U.toast(f.f + ' removed from the label'); };
+window.lbAuto = function(){ if (!canEdit()) return; var t = curT(), v = curV(); arrange(t, v); render(); U.toast('Fields and barcodes arranged to fit ' + v.w + ' × ' + v.h + ' mm'); };
+// ---- versions
+window.lbNew = function(){ if (!isAdm('Making a new version')) return; var t = curT(), d = draft(t);
+  if (d){ S.ver = d.v; render(); U.toast('v' + d.v + ' is already a draft — finish it or discard it'); return; }
+  var src = headV(t), nv = JSON.parse(JSON.stringify(src)); nv.v = Math.max.apply(null, t.versions.map(function(x){ return x.v; })) + 1; nv.from = ''; nv.to = '';
+  t.versions.push(nv); S.ver = nv.v; audit('NEW VERSION', t.code + ' v' + nv.v + ' (copy of v' + src.v + ')'); render(); U.toast(t.code + ' v' + nv.v + ' drafted from v' + src.v + ' — edit it, then Activate'); };
+window.lbDisc = function(){ if (!isAdm('Discarding a draft')) return; var t = curT(), v = curV();
+  if (vst(v) !== 'DRAFT'){ U.toast('Only a draft can be discarded — v' + v.v + ' is ' + vst(v).toLowerCase()); return; }
+  if (t.versions.length === 1){ U.toast('v1 is the only version of ' + t.code + ' — nothing to fall back to; activate it or leave it as a draft'); return; }
+  t.versions.splice(t.versions.indexOf(v), 1); S.ver = headV(t).v; audit('DISCARD', t.code + ' v' + v.v); render(); U.toast('Draft v' + v.v + ' discarded'); };
+function clash(t, from){ return T.filter(function(o){ return o !== t && o.type === t.type && o.station === t.station && o.versions.some(function(x){ return x.from && ovl(x.from, x.to, from, ''); }); })[0]; }
+window.lbAct = function(){ if (!isAdm('Activating a version')) return; var t = curT(), v = curV();
+  if (vst(v) !== 'DRAFT'){ U.toast('Activate works on a draft — v' + v.v + ' is ' + vst(v).toLowerCase() + '; make a New version first'); return; }
+  var bad = oobList(v); if (bad.length){ U.toast('Refused — outside the ' + v.w + ' × ' + v.h + ' label: ' + bad.join(', ') + ' (move them or Auto-arrange)'); return; }
+  var prev = live(t) || sched(t);
+  U.modal('Activate ' + t.code + ' v' + v.v, '<div class="mdl"><div class="hint">' + (prev ? 'v' + prev.v + ' is in force from ' + prev.from + '; it is closed the day before the new version starts. ' : '') + 'The template then resolves for ' + t.type + ' labels at ' + esc(t.station) + '.</div><div class="two"><div><label for="acF">Effective from</label><input type="date" id="acF" value="' + TODAY + '"/></div><div><label for="acN">Change note (mandatory)</label><input type="text" id="acN"/></div></div></div>', 'Activate', function(){
+    if (!U.req(['acF', 'acN'])) return false; var f = $('acF').value;
+    if (prev && f <= prev.from){ $('acF').classList.add('bad'); U.toast('Refused — overlapping validity: v' + prev.v + ' is effective from ' + prev.from + '; the new version must start after it'); return false; }
+    var c = clash(t, f); if (c){ U.toast('Refused — overlapping validity: ' + c.code + ' already resolves for ' + t.type + ' at ' + t.station + '; make a version of it instead'); return false; }
+    if (prev) prev.to = addD(f, -1); v.from = f; audit('ACTIVATE', t.code + ' v' + v.v + ' from ' + f + ' — ' + $('acN').value); render();
+    U.toast(f <= TODAY ? t.code + ' v' + v.v + ' active now' + (prev ? '; v' + prev.v + ' superseded (to ' + prev.to + ')' : '') : t.code + ' v' + v.v + ' scheduled from ' + f + (prev ? '; v' + prev.v + ' stays in force to ' + prev.to : '')); return true; }); };
+// ---- printing
+function queue(row){ S.log.unshift(row); render();
+  setTimeout(function(){ row.status = pStat(row.printer) === 'ONLINE' ? 'PRINTED' : 'FAILED'; render();
+    U.toast(row.id + (row.status === 'PRINTED' ? ' printed on ' + row.printer + ' — ' + row.copies + ' cop' + (row.copies === 1 ? 'y' : 'ies') : ' FAILED — printer ' + row.printer + ' is offline (OPS_LABEL_FAILED); print on another printer or reprint once it is back')); }, 600); }
+window.lbTest = function(){ var t = curT(), v = curV(), ps = printersOf(t);
+  if (!ps.length){ U.toast('Refused — no printer registered at ' + t.station + '; register one on the Devices screen first'); return; }
+  U.modal('Test print — ' + t.code + ' v' + v.v, '<div class="mdl"><div class="hint">Prints the sample ' + t.type.toLowerCase() + ' ' + esc(idVal(t)) + ' with this version, marked TEST.</div><div class="two"><div><label for="tpP">Printer</label><select id="tpP">' + ps.map(function(p){ return '<option value="' + p[0] + '">' + p[0] + ' · ' + p[1] + ' · ' + p[2].toLowerCase() + '</option>'; }).join('') + '</select></div><div><label for="tpC">Copies</label><input type="number" id="tpC" value="' + v.copies + '"/></div></div></div>', 'Print', function(){
+    var c = +$('tpC').value; if (!(c >= 1 && c <= 9)){ $('tpC').classList.add('bad'); U.toast('Copies 1 to 9'); return false; }
+    var row = {id: 'P-' + (++S.pn), at: now(), tpl: t.code + ' v' + v.v, val: idVal(t), printer: $('tpP').value, copies: c, status: 'QUEUED', test: true, of: '', why: '', by: WHO[S.role]};
+    queue(row); U.toast(row.id + ' queued on ' + row.printer); return true; }); };
+window.lbReprint = function(id){ var l = S.log.filter(function(x){ return x.id === id; })[0];
+  if (l.status !== 'PRINTED'){ U.toast('Refused — only a printed label is reprinted; ' + l.id + ' is ' + l.status.toLowerCase() + ' — print it again on a working printer'); return; }
+  U.modal('Reprint ' + l.val, '<div class="mdl"><div class="hint">A reprint records its reason and the original print ' + l.id + '; the barcode value stays ' + esc(l.val) + '.</div><div class="two"><div><label for="rpWhy">Reason (mandatory)</label><select id="rpWhy"><option value="">— choose —</option><option>Label damaged</option><option>Label unreadable at scanning</option><option>Printer jam</option><option>Label lost</option></select></div><div><label for="rpRm">Remark</label><input type="text" id="rpRm"/></div></div></div>', 'Reprint', function(){
+    if (!U.req(['rpWhy'])){ U.toast('A reprint needs a reason'); return false; }
+    var row = {id: 'P-' + (++S.pn), at: now(), tpl: l.tpl, val: l.val, printer: l.printer, copies: 1, status: 'QUEUED', test: false, of: l.id, why: $('rpWhy').value + ($('rpRm').value ? ' — ' + $('rpRm').value : ''), by: WHO[S.role]};
+    queue(row); audit('REPRINT', l.val + ' — ' + row.why + ' (original ' + l.id + ')'); U.toast(row.id + ' queued — reprint of ' + l.id); return true; }); };
+window.lbResolve = function(){ var ty = $('rsT').value, st = $('rsS').value;
+  var hit = T.filter(function(t){ return t.type === ty && t.station === st && live(t); })[0] || T.filter(function(t){ return t.type === ty && t.station === 'all mills' && live(t); })[0];
+  $('rsOut').innerHTML = hit ? '<b>' + hit.code + ' v' + live(hit).v + '</b> — active since ' + live(hit).from + (hit.station !== st ? ' (the all-mills template)' : '') + '; barcode = ' + IDF[ty] + ' only' : '<span class="bad">No active template for ' + ty + ' at ' + esc(st) + ' — the print is refused (OPS_LABEL_FAILED)</span>'; };
+// ---- add / upload
+window.lbAdd = function(){ if (!isAdm('Adding a template')) return;
+  U.modal('Add label template', '<div class="mdl"><div class="three"><div><label for="nC">Code</label><input type="text" id="nC"/></div><div><label for="nT">Label type</label><select id="nT">' + Object.keys(FL).map(function(k){ return '<option>' + k + '</option>'; }).join('') + '</select></div><div><label for="nS">Station</label><select id="nS">' + ST.map(function(s){ return '<option>' + s + '</option>'; }).join('') + '</select></div></div>'
+    + '<div class="three"><div><label for="nW">Width mm</label><input type="number" id="nW" value="100"/></div><div><label for="nH">Height mm</label><input type="number" id="nH" value="60"/></div><div><label for="nCp">Copies</label><input type="number" id="nCp" value="1"/></div></div>'
+    + '<div class="three"><div><label for="nY">Symbology</label><select id="nY"><option>CODE128</option><option>QR</option><option>DATAMATRIX</option><option value="CODE128+QR">CODE128 + QR</option></select></div><div><label for="nM">Media</label><select id="nM"><option>paper</option><option>synthetic</option><option>metallic</option></select></div><div><label for="nF">Planned from</label><input type="date" id="nF" value="' + TODAY + '"/></div></div>'
+    + '<div class="hint">Created as draft v1 with the id field and the barcode; place the other fields, then Activate. One template per label type and station at a time.</div></div>', 'Add', function(){
+    if (!U.req(['nC', 'nW', 'nH'])) return false; var c = $('nC').value.trim().toUpperCase(), w = +$('nW').value, h = +$('nH').value, ty = $('nT').value, st = $('nS').value;
+    if (T.some(function(t){ return t.code === c; })){ $('nC').classList.add('bad'); U.toast('Refused — code ' + c + ' already exists; codes are unique'); return false; }
+    if (!(w >= 20 && w <= 200 && h >= 20 && h <= 200)){ U.toast('Refused — label size 20 to 200 mm'); return false; }
+    var nt = {code: c, type: ty, station: st, media: $('nM').value, ref: '', versions: []}, k = clash(nt, $('nF').value || TODAY);
+    if (k){ U.toast('Refused — overlapping validity: ' + k.code + ' already resolves for ' + ty + ' at ' + st + ' (' + headV(k).from + ' →' + (headV(k).to ? ' ' + headV(k).to : ' open') + '); make a new version of it instead'); return false; }
+    var v = {v: 1, from: '', to: '', syms: $('nY').value.split('+'), w: w, h: h, copies: Math.max(1, Math.round(+$('nCp').value || 1)), fields: [{f: IDF[ty], b: true}], codes: []};
+    arrange(nt, v); nt.versions.push(v); T.push(nt); S.sel = T.length - 1; S.ver = 1; audit('ADD', c + ' · ' + ty + ' · ' + st + ' (draft v1)'); render(); U.toast(c + ' added as draft v1 — place the fields, then Activate'); return true; }, true); };
+window.lbUpload = function(){ if (!isAdm('Uploading templates')) return;
+  U.modal('Upload — sheet LABEL_TEMPLATE', '<div class="mdl"><table class="g"><thead><tr><th>Row</th><th>Template</th><th>Result</th></tr></thead><tbody><tr class="ok"><td>2</td><td>LBL-ABGM-PACK · PACK · ABGM packing · CODE128 · 100 × 50</td><td>' + B('OK', 'b-done') + ' <small>as draft v1</small></td></tr>'
+    + '<tr class="bad"><td>3</td><td>LBL-BRM-BUNDLE-2 · BUNDLE · BRM cooling bed</td><td>' + B('REJECTED', 'b-hold') + ' <small>overlaps LBL-BRM-BUNDLE</small></td></tr><tr class="bad"><td>4</td><td>LBL-BB-PACK · PACK · symbology PDF417</td><td>' + B('REJECTED', 'b-hold') + ' <small>not CODE128 / QR / DATAMATRIX</small></td></tr></tbody></table></div>', 'Load', function(){
+    if (!T.some(function(t){ return t.code === 'LBL-ABGM-PACK'; })){ var nt = {code: 'LBL-ABGM-PACK', type: 'PACK', station: 'ABGM packing', media: 'paper', ref: 'pack_100x50.zpl', versions: []}, v = {v: 1, from: '', to: '', syms: ['CODE128'], w: 100, h: 50, copies: 1, fields: ['pack no', 'heat', 'grade', 'size', 'pieces', 'weight', 'order'].map(function(f){ return {f: f, b: f === 'pack no'}; }), codes: []};
+      arrange(nt, v); nt.versions.push(v); T.push(nt); }
+    audit('UPLOAD', '1 row loaded as draft, 2 rejected'); render(); U.toast('1 template loaded as draft; 2 rows rejected with the reason'); return true; }); };
+window.lbRole = function(){ S.role = $('lbRole').value; render(); U.toast(S.role === 'ADM' ? 'Acting as the label administrator — adds, versions and activates templates' : 'Acting as the shift operator — test prints and reprints'); };
+window.lbTry = function(code, role){ if (role){ $('lbRole').value = role; S.role = role; } for (var i = 0; i < T.length; i++) if (T[i].code === code) lbSel(i); };
+T.forEach(function(t){ t.versions.forEach(function(v){ if (typeof v.fields[0] === 'string'){ v.fields = v.fields.map(function(f){ return {f: f, b: f === IDF[t.type]}; }); arrange(t, v); } }); });
+render();
+})();
+</script>
   </main>
 </div>
 
